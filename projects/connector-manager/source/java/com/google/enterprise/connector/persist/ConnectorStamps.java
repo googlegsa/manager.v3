@@ -57,10 +57,4 @@ public class ConnectorStamps {
   public Stamp getScheduleStamp() {
     return scheduleStamp;
   }
-
-  @Override
-  public String toString() {
-    return "{" + checkpointStamp + ", " + configurationStamp + ", "
-        + scheduleStamp + "}";
-  }
 }

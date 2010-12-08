@@ -14,18 +14,19 @@
 
 package com.google.enterprise.connector.pusher;
 
+import com.google.enterprise.connector.common.UniqueIdGenerator;
+import com.google.enterprise.connector.common.UuidGenerator;
 import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.RepositoryDocumentException;
 import com.google.enterprise.connector.spi.RepositoryException;
+import com.google.enterprise.connector.spi.SimpleProperty;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.spi.XmlUtils;
 import com.google.enterprise.connector.spi.SpiConstants.ActionType;
 import com.google.enterprise.connector.spiimpl.ValueImpl;
-import com.google.enterprise.connector.util.UniqueIdGenerator;
-import com.google.enterprise.connector.util.UuidGenerator;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -432,7 +433,11 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
     XmlUtils.xmlAppendStartTag(XML_METADATA, buf);
     buf.append("\n");
 
-    // Add all the metadata supplied by the Connector.
+    // Tag each document with the ID of its feed file.
+    wrapOneProperty(buf, SpiConstants.PROPNAME_FEEDID,
+        new SimpleProperty(Value.getStringValue(feedId)));
+
+    // Now add all the metadata supplied by the Connector.
     Set<String> propertyNames = document.getPropertyNames();
     if ((propertyNames == null) || propertyNames.isEmpty()) {
       LOGGER.log(Level.WARNING, "Property names set is empty");

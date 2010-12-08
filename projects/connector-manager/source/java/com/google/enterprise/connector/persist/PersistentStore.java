@@ -20,12 +20,6 @@ import com.google.enterprise.connector.scheduler.Schedule;
 
 /**
  * Stores and retrieves the persistent objects of a connector instance.
- * <p>
- * Each call to one of the set or remove methods on this interface
- * should update the version stamp of the corresponding object to a
- * new and unique value. Specifically, removing an object and then
- * re-adding it should not produce a version stamp for the new object
- * that might have been returned by the original object.
  */
 // TODO: Change StoreContext to String (instance name).
 public interface PersistentStore {
@@ -37,16 +31,15 @@ public interface PersistentStore {
    */
   ImmutableMap<StoreContext, ConnectorStamps> getInventory();
 
-  String getConnectorState(StoreContext context);
-  void storeConnectorState(StoreContext context, String checkpoint);
-  void removeConnectorState(StoreContext context);
+  String getCheckpoint(StoreContext context);
+  void setCheckpoint(StoreContext context, String checkpoint);
+  void removeCheckpoint(StoreContext context);
 
-  Configuration getConnectorConfiguration(StoreContext context);
-  void storeConnectorConfiguration(StoreContext context,
-      Configuration configuration);
-  void removeConnectorConfiguration(StoreContext context);
+  Configuration getConfiguration(StoreContext context);
+  void setConfiguration(StoreContext context, Configuration configuration);
+  void removeConfiguration(StoreContext context);
 
-  Schedule getConnectorSchedule(StoreContext context);
-  void storeConnectorSchedule(StoreContext context, Schedule schedule);
-  void removeConnectorSchedule(StoreContext context);
+  Schedule getSchedule(StoreContext context);
+  void setSchedule(StoreContext context, Schedule schedule);
+  void removeSchedule(StoreContext context);
 }

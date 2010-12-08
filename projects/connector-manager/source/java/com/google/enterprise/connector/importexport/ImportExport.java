@@ -14,202 +14,286 @@
 
 package com.google.enterprise.connector.importexport;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.enterprise.connector.common.AbstractCommandLineApp;
 import com.google.enterprise.connector.common.StringUtils;
-import com.google.enterprise.connector.instantiator.Configuration;
-import com.google.enterprise.connector.instantiator.Instantiator;
+import com.google.enterprise.connector.instantiator.EncryptedPropertyPlaceholderConfigurer;
 import com.google.enterprise.connector.instantiator.InstantiatorException;
+import com.google.enterprise.connector.manager.ConnectorStatus;
 import com.google.enterprise.connector.manager.Context;
+import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
-import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
-import com.google.enterprise.connector.scheduler.Schedule;
+import com.google.enterprise.connector.persist.PersistentStoreException;
+import com.google.enterprise.connector.servlet.SAXParseErrorHandler;
+import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.spi.ConfigureResponse;
-import com.google.enterprise.connector.util.SAXParseErrorHandler;
-import com.google.enterprise.connector.util.XmlParseUtil;
+import com.google.enterprise.connector.spi.XmlUtils;
 
-import org.apache.commons.cli.CommandLine;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.io.Reader;
+import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Locale;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Legacy Utility to import/export connectors from/to XML.
- * Used by the GSA.
+ * Utilities to import/export connectors from/to XML.
  */
-public class ImportExport extends AbstractCommandLineApp {
+public class ImportExport {
   private static final Logger LOGGER =
       Logger.getLogger(ImportExport.class.getName());
 
-  /**
-   * Returns a ImportExportConnectorList representing the current
-   * set of connectors.
+  /*
+   * Exports a list of connectors.
    *
-   * @return a ImportExportConnectorList
+   * @return a List of ImportExportConnectors
    */
-  @VisibleForTesting
-  static final ImportExportConnectorList getConnectors() {
-    ImportExportConnectorList connectors = new ImportExportConnectorList();
-    Instantiator instantiator = Context.getInstance().getInstantiator();
-    for (String connectorName : instantiator.getConnectorNames()) {
+  private static final List<ImportExportConnector> getConnectors(
+      Manager manager) {
+    List<ImportExportConnector> connectors =
+        new ArrayList<ImportExportConnector>();
+    for (ConnectorStatus connectorStatus : manager.getConnectorStatuses()) {
+      String name = connectorStatus.getName();
+      String type = connectorStatus.getType();
+      String scheduleString = connectorStatus.getSchedule();
+      Map<String, String> config = null;
       try {
-        Configuration configuration =
-            instantiator.getConnectorConfiguration(connectorName);
-        if (configuration != null) {
-          Schedule schedule = instantiator.getConnectorSchedule(connectorName);
-          connectors.add(new LegacyImportExportConnector(
-              connectorName, configuration, schedule, null));
-        }
+        config = manager.getConnectorConfig(connectorStatus.getName());
       } catch (ConnectorNotFoundException e) {
-        // This shouldn't happen.
-        LOGGER.warning("Connector " + connectorName + " not found!");
+        // should never happen
+        LOGGER.log(Level.WARNING, e.getMessage(), e);
       }
+      ImportExportConnector connector = new ImportExportConnector(
+          name, type, scheduleString, config);
+      connectors.add(connector);
     }
+
     return connectors;
   }
 
-  /**
-   * Imports a list of connectors. Replaces the existing connectors with the
-   * connectors in {@code connectors}. For each connector in {@code connectors},
-   * update an existing connector if the connector names match or create a new
-   * connector if it doesn't already exist.
-   * Unless instructed otherwise, remove any existing connectors which are not
-   * included in {@code connectors}.
+  /*
+   * Imports a list of connectors.  Replaces the existing connectors with the
+   * connectors in {@code connectors}.  For each connector in
+   * {@code connectors}, update an existing connector if the
+   * connector names match or create a new connector if it doesn't already
+   * exist.  Remove any existing connectors which are not included in
+   * {@code connectors}.
    *
-   * @param connectors a {@link ImportExportConnectorList}
    * @param noRemove {@code setConnectors} removes previous connectors
    *        which are not included in {@code connectors} if and only if
    *        {@code noremove} is {@code false}.
    */
-  static final void setConnectors(ImportExportConnectorList connectors,
-      boolean noRemove) {
-    Instantiator instantiator = Context.getInstance().getInstantiator();
-    Set<String> previousConnectorNames =
-        new HashSet<String>(instantiator.getConnectorNames());
+  private static final void setConnectors(Manager manager,
+      List<ImportExportConnector> connectors, boolean noRemove)
+      throws InstantiatorException, PersistentStoreException {
+    Set<String> previousConnectorNames = new HashSet<String>();
+
+    for (ConnectorStatus connector : manager.getConnectorStatuses()) {
+      previousConnectorNames.add(connector.getName());
+    }
 
     for (ImportExportConnector connector : connectors) {
       String name = connector.getName();
+      String type = connector.getType();
+      Map<String, String> config = connector.getConfig();
+      String schedule = connector.getScheduleString();
+
       try {
-        // Store the Configuration.
+        String language = "en";
         boolean update = previousConnectorNames.contains(name);
-        Configuration configuration = connector.getConfiguration();
+
+        // set connector config
         ConfigureResponse configureResponse =
-            instantiator.setConnectorConfiguration(name, configuration,
-                                                   Locale.ENGLISH, update);
+            manager.setConnectorConfig(name, type, config, language, update);
         if (configureResponse != null) {
-          LOGGER.warning("setConnectorConfiguration(name=" + name + "\"): "
-                         + configureResponse.getMessage());
+          String msg = "setConnectorConfig(name=" + name + "\"): "
+              + configureResponse.getMessage();
+          LOGGER.log(Level.WARNING, msg);
           continue;
         }
 
-        // Store the Schedule.
-        instantiator.setConnectorSchedule(name, connector.getSchedule());
+        // set schedule, if given
+        if (schedule != null ) {
+          try {
+            manager.setSchedule(name, schedule);
+          } catch (ConnectorNotFoundException e) {
+            // should never happen
+            LOGGER.log(Level.WARNING, e.getMessage(), e);
+            throw new RuntimeException(e);
+          }
+        }
 
         previousConnectorNames.remove(name);
-      } catch (ConnectorNotFoundException e) {
-        // This shouldn't happen.
-        LOGGER.warning("Connector " + name + " not found!");
       } catch (ConnectorExistsException e) {
-        // This shouldn't happen.
-        LOGGER.warning("Connector " + name + " already exists!");
-      } catch (ConnectorTypeNotFoundException e) {
-        LOGGER.warning("Connector Type " + connector.getTypeName()
-                       + " not found!");
-      } catch (InstantiatorException e) {
-        LOGGER.log(Level.WARNING, "Failed to create connector " + name + ": ",
-                   e);
+        // should never happen
+        LOGGER.log(Level.WARNING, e.getMessage(), e);
+      } catch (ConnectorNotFoundException e) {
+        // should never happen
+        LOGGER.log(Level.WARNING, e.getMessage(), e);
       }
     }
 
-    // Remove previous connectors which no longer exist.
+    // remove previous connectors which no longer exist
     if (!noRemove) {
       for (String name : previousConnectorNames) {
         try {
-          instantiator.removeConnector(name);
-        } catch (InstantiatorException e) {
-          LOGGER.log(Level.WARNING, "Failed to remove connector " + name + ": ",
-                     e);
+          manager.removeConnector(name);
+        } catch (ConnectorNotFoundException e) {
+          // should never happen
+          LOGGER.log(Level.WARNING, e.getMessage(), e);
         }
       }
     }
+  }
+
+  /**
+   * Deserializes connectors from XML.
+   *
+   * @return a List of ImportExportConnectors
+   */
+  @SuppressWarnings("deprecation")
+  public static List<ImportExportConnector> fromXmlConnectorsElement(
+      Element connectorsElement) {
+    List<ImportExportConnector> connectors =
+        new ArrayList<ImportExportConnector>();
+
+    NodeList connectorElements = connectorsElement.getElementsByTagName(
+        ServletUtil.XMLTAG_CONNECTOR_INSTANCE);
+
+    for (int i = 0; i < connectorElements.getLength(); i++) {
+      Element connectorElement = (Element) connectorElements.item(i);
+      String name = ServletUtil.getFirstElementByTagName(
+          connectorElement, ServletUtil.XMLTAG_CONNECTOR_NAME);
+      String type = ServletUtil.getFirstElementByTagName(
+          connectorElement, ServletUtil.XMLTAG_CONNECTOR_TYPE);
+      String scheduleString = ServletUtil.getFirstElementByTagName(
+          connectorElement, ServletUtil.XMLTAG_CONNECTOR_SCHEDULES);
+      // TODO: Remove this when v2.0 and older no longer needs to be supported.
+      if (scheduleString == null) {
+        // Could be dealing with old format.
+        scheduleString = ServletUtil.getFirstElementByTagName(
+            connectorElement, ServletUtil.XMLTAG_CONNECTOR_SCHEDULE);
+      }
+      Element configElement = (Element) connectorElement.getElementsByTagName(
+          ServletUtil.XMLTAG_CONNECTOR_CONFIG).item(0);
+      Map<String, String> config = ServletUtil.getAllAttributes(
+          configElement, ServletUtil.XMLTAG_PARAMETERS);
+      ImportExportConnector connector = new ImportExportConnector(
+          name, type, scheduleString, config);
+      connectors.add(connector);
+    }
+
+    return connectors;
+  }
+
+  /**
+   * Deserialializes connectors from XML string.
+   *
+   * @return a List of ImportExportConnectors
+   */
+  public static List<ImportExportConnector> fromXmlString(String xmlString) {
+    Document document =
+        ServletUtil.parse(xmlString, new SAXParseErrorHandler(), null);
+    Element connectorsElement = document.getDocumentElement();
+    return fromXmlConnectorsElement(connectorsElement);
+  }
+
+  /**
+   * Serializes connectors to XML.
+   *
+   * @param connectors a List of ImportExportConnectors
+   */
+  public static String asXmlString(List<ImportExportConnector> connectors) {
+    StringWriter sw = new StringWriter();
+    PrintWriter pw = new PrintWriter(sw);
+
+    ServletUtil.writeXMLTag(
+        pw, 0, ServletUtil.XMLTAG_CONNECTOR_INSTANCES, false);
+
+    for (ImportExportConnector connector : connectors) {
+      String name = connector.getName();
+      String type = connector.getType();
+      String scheduleString = connector.getScheduleString();
+      Map<String, String> config = connector.getConfig();
+      ServletUtil.writeXMLTag(
+          pw, 1, ServletUtil.XMLTAG_CONNECTOR_INSTANCE, false);
+      ServletUtil.writeXMLElement(
+          pw, 2, ServletUtil.XMLTAG_CONNECTOR_NAME, name);
+      ServletUtil.writeXMLElement(
+          pw, 2, ServletUtil.XMLTAG_CONNECTOR_TYPE, type);
+      StringBuilder builder = new StringBuilder();
+      ServletUtil.writeXMLTagWithAttrs(builder, 2,
+          ServletUtil.XMLTAG_CONNECTOR_SCHEDULES,
+          ServletUtil.ATTRIBUTE_VERSION + "3" + ServletUtil.QUOTE,
+          false);
+      builder.append(scheduleString);
+      ServletUtil.writeXMLTag(builder, 0,
+          ServletUtil.XMLTAG_CONNECTOR_SCHEDULES, true);
+      pw.println(builder.toString());
+      ServletUtil.writeXMLTag(
+          pw, 2, ServletUtil.XMLTAG_CONNECTOR_CONFIG, false);
+      Map<String, String> sorted = new TreeMap<String, String>(config);
+      for (Map.Entry<String, String> me : sorted.entrySet()) {
+        builder.setLength(0);
+        try {
+          builder.append(ServletUtil.ATTRIBUTE_NAME);
+          XmlUtils.xmlAppendAttrValue(me.getKey(), builder);
+          builder.append(ServletUtil.QUOTE).append(ServletUtil.ATTRIBUTE_VALUE);
+          XmlUtils.xmlAppendAttrValue(me.getValue(), builder);
+          builder.append(ServletUtil.QUOTE);
+        } catch (IOException e) { /* Can't happen with StringBuilder */ }
+        ServletUtil.writeXMLTagWithAttrs(
+            pw, 3, ServletUtil.XMLTAG_PARAMETERS, builder.toString(), true);
+      }
+      ServletUtil.writeXMLTag(
+          pw, 2, ServletUtil.XMLTAG_CONNECTOR_CONFIG, true);
+      ServletUtil.writeXMLTag(
+          pw, 1, ServletUtil.XMLTAG_CONNECTOR_INSTANCE, true);
+    }
+
+    ServletUtil.writeXMLTag(
+        pw, 0, ServletUtil.XMLTAG_CONNECTOR_INSTANCES, true);
+
+    return sw.toString();
   }
 
   /**
    * Reads a list of connectors from an XML file.
    *
-   * @param filename source XML file for connectors.
-   * @return an ImportExportConnectorList
+   * @return a List of ImportExportConnectors
    */
-  public static ImportExportConnectorList readFromFile(String filename)
+  public static List<ImportExportConnector> readFromFile(String filename)
       throws IOException {
-    String xmlString =
-        StringUtils.streamToStringAndThrow(new FileInputStream(filename));
-    Document document =
-        XmlParseUtil.parse(xmlString, new SAXParseErrorHandler(), null);
-    Element connectorsElement = document.getDocumentElement();
-    ImportExportConnectorList connectors = new ImportExportConnectorList();
-    connectors.fromXml(document.getDocumentElement(),
-        LegacyImportExportConnector.class);
-    return connectors;
+    Reader isr = new InputStreamReader(new FileInputStream(filename), "UTF-8");
+    String string = StringUtils.readAllToString(isr);
+    return fromXmlString(string);
   }
 
   /**
    * Writes a list of connectors to an XML file.
    *
-   * @param connectors an ImportExportConnectorList
-   * @param filename destination XML file for connectors.
+   * @param connectors a List of ImportExportConnectors
    */
   public static void writeToFile(String filename,
-      ImportExportConnectorList connectors) throws IOException {
-    PrintWriter out = new PrintWriter(new OutputStreamWriter(
-        new FileOutputStream(filename), "UTF-8"));
-    connectors.toXml(out, 0);
-    out.close();
-  }
-
-  @Override
-  public String getName() {
-    return "ImportExport";
-  }
-
-  @Override
-  public String getDescription() {
-    return "Imports and Exports Connector configurations.";
-  }
-
-  @Override
-  public String getCommandLineSyntax() {
-    return super.getCommandLineSyntax() + "(export|import|import-no-remove) <filename>";
-  }
-
-  @Override
-  public void run(CommandLine commandLine) throws Exception {
-    initStandAloneContext(true);
-    String[] args = commandLine.getArgs();
-    try {
-      if (args.length == 2 && args[0].equals("export")) {
-        writeToFile(args[1], getConnectors());
-      } else if (args.length == 2 && args[0].equals("import")) {
-        setConnectors(readFromFile(args[1]), false);
-      } else if (args.length == 2 && args[0].equals("import-no-remove")) {
-        setConnectors(readFromFile(args[1]), true);
-      } else {
-        printUsage();
-      }
-    } finally {
-      shutdown();
-    }
+      List<ImportExportConnector> connectors) throws IOException {
+    OutputStreamWriter osw =
+        new OutputStreamWriter(new FileOutputStream(filename), "UTF-8");
+    osw.write(asXmlString(connectors));
+    osw.close();
   }
 
   /**
@@ -217,10 +301,43 @@ public class ImportExport extends AbstractCommandLineApp {
    * <pre>
    * usage: ImportExport (export|import|import-no-remove) &lt;filename&gt;
    * </pre>
+   *
+   * <p>Use -Dkeystore.file=&lt;filename&gt; to set the keystore filename
+   * if the WebApp is not using the default value.
    */
   public static final void main(String[] args) throws Exception {
-    ImportExport app = new ImportExport();
-    app.run(app.parseArgs(args));
-    System.exit(0);
+    // Establish keystore file name before initializing the Context.
+    String ksFilename = System.getProperty("keystore.file",
+        "connector_manager.keystore");
+    EncryptedPropertyPlaceholderConfigurer.setKeyStorePath(
+        new File("WEB-INF/" + ksFilename).getAbsolutePath());
+
+    // Setup all the pathnames.
+    Context context = Context.getInstance();
+    context.setStandaloneContext("WEB-INF/applicationContext.xml",
+        new File("WEB-INF").getAbsolutePath());
+
+    // At this point the beans have been created, however, the
+    // SpringInstantiator attached to the ProductionManager has not been
+    // initialized.  Need to initialize before using the Manager.
+    context.setFeeding(false);
+    context.start();
+
+    try {
+      Manager manager = context.getManager();
+
+      if (args.length == 2 && args[0].equals("export")) {
+        writeToFile(args[1], getConnectors(manager));
+      } else if (args.length == 2 && args[0].equals("import")) {
+        setConnectors(manager, readFromFile(args[1]), false);
+      } else if (args.length == 2 && args[0].equals("import-no-remove")) {
+        setConnectors(manager, readFromFile(args[1]), true);
+      } else {
+        System.err.println(
+            "usage: ImportExport (export|import|import-no-remove) <filename>");
+      }
+    } finally {
+      context.shutdown(true);
+    }
   }
 }

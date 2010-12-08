@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.
+// Copyright 2006-2009 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,35 +15,51 @@
 package com.google.enterprise.connector.scheduler;
 
 import com.google.enterprise.connector.common.I18NUtil;
-import com.google.enterprise.connector.manager.Context;
-import com.google.enterprise.connector.instantiator.Configuration;
 import com.google.enterprise.connector.instantiator.Instantiator;
 import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.instantiator.MockInstantiator;
 import com.google.enterprise.connector.instantiator.SpringInstantiator;
 import com.google.enterprise.connector.instantiator.ThreadPool;
+import com.google.enterprise.connector.instantiator.TypeMap;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
+import com.google.enterprise.connector.pusher.MockPusher;
+import com.google.enterprise.connector.test.ConnectorTestUtils;
 import com.google.enterprise.connector.test.JsonObjectAsMap;
-import com.google.enterprise.connector.util.SystemClock;
 
 import junit.framework.TestCase;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Tests the Scheduler.
  */
 public class TraversalSchedulerTest extends TestCase {
 
-  private static final String APPLICATION_CONTEXT =
-      "testdata/contextTests/TestContext.xml";
+  private static final String TEST_DIR_NAME = "testdata/tmp/SchedulerTests";
+  private static final String TEST_CONFIG_FILE =
+    "classpath*:config/connectorType.xml";
+  private File baseDirectory;
+
+  @Override
+  protected void setUp() throws Exception {
+    // Make sure that the test directory does not exist
+    baseDirectory = new File(TEST_DIR_NAME);
+    assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
+    // Then recreate it empty
+    assertTrue(baseDirectory.mkdirs());
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
+  }
 
   private TraversalScheduler runWithSchedules(List<Schedule> schedules,
       Instantiator instantiator, boolean shutdown) {
@@ -79,8 +95,9 @@ public class TraversalSchedulerTest extends TestCase {
       Instantiator instantiator) {
     for (Schedule schedule : schedules) {
       String connectorName = schedule.getConnectorName();
+      String connectorSchedule = schedule.toString();
       try {
-        instantiator.setConnectorSchedule(connectorName, schedule);
+        instantiator.setConnectorSchedule(connectorName, connectorSchedule);
       } catch (ConnectorNotFoundException e) {
         fail("Connector " + connectorName + " Not Found: " + e.toString());
       }
@@ -88,20 +105,18 @@ public class TraversalSchedulerTest extends TestCase {
   }
 
   private Instantiator createMockInstantiator() {
-    ThreadPool threadPool = new ThreadPool(5,
-        new SystemClock() /* TODO: use mock clock? */);
+    ThreadPool threadPool = new ThreadPool(5);
     MockInstantiator instantiator = new MockInstantiator(threadPool);
     instantiator.setupTestTraversers();
     return instantiator;
   }
 
   private Instantiator createRealInstantiator() {
-    Context.refresh();
-    Context context = Context.getInstance();
-    context.setStandaloneContext(APPLICATION_CONTEXT,
-        Context.DEFAULT_JUNIT_COMMON_DIR_PATH);
-    SpringInstantiator si = (SpringInstantiator) context.getRequiredBean(
-        "Instantiator", SpringInstantiator.class);
+    SpringInstantiator si = new SpringInstantiator();
+    si.setPusherFactory(new MockPusher());
+    si.setLoadManagerFactory(new MockLoadManagerFactory());
+    si.setTypeMap(new TypeMap(TEST_CONFIG_FILE, TEST_DIR_NAME));
+    si.setThreadPool(new ThreadPool(5));
     si.init();
 
     // Instantiate a couple of connectors.
@@ -118,10 +133,8 @@ public class TraversalSchedulerTest extends TestCase {
   private void addConnector(Instantiator instantiator,
       String name, String typeName, String configString) {
     try {
-      Map<String, String> configMap =
-          new JsonObjectAsMap(new JSONObject(configString));
-      Configuration config = new Configuration(typeName, configMap, null);
-      instantiator.setConnectorConfiguration(name, config,
+      instantiator.setConnectorConfig(name, typeName,
+          new JsonObjectAsMap(new JSONObject(configString)),
           I18NUtil.getLocaleFromStandardLocaleString("en"), false);
     } catch (ConnectorExistsException cee) {
       fail(cee.toString());

@@ -1,4 +1,4 @@
-// Copyright 2009 Google Inc.
+// Copyright (C) 2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,13 +14,12 @@
 
 package com.google.enterprise.connector.instantiator;
 
-import com.google.enterprise.connector.manager.Context;
+import com.google.enterprise.connector.common.I18NUtil;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.pusher.Pusher;
 import com.google.enterprise.connector.pusher.PusherFactory;
 import com.google.enterprise.connector.scheduler.LoadManager;
 import com.google.enterprise.connector.scheduler.LoadManagerFactory;
-import com.google.enterprise.connector.scheduler.Schedule;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.SimpleDocument;
@@ -30,60 +29,74 @@ import com.google.enterprise.connector.test.ConnectorTestUtils;
 import com.google.enterprise.connector.traversal.BatchResult;
 import com.google.enterprise.connector.traversal.BatchSize;
 import com.google.enterprise.connector.traversal.TraversalDelayPolicy;
-import com.google.enterprise.connector.util.SystemClock;
-import com.google.enterprise.connector.util.database.DocumentStore;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
 
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+
 import java.io.File;
-import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
 
 /**
  * Tests batch support in {@link ConnectorCoordinatorImpl}.
  */
 public class ConnectorCoordinatorBatchTest extends TestCase {
-  private static final Locale locale = Locale.ENGLISH;
-
+  private static final Logger LOGGER =
+      Logger.getLogger(ConnectorCoordinatorBatchTest.class.getName());
+  private static final String EN = "en";
+  private static final int TRAVERSAL_TIME_LIMIT_SECS = 20;
   private static final int SHORT_TRAVERSAL_TIME_LIMIT_SECS = 1;
 
   ConnectorCoordinatorImpl coordinator;
-  RecordingPusher recordingPusher;
-  RecordingLoadManager recordingLoadManager;
   TypeInfo typeInfo;
+  RecordingPusher recordingPusher;
+  MockLoadManager recordingLoadManager;
+  File connectorDir;
+  Locale locale;
 
-  private static final String APPLICATION_CONTEXT =
-      "testdata/contextTests/ConnectorCoordinatorBatchTest.xml";
+  private static final String CONNECTOR_TYPE_RESOURCE_NAME =
+      "testdata/connectorCoordinatorBatchTest/config/connectorType.xml";
 
   private static final String TEST_DIR_NAME =
       "testdata/tmp/ConnectorCoordinatorBatchTests";
-  private final File baseDirectory  = new File(TEST_DIR_NAME);
-
 
   @Override
   protected void setUp() throws Exception {
-    assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
-    // Then recreate it empty.
-    assertTrue(baseDirectory.mkdirs());
-
-    Context.refresh();
-    Context context = Context.getInstance();
-    context.setStandaloneContext(APPLICATION_CONTEXT,
-        Context.DEFAULT_JUNIT_COMMON_DIR_PATH);
-    SpringInstantiator si = (SpringInstantiator) context.getRequiredBean(
-        "Instantiator", SpringInstantiator.class);
-    si.init();
-
-    typeInfo = getTypeMap().getTypeInfo("TestConnectorA");
-    Assert.assertNotNull(typeInfo);
-
     SyncingConnector.reset();
+    File baseDirectory = new File(TEST_DIR_NAME);
+    if (!baseDirectory.exists()) {
+      assertTrue(baseDirectory.mkdirs());
+    }
+    connectorDir = File.createTempFile("zzCm", "_cmType", baseDirectory);
+    connectorDir.delete();
+    assertTrue(connectorDir.mkdirs());
+    locale = I18NUtil.getLocaleFromStandardLocaleString(EN);
+
+    Resource r = new FileSystemResource(CONNECTOR_TYPE_RESOURCE_NAME);
+    TypeInfo ti = TypeInfo.fromSpringResourceAndThrow(r);
+    Assert.assertNotNull(ti);
+
+    File connectorTypeDir =
+        new File(connectorDir, ti.getConnectorTypeName());
+
+    if (!ConnectorTestUtils.deleteAllFiles(connectorTypeDir) ||
+        !connectorTypeDir.mkdirs()) {
+      throw new Exception("Failed to create type dir " + connectorTypeDir);
+    }
+
+    LOGGER.info("connector type dir = " + connectorTypeDir);
+
+    ti.setConnectorTypeDir(connectorTypeDir);
+    typeInfo = ti;
   }
 
   @Override
@@ -94,64 +107,37 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
       }
     } finally {
       coordinator = null;
-      assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
+      recordingPusher = null;
+      if (connectorDir != null) {
+        assertTrue(ConnectorTestUtils.deleteAllFiles(connectorDir));
+      }
     }
   }
 
-  /** Retrieve the TypeMap from the Spring Context. */
-  private TypeMap getTypeMap() {
-    return (TypeMap) Context.getInstance().getRequiredBean(
-        "TypeMap", TypeMap.class);
-  }
-
-  /** Retrieve the ConnectorCoordinatorMap from the Spring Context. */
-  private ConnectorCoordinatorMap getCoordinatorMap() {
-    return (ConnectorCoordinatorMap) Context.getInstance().getRequiredBean(
-        "ConnectorCoordinatorMap", ConnectorCoordinatorMap.class);
-  }
-
-  /** Retrieve the ConnectorCoordinatorFactory from the Spring Context. */
-  private ConnectorCoordinatorImplFactory getCoordinatorFactory() {
-    return (ConnectorCoordinatorImplFactory) Context.getInstance().getRequiredBean(
-        "ConnectorCoordinatorFactory", ConnectorCoordinatorImplFactory.class);
-  }
-
-  /** Retrieve the PusherFactory from the Spring Context. */
-  private RecordingPusherFactory getPusherFactory() {
-    return (RecordingPusherFactory) Context.getInstance().getRequiredBean(
-        "PusherFactory", RecordingPusherFactory.class);
-  }
-
-  /** Retrieve the LoadManagerFactory from the Spring Context. */
-  private RecordingLoadManagerFactory getLoadManagerFactory() {
-    return (RecordingLoadManagerFactory) Context.getInstance().getRequiredBean(
-        "LoadManagerFactory", RecordingLoadManagerFactory.class);
-  }
-
-  private void createPusherAndCoordinator() throws Exception {
-    coordinator = (ConnectorCoordinatorImpl) getCoordinatorMap().getOrAdd("c1");
-    recordingPusher = (RecordingPusher) getPusherFactory().newPusher("c1");
-    recordingPusher.reset();
-    recordingLoadManager =
-        (RecordingLoadManager) getLoadManagerFactory().newLoadManager("c1");
-    recordingLoadManager.reset();
-    Configuration config = new Configuration(
-        typeInfo.getConnectorTypeName(), new HashMap<String, String>(), null);
-    coordinator.setConnectorConfiguration(typeInfo, config, locale, false);
-    coordinator.setConnectorSchedule(new Schedule("c1:1000:0:0-0"));
+  private void createPusherAndCoordinator(int batchTimeout) throws Exception {
+    ThreadPool threadPool = new ThreadPool(batchTimeout);
+    recordingPusher = new RecordingPusher("c1");
+    recordingLoadManager = new MockLoadManager();
+    coordinator = new ConnectorCoordinatorImpl("c1",
+        new MockPusherFactory(recordingPusher),
+        new MockLoadManagerFactory(recordingLoadManager), threadPool);
+    Map<String, String> config = new HashMap<String, String>();
+    coordinator.setConnectorConfig(typeInfo, config, locale, false);
+    coordinator.setConnectorSchedule("c1:1000:0:0-0");
   }
 
   public void testCreateRunRemoveLoop() throws Exception {
     for (int ix = 0; ix < 100; ix++) {
-      createPusherAndCoordinator();
+      createPusherAndCoordinator(TRAVERSAL_TIME_LIMIT_SECS);
       runBatch(1 + ix, 1 + ix, 0);
       coordinator.removeConnector();
       coordinator = null;
+      recordingPusher = null;
     }
   }
 
   public void testStartThenResumeTraversal() throws Exception {
-    createPusherAndCoordinator();
+    createPusherAndCoordinator(TRAVERSAL_TIME_LIMIT_SECS);
     runBatch(1, 1, 0);
 
     // Run a second batch for the same connector coordinator to confirm
@@ -182,14 +168,13 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
     assertEquals(tracker.toString(), expectResumeTraversalCount, tracker
         .getResumeTraversalCount());
     BatchResult batchResult = recordingLoadManager.getBatchResult();
-    assertNotNull(batchResult);
     assertEquals(tracker.toString(), 1, batchResult.getCountProcessed());
     assertEquals(tracker.toString(), TraversalDelayPolicy.IMMEDIATE,
         batchResult.getDelayPolicy());
   }
 
   public void testManyBatches() throws Exception {
-    createPusherAndCoordinator();
+    createPusherAndCoordinator(TRAVERSAL_TIME_LIMIT_SECS);
     for (int ix = 0; ix < 10; ix++) {
       runBatch(1, 1, ix);
     }
@@ -221,106 +206,25 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
   }
 
   public void testDisabledTraversal() throws Exception {
-    createPusherAndCoordinator();
+    createPusherAndCoordinator(TRAVERSAL_TIME_LIMIT_SECS);
     // Disable traversal schedule.  No batch should run.
-    coordinator.setConnectorSchedule(new Schedule("#c1:1000:0:0-0"));
+    coordinator.setConnectorSchedule("#c1:1000:0:0-0");
     assertFalse(coordinator.startBatch());
     assertNull(recordingLoadManager.getBatchResult());
   }
 
-  public void testLegacyDisabledTraversal() throws Exception {
-    createPusherAndCoordinator();
-    // Legacy disabled traversal schedule was interval of 1-1.
-    // No batch should run.
-    coordinator.setConnectorSchedule(new Schedule("c1:1000:0:1-1"));
-    assertFalse(coordinator.startBatch());
-    assertNull(recordingLoadManager.getBatchResult());
-  }
-
-  public void testNoTraversalIntervals() throws Exception {
-    createPusherAndCoordinator();
+  public void testScheduledTraversal() throws Exception {
+    createPusherAndCoordinator(TRAVERSAL_TIME_LIMIT_SECS);
     // With no traversal intervals, no batch should run.
-    coordinator.setConnectorSchedule(new Schedule("c1:1000:0:"));
+    coordinator.setConnectorSchedule("c1:1000:0:");
     assertFalse(coordinator.startBatch());
     assertNull(recordingLoadManager.getBatchResult());
-  }
-
-  public void testOutsideTraversalIntervals() throws Exception {
-    createPusherAndCoordinator();
-    // If current time is outside traversal intervals, no batch should run.
-    Calendar now = Calendar.getInstance();
-    int hour = now.get(Calendar.HOUR_OF_DAY);
-    String intervals;
-    if (hour < 2 ) {
-      intervals = (hour + 2) + "-24";
-    } else if (hour >= 22) {
-      intervals = "0-" + hour;
-    } else {
-      intervals = "0-" + hour + ":" + (hour + 2) + "-24";
-    }
-    Schedule schedule = new Schedule("c1:1000:0:" + intervals);
-    coordinator.setConnectorSchedule(schedule);
-    assertFalse(coordinator.startBatch());
-    assertNull(recordingLoadManager.getBatchResult());
-  }
-
-  public void testOutsideWrappedTraversalIntervals() throws Exception {
-    createPusherAndCoordinator();
-    // If current time is outside a traversal interval that wraps around
-    // midnight, no batch should run.
-    Calendar now = Calendar.getInstance();
-    int hour = now.get(Calendar.HOUR_OF_DAY);
-
-    // Can't test this if we are too close to midnight.
-    // TODO: Fix this when we have a Mockable Clock.
-    if (hour > 0 && hour < 22) {
-      String interval = (hour + 2) + "-" + hour;
-      Schedule schedule = new Schedule("c1:1000:0:" + interval);
-      coordinator.setConnectorSchedule(schedule);
-      assertFalse(coordinator.startBatch());
-      assertNull(recordingLoadManager.getBatchResult());
-    }
-  }
-
-  public void testTraversalIntervals() throws Exception {
-    createPusherAndCoordinator();
-    // If current time is inside traversal intervals, a batch should run.
-    Calendar now = Calendar.getInstance();
-    int hour = now.get(Calendar.HOUR_OF_DAY);
-    String intervals;
-    if (hour <= 2 ) {
-      intervals = hour + "-" + (hour + 2) + ":12-23";
-    } else if (hour >= 22) {
-      intervals = "0-20:" + hour + "-24";
-    } else {
-      intervals = "0-" + (hour - 2) + ":" + hour + "-" + (hour + 2);
-    }
-    Schedule schedule = new Schedule("c1:1000:0:" + intervals);
-    coordinator.setConnectorSchedule(schedule);
-    assertTrue(coordinator.startBatch());
-  }
-
-  public void testWrappedTraversalIntervals() throws Exception {
-    createPusherAndCoordinator();
-    // If current time is inside a traversal interval that wraps
-    // around midnight, a batch should run. Regression test for Issue 217.
-    Calendar now = Calendar.getInstance();
-    int hour = now.get(Calendar.HOUR_OF_DAY);
-    String interval;
-    if (hour >= 20) {
-      interval = "20-1";
-    } else {
-      interval = (hour + 3) + "-" + (hour + 1);
-    }
-    Schedule schedule = new Schedule("c1:1000:0:" + interval);
-    coordinator.setConnectorSchedule(schedule);
-    assertTrue(coordinator.startBatch());
   }
 
   public void testTraversalDelayPolicy1() throws Exception {
-    createPusherAndCoordinator();
+    createPusherAndCoordinator(TRAVERSAL_TIME_LIMIT_SECS);
     // Force a POLLING wait.
-    coordinator.setConnectorSchedule(new Schedule("c1:1000:250:0-0"));
+    coordinator.setConnectorSchedule("c1:1000:250:0-0");
     coordinator.delayTraversal(TraversalDelayPolicy.POLL);
     assertFalse(coordinator.startBatch());
     assertNull(recordingLoadManager.getBatchResult());
@@ -333,9 +237,9 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
   }
 
   public void testTraversalDelayPolicy2() throws Exception {
-    createPusherAndCoordinator();
+    createPusherAndCoordinator(TRAVERSAL_TIME_LIMIT_SECS);
     // Force a POLLING wait.
-    coordinator.setConnectorSchedule(new Schedule("c1:1000:500:0-0"));
+    coordinator.setConnectorSchedule("c1:1000:500:0-0");
     coordinator.delayTraversal(TraversalDelayPolicy.POLL);
     assertFalse(coordinator.startBatch());
     assertNull(recordingLoadManager.getBatchResult());
@@ -345,7 +249,7 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
   }
 
   public void testTraversalDelayPolicy3() throws Exception {
-    createPusherAndCoordinator();
+    createPusherAndCoordinator(TRAVERSAL_TIME_LIMIT_SECS);
     // Force a ERROR wait.
     coordinator.delayTraversal(TraversalDelayPolicy.ERROR);
     assertFalse(coordinator.startBatch());
@@ -356,7 +260,7 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
   }
 
   public void testCancelBatch() throws Exception {
-    createPusherAndCoordinator();
+    createPusherAndCoordinator(TRAVERSAL_TIME_LIMIT_SECS);
     coordinator.startBatch();
     SyncingConnector.Tracker tracker =
         SyncingConnector.getTracker();
@@ -374,16 +278,16 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
   }
 
   public void testSetConnectorConfig() throws Exception {
-    createPusherAndCoordinator();
+    createPusherAndCoordinator(TRAVERSAL_TIME_LIMIT_SECS);
     coordinator.startBatch();
     SyncingConnector.Tracker tracker =
         SyncingConnector.getTracker();
     tracker.blockUntilTraversing();
     assertEquals(1, tracker.getStartTraversalCount());
 
-    Configuration config = coordinator.getConnectorConfiguration();
-    config.getMap().put("hi", "mom");
-    coordinator.setConnectorConfiguration(typeInfo, config, locale, true);
+    Map<String, String> configMap = coordinator.getConnectorConfig();
+    configMap.put("hi", "mom");
+    coordinator.setConnectorConfig(typeInfo, configMap, locale, true);
     tracker.blockUntilTraversingInterrupted();
     assertEquals(1, tracker.getLoginCount());
     assertEquals(1, tracker.getInterruptedCount());
@@ -395,11 +299,7 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
   }
 
   public void testTimeoutBatch() throws Exception {
-    // Override the default ThreadPool timeout with a much shorter timeout.
-    getCoordinatorFactory().setThreadPool(
-        new ThreadPool(SHORT_TRAVERSAL_TIME_LIMIT_SECS,
-        new SystemClock() /* TODO: Use a mock clock */));
-    createPusherAndCoordinator();
+    createPusherAndCoordinator(SHORT_TRAVERSAL_TIME_LIMIT_SECS);
     coordinator.startBatch();
     SyncingConnector.Tracker tracker =
         SyncingConnector.getTracker();
@@ -427,6 +327,10 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
       return document;
     }
 
+    public String getConnectorName() {
+      return connectorName;
+    }
+
     @Override
     public String toString() {
       return "PushedDocument connectorName = " + connectorName + " document = "
@@ -434,18 +338,14 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
     }
   }
 
-  public static class RecordingPusherFactory implements PusherFactory {
-    private RecordingPusher pusher;
-    private String connectorName;
+  private static class MockPusherFactory implements PusherFactory {
+    private final Pusher pusher;
 
-    /* @Override */
-    public Pusher newPusher(String connectorName) {
-      if (pusher == null) {
-        pusher = new RecordingPusher(connectorName);
-        this.connectorName = connectorName;
-      } else {
-        assertEquals(this.connectorName, connectorName);
-      }
+    MockPusherFactory(Pusher pusher) {
+      this.pusher = pusher;
+    }
+
+    public Pusher newPusher(String ignored) {
       return pusher;
     }
   }
@@ -459,27 +359,24 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
       this.connectorName = connectorName;
     }
 
-    /* @Override */
-    public boolean take(Document document, DocumentStore ignored) {
+    public boolean take(Document document) {
       pushedDocuments.add(new PushedDocument(document, connectorName));
       return true;
     }
 
-    /* @Override */
     public void flush() {
     }
 
-    /* @Override */
     public void cancel() {
+    }
+
+    int getCountPending() {
+      return pushedDocuments.size();
     }
 
     PushedDocument poll() throws InterruptedException {
       return pushedDocuments.poll(
           SyncingConnector.POLL_TIME_LIMIT_MILLIS, TimeUnit.MILLISECONDS);
-    }
-
-    void reset() {
-      pushedDocuments.clear();
     }
 
     @Override
@@ -488,26 +385,25 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
     }
   }
 
-  public static class RecordingLoadManagerFactory implements LoadManagerFactory {
-    private RecordingLoadManager loadManager;
+  private static class MockLoadManagerFactory implements LoadManagerFactory {
+    private final LoadManager loadManager;
 
-    /* @Override */
+    MockLoadManagerFactory(LoadManager loadManager) {
+      this.loadManager = loadManager;
+    }
+
     public LoadManager newLoadManager(String ignored) {
-      if (loadManager == null) {
-        loadManager = new RecordingLoadManager();
-      }
       return loadManager;
     }
   }
 
-  private static class RecordingLoadManager implements LoadManager {
+  private static class MockLoadManager implements LoadManager {
     int load = 200;
     int batchSize = 3;
 
     private final BlockingQueue<BatchResult> resultQueue =
         new ArrayBlockingQueue<BatchResult>(10);
 
-    /* @Override */
     public void recordResult(BatchResult batchResult) {
       resultQueue.add(batchResult);
     }
@@ -517,31 +413,22 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
           TimeUnit.MILLISECONDS);
     }
 
-    void reset() {
-      resultQueue.clear();
-    }
-
-    /* @Override */
     public void setLoad(int load) {
       this.load = load;
     }
 
-    /* @Override */
     public void setPeriod(int period) {
     }
 
-    /* @Override */
     public void setBatchSize(int batchSize) {
       this.batchSize = batchSize;
     }
 
-    /* @Override */
     public BatchSize determineBatchSize() {
       int size = Math.min(load, batchSize);
       return new BatchSize(size, size);
     }
 
-    /* @Override */
     public boolean shouldDelay() {
       return false;
     }

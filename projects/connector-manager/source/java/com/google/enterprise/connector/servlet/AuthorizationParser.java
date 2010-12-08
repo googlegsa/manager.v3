@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.
+// Copyright 2006-2009 Google Inc. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@ package com.google.enterprise.connector.servlet;
 
 import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.SimpleAuthenticationIdentity;
-import com.google.enterprise.connector.util.XmlParseUtil;
 
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -85,7 +84,7 @@ public class AuthorizationParser {
    * item.
    */
   private void parse() {
-    Element root = XmlParseUtil.parseAndGetRootElement(xmlBody,
+    Element root = ServletUtil.parseAndGetRootElement(xmlBody,
         ServletUtil.XMLTAG_AUTHZ_QUERY);
 
     if (root == null) {
@@ -127,14 +126,14 @@ public class AuthorizationParser {
    * to the ConnectorQueries.
    */
   private AuthenticationIdentity parseIdentityGroup(Element queryItem) {
-    String username = XmlParseUtil.getFirstElementByTagName(queryItem,
+    String username = ServletUtil.getFirstElementByTagName(queryItem,
         ServletUtil.XMLTAG_IDENTITY);
     String domain =
-        XmlParseUtil.getFirstAttribute(queryItem, ServletUtil.XMLTAG_IDENTITY,
-        ServletUtil.XMLTAG_DOMAIN_ATTRIBUTE);
+        ServletUtil.getFirstAttribute(queryItem, ServletUtil.XMLTAG_IDENTITY,
+            ServletUtil.XMLTAG_DOMAIN_ATTRIBUTE);
     String password =
-        XmlParseUtil.getFirstAttribute(queryItem, ServletUtil.XMLTAG_IDENTITY,
-        ServletUtil.XMLTAG_PASSWORD_ATTRIBUTE);
+        ServletUtil.getFirstAttribute(queryItem, ServletUtil.XMLTAG_IDENTITY,
+            ServletUtil.XMLTAG_PASSWORD_ATTRIBUTE);
 
     AuthenticationIdentity identity = findIdentity(username, password, domain);
     ConnectorQueries urlsByConnector = getConnectorQueriesForIdentity(identity);
