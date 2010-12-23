@@ -21,8 +21,8 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 /**
- * An implementation of ChecksumGenerator using algorithms from
- * java.security.MessageDigest.
+ * An implementation of ChecksumGenerator that return hexadecimal-encoded
+ * checksums using algorithms from java.security.MessageDigest.
  *
  * @see java.security.MessageDigest
  */
@@ -60,20 +60,20 @@ public class BasicChecksumGenerator implements ChecksumGenerator {
   }
 
   /**
+   * Returns the message digest checksum as an unecoded array of bytes.
+   *
    * @param in input stream to create a checksum for
    * @return a checksum for the bytes of {@code in}
    * @throws IOException
    */
-  /* @Override */
-  public String getChecksum(InputStream in) throws IOException {
+  byte[] getDigest(InputStream in) throws IOException {
     MessageDigest digest;
     try {
       digest = MessageDigest.getInstance(algorithm);
     } catch (NoSuchAlgorithmException e) {
-      throw new RuntimeException("failed to get a message digest for "
+      throw new RuntimeException("Failed to get a message digest for "
                                  + algorithm);
     }
-
     try {
       byte[] buf = new byte[BUF_SIZE];
       int count = in.read(buf);
@@ -81,18 +81,37 @@ public class BasicChecksumGenerator implements ChecksumGenerator {
         digest.update(buf, 0, count);
         count = in.read(buf);
       }
-      byte[] digestBytes = digest.digest();
-
-      StringBuilder result = new StringBuilder();
-      for (int k = 0; k < digestBytes.length; ++k) {
-        result.append(byteToHex[digestBytes[k] & 0xFF]);
-      }
-      return result.toString();
+      return digest.digest();
     } finally {
       in.close();
     }
   }
 
+  /**
+   * Returns a hexadecimal string representation of the message digest
+   * checksum of the input stream.
+   *
+   * @param in input stream to create a checksum for
+   * @return a checksum for the bytes of {@code in}
+   * @throws IOException
+   */
+  /* @Override */
+  public String getChecksum(InputStream in) throws IOException {
+    byte[] digestBytes = getDigest(in);
+    StringBuilder result = new StringBuilder();
+    for (int k = 0; k < digestBytes.length; ++k) {
+      result.append(byteToHex[digestBytes[k] & 0xFF]);
+    }
+    return result.toString();
+  }
+
+  /**
+   * Returns a hexadecimal string representation of the message digest
+   * checksum of the input string.
+   *
+   * @param input a String to create a checksum for
+   * @return a checksum for the bytes of {@code input}
+   */
   /* @Override */
   public String getChecksum(String input) {
     try {
