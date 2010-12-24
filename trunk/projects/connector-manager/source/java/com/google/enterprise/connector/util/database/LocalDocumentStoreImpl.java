@@ -24,10 +24,10 @@ import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.LocalDocumentStore;
 import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.RepositoryException;
-import com.google.enterprise.connector.spi.SimpleDocument;
 import com.google.enterprise.connector.spi.SimpleProperty;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.Value;
+import com.google.enterprise.connector.util.BasicChecksumGenerator;
 import com.google.enterprise.connector.util.Clock;
 import com.google.enterprise.connector.util.SystemClock;
 
@@ -44,7 +44,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
+import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -69,16 +69,20 @@ public class LocalDocumentStoreImpl implements DocumentStore {
 
   private final JdbcDatabase database;
   private final String connectorName;
+  private final String docidColumn =
+      SpiConstants.PERSISTABLE_ATTRIBUTES.get(SpiConstants.PROPNAME_DOCID);
 
   // Current DocumentBatch under construction.
   private DocumentBatch batch = null;
 
+  // Table name for this Connector instance.
+  private String tableName;
+
   // Cached SQL Resources
-  private String singleDocumentQuery; // Get Document by ID.
-  private String manyDocumentsQuery;  // Returns all Documents >= ID.
+  private String singleDocumentQuery; // Get Document by DocId.
+  private String manyDocumentsQuery;  // Returns all Documents > DocId.
   private String batchDocumentsQuery; // Batch insert/update Query.
   private String deleteStatement;     // Delete Connector statement.
-  private String tableName;
 
   /**
    * Constructs a {@link LocalDocumentStore} instance for the named
@@ -113,16 +117,24 @@ public class LocalDocumentStoreImpl implements DocumentStore {
     // Locate our SQL DatabaseResourceBundle.
     DatabaseResourceBundleManager mgr = new DatabaseResourceBundleManager();
     DatabaseInfo dbInfo = database.getDatabaseInfo();
-    resourceBundle = mgr.getResourceBundle(RESOURCE_BUNDLE_NAME, dbInfo, classLoader);
+    resourceBundle =
+        mgr.getResourceBundle(RESOURCE_BUNDLE_NAME, dbInfo, classLoader);
     if (resourceBundle == null) {
       throw new RuntimeException("Failed to load SQL ResourceBundle "
                                  + RESOURCE_BUNDLE_NAME);
     }
 
     // Verify that the connector instance table exists.
-    tableName = getResource("table.name");
-    if (!database.verifyTableExists(tableName,
-         resourceBundle.getStringArray("table.create.ddl"))) {
+    tableName = makeTableName(getResource("table.name.prefix"), connectorName,
+                              getMaxTableNameLength());
+    String[] ddl = resourceBundle.getStringArray("table.create.ddl");
+    if (ddl != null) {
+      Object[] params = { tableName };
+      for (int i = 0; i < ddl.length; i++) {
+        ddl[i] = MessageFormat.format(ddl[i], params);
+      }
+    }
+    if (!database.verifyTableExists(tableName, ddl)) {
       throw new RuntimeException("Document Store Table does not exist "
                                  + tableName);
     }
@@ -146,6 +158,56 @@ public class LocalDocumentStoreImpl implements DocumentStore {
   }
 
   /**
+   * Returns the maximum table name length for this database vendor.
+   */
+  private int getMaxTableNameLength() {
+    int maxTableNameLength;
+    try {
+      Connection connection = database.getConnectionPool().getConnection();
+      try {
+        DatabaseMetaData metaData = connection.getMetaData();
+        maxTableNameLength = metaData.getMaxTableNameLength();
+        if (maxTableNameLength == 0) {
+          maxTableNameLength = 255;
+        }
+      } finally {
+        database.getConnectionPool().releaseConnection(connection);
+      }
+    } catch (SQLException e) {
+      LOGGER.warning("Failed to fetch database maximum table name length.");
+      maxTableNameLength = 30;  // Assume the worst. Oracle is 30 chars.
+    }
+    return maxTableNameLength;
+  }
+
+  /**
+   * Constructs a database table name based up the configured table name prefix
+   * and the Connector name.  All attempts are made to make this a straight
+   * concatenation.  However if the connector name is too long or contains
+   * invalid SQL identifier characters, then we hash it.
+   *
+   * @param prefix the generated table name will begin with this prefix
+   * @param connectorName the connector name
+   * @param maxLength the maximum length of the generated table name
+   */
+  @VisibleForTesting
+  static String makeTableName(String prefix, String connectorName, int maxLength) {
+    prefix = Strings.nullToEmpty(prefix);
+    String suffix;
+    if ((connectorName.matches("[a-z0-9]+[a-z0-9_]*")) &&
+        ((connectorName.length() + prefix.length()) <= maxLength)) {
+      suffix = connectorName;
+    } else {
+      BasicChecksumGenerator sumGen = new BasicChecksumGenerator("MD5");
+      suffix = sumGen.getChecksum(connectorName);
+      if (prefix.length() + suffix.length() > maxLength) {
+        suffix = suffix.substring(0, maxLength - prefix.length());
+      }
+    }
+    return (prefix + suffix).toLowerCase();
+  }
+
+  /**
    * Returns the docid of the supplied document, or empty string if
    * it is not available.
    */
@@ -160,23 +222,26 @@ public class LocalDocumentStoreImpl implements DocumentStore {
   }
 
   /**
-   * Deletes all rows in the Document Table for this Connector.
+   * Deletes the Document Table for this Connector.
    */
   /* @Override */
-  public void reset() {
+  public synchronized void delete() {
     init();
     Connection connection = null;
-    PreparedStatement statement = null;
+    Statement statement = null;
     try {
+      Object[] params = { tableName };
+      String query = MessageFormat.format(deleteStatement, params);
       connection = database.getConnectionPool().getConnection();
-      statement = connection.prepareStatement(deleteStatement);
-      statement.setString(1, connectorName);
-      int numDeleted = statement.executeUpdate();
-      LOGGER.fine("Deleted " + numDeleted + " records for connector "
-                  + connectorName);
+      statement = connection.createStatement();
+      statement.executeUpdate(query);
+      LOGGER.fine("Deleted Document Store Table " + tableName
+                  + " for connector " + connectorName);
+      // Force re-initialization.
+      resourceBundle = null;
     } catch (SQLException e) {
-      LOGGER.log(Level.WARNING, "Failed to delete documents for connector "
-                 + connectorName, e);
+      LOGGER.log(Level.WARNING, "Failed to delete Document Store Table "
+                 + tableName + " for connector " + connectorName, e);
     } finally {
       try {
         if (statement != null) {
@@ -222,13 +287,14 @@ public class LocalDocumentStoreImpl implements DocumentStore {
                                 "DocId must not be null or empty.");
     init();
     Connection connection = null;
-    PreparedStatement statement = null;
+    Statement statement = null;
     try {
       connection = database.getConnectionPool().getConnection();
-      statement = connection.prepareStatement(singleDocumentQuery);
-      statement.setString(1, connectorName);
-      statement.setString(2, docid);
-      ResultSet resultSet = statement.executeQuery();
+      statement = connection.createStatement(
+            ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+      Object[] params = { tableName, quoteValue(docid) };
+      String query = MessageFormat.format(singleDocumentQuery, params);
+      ResultSet resultSet = statement.executeQuery(query);
       if (resultSet.next()) {
         return makeDocument(resultSet);
       }
@@ -293,7 +359,8 @@ public class LocalDocumentStoreImpl implements DocumentStore {
    * the next batch.
    */
   private class DocumentIterator implements Iterator<Document> {
-    private static final int BATCH_SIZE = 20000;
+    // H2 will hold 10K ResultSet rows in memory before spilling to disk.
+    private static final int BATCH_SIZE = 10000;
     private String lastDocid;
     private Document[] documents;
     private int currentDoc;
@@ -334,30 +401,45 @@ public class LocalDocumentStoreImpl implements DocumentStore {
       throw new UnsupportedOperationException();
     }
 
-    /** Gets the next batch of Documents from the Database. */
+    /**
+     * Gets the next batch of Documents from the Database.
+     */
     private void getBatch() {
       Connection connection = null;
-      PreparedStatement statement = null;
+      Statement statement = null;
       currentDoc = 0;
       numDocs = 0;
 
       try {
         connection = database.getConnectionPool().getConnection();
-        statement = connection.prepareStatement(manyDocumentsQuery,
-            ResultSet.TYPE_FORWARD_ONLY,ResultSet.CONCUR_READ_ONLY);
+        statement = connection.createStatement(
+            ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
         statement.setQueryTimeout(15 * 60); // TODO: make this configurable.
-        statement.setMaxRows(documents.length);
-        statement.setString(1, connectorName);
-        statement.setString(2, lastDocid);
 
-        ResultSet resultSet = statement.executeQuery();
-        while (resultSet.next()) {
-          documents[numDocs++] = makeDocument(resultSet);
+        // SQL Server forces us to use java.text.MessageFormat rather than
+        // PreparedStatement because:
+        //  1) The argument to TOP ROWS cannot be parameterized
+        //     in all but the most recent versions of SQLServer.
+        //  2) The SQL Server query takes the parameters in the
+        //     reverse order as the rest of the database vendors, and
+        //     PreparedStatements do not allow positional parameters.
+        Object[] params = { tableName, quoteValue(lastDocid),
+                            Integer.toString(documents.length) };
+        String query = MessageFormat.format(manyDocumentsQuery, params);
+        ResultSet resultSet = statement.executeQuery(query);
+        // SQL Server tends to throw deadlock exceptions if we are
+        // reading and writing at high rates concurrently.  If so,
+        // simply end this batch prematurely and pick up where we
+        // left off on the next batch.
+        try {
+          while (resultSet.next()) {
+            documents[numDocs++] = makeDocument(resultSet);
+          }
+        } finally {
+          if (numDocs > 0) {
+            lastDocid = getDocId(documents[numDocs - 1]);
+          }
         }
-        if (numDocs > 0) {
-          lastDocid = getDocId(documents[numDocs -1]);
-        }
-
       } catch (SQLException e) {
         LOGGER.log(Level.WARNING, "Failed to retrieve documents: "
                    + " for connector " + connectorName, e);
@@ -379,30 +461,58 @@ public class LocalDocumentStoreImpl implements DocumentStore {
   }
 
   /**
+   * Quotes the supplied value using single qoutes.  MessageFormat
+   * considers embedded single-quotes special, and doesn't do
+   * substitutions within them.  Unfortunately, this is exactly
+   * where we want to use substitutions: in SQL queries like:
+   * {@code ... WHERE ( connector_name='{0}' ...}.
+   */
+  private String quoteValue(String value) {
+    return "'" + value.replace("'", "''") + "'";
+  }
+
+  /**
    * Constructs a {@link Document} based upon the data in the current row
    * of the {@link ResultSet}.
    *
    * @param resultSet a {@link ResultSet}
    * @return a {@link Document}
    */
-  private Document makeDocument(ResultSet resultSet) {
-    ImmutableMap.Builder<String, List<Value>> builder = ImmutableMap.builder();
+  private Document makeDocument(ResultSet resultSet)
+      throws SQLException {
+    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
     for (String propertyName : SpiConstants.PERSISTABLE_ATTRIBUTES.keySet()) {
-      String value = null;
-      try {
-        value = resultSet.getString(
-            SpiConstants.PERSISTABLE_ATTRIBUTES.get(propertyName));
-      } catch (SQLException e) {
-        LOGGER.log(Level.WARNING, "Failed to fetch value for "
-                   + SpiConstants.PERSISTABLE_ATTRIBUTES.get(propertyName)
-                   + " from ResultSet", e);
-      }
+      String value = resultSet.getString(
+          SpiConstants.PERSISTABLE_ATTRIBUTES.get(propertyName));
       if (value != null) {
-        builder.put(propertyName,
-            Collections.singletonList(Value.getStringValue(value)));
+        builder.put(propertyName, value);
       }
     }
-    return new SimpleDocument(builder.build());
+    return new StoredDocument(builder.build());
+  }
+
+  /** A Document implementation representing a Document in the DocumentStore. */
+  private class StoredDocument implements Document {
+    private final ImmutableMap<String, String> properties;
+
+    public StoredDocument(ImmutableMap<String, String> properties) {
+      this.properties = properties;
+    }
+
+    /* @Override */
+    public Set<String> getPropertyNames() {
+      return properties.keySet();
+    }
+
+    /* @Override */
+    public Property findProperty(String name) {
+      String value = properties.get(name);
+      if (value != null) {
+        return new SimpleProperty(Value.getStringValue(value));
+      } else {
+        return null;
+      }
+    }
   }
 
   /**
@@ -421,6 +531,9 @@ public class LocalDocumentStoreImpl implements DocumentStore {
     } catch (SQLException e) {
       LOGGER.log(Level.WARNING, "Failed to persist document "
                  + getDocId(document) + " for connector " + connectorName, e);
+    } catch (RepositoryException re) {
+      LOGGER.log(Level.WARNING, "Failed to persist document "
+                 + getDocId(document) + " for connector " + connectorName, re);
     }
   }
 
@@ -453,9 +566,7 @@ public class LocalDocumentStoreImpl implements DocumentStore {
   }
 
   /**
-   * Represents a batch of {@link Document} inserts into the documents table.
-   * This is backed by a JDBC batch insert and committed by a call to
-   * {@code flush()}.
+   * Represents a batch of {@link Document} to store to the documents table.
    */
   private class DocumentBatch {
     // Oracle supports a maximum of 1000 items in a list.
@@ -476,34 +587,22 @@ public class LocalDocumentStoreImpl implements DocumentStore {
      * Adds the supplied {@link Document} to this batch of documents
      * to insert into the documents table.
      */
-    synchronized void addDocument(Document document) throws SQLException {
+    synchronized void addDocument(Document document)
+        throws SQLException, RepositoryException {
       String docid = getDocId(document);
       Preconditions.checkState((docid.length() > 0), "DocID must not be null or empty");
 
       // Remember all the persistable attributes for this document.
       Map<String, String> properties = documents.get(docid);
       if (properties == null) {
-        properties = new HashMap<String, String>();
+        properties = Maps.newHashMap();
         documents.put(docid, properties);
       }
-      Set propNames;
-      try {
-        propNames = document.getPropertyNames();
-      } catch (RepositoryException re) {
-        LOGGER.log(Level.WARNING, "Failed to retrieve property names from "
-                   + "document " + docid, re);
-        return;
-      }
 
+      Set propNames = document.getPropertyNames();
       for (String propertyName : SpiConstants.PERSISTABLE_ATTRIBUTES.keySet()) {
         if (propNames.contains(propertyName)) {
-          String value = null;
-          try {
-            value = Value.getSingleValueString(document, propertyName);
-          } catch (RepositoryException e) {
-            LOGGER.log(Level.WARNING, "Failed to retrieve property " + propertyName
-                       + " from document " + docid, e);
-          }
+          String value = Value.getSingleValueString(document, propertyName);
           properties.put(propertyName, value);
         }
       }
@@ -515,35 +614,24 @@ public class LocalDocumentStoreImpl implements DocumentStore {
     }
 
     /**
-     * Quotes the supplied value using single qoutes.  MessageFormat
-     * considers embedded single-quotes special, and doesn't do
-     * substitutions within them.  Unfortunately, this is exactly
-     * where we want to use substitutions: in SQL queries like:
-     * {@code ... WHERE ( connector_name='{0}' ...}.
-     * <p>
-     * One solution is to add the quote characters to the value being
-     * substituted in (the purpose of this method).  Another solution would
-     * be to avoid MessageFormat, possibly trying PreparedStatement syntax.
-     */
-    private String quoteValue(String value) {
-      return "'" + value.replace("'", "''") + "'";
-    }
-
-    /**
-     * Writes out the collected Document data.
+     * Writes out the collected Document data.  If any document already exists
+     * in the Documents table, it is updated (newer values replace any existing
+     * values), otherwise it is inserted into the table.
      */
     private void writeDocuments() throws SQLException {
       if (documents.isEmpty()) {
         return;
       }
 
+      // This uses Message.format() rather than PreparedStatements, because
+      // Lists cannot be inserted as PreparedStatement substitution.
       StringBuilder builder = new StringBuilder();
       for (String docid : documents.keySet()) {
         builder.append(quoteValue(docid)).append(',');
       }
       builder.setLength(builder.length() - 1);
 
-      Object[] params = { quoteValue(connectorName), builder.toString() };
+      Object[] params = { tableName, builder.toString() };
       String query = MessageFormat.format(batchDocumentsQuery, params);
       Statement statement = connection.createStatement(
           ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
@@ -551,32 +639,31 @@ public class LocalDocumentStoreImpl implements DocumentStore {
         ResultSet resultSet = statement.executeQuery(query);
         while (resultSet.next()) {
           // Update existing document.
-          Map<String, String> properties = documents.remove(resultSet.getString(6));
+          Map<String, String> properties = documents.remove(resultSet.getString(5));
           resultSet.updateTimestamp(1, new Timestamp(clock.getTimeMillis()));
-          updateValue(resultSet, 3, properties, SpiConstants.PROPNAME_FEEDID);
-          updateValue(resultSet, 4, properties, SpiConstants.PROPNAME_SNAPSHOT);
-          updateValue(resultSet, 5, properties, SpiConstants.PROPNAME_ACTION);
-          updateValue(resultSet, 7, properties, SpiConstants.PROPNAME_PRIMARY_FOLDER);
-          updateValue(resultSet, 8, properties, SpiConstants.PROPNAME_CONTAINER);
-          updateValue(resultSet, 9, properties, SpiConstants.PROPNAME_MESSAGE);
-          updateValue(resultSet, 10, properties, SpiConstants.PROPNAME_PERSISTED_CUSTOMDATA_1);
-          updateValue(resultSet, 11, properties, SpiConstants.PROPNAME_PERSISTED_CUSTOMDATA_2);
+          updateValue(resultSet, 2, properties, SpiConstants.PROPNAME_FEEDID);
+          updateValue(resultSet, 3, properties, SpiConstants.PROPNAME_SNAPSHOT);
+          updateValue(resultSet, 4, properties, SpiConstants.PROPNAME_ACTION);
+          updateValue(resultSet, 6, properties, SpiConstants.PROPNAME_PRIMARY_FOLDER);
+          updateValue(resultSet, 7, properties, SpiConstants.PROPNAME_CONTAINER);
+          updateValue(resultSet, 8, properties, SpiConstants.PROPNAME_MESSAGE);
+          updateValue(resultSet, 9, properties, SpiConstants.PROPNAME_PERSISTED_CUSTOMDATA_1);
+          updateValue(resultSet, 10, properties, SpiConstants.PROPNAME_PERSISTED_CUSTOMDATA_2);
           resultSet.updateRow();
         }
         for (Map<String, String> properties : documents.values()) {
           // Insert new document.
           resultSet.moveToInsertRow();
           resultSet.updateTimestamp(1, new Timestamp(clock.getTimeMillis()));
-          resultSet.updateString(2, connectorName);
-          setValue(resultSet, 3, properties, SpiConstants.PROPNAME_FEEDID);
-          setValue(resultSet, 4, properties, SpiConstants.PROPNAME_SNAPSHOT);
-          setValue(resultSet, 5, properties, SpiConstants.PROPNAME_ACTION);
-          setValue(resultSet, 6, properties, SpiConstants.PROPNAME_DOCID);
-          setValue(resultSet, 7, properties, SpiConstants.PROPNAME_PRIMARY_FOLDER);
-          setValue(resultSet, 8, properties, SpiConstants.PROPNAME_CONTAINER);
-          setValue(resultSet, 9, properties, SpiConstants.PROPNAME_MESSAGE);
-          setValue(resultSet, 10, properties, SpiConstants.PROPNAME_PERSISTED_CUSTOMDATA_1);
-          setValue(resultSet, 11, properties, SpiConstants.PROPNAME_PERSISTED_CUSTOMDATA_2);
+          setValue(resultSet, 2, properties, SpiConstants.PROPNAME_FEEDID);
+          setValue(resultSet, 3, properties, SpiConstants.PROPNAME_SNAPSHOT);
+          setValue(resultSet, 4, properties, SpiConstants.PROPNAME_ACTION);
+          setValue(resultSet, 5, properties, SpiConstants.PROPNAME_DOCID);
+          setValue(resultSet, 6, properties, SpiConstants.PROPNAME_PRIMARY_FOLDER);
+          setValue(resultSet, 7, properties, SpiConstants.PROPNAME_CONTAINER);
+          setValue(resultSet, 8, properties, SpiConstants.PROPNAME_MESSAGE);
+          setValue(resultSet, 9, properties, SpiConstants.PROPNAME_PERSISTED_CUSTOMDATA_1);
+          setValue(resultSet, 10, properties, SpiConstants.PROPNAME_PERSISTED_CUSTOMDATA_2);
           resultSet.insertRow();
         }
         resultSet.close();

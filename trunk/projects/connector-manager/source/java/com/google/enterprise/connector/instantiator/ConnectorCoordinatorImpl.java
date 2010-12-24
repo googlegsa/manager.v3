@@ -201,7 +201,7 @@ class ConnectorCoordinatorImpl implements
 
       // Discard all content from the LocalDocumentStore for this connector.
       if (documentStore != null) {
-        documentStore.reset();
+        documentStore.delete();
       }
     } finally {
       instanceInfo = null;
@@ -405,7 +405,7 @@ class ConnectorCoordinatorImpl implements
 
         // Discard all content from the LocalDocumentStore for this connector.
         if (documentStore != null) {
-          documentStore.reset();
+          documentStore.delete();
         }
 
         // Kick off a restart immediately.
