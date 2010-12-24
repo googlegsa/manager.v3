@@ -74,6 +74,13 @@ public abstract class ConnectorManagerServlet extends HttpServlet {
   @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
+    // Make sure this requester is OK
+    if (!RemoteAddressFilter.getInstance()
+          .allowed(RemoteAddressFilter.Access.BLACK, req.getRemoteAddr())) {
+      res.sendError(HttpServletResponse.SC_FORBIDDEN);
+      return;
+    }
+
     BufferedReader reader = req.getReader();
     res.setContentType(ServletUtil.MIMETYPE_XML);
     res.setCharacterEncoding("UTF-8");

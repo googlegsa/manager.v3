@@ -63,21 +63,18 @@ public class GetConfig extends HttpServlet {
   @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
+    // Make sure this requester is OK
+    if (!RemoteAddressFilter.getInstance()
+          .allowed(RemoteAddressFilter.Access.RED, req.getRemoteAddr())) {
+      res.sendError(HttpServletResponse.SC_FORBIDDEN);
+      return;
+    }
+
     res.setContentType(ServletUtil.MIMETYPE_XML);
     PrintWriter out = res.getWriter();
     NDC.push("Support");
     try {
-      Context context = Context.getInstance();
-
-      // Only allow incoming connections from the GSA or localhost.
-      if (!ServletUtil.allowedRemoteAddr(context.getGsaFeedHost(),
-                                         req.getRemoteAddr())) {
-        res.sendError(HttpServletResponse.SC_FORBIDDEN);
-        return;
-      }
-
       handleDoGet(out);
-
     } finally {
       out.close();
       NDC.clear();

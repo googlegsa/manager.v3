@@ -1,4 +1,4 @@
-// Copyright (C) 2006-2008 Google Inc.
+// Copyright 2006 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -41,6 +41,13 @@ public class TestConnectivity extends HttpServlet {
   @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
+    // Make sure this requester is OK
+    if (!RemoteAddressFilter.getInstance()
+          .allowed(RemoteAddressFilter.Access.BLACK, req.getRemoteAddr())) {
+      res.sendError(HttpServletResponse.SC_FORBIDDEN);
+      return;
+    }
+
     res.setContentType(ServletUtil.MIMETYPE_XML);
     PrintWriter out = res.getWriter();
     NDC.push("Support Manager");
