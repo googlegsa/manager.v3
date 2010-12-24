@@ -24,11 +24,6 @@ import com.google.enterprise.connector.spi.LocalDocumentStore;
 public interface DocumentStore extends LocalDocumentStore {
 
   /**
-   * Deletes all rows in the Document Table associated with this Connector.
-   */
-  public void reset();
-
-  /**
    * Cancels any pending additions to the Documents table.
    * This discards any data that has not already been committed,
    * specifically, Documents that would have been written by a
@@ -38,4 +33,8 @@ public interface DocumentStore extends LocalDocumentStore {
   // whole batches, even bits that have been already committed.
   public void cancel();
 
+  /**
+   * Deletes the Document Table associated with this Connector.
+   */
+  public void delete();
 }

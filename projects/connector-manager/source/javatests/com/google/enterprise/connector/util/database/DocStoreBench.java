@@ -120,7 +120,8 @@ public class DocStoreBench extends AbstractCommandLineApp {
   private DataSource getDataSource() throws Exception {
     // Setup H2 JDBC DataSource.
     org.h2.jdbcx.JdbcDataSource dataSource = new org.h2.jdbcx.JdbcDataSource();
-    dataSource.setURL("jdbc:h2:" + TEST_DIR_NAME + "DocStore;MVCC=TRUE;CACHE_SIZE=131072");
+    dataSource.setURL("jdbc:h2:" + TEST_DIR_NAME
+        + "DocStore;MVCC=TRUE;CACHE_SIZE=131072;MAX_OPERATION_MEMORY=0");
     dataSource.setUser("sa");
     dataSource.setPassword("sa");
 
@@ -153,10 +154,10 @@ public class DocStoreBench extends AbstractCommandLineApp {
     new StoreBenchMark().runBenchMark();
     new RetrieveBenchMark().runBenchMark();
     new StoreRetrieveBenchMark().runBenchMark();
-    new RetrieveFromDocidBenchMark().runBenchMark();
-    new ParentRetrieveBenchMark().runBenchMark();
-    new MaxRowsRetrieveBenchMark().runBenchMark();
-    new TopLimitRownumRetrieveBenchMark().runBenchMark();
+    //new RetrieveFromDocidBenchMark().runBenchMark();
+    //new ParentRetrieveBenchMark().runBenchMark();
+    //new MaxRowsRetrieveBenchMark().runBenchMark();
+    //new TopLimitRownumRetrieveBenchMark().runBenchMark();
   }
 
   /**
@@ -681,8 +682,8 @@ public class DocStoreBench extends AbstractCommandLineApp {
    * returned ResultSet.
    */
   private class BenchMaxRowsRead extends SqlBenchMarkRunnable {
-    private static final String maxRowsQuery = "SELECT docid FROM {0} WHERE ("
-        + " connector_name = {1} AND docid > {2} ) ORDER BY docid";
+    private static final String maxRowsQuery = "SELECT docid FROM {0} WHERE "
+        + "( docid > {1} ) ORDER BY docid";
     private String lastDocid;
     private int maxRows;
 
@@ -709,8 +710,7 @@ public class DocStoreBench extends AbstractCommandLineApp {
      * Runs a query against the DB, setting the maximum number of rows returned.
      */
     private int runMaxRowsQuery() {
-      Object[] params = { store.getDocTableName(), quoteValue(connectorName),
-                          quoteValue(lastDocid) };
+      Object[] params = { store.getDocTableName(), quoteValue(lastDocid) };
       return runQuery(MessageFormat.format(maxRowsQuery, params), maxRows);
     }
 
@@ -729,20 +729,20 @@ public class DocStoreBench extends AbstractCommandLineApp {
     private final Map<SpiConstants.DatabaseType, String> queries =
         ImmutableMap.<SpiConstants.DatabaseType, String> builder()
         .put(SpiConstants.DatabaseType.H2,
-             "SELECT docid FROM {0} WHERE ( connector_name = {1} AND docid > {2} )"
-             + " ORDER BY docid LIMIT {3}")
+             "SELECT docid FROM {0} WHERE ( docid > {1} )"
+             + " ORDER BY docid LIMIT {2}")
         .put(SpiConstants.DatabaseType.MYSQL,
-             "SELECT docid FROM {0} WHERE ( connector_name = {1} AND docid > {2} )"
-             + " ORDER BY docid LIMIT {3}")
+             "SELECT docid FROM {0} WHERE ( docid > {1} )"
+             + " ORDER BY docid LIMIT {2}")
         .put(SpiConstants.DatabaseType.ORACLE,
-             "SELECT docid FROM {0} WHERE ( connector_name = {1} "
-             + "AND docid > {2} AND ROWNUM <= {3} ) ORDER BY docid")
+             "SELECT docid FROM {0} WHERE ( docid > {1}"
+             + " AND ROWNUM <= {2} ) ORDER BY docid")
         .put(SpiConstants.DatabaseType.SQLSERVER,
-             "SELECT TOP {3} docid FROM {0} "
-             + "WHERE ( connector_name = {1} AND docid > {2} ) ORDER BY docid")
+             "SELECT TOP {2} docid FROM {0} "
+             + "WHERE ( docid > {1} ) ORDER BY docid")
         .put(SpiConstants.DatabaseType.OTHER,
-             "SELECT docid FROM {0} WHERE ( connector_name = {1} AND docid > {2} )"
-             + " FETCH FIRST {3} ROWS ONLY ORDER BY docid")
+             "SELECT docid FROM {0} WHERE ( docid > {1} )"
+             + " FETCH FIRST {2} ROWS ONLY ORDER BY docid")
         .build();
 
     private String lastDocid;
@@ -754,7 +754,7 @@ public class DocStoreBench extends AbstractCommandLineApp {
     }
 
     /**
-     * Reads all the documents whose parent matches one from an arbitarty
+     * Reads all the documents whose parent matches one from an arbitrary
      * list.
      */
     /* @Override */
@@ -774,8 +774,8 @@ public class DocStoreBench extends AbstractCommandLineApp {
      * Runs a query against the DB, setting the maximum number of rows returned.
      */
     private int runMaxRowsQuery() {
-      Object[] params = { store.getDocTableName(), quoteValue(connectorName),
-                          quoteValue(lastDocid), Integer.toString(maxRows) };
+      Object[] params = { store.getDocTableName(), quoteValue(lastDocid),
+                          Integer.toString(maxRows) };
       String query = queries.get(jdbcDatabase.getDatabaseType());
       return runQuery(MessageFormat.format(query, params), 0);
     }
@@ -889,6 +889,7 @@ public class DocStoreBench extends AbstractCommandLineApp {
       startTimer();
       for (Thread thread : threads) {
         thread.start();
+        try { Thread.sleep(1000); } catch (InterruptedException ie) {}
       }
     }
 
