@@ -51,6 +51,13 @@ public class GetConfigForm extends HttpServlet {
   @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
+    // Make sure this requester is OK
+    if (!RemoteAddressFilter.getInstance()
+          .allowed(RemoteAddressFilter.Access.BLACK, req.getRemoteAddr())) {
+      res.sendError(HttpServletResponse.SC_FORBIDDEN);
+      return;
+    }
+
     ConnectorMessageCode status = new ConnectorMessageCode();
     String connectorTypeName =
         req.getParameter(ServletUtil.XMLTAG_CONNECTOR_TYPE);

@@ -177,21 +177,20 @@ public class GetConnectorLogs extends HttpServlet {
   @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws IOException, FileNotFoundException {
+    // Make sure this requester is OK
+    if (!RemoteAddressFilter.getInstance()
+          .allowed(RemoteAddressFilter.Access.RED, req.getRemoteAddr())) {
+      res.sendError(HttpServletResponse.SC_FORBIDDEN);
+      return;
+    }
+
     NDC.push("Support");
     try {
-      Context context = Context.getInstance();
-
-      // Only allow incoming connections from the GSA or localhost.
-      if (!ServletUtil.allowedRemoteAddr(context.getGsaFeedHost(),
-                                         req.getRemoteAddr())) {
-        res.sendError(HttpServletResponse.SC_FORBIDDEN);
-        return;
-      }
-
       // Are we retrieving Connector logs, Feed logs, or TeedFeed file?
       LogHandler handler;
       String logsTag;
       try {
+        Context context = Context.getInstance();
         if (req.getServletPath().indexOf("Teed") > 0) {
           handler = new TeedFeedHandler(context);
           logsTag = ServletUtil.XMLTAG_TEED_FEED;
