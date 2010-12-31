@@ -151,7 +151,6 @@ public class JdbcDatabase {
     } catch (SQLException e1) {
       // If that fails, we may have multiple clients trying to create the table
       // at the same time; wait a bit, then try again.
-      System.out.println("verifyTableExists is trying again"); //DEBUGGING
       try { Thread.sleep(30000); } catch (InterruptedException ignored) {}
       try {
         return verifyTableAndThrow(tableName, createTableDdl);
