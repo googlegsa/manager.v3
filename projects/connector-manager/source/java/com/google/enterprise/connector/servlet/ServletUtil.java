@@ -30,9 +30,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.net.InetAddress;
 import java.net.URL;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
@@ -684,35 +682,6 @@ public class ServletUtil {
       }
     }
     return buf.toString();
-  }
-
-  /**
-   * Verify the request originated from either the GSA or
-   * localhost.  Since the logs and the feed file may contain
-   * proprietary customer information, we don't want to serve
-   * them up to just anybody.
-   *
-   * @param gsaHost the GSA feed host
-   * @param remoteAddr the IP address of the caller
-   * @return true if request came from an acceptable IP address.
-   */
-  public static boolean allowedRemoteAddr(String gsaHost, String remoteAddr) {
-    try {
-      InetAddress caller = InetAddress.getByName(remoteAddr);
-      if (caller.isLoopbackAddress() ||
-          caller.equals(InetAddress.getLocalHost())) {
-        return true;  // localhost is allowed access
-      }
-      InetAddress[] gsaAddrs = InetAddress.getAllByName(gsaHost);
-      for (int i = 0; i < gsaAddrs.length; i++) {
-        if (caller.equals(gsaAddrs[i])) {
-          return true;  // GSA is allowed access
-        }
-      }
-    } catch (UnknownHostException uhe) {
-      // Unknown host - fall through to fail.
-    }
-    return false;
   }
 
   private static final String DOCTYPE = "<!DOCTYPE html PUBLIC "

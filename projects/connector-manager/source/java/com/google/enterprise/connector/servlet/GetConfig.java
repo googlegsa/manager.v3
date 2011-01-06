@@ -88,16 +88,16 @@ public class GetConfig extends HttpServlet {
   @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws IOException, FileNotFoundException {
+    // Make sure this requester is OK
+    if (!RemoteAddressFilter.getInstance()
+          .allowed(RemoteAddressFilter.Access.RED, req.getRemoteAddr())) {
+      res.sendError(HttpServletResponse.SC_FORBIDDEN);
+      return;
+    }
+
     NDC.push("Support");
     try {
       Context context = Context.getInstance();
-
-      // Only allow incoming connections from the GSA or localhost.
-      if (!ServletUtil.allowedRemoteAddr(context.getGsaFeedHost(),
-                                         req.getRemoteAddr())) {
-        res.sendError(HttpServletResponse.SC_FORBIDDEN);
-        return;
-      }
 
       // Fetch the name of the archive file to return. getPathInfo() returns
       // items with a leading '/', so we want to pull off only the basename.
