@@ -656,23 +656,41 @@ public class Context {
     return propFile;
   }
 
-  public Properties getConnectorManagerConfig() throws InstantiatorException {
+  /**
+   * Returns the configuration Properties for the Connector Manager.
+   */
+  public Properties getConnectorManagerProperties() {
     initApplicationContext();
-    Properties result = new Properties();
-    // Get the properties out of the CM properties file if present.
-    String propFileName = getPropFileName();
-    File propFile = getPropFile(propFileName);
     try {
-      Properties props = PropertiesUtils.loadFromFile(propFile);
-      result.setProperty(GSA_FEED_HOST_PROPERTY_KEY,
-          props.getProperty(GSA_FEED_HOST_PROPERTY_KEY));
-      result.setProperty(GSA_FEED_PORT_PROPERTY_KEY,
-          props.getProperty(GSA_FEED_PORT_PROPERTY_KEY, GSA_FEED_PORT_DEFAULT));
-    } catch (PropertiesException e) {
-      LOGGER.log(Level.WARNING, "Unable to read application context properties"
-          + " file " + propFileName,
-          e);
+      // Get the properties out of the CM properties file if present.
+      String propFileName = getPropFileName();
+      File propFile = getPropFile(propFileName);
+      try {
+        Properties props = PropertiesUtils.loadFromFile(propFile);
+        propertiesVersion = PropertiesUtils.getPropertiesVersion(props);
+        return props;
+      } catch (PropertiesException pe) {
+        LOGGER.log(Level.WARNING, "Unable to read application context"
+                   + " properties file " + propFileName, pe);
+      }
+    } catch (InstantiatorException ie) {
+      LOGGER.log(Level.WARNING, "Unable to read application context"
+                 + " properties", ie);
     }
+    return new Properties();
+  }
+
+  /**
+   * Returns a Properties containing just the GSA feed host and port properties.
+   */
+  public Properties getConnectorManagerConfig() throws InstantiatorException {
+    // Get the properties out of the CM properties file if present.
+    Properties props = getConnectorManagerProperties();
+    Properties result = new Properties();
+    result.setProperty(GSA_FEED_HOST_PROPERTY_KEY,
+        props.getProperty(GSA_FEED_HOST_PROPERTY_KEY));
+    result.setProperty(GSA_FEED_PORT_PROPERTY_KEY,
+        props.getProperty(GSA_FEED_PORT_PROPERTY_KEY, GSA_FEED_PORT_DEFAULT));
     return result;
   }
 
@@ -802,22 +820,8 @@ public class Context {
    * @param defaultValue if property does not exist
    */
   private String getProperty(String key, String defaultValue) {
-    try {
-      String propFileName = getPropFileName();
-      File propFile = getPropFile(propFileName);
-      try {
-        Properties props = PropertiesUtils.loadFromFile(propFile);
-        propertiesVersion = PropertiesUtils.getPropertiesVersion(props);
-        return props.getProperty(key, defaultValue);
-      } catch (PropertiesException e) {
-        LOGGER.log(Level.WARNING, "Unable to read application context "
-                   + "properties file " + propFileName, e);
-      }
-    } catch (InstantiatorException ie) {
-      LOGGER.log(Level.WARNING, "Unable to read application context "
-                 + "properties file.", ie);
-    }
-    return defaultValue;
+    Properties props = getConnectorManagerProperties();
+    return props.getProperty(key, defaultValue);
   }
 
   /**
