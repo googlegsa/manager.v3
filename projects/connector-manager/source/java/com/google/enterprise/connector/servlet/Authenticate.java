@@ -18,6 +18,7 @@ import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.manager.ConnectorStatus;
 import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.spi.AuthenticationIdentity;
+import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.connector.spi.SimpleAuthenticationIdentity;
 import com.google.enterprise.connector.util.XmlParseUtil;
 
@@ -107,15 +108,21 @@ public class Authenticate extends ConnectorManagerServlet {
       try {
         AuthenticationIdentity identity =
             new SimpleAuthenticationIdentity(username, password, domain);
-        boolean authn =
+        AuthenticationResponse response =
             manager.authenticate(connectorName, identity);
-        if (authn) {
+        if (response.isValid()) {
           ServletUtil.writeXMLTagWithAttrs(
               out, 2, ServletUtil.XMLTAG_SUCCESS,
               ServletUtil.XMLTAG_CONNECTOR_NAME + "=\"" + connectorName + "\"",
               false);
           ServletUtil.writeXMLElement(
               out, 3, ServletUtil.XMLTAG_IDENTITY, username);
+          if (response.getGroups() != null) {
+            for (String group : response.getGroups()) {
+              ServletUtil.writeXMLElement(
+                  out, 3, ServletUtil.XMLTAG_GROUP, group);
+            }
+          }
           ServletUtil.writeXMLTag(out, 2, ServletUtil.XMLTAG_SUCCESS, true);
         } else {
           ServletUtil.writeXMLTagWithAttrs(

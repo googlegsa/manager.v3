@@ -119,6 +119,7 @@ public class ServletUtil {
   public static final String XMLTAG_AUTHZ_QUERY = "AuthorizationQuery";
   public static final String XMLTAG_CONNECTOR_QUERY = "ConnectorQuery";
   public static final String XMLTAG_IDENTITY = "Identity";
+  public static final String XMLTAG_GROUP = "Group";
   public static final String XMLTAG_DOMAIN_ATTRIBUTE = "domain";
   public static final String XMLTAG_PASSWORD_ATTRIBUTE = "password";
   public static final String XMLTAG_RESOURCE = "Resource";

@@ -64,22 +64,16 @@ public class ProductionManager implements Manager {
   }
 
   /* @Override */
-  public boolean authenticate(String connectorName,
+  public AuthenticationResponse authenticate(String connectorName,
       AuthenticationIdentity identity) {
-    boolean result = false;
-
     try {
       AuthenticationManager authnManager =
           instantiator.getAuthenticationManager(connectorName);
-      AuthenticationResponse authenticationResponse;
       // Some connectors don't implement the AuthenticationManager interface so
       // we need to check.
       if (authnManager != null) {
-        authenticationResponse = authnManager.authenticate(identity);
-      } else {
-        authenticationResponse = new AuthenticationResponse(false, null);
+        return authnManager.authenticate(identity);
       }
-      result = authenticationResponse.isValid();
     } catch (ConnectorNotFoundException e) {
       LOGGER.log(Level.WARNING, "Connector " + connectorName + " Not Found: ",
           e);
@@ -92,8 +86,7 @@ public class ProductionManager implements Manager {
     } catch (Exception e) {
       LOGGER.log(Level.WARNING, "Exception: ", e);
     }
-
-    return result;
+    return new AuthenticationResponse(false, null);
   }
 
   /* @Override */
