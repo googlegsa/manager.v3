@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright 2006 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,16 +21,30 @@ package com.google.enterprise.connector.spi;
 public interface AuthenticationManager {
 
   /**
-   * Authenticates against the repository and returns true or false
-   * depending on whether authentication was successful. If an exception is
-   * thrown, the implementor should provide an explanatory message.
+   * Authenticates against the repository and returns an
+   * {@link AuthenticationResponse} indicating whether authentication
+   * was successful.
    *
-   * @param identity An AuthenticationIdentity object that encapsulates the
-   *        user's identity
-   * @return True means that authentication succeeded, false indicates
-   *         failure
-   * @throws RepositoryLoginException if there is a credentials-related problem that
-   *         prohibits authentication
+   * If the authentication was successful, the connector may return a
+   * {@code Collection} of group names representing any groups for which
+   * the user is a member.
+   *
+   * If the password supplied in the AuthenticationIdentity is {@code null},
+   * the connector may skip authentication, but still return a valid
+   * {@link AuthenticationResponse} containing a {@code Collection} of
+   * group names representing any groups for which the user is a member.
+   *
+   * If an exception is thrown, the implementor should provide
+   * an explanatory message.
+   *
+   * @param  identity An AuthenticationIdentity object that encapsulates the
+   *         user's identity
+   * @return an AuthenticationResponse indicating whether authentication was
+   *         successful, or if the identity password was {@code null}, the
+   *         Collection of groups to which the user belongs.
+   *
+   * @throws RepositoryLoginException if there is a credentials-related problem
+   *         that prohibits authentication
    * @throws RepositoryException if there is a more general problem, such
    *         as the system is unreachable or down
    */
