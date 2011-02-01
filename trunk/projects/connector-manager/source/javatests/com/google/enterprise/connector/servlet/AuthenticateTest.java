@@ -1,4 +1,4 @@
-// Copyright (C) 2006-2009 Google Inc.
+// Copyright 2006 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,6 +22,8 @@ import junit.framework.TestCase;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.logging.Logger;
 
 /**
@@ -32,7 +34,7 @@ public class AuthenticateTest extends TestCase {
   private static final Logger LOGGER =
     Logger.getLogger(AuthenticateTest.class.getName());
 
-  public void testHandleDoPost() {
+  public void testAuthenticate() {
     String xmlBody =
       "<AuthnRequest>\n" +
       "  <Credentials>\n" +
@@ -52,7 +54,42 @@ public class AuthenticateTest extends TestCase {
       "    </Success>\n" +
       "  </AuthnResponse>\n" +
       "</CmResponse>\n";
-    doTest(xmlBody, expectedResult, null, "fooUser", "fooPassword");
+    doTest(xmlBody, expectedResult, null, "fooUser", "fooPassword", null);
+  }
+
+  public void testBadUsername() {
+    String xmlBody =
+      "<AuthnRequest>\n" +
+      "  <Credentials>\n" +
+      "    <Username>badUser</Username>\n" +
+      "    <Password>fooPassword</Password>\n" +
+      "  </Credentials>\n" +
+      "</AuthnRequest>";
+
+    doTestFailedAuthentication(xmlBody);
+  }
+
+  public void testBadPassword() {
+    String xmlBody =
+      "<AuthnRequest>\n" +
+      "  <Credentials>\n" +
+      "    <Username>fooUser</Username>\n" +
+      "    <Password>badPassword</Password>\n" +
+      "  </Credentials>\n" +
+      "</AuthnRequest>";
+
+    doTestFailedAuthentication(xmlBody);
+  }
+
+  public void doTestFailedAuthentication(String xmlBody) {
+    String expectedResult =
+      "<CmResponse>\n" +
+      "  <AuthnResponse>\n" +
+      "    <Failure ConnectorName=\"connector1\"/>\n" +
+      "    <Failure ConnectorName=\"connector2\"/>\n" +
+      "  </AuthnResponse>\n" +
+      "</CmResponse>\n";
+    doTest(xmlBody, expectedResult, null, "fooUser", "fooPassword", null);
   }
 
   public void testWithDomain() {
@@ -60,7 +97,7 @@ public class AuthenticateTest extends TestCase {
       "<AuthnRequest>\n" +
       "  <Credentials>\n" +
       "    <Username>fooUser</Username>\n" +
-      "    <Domain>fooDomain</Domain>" +
+      "    <Domain>fooDomain</Domain>\n" +
       "    <Password>fooPassword</Password>\n" +
       "  </Credentials>\n" +
       "</AuthnRequest>";
@@ -76,7 +113,51 @@ public class AuthenticateTest extends TestCase {
       "    </Success>\n" +
       "  </AuthnResponse>\n" +
       "</CmResponse>\n";
-    doTest(xmlBody, expectedResult, "fooDomain", "fooUser", "fooPassword");
+    doTest(xmlBody, expectedResult, "fooDomain", "fooUser", "fooPassword", null);
+  }
+
+  public void testPassAndFail() {
+    String xmlBody =
+      "<AuthnRequest>\n" +
+      "  <Credentials>\n" +
+      "    <Username>fooUser</Username>\n" +
+      "    <Domain>connector1</Domain>\n" +
+      "    <Password>fooPassword</Password>\n" +
+      "  </Credentials>\n" +
+      "</AuthnRequest>";
+
+    String expectedResult =
+      "<CmResponse>\n" +
+      "  <AuthnResponse>\n" +
+      "    <Success ConnectorName=\"connector1\">\n" +
+      "      <Identity>fooUser</Identity>\n" +
+      "    </Success>\n" +
+      "    <Failure ConnectorName=\"connector2\"/>\n" +
+      "  </AuthnResponse>\n" +
+      "</CmResponse>\n";
+    doTest(xmlBody, expectedResult, "connector1", "fooUser", "fooPassword", null);
+  }
+
+  public void testFailAndPass() {
+    String xmlBody =
+      "<AuthnRequest>\n" +
+      "  <Credentials>\n" +
+      "    <Username>fooUser</Username>\n" +
+      "    <Domain>connector2</Domain>\n" +
+      "    <Password>fooPassword</Password>\n" +
+      "  </Credentials>\n" +
+      "</AuthnRequest>";
+
+    String expectedResult =
+      "<CmResponse>\n" +
+      "  <AuthnResponse>\n" +
+      "    <Failure ConnectorName=\"connector1\"/>\n" +
+      "    <Success ConnectorName=\"connector2\">\n" +
+      "      <Identity>fooUser</Identity>\n" +
+      "    </Success>\n" +
+      "  </AuthnResponse>\n" +
+      "</CmResponse>\n";
+    doTest(xmlBody, expectedResult, "connector2", "fooUser", "fooPassword", null);
   }
 
   public void testWithTwoConnectorNameElements() {
@@ -104,7 +185,7 @@ public class AuthenticateTest extends TestCase {
       "    </Success>\n" +
       "  </AuthnResponse>\n" +
       "</CmResponse>\n";
-    doTest(xmlBody, expectedResult, "fooDomain", "fooUser", "fooPassword");
+    doTest(xmlBody, expectedResult, "fooDomain", "fooUser", "fooPassword", null);
   }
 
   public void testWithOneConnectorNameElement() {
@@ -128,22 +209,112 @@ public class AuthenticateTest extends TestCase {
       "    </Success>\n" +
       "  </AuthnResponse>\n" +
       "</CmResponse>\n";
-    doTest(xmlBody, expectedResult, "fooDomain", "fooUser", "fooPassword");
+    doTest(xmlBody, expectedResult, "fooDomain", "fooUser", "fooPassword", null);
+  }
+
+  public void testGetGroupsNoPassword() {
+    String xmlBody =
+      "<AuthnRequest>\n" +
+      "  <Credentials>\n" +
+      "    <Username>fooUser</Username>\n" +
+      "  </Credentials>\n" +
+      "</AuthnRequest>";
+
+    doTestGroups(xmlBody);
+  }
+
+
+  public void testGetGroupsEmptyPassword() {
+    String xmlBody =
+      "<AuthnRequest>\n" +
+      "  <Credentials>\n" +
+      "    <Username>fooUser</Username>\n" +
+      "    <Password></Password>\n" +
+      "  </Credentials>\n" +
+      "</AuthnRequest>";
+
+    doTestGroups(xmlBody);
+  }
+
+  public void testAuthenticateWithGroups() {
+    String xmlBody =
+      "<AuthnRequest>\n" +
+      "  <Credentials>\n" +
+      "    <Username>fooUser</Username>\n" +
+      "    <Password>fooPassword</Password>\n" +
+      "  </Credentials>\n" +
+      "</AuthnRequest>";
+
+    doTestGroups(xmlBody);
+  }
+
+  public void testPassAndFailGroups() {
+    String xmlBody =
+      "<AuthnRequest>\n" +
+      "  <Credentials>\n" +
+      "    <Username>fooUser</Username>\n" +
+      "    <Domain>connector1</Domain>\n" +
+      "  </Credentials>\n" +
+      "</AuthnRequest>";
+
+    String expectedResult =
+      "<CmResponse>\n" +
+      "  <AuthnResponse>\n" +
+      "    <Success ConnectorName=\"connector1\">\n" +
+      "      <Identity>fooUser</Identity>\n" +
+      "      <Group>staff</Group>\n" +
+      "      <Group>wheel</Group>\n" +
+      "    </Success>\n" +
+      "    <Failure ConnectorName=\"connector2\"/>\n" +
+      "  </AuthnResponse>\n" +
+      "</CmResponse>\n";
+
+    doTest(xmlBody, expectedResult, "connector1", "fooUser", "fooPassword",
+           makeGroups());
+  }
+
+  private void doTestGroups(String xmlBody) {
+    String expectedResult =
+      "<CmResponse>\n" +
+      "  <AuthnResponse>\n" +
+      "    <Success ConnectorName=\"connector1\">\n" +
+      "      <Identity>fooUser</Identity>\n" +
+      "      <Group>staff</Group>\n" +
+      "      <Group>wheel</Group>\n" +
+      "    </Success>\n" +
+      "    <Success ConnectorName=\"connector2\">\n" +
+      "      <Identity>fooUser</Identity>\n" +
+      "      <Group>staff</Group>\n" +
+      "      <Group>wheel</Group>\n" +
+      "    </Success>\n" +
+      "  </AuthnResponse>\n" +
+      "</CmResponse>\n";
+
+    doTest(xmlBody, expectedResult, null, "fooUser", "fooPassword",
+           makeGroups());
+  }
+
+  private Collection<String> makeGroups() {
+    ArrayList<String> groups = new ArrayList<String>();
+    groups.add("staff");
+    groups.add("wheel");
+    return groups;
   }
 
   private void doTest(String xmlBody, String expectedResult, String domain,
-      String username, String password) {
-    LOGGER.info("xmlBody: " + xmlBody);
+      String username, String password, Collection<String> groups) {
+    LOGGER.info("==================================");
+    LOGGER.info("xmlBody:\n" + xmlBody);
     MockManager manager = MockManager.getInstance();
     manager.setShouldVerifyIdentity(true);
-    manager.setExpectedIdentity(domain, username, password);
+    manager.setExpectedIdentity(domain, username, password, groups);
     StringWriter writer = new StringWriter();
     PrintWriter out = new PrintWriter(writer);
     Authenticate.handleDoPost(xmlBody, manager, out);
     out.flush();
     StringBuffer result = writer.getBuffer();
-    LOGGER.info(result.toString());
-    LOGGER.info(expectedResult);
+    LOGGER.info("expected result:\n" + expectedResult);
+    LOGGER.info("actual result:\n" + result.toString());
     Assert.assertEquals(StringUtils.normalizeNewlines(expectedResult),
         StringUtils.normalizeNewlines(result.toString()));
     out.close();
