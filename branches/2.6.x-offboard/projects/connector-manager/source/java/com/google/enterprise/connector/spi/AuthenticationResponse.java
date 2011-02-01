@@ -14,6 +14,8 @@
 
 package com.google.enterprise.connector.spi;
 
+import java.util.Collection;
+
 /**
  * The response for the {@link AuthenticationManager}.authenticate method.
  */
@@ -21,19 +23,36 @@ public class AuthenticationResponse {
 
   private final boolean valid;
   private final String data;
+  private final Collection<String> groups;
 
   /**
    * Makes an AuthenticationResponse.
-   * @param valid   Indicates that authentication was successful (valid)
+   *
+   * @param valid  Indicates that authentication was successful (valid).
    * @param data   Reserved for future use.  May be set but will be ignored.
    */
   public AuthenticationResponse(boolean valid, String data) {
-    this.valid = valid;
-    this.data = data;
+    this(valid, data, null);
   }
 
   /**
-   * Tests whether authentication was valid
+   * Makes an AuthenticationResponse.
+   *
+   * @param valid  Indicates that authentication was successful (valid).
+   * @param data   Reserved for future use.  May be set but will be ignored.
+   * @param groups A Collection of groups to which the user belongs.
+   * @since 2.6.10
+   */
+  public AuthenticationResponse(boolean valid, String data,
+                                Collection<String> groups) {
+    this.valid = valid;
+    this.data = data;
+    this.groups = groups;
+  }
+
+  /**
+   * Tests whether authentication was valid.
+   *
    * @return true if authentication was valid
    */
   public boolean isValid() {
@@ -41,10 +60,21 @@ public class AuthenticationResponse {
   }
 
   /**
-   * Get the client data
+   * Get the client data.
+   *
    * @return data - may be null
    */
   public String getData() {
     return data;
+  }
+
+  /**
+   * Gets the groups to which the user belongs.
+   *
+   * @return Collection of group names - may be null
+   * @since 2.6.10
+   */
+  public Collection<String> getGroups() {
+    return groups;
   }
 }
