@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+<beans>
+  <bean id="FeedConnection"
+        class="com.google.enterprise.connector.pusher.MockFeedConnection">
+  </bean>
+
+  <bean id="PusherFactory"
+        class="com.google.enterprise.connector.pusher.DocPusherFactory">
+    <constructor-arg index="0" ref="FeedConnection" />
+  </bean>
+
+  <bean id="LoadManagerFactory"
+        class="com.google.enterprise.connector.scheduler.HostLoadManagerFactory">
+    <property name="feedConnection" ref="FeedConnection"/>
+  </bean>
+
+  <bean id="ConnectorScheduleStore"
+        class="com.google.enterprise.connector.persist.MockConnectorScheduleStore">
+  </bean>
+
+  <bean id="ConnectorStateStore"
+        class="com.google.enterprise.connector.persist.MockConnectorStateStore">
+  </bean>
+
+  <bean id="ConnectorConfigStore"
+        class="com.google.enterprise.connector.persist.FileStore">
+  </bean>
+
+  <bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+    <property name="staticMethod"
+              value="com.google.enterprise.connector.instantiator.InstanceInfo.setConnectorStores"/>
+    <property name="arguments">
+      <list>
+        <ref bean="ConnectorConfigStore"/>
+        <ref bean="ConnectorScheduleStore"/>
+        <ref bean="ConnectorStateStore"/>
+      </list>
+    </property>
+  </bean>
+
+  <bean id="Instantiator"
+        class="com.google.enterprise.connector.instantiator.SpringInstantiator">
+    <property name="pusherFactory" ref="PusherFactory" />
+    <property name="loadManagerFactory" ref="LoadManagerFactory"/>
+    <property name="threadPool" ref="ThreadPool" />
+  </bean>
+
+  <bean id="ThreadPool"
+        class="com.google.enterprise.connector.instantiator.ThreadPool">
+    <constructor-arg index="0" type="int" value="5"/>
+  </bean>
+
+  <bean id="Manager"
+        class="com.google.enterprise.connector.manager.ProductionManager">
+    <property name="instantiator" ref="Instantiator" />
+  </bean>
+
+  <bean id="TraversalScheduler"
+        class="com.google.enterprise.connector.scheduler.TraversalScheduler">
+    <constructor-arg index="0" ref="Instantiator" />
+  </bean>
+</beans>
