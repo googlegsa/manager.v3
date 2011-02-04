@@ -10,6 +10,15 @@ issues and work-arounds.
 
 Web Site: http://code.google.com/p/google-enterprise-connector-manager/
 
+Release 2.6.10, 04 February 2011
+================================
+
+Introduction
+------------
+This is an internal release for the Connector Manager on-board the GSA,
+not for general use.
+
+
 Release 2.6.6,  7 December 2010
 ===============================
 
@@ -50,6 +59,22 @@ Summary of Changes
      package. This package will be used for utility classes that are not
      part of or related to the spi package, but which connector
      implementers might find useful.
+
+
+Release 2.6.4, 16 September 2010
+================================
+
+Introduction
+------------
+This is an internal release for the Connector Manager on-board the GSA,
+not for general use.
+
+Summary of Changes
+------------------
+  * Servlet access to the Connector Manager on-board the GSA has been
+    largely locked down. The getConfiguration and getConnectorLogs
+    servlets remain accessible for the benefit connector administrators
+    and support personnel.
 
 
 Release 2.6.0,  14 June 2010
