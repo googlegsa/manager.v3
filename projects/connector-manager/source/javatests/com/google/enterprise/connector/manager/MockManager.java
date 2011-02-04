@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.
+// Copyright (C) 2006-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,13 +18,11 @@ import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.persist.PersistentStoreException;
 import com.google.enterprise.connector.spi.AuthenticationIdentity;
-import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.ConnectorType;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -45,14 +43,10 @@ public class MockManager implements Manager {
   private static final Logger LOGGER =
       Logger.getLogger(MockManager.class.getName());
 
-  private static final String CONNECTOR1 = "connector1";
-  private static final String CONNECTOR2 = "connector2";
-
   private boolean shouldVerifyIdentity;
   private String domain;
   private String username;
   private String password;
-  private Collection<String> groups;
 
   // Protected constructor used by JUnit test subclasses.
   protected MockManager() {
@@ -64,25 +58,16 @@ public class MockManager implements Manager {
   }
 
   /* @Override */
-  public AuthenticationResponse authenticate(String connectorName,
+  public boolean authenticate(String connectorName,
       AuthenticationIdentity identity) {
-    if (shouldVerifyIdentity) {
-      // Domains connector1 and connector2 only work for their respective
-      // connectors.
-      // This is used to test some connectors failing, but others passing.
-      if ((CONNECTOR1.equals(identity.getDomain()) &&
-           !CONNECTOR1.equals(connectorName)) ||
-          (CONNECTOR2.equals(identity.getDomain()) &&
-           !CONNECTOR2.equals(connectorName))) {
-        return new AuthenticationResponse(false, null, null);
-      }
-
-      StringBuilder sb = new StringBuilder();
-      if (!verifyIdentity(identity, sb)) {
-        return new AuthenticationResponse(false, null, null);
-      }
+    if (!shouldVerifyIdentity) {
+      return true;
     }
-    return new AuthenticationResponse(true, null, groups);
+    StringBuilder sb = new StringBuilder();
+    if (!verifyIdentity(identity, sb)) {
+      throw new IllegalStateException(new String(sb));
+    }
+    return true;
   }
 
   // Note this is trying to duplicate the AuthorizationParser.matchesIdentity()
@@ -96,11 +81,8 @@ public class MockManager implements Manager {
     if (!verifyComponent("username", username, identity.getUsername(), sb)) {
       result = false;
     }
-    // NULL password means do not authenticate, but return any groups.
-    if (identity.getPassword() != null) {
-      if (!verifyComponent("password", password, identity.getPassword(), sb)) {
-        result = false;
-      }
+    if (!verifyComponent("password", password, identity.getPassword(), sb)) {
+      result = false;
     }
     return result;
   }
@@ -191,8 +173,8 @@ public class MockManager implements Manager {
   /* @Override */
   public List<ConnectorStatus> getConnectorStatuses() {
     List<ConnectorStatus> statuses = new ArrayList<ConnectorStatus>();
-    statuses.add(getConnectorStatus(CONNECTOR1));
-    statuses.add(getConnectorStatus(CONNECTOR2));
+    statuses.add(getConnectorStatus("connector1"));
+    statuses.add(getConnectorStatus("connector2"));
     return statuses;
   }
 
@@ -229,7 +211,7 @@ public class MockManager implements Manager {
   /* @Override */
   public void removeConnector(String connectorName)
       throws ConnectorNotFoundException, PersistentStoreException {
-    if (CONNECTOR2.equals(connectorName)) {
+    if ("connector2".equals(connectorName)) {
       throw new ConnectorNotFoundException();
     }
     LOGGER.info("Removing connector: " + connectorName);
@@ -255,10 +237,9 @@ public class MockManager implements Manager {
   }
 
   public void setExpectedIdentity(String domain, String username,
-      String password, Collection<String> groups) {
+      String password) {
     this.domain = domain;
     this.username = username;
     this.password = password;
-    this.groups = groups;
   }
 }

@@ -17,7 +17,7 @@ package com.google.enterprise.connector.util;
 /**
  * Represents an invalid HTTP response during URL validation.
  *
- * @since 3.0
+ * @since 2.6.6
  */
 public class UrlValidatorException extends Exception {
   /** The HTTP status code. */

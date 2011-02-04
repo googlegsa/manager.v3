@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.
+// Copyright (C) 2006 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@ package com.google.enterprise.connector.manager;
 
 import com.google.enterprise.connector.common.PropertiesException;
 import com.google.enterprise.connector.common.PropertiesUtils;
-import com.google.enterprise.connector.instantiator.Instantiator;
 import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.instantiator.SpringInstantiator;
 import com.google.enterprise.connector.instantiator.ThreadPool;
@@ -30,9 +29,9 @@ import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEvent;
+import org.springframework.context.support.FileSystemXmlApplicationContext;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.core.io.Resource;
-import org.springframework.web.context.support.XmlWebApplicationContext;
 
 import java.io.File;
 import java.io.IOException;
@@ -213,15 +212,6 @@ public class Context {
       + " configuring a Connector Manager deployment that only authorizes\n"
       + " search results.  Traversals are enabled by default.\n"
       + " traversal.enabled=false\n"
-      + "\n"
-      + " The 'config.change.detect.interval' property specifies how often\n"
-      + " (in seconds) to look for asynchronous configuration changes.\n"
-      + " Values <= 0 imply never.  For stand-alone deployments, long\n"
-      + " intervals or never are probably sufficient.  For clustered\n"
-      + " deployments with a shared configuration store, 60 to 300 seconds\n"
-      + " is probably sufficient.  The default configuration change\n"
-      + " detection interval is -1 (never).\n"
-      + " config.change.detect.interval=60\n"
       + "\n";
 
   private static final Logger LOGGER =
@@ -246,8 +236,9 @@ public class Context {
   private TraversalContext traversalContext = null;
   private SpringInstantiator instantiator = null;
 
+  // control variables for turning off normal functionality - testing only
   private String standaloneContextLocation;
-  private String standaloneContextBaseDir;
+
 
   private Boolean gsaAdminRequiresPrefix = null;
 
@@ -293,19 +284,14 @@ public class Context {
       standaloneContextLocation = DEFAULT_JUNIT_CONTEXT_LOCATION;
     }
 
-    if (standaloneContextBaseDir == null) {
-      standaloneContextBaseDir = System.getProperty("user.dir");
-    }
-
     if (commonDirPath == null) {
       commonDirPath = DEFAULT_JUNIT_COMMON_DIR_PATH;
     }
     LOGGER.info("context file: " + standaloneContextLocation);
-    LOGGER.info("context base directory: " + standaloneContextBaseDir);
     LOGGER.info("common dir path: " + commonDirPath);
 
-    applicationContext = new AnchoredFileSystemXmlApplicationContext(
-        standaloneContextBaseDir, standaloneContextLocation);
+    applicationContext =
+        new FileSystemXmlApplicationContext(standaloneContextLocation);
   }
 
   /**
@@ -317,25 +303,8 @@ public class Context {
    * ConnectorType and Connector instantiation configuration data.
    */
   public void setStandaloneContext(String contextLocation,
-                                   String commonDirPath) {
-    setStandaloneContext(contextLocation, null, commonDirPath);
-  }
-
-  /**
-   * Establishes that we are operating within the standalone context. In
-   * this case, we use a FileSystemApplicationContext.
-   * @param contextLocation the name of the context XML file used for
-   * instantiation.
-   * @param contextBaseDir base directory for relative file paths in
-   * the contextLocation.
-   * @param commonDirPath the location of the common directory which contains
-   * ConnectorType and Connector instantiation configuration data.
-   */
-  public void setStandaloneContext(String contextLocation,
-                                   String contextBaseDir,
                                    String commonDirPath) {
     this.standaloneContextLocation = contextLocation;
-    this.standaloneContextBaseDir = contextBaseDir;
     this.commonDirPath = commonDirPath;
     initializeStandaloneApplicationContext();
   }
@@ -569,7 +538,7 @@ public class Context {
   }
 
   /**
-   * Gets the singleton {@link Manager}.
+   * Gets the singleton Manager.
    *
    * @return the Manager
    */
@@ -579,20 +548,6 @@ public class Context {
     }
     manager = (Manager) getRequiredBean("Manager", Manager.class);
     return manager;
-  }
-
-  /**
-   * Gets the singleton {@link Instantiator}.
-   *
-   * @return the Instantiator
-   */
-  public Instantiator getInstantiator() {
-    if (instantiator != null) {
-      return instantiator;
-    }
-    instantiator = (SpringInstantiator)
-        getRequiredBean("Instantiator", SpringInstantiator.class);
-    return instantiator;
   }
 
   /**
@@ -634,38 +589,19 @@ public class Context {
     return applicationContext;
   }
 
-  /**
-   * Retrieves the ApplicationContext configLocations,
-   * or null if none specified.
-   *
-   * @return String array of configLocations.
-   */
-  public String[] getConfigLocations() {
-    initApplicationContext();
-    if (isServletContext) {
-      return ((XmlWebApplicationContext) applicationContext)
-          .getConfigLocations();
-    } else {
-      return ((AnchoredFileSystemXmlApplicationContext) applicationContext)
-          .getConfigLocations();
-    }
-  }
-
   public synchronized void shutdown(boolean force) {
-    if (started) {
-      LOGGER.info("Shutdown initiated...");
-      stopServices(force);
-      if (null != traversalScheduler) {
-        traversalScheduler.shutdown();
-        traversalScheduler = null;
-      }
-      if (null != instantiator) {
-        instantiator.shutdown(force,
-            ThreadPool.DEFAULT_SHUTDOWN_TIMEOUT_MILLIS);
-        instantiator = null;
-      }
-      started = false;
+    LOGGER.info("Shutdown initiated...");
+    stopServices(force);
+    if (null != traversalScheduler) {
+      traversalScheduler.shutdown();
+      traversalScheduler = null;
     }
+    if (null != instantiator) {
+      instantiator.shutdown(force,
+          ThreadPool.DEFAULT_SHUTDOWN_TIMEOUT_MILLIS);
+      instantiator = null;
+    }
+    started = false;
   }
 
   /**
@@ -747,7 +683,7 @@ public class Context {
   /**
    * Returns a Properties containing just the GSA feed host and port properties.
    */
-  public Properties getConnectorManagerConfig() {
+  public Properties getConnectorManagerConfig() throws InstantiatorException {
     // Get the properties out of the CM properties file if present.
     Properties props = getConnectorManagerProperties();
     Properties result = new Properties();

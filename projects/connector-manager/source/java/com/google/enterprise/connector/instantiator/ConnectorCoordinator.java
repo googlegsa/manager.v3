@@ -1,4 +1,4 @@
-// Copyright 2009 Google Inc.
+// Copyright (C) 2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,10 +14,8 @@
 
 package com.google.enterprise.connector.instantiator;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
-import com.google.enterprise.connector.scheduler.Schedule;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.ConfigureResponse;
@@ -25,6 +23,7 @@ import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.traversal.Traverser;
 
 import java.util.Locale;
+import java.util.Map;
 
 /**
  * Management interface for a connector instance.
@@ -39,17 +38,15 @@ import java.util.Locale;
  * Note that a {@link ConnectorCoordinator} may be created with a name but not a
  * complete full configuration for purposes of providing synchronization during
  * the creation process. The configuration can be specified using
- * {@link #setConnectorConfiguration(TypeInfo, Configuration, Locale, boolean)}
- * The {@link #exists()} method will return false for a
- * {@link ConnectorCoordinator} without a complete configuration. In addition
- * many of the methods in this interface will throw a
- * {@link ConnectorNotFoundException} if the {@link ConnectorCoordinator} does
- * not have a complete configuration.
+ * {@link #setConnectorConfig(TypeInfo, Map, Locale, boolean)} The
+ * {@link #exists()} method will return false for a {@link ConnectorCoordinator}
+ * without a complete configuration. In addition many of the methods in this
+ * interface will throw a {@link ConnectorNotFoundException} if the
+ * {@link ConnectorCoordinator} does not have a complete configuration.
  * <p>
  * It is expected the caller will guarantee that each
  * {@link ConnectorCoordinator} in the system has a unique name.
  */
-@VisibleForTesting
 public interface ConnectorCoordinator {
   /**
    * Returns true if this {@link ConnectorCoordinator} holds a
@@ -75,8 +72,8 @@ public interface ConnectorCoordinator {
    * Removes this {@link ConnectorCoordinator} from the system. After this
    * returns {@link ConnectorCoordinator#exists()} will return false until
    * someone re-creates the connector configuration by calling
-   * {@link #setConnectorConfiguration(TypeInfo, Configuration, Locale, boolean)}.
-   * This is a noop if this {@link ConnectorCoordinator} does not exist.
+   * {@link #setConnectorConfig(TypeInfo, Map, Locale, boolean)}. This is a noop
+   * if this {@link ConnectorCoordinator} does not exist.
    */
   public void removeConnector();
 
@@ -113,7 +110,6 @@ public interface ConnectorCoordinator {
    * @throws InstantiatorException if unable to instantiate the requested
    *         {@link Traverser}
    */
-  @VisibleForTesting
   public TraversalManager getTraversalManager()
       throws ConnectorNotFoundException, InstantiatorException;
 
@@ -143,23 +139,23 @@ public interface ConnectorCoordinator {
   public void restartConnectorTraversal() throws ConnectorNotFoundException;
 
   /**
-   * Sets the {@link Schedule} for this {@link ConnectorCoordinator}. If this
+   * Sets the schedule for this {@link ConnectorCoordinator}. If this
    * {@link ConnectorCoordinator} supports persistence this will persist the
-   * new Schedule.
+   * new schedule.
    *
    * @throws ConnectorNotFoundException if this {@link ConnectorCoordinator}
    *         does not exist.
    */
-  public void setConnectorSchedule(Schedule connectorSchedule)
+  public void setConnectorSchedule(String connectorSchedule)
       throws ConnectorNotFoundException;
 
   /**
-   * Returns the {@link Schedule} for this {@link ConnectorCoordinator}.
+   * Returns the schedule for this {@link ConnectorCoordinator}.
    *
    * @throws ConnectorNotFoundException if this {@link ConnectorCoordinator}
    *         does not exist.
    */
-  public Schedule getConnectorSchedule() throws ConnectorNotFoundException;
+  public String getConnectorSchedule() throws ConnectorNotFoundException;
 
   /**
    * Set the Connector's traversal state.
@@ -208,8 +204,8 @@ public interface ConnectorCoordinator {
    *
    * @param newTypeInfo the new {@link TypeInfo} for this
    *        {@link ConnectorCoordinator}.
-   * @param configuration the replacement {@link Configuration} properties for
-   *        this {@link ConnectorCoordinator}.
+   * @param configMap the replacement configuration properties for this
+   *        {@link ConnectorCoordinator}.
    * @param locale the locale for use in constructing the returned
    *        {@link ConfigureResponse}.
    * @param update true means to update and existing configuration and flase
@@ -220,18 +216,18 @@ public interface ConnectorCoordinator {
    * @throws ConnectorExistsException {@link #exists()} returns true and update
    *         is false.
    */
-  public ConfigureResponse setConnectorConfiguration(TypeInfo newTypeInfo,
-      Configuration configuration, Locale locale, boolean update)
+  public ConfigureResponse setConnectorConfig(TypeInfo newTypeInfo,
+      Map<String, String> configMap, Locale locale, boolean update)
       throws ConnectorNotFoundException, ConnectorExistsException,
       InstantiatorException;
 
   /**
-   * Returns the {@link Configuration} for this {@link ConnectorCoordinator}.
+   * Returns the configuration parameters for this {@link ConnectorCoordinator}.
    *
    * @throws ConnectorNotFoundException if this {@link ConnectorCoordinator}
    *         does not exist.
    */
-  public Configuration getConnectorConfiguration()
+  public Map<String, String> getConnectorConfig()
       throws ConnectorNotFoundException;
 
   /**

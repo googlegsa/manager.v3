@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.
+// Copyright (C) 2006-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,20 +14,15 @@
 
 package com.google.enterprise.connector.pusher;
 
-import com.google.common.collect.ImmutableSet;
+import com.google.enterprise.connector.common.Base64FilterInputStream;
 import com.google.enterprise.connector.common.CompressedFilterInputStream;
 import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.spi.Document;
-import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.RepositoryDocumentException;
-import com.google.enterprise.connector.spi.SimpleProperty;
 import com.google.enterprise.connector.spi.SpiConstants;
-import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.traversal.FileSizeLimitInfo;
-import com.google.enterprise.connector.util.Base64FilterInputStream;
-import com.google.enterprise.connector.util.database.DocumentStore;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileOutputStream;
@@ -38,7 +33,6 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.LinkedList;
 import java.util.ListIterator;
-import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
@@ -170,15 +164,13 @@ public class DocPusher implements Pusher {
    * Takes a Document and sends a the feed to the GSA.
    *
    * @param document Document corresponding to the document.
-   * @param documentStore {@link DocumentStore} for recording document
-   *        status.  Optional - may be {@code null}.
    * @return true if Pusher should accept more documents, false otherwise.
    * @throws PushException if Pusher problem
    * @throws FeedException if transient Feed problem
    * @throws RepositoryDocumentException if fatal Document problem
    * @throws RepositoryException if transient Repository problem
    */
-  public boolean take(Document document, DocumentStore documentStore)
+  public boolean take(Document document)
       throws PushException, FeedException, RepositoryException {
     if (feedSender.isShutdown()) {
       throw new IllegalStateException("Pusher is shut down");
@@ -224,11 +216,7 @@ public class DocPusher implements Pusher {
     try {
       // Add this document to the feed.
       contentStream = getContentStream(document, feedType);
-      Document feedDocument = new FeedDocument(document, xmlFeed.getFeedId());
-      xmlFeed.addRecord(feedDocument, contentStream, contentEncoding);
-      if (documentStore != null) {
-        documentStore.storeDocument(feedDocument);
-      }
+      xmlFeed.addRecord(document, contentStream, contentEncoding);
       if (LOGGER.isLoggable(Level.FINER)) {
         LOGGER.finer("Document "
             + DocUtils.getRequiredString(document, SpiConstants.PROPNAME_DOCID)
@@ -254,7 +242,7 @@ public class DocPusher implements Pusher {
         if ((checkSubmissions() > 10) || feedConnection.isBacklogged()) {
           return false;
         }
-      }
+     }
 
       // Indicate that this Pusher may accept more documents.
       return true;
@@ -789,38 +777,6 @@ public class DocPusher implements Pusher {
       if (in != null) {
         super.close();
       }
-    }
-  }
-
-  /**
-   * Wraps the supplied {@link Document}, adding a
-   * {@code SpiConstants.PROPNAME_FEEDID} property to the set of
-   * properties.
-   */
-  private class FeedDocument implements Document {
-    private String feedId;
-    private Document document;
-
-    FeedDocument(Document document, String feedId) {
-      this.document = document;
-      this.feedId = feedId;
-    }
-
-    /* @Override */
-    public Property findProperty(String name) throws RepositoryException {
-      if (SpiConstants.PROPNAME_FEEDID.equals(name)) {
-        return new SimpleProperty(Value.getStringValue(feedId));
-      } else {
-        return document.findProperty(name);
-      }
-    }
-
-    /* @Override */
-    public Set<String> getPropertyNames() throws RepositoryException {
-      return new ImmutableSet.Builder<String>()
-             .add(SpiConstants.PROPNAME_FEEDID)
-             .addAll(document.getPropertyNames())
-             .build();
     }
   }
 

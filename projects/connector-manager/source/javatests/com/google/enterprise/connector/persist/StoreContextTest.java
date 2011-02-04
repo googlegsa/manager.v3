@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright (C) 2010 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@ package com.google.enterprise.connector.persist;
 
 import junit.framework.TestCase;
 
+import java.io.File;
+
 /**
  * Tests the equality, hash codes, and natural ordering of {@link
  * StoreContext} objects.
@@ -24,67 +26,17 @@ public class StoreContextTest extends TestCase {
   /** Gets an array of test objects sorted by the natural ordering. */
   private static StoreContext[] getTestObjects() {
     return new StoreContext[] {
-      new StoreContext("alice", "aliceType"),
-      new StoreContext("alice", "bobType"),
-      new StoreContext("bob", "aliceType"),
-      new StoreContext("bob", "bobType"),
+      new StoreContext("alice", null),
+      new StoreContext("alice", new File("/alice")),
+      new StoreContext("alice", new File("/bob")),
+      new StoreContext("bob", null),
+      new StoreContext("bob", new File("/alice")),
+      new StoreContext("bob", new File("/bob")),
     };
   }
 
   private static final StoreContext[] LEFT = getTestObjects();
   private static final StoreContext[] RIGHT = getTestObjects();
-
-  /**
-   * Tests if the exception is thrown correctly when the connector name is null.
-   */
-  public void testNullConnectorName() {
-    try {
-      new StoreContext(null, "test");
-      fail("failed to throw exception");
-    } catch (IllegalArgumentException e) {
-      assertEquals("StoreContext.connectorName may not be null or empty.",
-                   e.getMessage());
-    }
-  }
-
-  /**
-   * Tests if the exception is thrown correctly if the connector name is empty.
-   */
-  public void testEmptyConnectorName() {
-    try {
-      new StoreContext("", "test");
-      fail("failed to throw exception");
-    } catch (IllegalArgumentException e) {
-      assertEquals("StoreContext.connectorName may not be null or empty.",
-                   e.getMessage());
-    }
-  }
-
-  /**
-   * Tests if the exception is thrown correctly when the type name is null.
-   */
-  public void testNullTypeName() {
-    try {
-      new StoreContext("test", null);
-      fail("failed to throw exception");
-    } catch (IllegalArgumentException e) {
-      assertEquals("StoreContext.typeName may not be null or empty.",
-                   e.getMessage());
-    }
-  }
-
-  /**
-   * Tests if the exception is thrown correctly if the type name is empty.
-   */
-  public void testEmptyTypeName() {
-    try {
-      new StoreContext("test", "");
-      fail("failed to throw exception");
-    } catch (IllegalArgumentException e) {
-      assertEquals("StoreContext.typeName may not be null or empty.",
-                   e.getMessage());
-    }
-  }
 
   /**
    * Make sure our test arrays have distinct instances, so that an ==
@@ -115,7 +67,7 @@ public class StoreContextTest extends TestCase {
   public void testCompareTo() {
     for (int i = 0; i < LEFT.length; i++) {
       for (int j = 0; j < RIGHT.length; j++) {
-        assertEquals("Compare " + i + ", " + j + " => "
+        assertEquals("Compare " + i + ", " + j + " => " 
             + LEFT[i].compareTo(RIGHT[j]),
             sgn(i - j), sgn(LEFT[i].compareTo(RIGHT[j])));
       }

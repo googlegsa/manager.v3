@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.
+//Copyright (C) 2006 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.PersistentStoreException;
 import com.google.enterprise.connector.spi.ConfigureResponse;
-import com.google.enterprise.connector.util.XmlParseUtil;
 
 import org.w3c.dom.Element;
 
@@ -39,16 +38,17 @@ public class SetConnectorConfigHandler {
     Logger.getLogger(SetConnectorConfigHandler.class.getName());
 
   private ConnectorMessageCode status;
-  private String language = null;
+  private String language;
   private String connectorName;
-  private String connectorType = null;
+  private String connectorType;
   private boolean update = false;
-  private Map<String, String> configData = null;
+  private Map<String, String> configData;
   private ConfigureResponse configRes;
 
   /*
    * Reads from an input XML body string
    * @param manager Manager
+   * @param language String.
    * @param xmlBody String Input XML body string.
    */
   public SetConnectorConfigHandler(String xmlBody, Manager manager) {
@@ -56,24 +56,24 @@ public class SetConnectorConfigHandler {
     if (Context.getInstance().gsaAdminRequiresPrefix()) {
       xmlBody = ServletUtil.stripCmPrefix(xmlBody);
     }
-    Element root = XmlParseUtil.parseAndGetRootElement(
+    Element root = ServletUtil.parseAndGetRootElement(
         xmlBody, ServletUtil.XMLTAG_CONNECTOR_CONFIG);
     if (root == null) {
       this.status.setMessageId(ConnectorMessageCode.ERROR_PARSING_XML_REQUEST);
       return;
     }
 
-    this.language = XmlParseUtil.getFirstElementByTagName(
+    this.language = ServletUtil.getFirstElementByTagName(
         root, ServletUtil.QUERY_PARAM_LANG);
-    this.connectorName = XmlParseUtil.getFirstElementByTagName(
+    this.connectorName = ServletUtil.getFirstElementByTagName(
         root, ServletUtil.XMLTAG_CONNECTOR_NAME);
     if (this.connectorName == null) {
       this.status.setMessageId(ConnectorMessageCode.RESPONSE_NULL_CONNECTOR);
       return;
     }
-    this.connectorType = XmlParseUtil.getFirstElementByTagName(
+    this.connectorType = ServletUtil.getFirstElementByTagName(
         root, ServletUtil.XMLTAG_CONNECTOR_TYPE);
-    if (XmlParseUtil.getFirstElementByTagName(root,
+    if (ServletUtil.getFirstElementByTagName(root,
         ServletUtil.XMLTAG_UPDATE_CONNECTOR).equalsIgnoreCase("true")) {
       this.update = true;
     } else {
@@ -83,7 +83,7 @@ public class SetConnectorConfigHandler {
       this.connectorName = this.connectorName.toLowerCase();
     }
     NDC.pushAppend(this.connectorName);
-    this.configData = XmlParseUtil.getAllAttributes(
+    this.configData = ServletUtil.getAllAttributes(
         root, ServletUtil.XMLTAG_PARAMETERS);
     if (this.configData.isEmpty()) {
       this.status.setMessageId(ConnectorMessageCode.RESPONSE_NULL_CONFIG_DATA);

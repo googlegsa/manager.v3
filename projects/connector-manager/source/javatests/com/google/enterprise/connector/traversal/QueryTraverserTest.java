@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.
+// Copyright (C) 2006-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -32,8 +32,6 @@ import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
-import com.google.enterprise.connector.util.SystemClock;
-import com.google.enterprise.connector.util.database.DocumentStore;
 
 import junit.framework.TestCase;
 
@@ -66,8 +64,7 @@ public class QueryTraverserTest extends TestCase {
   }
 
   private void runTestBatches(int batchHint, int batchMax) {
-    ThreadPool threadPool = new ThreadPool(5,
-        new SystemClock() /* TODO: use mock clock? */);
+    ThreadPool threadPool = new ThreadPool(5);
     MockInstantiator instantiator = new MockInstantiator(threadPool);
     try {
       MockRepositoryEventList mrel =
@@ -119,8 +116,7 @@ public class QueryTraverserTest extends TestCase {
 
     Traverser traverser = new QueryTraverser(new MockPusher(System.out), qtm,
         instantiator.getTraversalStateStore(connectorName), connectorName,
-        Context.getInstance().getTraversalContext(),
-        new SystemClock() /* TODO: use a mock clock? */, null);
+        Context.getInstance().getTraversalContext());
 
     instantiator.setupTraverser(connectorName, traverser);
     return traverser;
@@ -158,8 +154,7 @@ public class QueryTraverserTest extends TestCase {
       fail("Unable to initialize largefile.txt: " + e.toString());
     }
 
-    ThreadPool threadPool = new ThreadPool(5,
-        new SystemClock() /* TODO: use mock clock? */);
+    ThreadPool threadPool = new ThreadPool(5);
     MockInstantiator instantiator = new MockInstantiator(threadPool);
     try {
       MockRepositoryEventList mrel =
@@ -185,9 +180,7 @@ public class QueryTraverserTest extends TestCase {
     ProductionTraversalContext context = new ProductionTraversalContext();
     context.setTraversalTimeLimitSeconds(1);
     QueryTraverser queryTraverser = new QueryTraverser(pusher, traversalManager,
-        stateStore, CONNECTOR_NAME, context,
-        new SystemClock() /* TODO: use a mock clock */, null);
-
+        stateStore, CONNECTOR_NAME, context);
     BatchResult result = queryTraverser.runBatch(new BatchSize(100, 100));
     assertTrue(result.getCountProcessed() > 0);
     assertEquals(traversalManager.getDocumentCount(),
@@ -206,8 +199,7 @@ public class QueryTraverserTest extends TestCase {
     ProductionTraversalContext context = new ProductionTraversalContext();
     context.setTraversalTimeLimitSeconds(1);
     QueryTraverser queryTraverser = new QueryTraverser(pusher, traversalManager,
-        stateStore, CONNECTOR_NAME, context, new SystemClock(), null);
-
+        stateStore, CONNECTOR_NAME, context);
     BatchResult result = queryTraverser.runBatch(new BatchSize(10, 20));
     assertTrue(result.getCountProcessed() > 10);
     assertTrue(result.getCountProcessed() <= 20);
@@ -290,7 +282,7 @@ public class QueryTraverserTest extends TestCase {
 
   /**
    * A {@link Pusher} that performs validations
-   * @see ValidatingPusher#take(Document, DocumentStore) for details.
+   * @see ValidatingPusher#take(Document) for details.
    */
   private static class ValidatingPusher implements Pusher, PusherFactory {
     private final String connectorName;
@@ -320,11 +312,10 @@ public class QueryTraverserTest extends TestCase {
      * matches the number of documents pushed (formatted as a {@link String}).
      * </OL>
      */
-    public boolean take(Document document, DocumentStore ignored)
-        throws RepositoryException {
+    public boolean take(Document document) throws RepositoryException{
       String expectId = Long.toString(pushCount);
       String gotId =
-          Value.getSingleValueString(document, SpiConstants.PROPNAME_DOCID);
+        Value.getSingleValueString(document, SpiConstants.PROPNAME_DOCID);
       assertEquals(expectId, gotId);
       pushCount++;
       return true;
@@ -360,5 +351,6 @@ public class QueryTraverserTest extends TestCase {
     public void storeTraversalState(String state) {
       this.state = state;
     }
+
   }
 }

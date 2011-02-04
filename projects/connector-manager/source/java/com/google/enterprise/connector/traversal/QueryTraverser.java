@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.
+// Copyright (C) 2006-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,27 +14,21 @@
 
 package com.google.enterprise.connector.traversal;
 
-import com.google.common.collect.ImmutableSet;
 import com.google.enterprise.connector.pusher.FeedException;
 import com.google.enterprise.connector.pusher.PushException;
 import com.google.enterprise.connector.pusher.Pusher;
 import com.google.enterprise.connector.pusher.PusherFactory;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.DocumentList;
-import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.RepositoryDocumentException;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.SkippedDocumentException;
-import com.google.enterprise.connector.spi.SimpleProperty;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.TraversalContext;
 import com.google.enterprise.connector.spi.TraversalContextAware;
 import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.spi.Value;
-import com.google.enterprise.connector.util.Clock;
-import com.google.enterprise.connector.util.database.DocumentStore;
 
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -48,10 +42,8 @@ public class QueryTraverser implements Traverser {
   private final PusherFactory pusherFactory;
   private final TraversalManager queryTraversalManager;
   private final TraversalStateStore stateStore;
-  private final DocumentStore documentStore;
   private final String connectorName;
   private final TraversalContext traversalContext;
-  private final Clock clock;
 
   // Synchronize access to cancelWork.
   private final Object cancelLock = new Object();
@@ -59,15 +51,12 @@ public class QueryTraverser implements Traverser {
 
   public QueryTraverser(PusherFactory pusherFactory,
       TraversalManager traversalManager, TraversalStateStore stateStore,
-      String connectorName, TraversalContext traversalContext, Clock clock,
-      DocumentStore documentStore) {
+      String connectorName, TraversalContext traversalContext) {
     this.pusherFactory = pusherFactory;
     this.queryTraversalManager = traversalManager;
     this.stateStore = stateStore;
     this.connectorName = connectorName;
     this.traversalContext = traversalContext;
-    this.clock = clock;
-    this.documentStore = documentStore;
     if (queryTraversalManager instanceof TraversalContextAware) {
       TraversalContextAware contextAware =
           (TraversalContextAware)queryTraversalManager;
@@ -95,7 +84,7 @@ public class QueryTraverser implements Traverser {
 
   //@Override
   public BatchResult runBatch(BatchSize batchSize) {
-    final long startTime = clock.getTimeMillis();
+    final long startTime = System.currentTimeMillis();
     final long timeoutTime = startTime
       + traversalContext.traversalTimeLimitSeconds() * 1000;
 
@@ -117,7 +106,7 @@ public class QueryTraverser implements Traverser {
         throw new IllegalStateException("null TraversalStateStore");
       }
     } catch (IllegalStateException ise) {
-      // We get here if the store for the connector is disabled.
+      // We get here if the ConnectorStateStore for connector is disabled.
       // That happens if the connector was deleted while we were asleep.
       // Our connector seems to have been deleted.  Don't process a batch.
       LOGGER.finer("Halting traversal..." + ise.getMessage());
@@ -163,7 +152,7 @@ public class QueryTraverser implements Traverser {
                       + " has been interrupted...breaking out of batch run.");
           break;
         }
-        if (clock.getTimeMillis() >= timeoutTime) {
+        if (System.currentTimeMillis() >= timeoutTime) {
           LOGGER.fine("Traversal for connector " + connectorName
               + " is completing due to time limit.");
           break;
@@ -199,7 +188,7 @@ public class QueryTraverser implements Traverser {
           LOGGER.finer("Sending document (" + docid + ") from connector "
               + connectorName + " to Pusher");
 
-          if (!pusher.take(nextDocument, documentStore)) {
+          if (!pusher.take(nextDocument)) {
             LOGGER.fine("Traversal for connector " + connectorName
                 + " is completing at the request of the Pusher.");
             break;
@@ -210,27 +199,26 @@ public class QueryTraverser implements Traverser {
            * It uses Exceptions for non-exceptional cases.
            */
           // Skip this document.  Proceed on to the next one.
-          skipDocument(docid, nextDocument, e);
+          if (LOGGER.isLoggable(Level.FINER)) {
+            LOGGER.log(Level.FINER, "Skipping document (" + docid
+                + ") from connector " + connectorName + ": " + e.getMessage());
+          }
         } catch (RepositoryDocumentException e) {
           // Skip individual documents that fail.  Proceed on to the next one.
-          skipDocument(docid, nextDocument, e);
+          LOGGER.log(Level.WARNING, "Skipping document (" + docid
+              + ") from connector " + connectorName, e);
         } catch (RuntimeException e) {
           // Skip individual documents that fail.  Proceed on to the next one.
-          skipDocument(docid, nextDocument, e);
+          LOGGER.log(Level.WARNING, "Skipping document (" + docid
+              + ") from connector " + connectorName, e);
         }
       }
       // No more documents. Wrap up any accumulated feed data and send it off.
       if (!isCancelled()) {
         pusher.flush();
-        if (documentStore != null) {
-          documentStore.flush();
-        }
       }
     } catch (OutOfMemoryError e) {
       pusher.cancel();
-      if (documentStore != null) {
-        documentStore.cancel();
-      }
       System.runFinalization();
       System.gc();
       result = new BatchResult(TraversalDelayPolicy.ERROR);
@@ -280,14 +268,11 @@ public class QueryTraverser implements Traverser {
     }
     if (result == null) {
       result = new BatchResult(TraversalDelayPolicy.IMMEDIATE, counter,
-                               startTime, clock.getTimeMillis());
+                               startTime, System.currentTimeMillis());
     } else if (pusher != null) {
       // We are returning an error from this batch. Cancel any feed that
       // might be in progress.
       pusher.cancel();
-      if (documentStore != null) {
-        documentStore.cancel();
-      }
     }
     return result;
   }
@@ -318,59 +303,11 @@ public class QueryTraverser implements Traverser {
       }
       return connectorState;
     } catch (IllegalStateException ise) {
-      // We get here if the store for the connector is disabled.
+      // We get here if the ConnectorStateStore for connector is disabled.
       // That happens if the connector was deleted while we were working.
       // Our connector seems to have been deleted.  Don't save a checkpoint.
       LOGGER.finest("...checkpoint " + connectorState + " discarded.");
     }
     return null;
-  }
-
-  private void skipDocument(String docid, Document document, Exception e) {
-    if (LOGGER.isLoggable(Level.FINER)) {
-      LOGGER.log(Level.FINER, "Skipping document (" + docid
-          + ") from connector " + connectorName + ": " + e.getMessage());
-    }
-    if (documentStore != null) {
-      documentStore.storeDocument(new SkippedDocument(document, e));
-    }
-  }
-
-  /**
-   * Wraps the supplied {@link Document}, adding a
-   * {@code SpiConstants.PROPNAME_MESSAGE} property to the set of
-   * properties.
-   */
-  private class SkippedDocument implements Document {
-    private Document document;
-    private Exception exception;
-
-    SkippedDocument(Document document, Exception exception) {
-      this.document = document;
-      this.exception = exception;
-    }
-
-    /* @Override */
-    public Property findProperty(String name) throws RepositoryException {
-      if (SpiConstants.PROPNAME_MESSAGE.equals(name)) {
-        String message = Value.getSingleValueString(document, name);
-        message = exception.getMessage() + ((message == null) ? "" : ": " + message);
-        return new SimpleProperty(Value.getStringValue(message));
-      } else if (SpiConstants.PROPNAME_ACTION.equals(name)) {
-        return new SimpleProperty(Value.getStringValue(
-            SpiConstants.ActionType.SKIPPED.toString()));
-      } else {
-        return document.findProperty(name);
-      }
-    }
-
-    /* @Override */
-    public Set<String> getPropertyNames() throws RepositoryException {
-      return new ImmutableSet.Builder<String>()
-             .add(SpiConstants.PROPNAME_ACTION)
-             .add(SpiConstants.PROPNAME_MESSAGE)
-             .addAll(document.getPropertyNames())
-             .build();
-    }
   }
 }

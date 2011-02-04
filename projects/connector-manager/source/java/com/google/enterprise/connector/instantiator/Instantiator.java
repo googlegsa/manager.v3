@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.
+// Copyright (C) 2006-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.google.enterprise.connector.instantiator;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
-import com.google.enterprise.connector.scheduler.Schedule;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.ConfigureResponse;
@@ -28,11 +27,12 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Facade interface for instantiator package.
+ * Interface for instantiator component.
  */
 public interface Instantiator {
+
   /**
-   * Gets an AuthenticationManager for a named connector.
+   * gets an AuthenticationManager for a named connector.
    *
    * @param connectorName the String name of the connector for which to get the
    *        Traverser
@@ -46,7 +46,7 @@ public interface Instantiator {
       throws ConnectorNotFoundException, InstantiatorException;
 
   /**
-   * Gets an AuthorizationManager for a named connector.
+   * gets an AuthorizationManager for a named connector.
    *
    * @param connectorName the String name of the connector for which to get the
    *        Traverser
@@ -141,10 +141,12 @@ public interface Instantiator {
       throws ConnectorNotFoundException;
 
   /**
-   * Sets the {@link Configuration} for a new connector.
+   * Sets the configuration for a new connector. This connector should not
+   * exist.
    *
-   * @param connectorName The connector's name
-   * @param configuration A Configuration for this connector
+   * @param connectorName The connector to create
+   * @param connectorTypeName The type for this connector
+   * @param configMap A configuration map for this connector
    * @param locale A Java Locale string
    * @param update A boolean true if updating the existing connector
    * @return null if config is valid and accepted, a ConfigureResponse object
@@ -154,52 +156,52 @@ public interface Instantiator {
    * @throws ConnectorTypeNotFoundException
    * @throws InstantiatorException
    */
-  public ConfigureResponse setConnectorConfiguration(String connectorName,
-      Configuration configuration, Locale locale, boolean update)
+  public ConfigureResponse setConnectorConfig(String connectorName,
+      String connectorTypeName, Map<String, String> configMap, Locale locale,
+      boolean update)
       throws ConnectorNotFoundException, ConnectorExistsException,
       ConnectorTypeNotFoundException, InstantiatorException;
 
   /**
-   * Get a connector's ConnectorType-specific {@link Configuration} data
+   * Get a connector's ConnectorType-specific configuration data
    *
    * @param connectorName the connector to look up
-   * @return a {@link Configuration} of its ConnectorType-specific
+   * @return a Map&lt;String, String&gt; of its ConnectorType-specific
    *         configuration data
    * @throws ConnectorNotFoundException if the named connector is not found
    */
-  public Configuration getConnectorConfiguration(String connectorName)
+  public Map<String, String> getConnectorConfig(String connectorName)
       throws ConnectorNotFoundException;
 
   /**
-   * Sets the {@link Schedule} of a named connector.
+   * Sets the schedule of a named connector.
    *
    * @param connectorName
-   * @param connectorSchedule Schedule to store or null unset any existing
-   *        Schedule.
+   * @param connectorSchedule String to store or null unset any existing
+   *        schedule.
    * @throws ConnectorNotFoundException if the named connector is not found
    */
   public void setConnectorSchedule(String connectorName,
-      Schedule connectorSchedule) throws ConnectorNotFoundException;
+      String connectorSchedule) throws ConnectorNotFoundException;
 
   /**
-   * Gets the {@link Schedule} of a named connector.
+   * Gets the schedule of a named connector.
    *
    * @param connectorName
-   * @return the Schedule, or null if there is no stored Schedule
+   * @return the schedule String, or null if there is no stored  schedule
    *         for this connector.
    * @throws ConnectorNotFoundException if the named connector is not found
    */
-  public Schedule getConnectorSchedule(String connectorName)
+  public String getConnectorSchedule(String connectorName)
       throws ConnectorNotFoundException;
 
   /**
-   * Starts running a batch for a named connector if a batch is not
-   * already running.
+   * Returns the named {@link ConnectorCoordinator}.
    *
    * @throws ConnectorNotFoundException if the named connector is not found
    */
-  public void startBatch(String connectorName)
-      throws ConnectorNotFoundException;
+  public ConnectorCoordinator getConnectorCoordinator(
+      String connectorName) throws ConnectorNotFoundException;
 
   /**
    * Shutdown all the Connector instances.

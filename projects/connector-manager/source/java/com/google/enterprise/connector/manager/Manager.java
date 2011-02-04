@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.
+// Copyright (C) 2006-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.persist.PersistentStoreException;
 import com.google.enterprise.connector.spi.AuthenticationIdentity;
-import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.ConnectorType;
 
@@ -165,10 +164,9 @@ public interface Manager {
    * @param connectorName
    * @param identity An AuthenticationIdentity object that encapsulates the
    *        user's identity
-   * @return an AuthenticationResponse
+   * @return true for success.
    */
-  public AuthenticationResponse authenticate(String connectorName,
-      AuthenticationIdentity identity);
+  public boolean authenticate(String connectorName, AuthenticationIdentity identity);
 
   /**
    * Gets authorization from a named connector for a set of documents by ID.
