@@ -38,7 +38,7 @@ public class SpiConstants {
    * <p>
    * Value: "google:"
    *
-   * @since 3.0
+   * @since 2.6.6
    */
   public static final String RESERVED_PROPNAME_PREFIX = "google:";
 
@@ -308,7 +308,7 @@ public class SpiConstants {
    * Value: google:folder
    *
    * @see "RFC 3986: Uniform Resource Identifier (URI): Generic Syntax"
-   * @since 3.0
+   * @since 2.6.6
    */
   public static final String PROPNAME_FOLDER = "google:folder";
 
@@ -323,7 +323,7 @@ public class SpiConstants {
    * Value: google:lock
    *
    * @see "<a href='http://code.google.com/apis/searchappliance/documentation/62/feedsguide.html#defining_the_xml'>Defining the XML Record for a Document</a>"
-   *
+   * @since 2.6.4
    */
   public static final String PROPNAME_LOCK = "google:lock";
 
