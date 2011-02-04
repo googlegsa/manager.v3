@@ -73,8 +73,17 @@ Summary of Changes
 ------------------
   * Servlet access to the Connector Manager on-board the GSA has been
     largely locked down. The getConfiguration and getConnectorLogs
-    servlets remain accessible for the benefit connector administrators
+    servlets remain accessible for the benefit of connector administrators
     and support personnel.
+
+
+Release 2.6.2, 09 September 2010
+================================
+
+Introduction
+------------
+This is an internal release for the Connector Manager on-board the GSA,
+not for general use.
 
 
 Release 2.6.0,  14 June 2010
