@@ -22,15 +22,17 @@ import com.google.enterprise.connector.util.Base64DecoderException;
 import org.springframework.beans.factory.config.PropertyPlaceholderConfigurer;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
+import java.nio.channels.FileLock;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.KeyStore;
@@ -90,6 +92,8 @@ public class EncryptedPropertyPlaceholderConfigurer extends
   private static String keyStoreType = "JCEKS";
 
   private static String keyStoreCryptoAlgo = "AES";
+
+  private static SecretKey secretKey = null;
 
   /*
    * Overridden from the base class implementation. This looks for properties
@@ -161,29 +165,41 @@ public class EncryptedPropertyPlaceholderConfigurer extends
   }
 
   /*
-   * Creates a new keystore if none exists, or reads in existing
-   * keystore.
+   * Reads a KeyStore from the supplied file, or creates a new KeyStore
+   * if none exists.
    */
-  public static KeyStore getKeyStore() throws KeyStoreException,
-      CertificateException, NoSuchAlgorithmException, IOException {
+  private static KeyStore readKeyStore(RandomAccessFile keyStoreFile,
+      char[] keyPassChars) throws IOException, CertificateException,
+      NoSuchAlgorithmException, KeyStoreException {
+    KeyStore keyStore = KeyStore.getInstance(keyStoreType);
 
-    KeyStore ks = KeyStore.getInstance(keyStoreType);
-    FileInputStream fis = null;
-    File f = new File(keyStorePath);
-    if (f.exists()) {
-      fis = new FileInputStream(f);
-      LOGGER.config("Using existing keystore at " + f.getAbsolutePath());
+    // If the file is non-empty, read in the KeyStore, otherwise
+    // create an empty KeyStore.
+    ByteArrayInputStream bais = null;
+    if (keyStoreFile.length() > 0L) {
+      byte[] buffer = new byte[(int) keyStoreFile.length()];
+      keyStoreFile.seek(0L);
+      keyStoreFile.read(buffer);
+      bais = new ByteArrayInputStream(buffer);
     }
-    String keyStorePasswd = getKeyStorePasswd();
-    char[] keyPassChars = keyStorePasswd.toCharArray();
-    if (keyStorePasswd.length() == 0) {
-      keyPassChars = null;
-    }
-    ks.load(fis, keyPassChars);
-    if (fis != null) {
-      fis.close();
-    }
-    return ks;
+
+    keyStore.load(bais, keyPassChars);
+    return keyStore;
+  }
+
+  /*
+   * Writes a KeyStore to the supplied file, overwriting it completely.
+   */
+  private static void writeKeyStore(KeyStore keyStore,
+      RandomAccessFile keyStoreFile, char[] keyPassChars) throws IOException,
+      CertificateException, NoSuchAlgorithmException, KeyStoreException {
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    keyStore.store(baos, keyPassChars);
+
+    keyStoreFile.seek(0L);
+    keyStoreFile.setLength(0L);
+    keyStoreFile.write(baos.toByteArray());
+    keyStoreFile.getChannel().force(false);
   }
 
   /*
@@ -214,31 +230,39 @@ public class EncryptedPropertyPlaceholderConfigurer extends
    * Reads in secret key from keystore, or generates one and stores it in the
    * keystore if none exists.
    */
-  private static SecretKey getSecretKey() throws NoSuchAlgorithmException,
-      KeyStoreException, CertificateException, IOException {
-
-    SecretKey key = null;
-    KeyStore keyStore = getKeyStore();
-    String keyStorePasswd = getKeyStorePasswd();
-    char[] keyStorePasswdChars = keyStorePasswd.toCharArray();
-
-    try {
-      key = (SecretKey)keyStore.getKey(KEY_NAME, keyStorePasswdChars);
-      if (key == null) {
-        // key did not exist --- create a new key, and store it
-        LOGGER.config("Creating new key for password encryption");
-        key = KeyGenerator.getInstance(keyStoreCryptoAlgo).generateKey();
-        keyStore.setKeyEntry(KEY_NAME, key, keyStorePasswdChars, null);
-        File file = new File(keyStorePath);
-        FileOutputStream keyStoreFile = new FileOutputStream(file);
-        keyStore.store(keyStoreFile, keyStorePasswdChars);
-        keyStoreFile.close();
-      }
-    } catch (UnrecoverableKeyException e) {
-      e.printStackTrace();
-      LOGGER.severe("Key cannot be recovered from keystore");
+  private static synchronized SecretKey getSecretKey()
+      throws NoSuchAlgorithmException, KeyStoreException, CertificateException,
+             UnrecoverableKeyException, IOException {
+    if (secretKey != null) {
+      return secretKey;
     }
-    return key;
+    char[] keyStorePasswdChars = getKeyStorePasswd().toCharArray();
+
+    File keyStoreFile = new File(keyStorePath);
+    keyStoreFile.createNewFile();
+    LOGGER.config("Accessing keystore at " + keyStoreFile.getAbsolutePath());
+
+    // Lock the keystore file to avoid concurrent key generation.
+    RandomAccessFile raf = new RandomAccessFile(keyStoreFile, "rw");
+    try {
+      FileLock lock = raf.getChannel().lock();
+      try {
+        KeyStore keyStore = readKeyStore(raf, keyStorePasswdChars);
+        secretKey = (SecretKey)keyStore.getKey(KEY_NAME, keyStorePasswdChars);
+        if (secretKey == null) {
+          // key did not exist --- create a new key, and store it
+          LOGGER.config("Creating new key for password encryption");
+          secretKey = KeyGenerator.getInstance(keyStoreCryptoAlgo).generateKey();
+          keyStore.setKeyEntry(KEY_NAME, secretKey, keyStorePasswdChars, null);
+          writeKeyStore(keyStore, raf, keyStorePasswdChars);
+        }
+      } finally {
+        lock.release();
+      }
+    } finally {
+      raf.close();
+    }
+    return secretKey;
   }
 
   public static String encryptString(String plainText) {
@@ -280,6 +304,10 @@ public class EncryptedPropertyPlaceholderConfigurer extends
       throw new RuntimeException("Could not encrypt password");
     } catch (InvalidKeyException e) {
       LOGGER.severe("Could not encrypt password");
+      throw new RuntimeException("Could not encrypt password");
+    } catch (UnrecoverableKeyException e) {
+      LOGGER.severe(
+          "Could not encrypt password: Key cannot be recovered from keystore");
       throw new RuntimeException("Could not encrypt password");
     } catch (KeyStoreException e) {
       LOGGER.severe("Could not encrypt password");
@@ -330,6 +358,10 @@ public class EncryptedPropertyPlaceholderConfigurer extends
       throw new RuntimeException("Could not decrypt password");
     } catch (InvalidKeyException e) {
       LOGGER.severe("Could not decrypt password");
+      throw new RuntimeException("Could not decrypt password");
+    } catch (UnrecoverableKeyException e) {
+      LOGGER.severe(
+          "Could not decrypt password: Key cannot be recovered from keystore");
       throw new RuntimeException("Could not decrypt password");
     } catch (BadPaddingException e) {
       LOGGER.severe("Could not decrypt password");
