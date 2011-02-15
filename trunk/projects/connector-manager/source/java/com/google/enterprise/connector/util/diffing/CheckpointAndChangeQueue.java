@@ -238,8 +238,7 @@ public class CheckpointAndChangeQueue {
         JSONObject json = new JSONObject(contents);
         return json;
       } catch (JSONException e) {
-        throw IOExceptionHelper.newIOException(
-            "Failed reading persisted JSON queue.", e);
+        throw newIOException("Failed reading persisted JSON queue.", e);
       }
     }
   }
@@ -265,8 +264,7 @@ public class CheckpointAndChangeQueue {
       try {
         queueJson.write(writer);
       } catch (JSONException e) {
-        throw IOExceptionHelper.newIOException(
-            "Failed writing recovery file.", e);
+        throw newIOException("Failed writing recovery file.", e);
       }
       writer.write(SENTINAL);
       writer.flush();
@@ -289,8 +287,7 @@ public class CheckpointAndChangeQueue {
       JSONObject jsonMonPoints = json.getJSONObject(MONITOR_STATE_JSON_TAG);
       monitorPoints = new MonitorRestartState(jsonMonPoints);
     } catch (JSONException e) {
-      throw IOExceptionHelper.newIOException(
-                "Failed reading persisted JSON queue.", e);
+      throw newIOException("Failed reading persisted JSON queue.", e);
     }
   }
 
@@ -509,5 +506,16 @@ public class CheckpointAndChangeQueue {
       String errmsg = "Failed to delete: " + persistDir.getAbsolutePath();
       LOG.severe(errmsg);
     }
+  }
+
+  /**
+   * Makes a new IOException with the supplied
+   * message and cause in a manner that is supported by
+   * java 5.
+   */
+  private static IOException newIOException(String msg, Throwable cause) {
+    IOException result = new IOException(msg);
+    result.initCause(cause);
+    return result;
   }
 }
