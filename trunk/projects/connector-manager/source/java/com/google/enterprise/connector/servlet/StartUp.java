@@ -14,12 +14,15 @@
 
 package com.google.enterprise.connector.servlet;
 
+import com.google.common.base.Function;
+import com.google.common.base.Strings;
 import com.google.enterprise.connector.instantiator.EncryptedPropertyPlaceholderConfigurer;
 import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.manager.Context;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.servlet.ServletContext;
@@ -47,6 +50,8 @@ public class StartUp extends HttpServlet {
       ServletContext servletContext = this.getServletContext();
       doConnectorManagerStartup(servletContext);
       LOGGER.info("init done");
+    } catch (IOException e) {
+      LOGGER.log(Level.SEVERE, "Connector Manager Startup failed: ", e);
     } finally {
       NDC.remove();
     }
@@ -83,28 +88,32 @@ public class StartUp extends HttpServlet {
     LOGGER.info("Connector Manager started.");
   }
 
-  private void doConnectorManagerStartup(ServletContext servletContext) {
+  private void doConnectorManagerStartup(ServletContext servletContext)
+      throws IOException {
     LOGGER.info(ServletUtil.getManagerSplash());
 
     // read in and set initialization parameters
     String kp = servletContext.getInitParameter("keystore_passwd_file");
-    EncryptedPropertyPlaceholderConfigurer.setKeyStorePasswdPath(kp);
+    if (!Strings.isNullOrEmpty(kp)) {
+      EncryptedPropertyPlaceholderConfigurer.setKeyStorePasswdPath(
+         getRealPath(servletContext, kp));
+    }
 
     String ks = servletContext.getInitParameter("keystore_file");
-    String realks = servletContext.getRealPath("/WEB-INF/" + ks);
-    if (null == realks) {
-      // Servlet container cannot translated the virtual path to a
-      // real path, so use the given path.
-      EncryptedPropertyPlaceholderConfigurer.setKeyStorePath(ks);
-    } else {
-      EncryptedPropertyPlaceholderConfigurer.setKeyStorePath(realks);
+    if (!Strings.isNullOrEmpty(ks)) {
+      EncryptedPropertyPlaceholderConfigurer.setKeyStorePath(
+          getRealPath(servletContext, ks));
     }
 
     String kt = servletContext.getInitParameter("keystore_type");
-    EncryptedPropertyPlaceholderConfigurer.setKeyStoreType(kt);
+    if (!Strings.isNullOrEmpty(kt)) {
+      EncryptedPropertyPlaceholderConfigurer.setKeyStoreType(kt);
+    }
 
     String ka = servletContext.getInitParameter("keystore_crypto_algo");
-    EncryptedPropertyPlaceholderConfigurer.setKeyStoreCryptoAlgo(ka);
+    if (!Strings.isNullOrEmpty(ka)) {
+      EncryptedPropertyPlaceholderConfigurer.setKeyStoreCryptoAlgo(ka);
+    }
 
     // Note: default context location is /WEB-INF/applicationContext.xml
     LOGGER.info("Making an XmlWebApplicationContext");
@@ -115,5 +124,29 @@ public class StartUp extends HttpServlet {
     Context context = Context.getInstance();
     context.setServletContext(ac, servletContext.getRealPath("/WEB-INF"));
     context.start();
+  }
+
+  /**
+   * Tries to normalize a pathname, as if relative to the context.
+   * Absolute paths are allowed (unlike traditional web-app behaviour).
+   * file: URLs are allowed as well and are treated like absolute paths.
+   * All relative paths are made relative the the web-app WEB-INF directory.
+   * Attempts are made to recognize paths that are already relative to
+   * WEB-INF (they begin with WEB-INF or /WEB-INF).
+   *
+   * @param servletContext the ServletContext
+   * @param name the file name
+   */
+  private String getRealPath(final ServletContext servletContext, String name)
+      throws IOException {
+    return ServletUtil.getRealPath(name,
+        new Function<String, String>() {
+          public String apply(String path) {
+            // If servlet container cannot translated the virtual path to a
+            // real path, so use the supplied path.
+            String realPath = servletContext.getRealPath("/WEB-INF/" + path);
+            return (realPath == null) ? path : realPath;
+          }
+        });
   }
 }

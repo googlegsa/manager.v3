@@ -14,6 +14,9 @@
 
 package com.google.enterprise.connector.servlet;
 
+import com.google.common.base.Function;
+import com.google.common.base.Preconditions;
+
 import com.google.enterprise.connector.common.SecurityUtils;
 import com.google.enterprise.connector.util.JarUtils;
 import com.google.enterprise.connector.util.SAXParseErrorHandler;
@@ -24,8 +27,12 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -412,6 +419,72 @@ public class ServletUtil {
       return XMLIndent[XMLIndent.length - 1]
           + indentStr(level + 1 - XMLIndent.length);
     }
+  }
+
+  /**
+   * Tries to normalize a pathname, as if relative to the context.
+   * Absolute paths are allowed (unlike traditional web-app behaviour).
+   * file: URLs are allowed as well and are treated like absolute paths.
+   * All relative paths are made relative the the web-app WEB-INF directory.
+   * Attempts are made to recognize paths that are already relative to
+   * WEB-INF (they begin with WEB-INF or /WEB-INF).
+   *
+   * @param name the file name
+   * @param toAbsolute Function to map a relative path to an absolute one.
+   */
+  public static String getRealPath(String name,
+      Function<String, String> toAbsolute) throws IOException {
+    Preconditions.checkNotNull(name);
+
+    // The administrator can override any of this manipulation by specifying a
+    // file: URI, similar to the way Spring allows file: URIs to specify true
+    // absolute resource locations.
+    if (name.toLowerCase().startsWith("file:")) {
+      try {
+        return new File(new URI(name).getPath()).getAbsolutePath();
+      } catch (URISyntaxException urie) {
+        throw new IOException("Invalid file: URI: " + name);
+      }
+    }
+
+    // Web-app style "/WEB-INF/..." is still relative, even though it looks
+    // absolute. Strip redundant attempts to make the path relative to WEB-INF.
+    name = webAppRelative(name);
+
+    // Absolute paths are allowed to point outside of the web application.
+    if (new File(name).isAbsolute()) {
+      return name;
+    }
+
+    // Force relative paths to be relative to WEB-INF.
+    return toAbsolute.apply(name);
+  }
+
+  // If the supplied pathname starts with WEB-INF (either relative or
+  // absolute), return a pathname that is truly relative to WEB-INF.
+  // Otherwise return the original pathname.
+  // Note: Technically, one could argue that "/WEB-INF" or "WEB-INF"
+  // should return the empty string.  This, however returns the supplied path.
+  private static String webAppRelative(String name) {
+    String pathname = new File(name).getPath();
+    String webInf = "WEB-INF" + File.separator;
+    int index = pathname.indexOf(webInf);
+    if (index < 0) {
+      return name;
+    }
+
+    // Look for leading "/WEB-INF/..." or "WEB-INF/..."
+    File webInfFile = new File(pathname.substring(0, index + webInf.length()));
+    File parent = webInfFile.getParentFile();
+    if ("WEB-INF".equals(webInfFile.getName()) && (parent == null ||
+        parent.getPath().equals(File.separator) ||
+        (webInfFile.isAbsolute() && parent.getParent() == null))) {
+      // Return the portion relative to WEB-INF.
+      return pathname.substring(index + webInf.length());
+    }
+
+    // It doesn't look like it is trying to be WEB-INF, so return the original.
+    return name;
   }
 
   private static final Pattern PREPEND_CM_PATTERN =

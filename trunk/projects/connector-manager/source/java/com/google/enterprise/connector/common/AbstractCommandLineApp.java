@@ -14,8 +14,11 @@
 
 package com.google.enterprise.connector.common;
 
+import com.google.common.base.Function;
+import com.google.common.base.Strings;
 import com.google.enterprise.connector.instantiator.EncryptedPropertyPlaceholderConfigurer;
 import com.google.enterprise.connector.manager.Context;
+import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.util.JarUtils;
 import com.google.enterprise.connector.util.SAXParseErrorHandler;
 import com.google.enterprise.connector.util.XmlParseUtil;
@@ -340,17 +343,25 @@ public abstract class AbstractCommandLineApp {
     is.close();
 
     // Supply EncryptedPropertyPlaceholder with the keystore config.
-    EncryptedPropertyPlaceholderConfigurer.setKeyStoreType(keystore_type);
-    EncryptedPropertyPlaceholderConfigurer
-        .setKeyStorePasswdPath(keystore_passwd_file);
-    EncryptedPropertyPlaceholderConfigurer
-        .setKeyStoreCryptoAlgo(keystore_crypto_algo);
+    if (!Strings.isNullOrEmpty(keystore_type)) {
+      EncryptedPropertyPlaceholderConfigurer.setKeyStoreType(keystore_type);
+    }
+    if (!Strings.isNullOrEmpty(keystore_crypto_algo)) {
+      EncryptedPropertyPlaceholderConfigurer
+          .setKeyStoreCryptoAlgo(keystore_crypto_algo);
+    }
 
     // Because of differences in ServletContext and StandaloneContext,
     // there are differences in the expected location of the keystore file.
     // See keystore configuration in the StartUp servlet for details.
-    String keystorePath = new File(webInfDir, keystore_file).getAbsolutePath();
-    EncryptedPropertyPlaceholderConfigurer.setKeyStorePath(keystorePath);
+    if (!Strings.isNullOrEmpty(keystore_file)) {
+      EncryptedPropertyPlaceholderConfigurer
+          .setKeyStorePath(getRealPath(webInfDir, keystore_file));
+    }
+    if (!Strings.isNullOrEmpty(keystore_passwd_file)) {
+      EncryptedPropertyPlaceholderConfigurer
+          .setKeyStorePasswdPath(getRealPath(webInfDir, keystore_passwd_file));
+    }
   }
 
   // Relative to a given directory name, where is WEB-INF?
@@ -394,5 +405,27 @@ public abstract class AbstractCommandLineApp {
       }
     }
     return null;
+  }
+
+  /**
+   * Tries to normalize a pathname, as if relative to the context.
+   * Absolute paths are allowed (unlike traditional web-app behaviour).
+   * file: URLs are allowed as well and are treated like absolute paths.
+   * All relative paths are made relative the the web-app WEB-INF directory.
+   * Attempts are made to recognize paths that are already relative to
+   * WEB-INF (they begin with WEB-INF or /WEB-INF).
+   *
+   * @param servletContext the ServletContext
+   * @param name the file name
+   */
+  private String getRealPath(final File webInfDir, final String name)
+      throws IOException {
+    return ServletUtil.getRealPath(name,
+        new Function<String, String>() {
+          public String apply(String path) {
+            // Force relative paths to be relative to WEB-INF.
+            return new File(webInfDir, name).getAbsolutePath();
+          }
+        });
   }
 }
