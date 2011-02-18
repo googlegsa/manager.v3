@@ -146,6 +146,7 @@ public class EncryptedPropertyPlaceholderConfigurer extends
 
   public static void setKeyStorePasswdPath(String k) {
     keyStorePasswdPath = k;
+    LOGGER.config("Using keystore password file " + k);
   }
 
   public static void setKeyStoreType(String t) {

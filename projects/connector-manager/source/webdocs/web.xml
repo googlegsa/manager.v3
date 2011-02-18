@@ -46,10 +46,16 @@
 
   <context-param>
     <param-name>keystore_passwd_file</param-name>
-    <param-value>keystore_passwd</param-value>
+    <param-value></param-value>
     <description>
       File containing the password that is used to secure the keystore.
       If this is not provided, an empty password will be used.
+      This may be an absolute path or a relative path.  If it is a
+      relative path it is assumed to be relative to the WEB-INF directory.
+      If the StandardContext is being used and the 'unpackWAR' is defaulted
+      to 'true' then the Web App will search for this file under its WEB-INF
+      directory.  If the Servlet container cannot translate this path to a
+      real path, then it will be treated as a virtual path.
     </description>
   </context-param>
 
@@ -58,6 +64,8 @@
     <param-value>connector_manager.keystore</param-value>
     <description>
       Filename of keystore.  This file will be created if it does not exist.
+      This may be an absolute path or a relative path.  If it is a
+      relative path it is assumed to be relative to the WEB-INF directory.
       If the StandardContext is being used and the 'unpackWAR' is defaulted
       to 'true' then the Web App will search for this file under its WEB-INF
       directory.  If the Servlet container cannot translate this path to a
