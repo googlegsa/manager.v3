@@ -27,13 +27,14 @@ embedded database to an external corporate database.
 == Usage ==
 
 {{{
-usage: Manager MigrateStore [-?] [-v] [-l] [source_name] [dest_name]
-       -?, --help      Display this help.
-       -v, --version   Display version.
-       -l, --list      List available PersistentStores.
-       -f, --force     Overwrite existing data in destination PersistentStore.
-       source_name     Name of source PeristentStore (e.g. FilePersistentStore)
-       dest_name       Name of destination PeristentStore (e.g. JdbcPersistentStore)
+usage: Manager MigrateStore [-?] [-v] [-l] [-c connector] [source_name] [dest_name]
+       -?, --help            Display this help.
+       -v, --version         Display version.
+       -l, --list            List available PersistentStores.
+       -f, --force           Overwrite existing data in destination PersistentStore.
+       -c,--connector <connector_name>    Connector to migrate.
+       source_name           Name of source PeristentStore (e.g. FilePersistentStore)
+       dest_name             Name of destination PeristentStore (e.g. JdbcPersistentStore)
 }}}
 The `--list` option lists the available Persistent Stores as
 identified by Bean name in the Connector Manager's
@@ -42,6 +43,9 @@ identified by Bean name in the Connector Manager's
 The `--force` option will allow data from the source store to
 overwrite any existing data in the destination store.  By
 default, existing data in the destination is preserved.
+
+One or more connectors to migrate may be specified using `--connector` 
+options.  If unspecified, all connectors are migrated.
 
 If you do not include the source and destination Persistent
 Stores on the command line, you will be prompted to choose
@@ -95,6 +99,15 @@ Notes or Wikis.
 instances, but it does not migrate the Connector Manager's own
 configuration (which includes the configuration of the Persistent
 Stores itself).
+
+== Modifying a Connector's `connectorInstance.xml` Configuration ==
+
+!MigrateStore is a useful tool to aid in making manual modifications
+to a Connector's `connectorInstance.xml` configuration file when
+that configuration is stored in a database rather than as plain
+text files in the file system.
+
+For details see the ModifyConnectorInstanceXml wiki page.
 
 ==Migrating Connector Data between Database Persistent Stores==
 
