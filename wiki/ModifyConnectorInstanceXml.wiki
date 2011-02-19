@@ -1,0 +1,38 @@
+#summary Modifying a Connector's `connectorInstance.xml` Configuration
+
+== Introduction ==
+
+A Connector's `connectorInstance.xml` configuration file contains
+advanced implementation-specific configuration, as well
+as Spring Framework bean configuration for a Connector
+deployment.
+
+Currently, a Connector's `connectorInstance.xml` configuration file 
+is not directly modifiable using the Search Appliance Admin Console.
+
+When a connector's configuration is stored in files within the web
+application filesystem, manual modifications to these files could
+easily be done using any plain text editor.
+
+However, when a connector's configuration is stored in a JDBC
+database, modifying that configuration manually becomes non-trivial.
+
+This page discusses the steps needed to export a connector's
+configuration from the database, manually edit it, then re-import
+the modified configuration into the database.
+
+Doing so requires direct access to the computer hosting a
+Google Connector Manager for the deployed Connector, with
+sufficient rights to modify files in the Connector Manager
+Tomcat web application directory.
+
+== Modifying a Connector's `connectorInstance.xml` Configuration ==
+
+  # Disable traversal for that connector.   In the GSA Amin UI, go to 
+*Connector Administration > Connectors*, click the *Edit* link
+for the desired connector, check the *Disable Traversal*  check box,
+then click the *Save Configuration* button.<br><br>
+
+  # On the computer that contains the connector deployment, launch
+a command shell, then change directory to the `Scripts` directory 
+within the connector deployment.<br>`$ cd MyGoogleConnector/Scripts`<br>
