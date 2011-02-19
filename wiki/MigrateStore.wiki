@@ -32,7 +32,7 @@ usage: Manager MigrateStore [-?] [-v] [-l] [-c connector] [source_name] [dest_na
        -v, --version         Display version.
        -l, --list            List available PersistentStores.
        -f, --force           Overwrite existing data in destination PersistentStore.
-       -c,--connector <connector_name>    Connector to migrate.
+       -c, --connector <connector_name>  Connector to migrate.
        source_name           Name of source PeristentStore (e.g. FilePersistentStore)
        dest_name             Name of destination PeristentStore (e.g. JdbcPersistentStore)
 }}}
