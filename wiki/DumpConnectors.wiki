@@ -27,10 +27,15 @@ XML file.
 
 {{{
 usage: Manager DumpConnectors [-?] [-v] <output_filename>
-       -?, --help      Display this help.
-       -v, --version   Display version.
-       output_filename Name of output XML file.
+       -?, --help                        Display this help.
+       -v, --version                     Display version.
+       -c, --connector <connector_name>  Connector to export.
+       output_filename                   Name of output XML file.
 }}}
+
+One or more connectors to export may be specified using `--connector` 
+options.  If unspecified, the configurations for all connectors are written 
+to the output file.
 
 The !DumpConnectors utility is built into the Connector Manager's
 `connector.jar` file and is run by executing the `Manager`
@@ -45,4 +50,4 @@ persistent state for all Connector instances, including configuration,
 traversal schedule, and traversal checkpoint.
 
 ----
-New in Connector Manager v3.0
+_Since Connector Manager v3.0_
