@@ -9,11 +9,9 @@ deployment.
 
 Currently, a Connector's `connectorInstance.xml` configuration file 
 is not directly modifiable using the Search Appliance Admin Console.
-
 When a connector's configuration is stored in files within the web
 application filesystem, manual modifications to these files could
-easily be done using any plain text editor.
-
+easily be done using any plain text editor. 
 However, when a connector's configuration is stored in a JDBC
 database, modifying that configuration manually becomes non-trivial.
 
@@ -28,5 +26,18 @@ Tomcat web application directory.
 
 == Modifying a Connector's `connectorInstance.xml` Configuration ==
 
-  # Disable traversal for that connector:<br>In the GSA Amin UI, go to *Connector Administration > Connectors*, click the *Edit* link for the desired connector, check the *Disable Traversal*  check box, then click the *Save Configuration* button.<br><br>
+These example makes the following assumptions:
+  * The name of the connector deployment is `MyConnector`, the name of the connector instance is `myconnector`, and that connector is of type `SomeConnectorType`.<br><br>
+  * The default `JdbcPersistentStore` is used to store connector configuration data.  If you are using a customized external database configuration in `applicationContext.xml`, for instance `MyCompanyOraclePersistentStore`, then use that specific !PersistentStore in the following instructions.  If you are unsure of the available !PersistentStore configurations, run MigrateStore in interactive mode for assistance.<br><br>
+
+
+  # Disable traversal for the connector:<br>In the GSA Amin UI, go to *Connector Administration > Connectors*, click the *Edit* link for the desired connector, check the *Disable Traversal*  check box, then click the *Save Configuration* button.<br><br>
   # On the computer that contains the connector deployment, launch a command shell, then change directory to the `Scripts` directory within the connector deployment:<br>`$ cd MyGoogleConnector/Scripts`<br><br>
+  # Export the connector's configuration to the local file system using the MigrateStore command:<br>`$ ./Manager MigrateStore --force -connector myconnector JdbcPersistentStore FilePersistentStore`<br><br>
+  # Change directory to the connector's exported configuration:<br>`$cd ../Tomcat/webapps/connector-manager/WEB-INF/connectors/SomeConnectorType/myconnector`<br><br>
+  # Edit `connectorInstance.xml` with a plain text editor.  This file must remain a plain text UTF-8 encoded file.  Do not use a word processor that will convert the file to some proprietary word processing format. Save the file.<br><br>
+  # Import the connector's modified configuration to the database using the MigrateStore command:<br>`$ ./Manager MigrateStore --force -connector myconnector FilePersistentStore JdbcPersistentStore`<br><br>
+  # Reset the index for that connector on the GSA (Optional).  Most changes to advanced connector configuration in `connectorInstance.xml` will require re-indexing all content for that connector.  If you know this is not necessary, you may skip this step.  If you are unsure, you should reset the index:<br>In the GSA Amin UI, go to *Connector Administration > Connectors* and click the *Reset* link for the target connector.<br><br>
+  # Re-enable traversal for the connector:<br>In the GSA Amin UI, go to *Connector Administration > Connectors*, click the *Edit* link for the desired connector, check the *Disable Traversal*  uncheck box, then click the *Save Configuration* button.<br><br>
+
+_Since Connector Manager 3.0_
