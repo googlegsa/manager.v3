@@ -114,4 +114,4 @@ For details see the ModifyConnectorInstanceXml wiki page.
 *TODO* (Describe dual !JdbcPersistentStore configurations.)
 
 ----
-New in Connector Manager v3.0
+_Since Connector Manager v3.0_
