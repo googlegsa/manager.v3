@@ -40,4 +40,5 @@ These example makes the following assumptions:
   # Reset the index for that connector on the GSA (Optional).  Most changes to advanced connector configuration in `connectorInstance.xml` will require re-indexing all content for that connector.  If you know this is not necessary, you may skip this step.  If you are unsure, you should reset the index:<br>In the GSA Amin UI, go to *Connector Administration > Connectors* and click the *Reset* link for the target connector.<br><br>
   # Re-enable traversal for the connector:<br>In the GSA Amin UI, go to *Connector Administration > Connectors*, click the *Edit* link for the desired connector, check the *Disable Traversal*  uncheck box, then click the *Save Configuration* button.<br><br>
 
-_Since Connector Manager 3.0_
+----
+_Since Connector Manager v3.0_
