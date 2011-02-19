@@ -28,11 +28,5 @@ Tomcat web application directory.
 
 == Modifying a Connector's `connectorInstance.xml` Configuration ==
 
-  # Disable traversal for that connector.   In the GSA Amin UI, go to 
-*Connector Administration > Connectors*, click the *Edit* link
-for the desired connector, check the *Disable Traversal*  check box,
-then click the *Save Configuration* button.<br><br>
-
-  # On the computer that contains the connector deployment, launch
-a command shell, then change directory to the `Scripts` directory 
-within the connector deployment.<br>`$ cd MyGoogleConnector/Scripts`<br>
+  # Disable traversal for that connector:<br>In the GSA Amin UI, go to *Connector Administration > Connectors*, click the *Edit* link for the desired connector, check the *Disable Traversal*  check box, then click the *Save Configuration* button.<br><br>
+  # On the computer that contains the connector deployment, launch a command shell, then change directory to the `Scripts` directory within the connector deployment:<br>`$ cd MyGoogleConnector/Scripts`<br><br>
