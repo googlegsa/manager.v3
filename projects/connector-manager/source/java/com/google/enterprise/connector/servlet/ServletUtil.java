@@ -17,8 +17,8 @@ package com.google.enterprise.connector.servlet;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 
+import com.google.enterprise.connector.common.JarUtils;
 import com.google.enterprise.connector.common.SecurityUtils;
-import com.google.enterprise.connector.util.JarUtils;
 import com.google.enterprise.connector.util.SAXParseErrorHandler;
 import com.google.enterprise.connector.util.XmlParseUtil;
 import com.google.enterprise.connector.util.XmlParseUtil.LocalEntityResolver;

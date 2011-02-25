@@ -14,13 +14,13 @@
 
 package com.google.enterprise.connector.importexport;
 
+import com.google.enterprise.connector.common.JarUtils;
 import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.instantiator.Configuration;
 import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.persist.PersistentStore;
 import com.google.enterprise.connector.persist.StoreContext;
-import com.google.enterprise.connector.util.JarUtils;
 
 import java.util.Map;
 import java.util.Properties;
