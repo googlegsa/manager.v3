@@ -14,11 +14,14 @@
 
 package com.google.enterprise.connector.persist;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSortedSet;
 import com.google.enterprise.connector.common.AbstractCommandLineApp;
 import com.google.enterprise.connector.instantiator.TypeMap;
 import com.google.enterprise.connector.manager.Context;
 
 import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
@@ -26,6 +29,7 @@ import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Collection;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -34,13 +38,14 @@ import java.util.logging.Logger;
  * to another.
  *
  * <pre>
- * usage: MigrateStore [-?] [-v] [-l] [source_name] [dest_name]
- *        -?, --help      Display this help.
- *        -v, --version   Display version.
- *        -l, --list      List available PersistentStores.
- *        -f, --force     Overwrite existing data in destination PersistentStore.
- *        source_name     Name of source PeristentStore (e.g. FilePersistentStore)
- *        dest_name       Name of destination PeristentStore (e.g. JdbcPersistentStore)
+ * usage: MigrateStore [-?] [-v] [-c connector_name] [-l] [source_name] [dest_name]
+ *        -?, --help        Display this help.
+ *        -v, --version     Display version.
+ *        -c, --connector   Connector(s) to migrage (default is all connectors).
+ *        -l, --list        List available PersistentStores.
+ *        -f, --force       Overwrite existing data in destination PersistentStore.
+ *        source_name       Name of source PeristentStore (e.g. FilePersistentStore)
+ *        dest_name         Name of destination PeristentStore (e.g. JdbcPersistentStore)
  * </pre>
  */
 public class MigrateStore extends AbstractCommandLineApp {
@@ -62,7 +67,8 @@ public class MigrateStore extends AbstractCommandLineApp {
 
   @Override
   public String getCommandLineSyntax() {
-    return super.getCommandLineSyntax() + "[-l] [-f] [source_name] [dest_name]";
+    return super.getCommandLineSyntax()
+        + "[-l] [-f] [-c connector] [source_name] [dest_name]";
   }
 
   @Override
@@ -71,6 +77,11 @@ public class MigrateStore extends AbstractCommandLineApp {
     options.addOption("l", "list", false, "List available PersistentStores.");
     options.addOption("f", "force", false,
         "Overwrite existing data in destination PersistentStore.");
+    options.addOption(OptionBuilder.withLongOpt("connector")
+                      .hasArg()
+                      .withArgName("connector_name")
+                      .withDescription("Connector to migrate.")
+                      .create('c'));
     return options;
   }
 
@@ -84,6 +95,9 @@ public class MigrateStore extends AbstractCommandLineApp {
     builder.append("connector installations, when moving connector ");
     builder.append("deployments from test to production, or when moving ");
     builder.append("from the embedded database to a corporate database.");
+    builder.append(NL).append(NL);
+    builder.append("One or more connectors to migrate may be specified using ");
+    builder.append("-c options.  If unspecified, all connectors are migrated.");
     builder.append(NL).append(NL);
     builder.append("If configuration data for a connector already exists ");
     builder.append("in the destination store, it will not be overwritten ");
@@ -126,24 +140,38 @@ public class MigrateStore extends AbstractCommandLineApp {
           return;
         }
       }
-
       if (sourceName.equals(destName)) {
         System.err.println(
             "Source and destination PersistentStores must be different.");
         return;
       }
 
-      // Actually perform the migration.
       PersistentStore sourceStore = getPersistentStoreByName(sourceName);
+
+      // Determine which connectors to migrate.
+      Collection<String> connectors = null;
+      String[] connectorNames = commandLine.getOptionValues('c');
+      if (connectorNames != null) {
+        connectors = ImmutableSortedSet.copyOf(connectorNames);
+      } else if (args.length != 2) {
+        // If no connectors were specified on the command line, and we had
+        // to prompt the user for the source and destination stores, then also
+        // prompt the user for a connector to migrate.
+        String name = selectConnectorName(getConnectorNames(sourceStore));
+        if (name != null) {
+          connectors = ImmutableSortedSet.of(name);
+        }
+      }
+
+      // Actually perform the migration.
       PersistentStore destStore = getPersistentStoreByName(destName);
       if (sourceStore != null && destStore != null) {
         // Adjust the logging levels so that StoreMigrator messages are logged
         // to the Console.
         Logger.getLogger(StoreMigrator.class.getName()).setLevel(Level.INFO);
-
-        StoreMigrator.migrate(sourceStore, destStore,
+        StoreMigrator.migrate(sourceStore, destStore, connectors,
             commandLine.hasOption("force"));
-        StoreMigrator.checkMissing(destStore);
+        StoreMigrator.checkMissing(destStore, connectors);
       }
     } finally {
       shutdown();
@@ -197,6 +225,29 @@ public class MigrateStore extends AbstractCommandLineApp {
   private String[] getStoreNames() {
     return Context.getInstance().getApplicationContext()
         .getBeanNamesForType(PersistentStore.class);
+  }
+
+  /**
+   * Returns a connector name to migrate selected by the user.
+   */
+  private String selectConnectorName(String[] connectorNames) {
+    return pickMenu("Available Connector Instances:",
+                    "Please select Connectors to migrate [All]: ",
+                    connectorNames);
+  }
+
+  /**
+   * Returns a list of the names of configured PersistentStores.
+   */
+  private String[] getConnectorNames(PersistentStore  sourceStore) {
+    ImmutableMap<StoreContext, ConnectorStamps> inventory =
+        sourceStore.getInventory();
+    String[] connectorNames = new String[inventory.size()];
+    int i = 0;
+    for (StoreContext context : inventory.keySet()) {
+      connectorNames[i++] = context.getConnectorName();
+    }
+    return connectorNames;
   }
 
   /**

@@ -18,6 +18,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.enterprise.connector.instantiator.Configuration;
 import com.google.enterprise.connector.scheduler.Schedule;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
@@ -53,9 +54,9 @@ public class StoreMigrator {
    */
   public void migrate() {
     for (PersistentStore legacyStore : legacyStores) {
-      migrate(legacyStore, store, false);
+      migrate(legacyStore, store, null, false);
     }
-    checkMissing(store);
+    checkMissing(store, null);
   }
 
   /**
@@ -63,14 +64,21 @@ public class StoreMigrator {
    *
    * @param sourceStore source {@link PersistentStore}
    * @param destStore destination {@link PersistentStore}
+   * @param connectorNames Collection of connector names to migrate.
    * @param force if {@code true} overwrite existing data in the
    *        {@code destStore}.
    */
   public static void migrate(PersistentStore sourceStore,
-      PersistentStore destStore, boolean force) {
+                             PersistentStore destStore,
+                             Collection<String> connectorNames,
+                             boolean force) {
     ImmutableMap<StoreContext, ConnectorStamps> inventory =
           sourceStore.getInventory();
     for (StoreContext context : inventory.keySet()) {
+      if (connectorNames != null &&
+          !connectorNames.contains(context.getConnectorName())) {
+        continue;
+      }
       // This double assignment ensures that we check the same
       // object type that we're storing.
       Configuration config = destStore.getConnectorConfiguration(context);
@@ -106,12 +114,18 @@ public class StoreMigrator {
    * log a message.
    *
    * @param persistentStore PersistentStore to check.
+   * @param connectorNames Collection of connector names to check.
    */
-  public static void checkMissing(PersistentStore persistentStore) {
+  public static void checkMissing(PersistentStore persistentStore,
+        Collection<String> connectorNames) {
     // Check for missing objects in the specified store.
     ImmutableMap<StoreContext, ConnectorStamps> inventory =
         persistentStore.getInventory();
     for (StoreContext context : inventory.keySet()) {
+      if (connectorNames != null &&
+          !connectorNames.contains(context.getConnectorName())) {
+        continue;
+      }
       if (persistentStore.getConnectorConfiguration(context) == null) {
         logMissing(context, "configuration");
       }
