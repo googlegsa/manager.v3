@@ -16,9 +16,9 @@ package com.google.enterprise.connector.instantiator;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSortedSet;
+import com.google.enterprise.connector.common.JarUtils;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
-import com.google.enterprise.connector.util.JarUtils;
 
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.io.Resource;
