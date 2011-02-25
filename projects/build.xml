@@ -78,9 +78,11 @@
     </ant>
   </target>
 
-  <target name="download-connector-manager" depends="connector-manager-war-prod,spi-javadoc,make-downloads-dir">
+  <target name="download-connector-manager"
+          depends="connector-manager-war-prod,spi-javadoc,make-downloads-dir">
     <copy file="${trunk.dir}/COPYING" tofile="${trunk.dir}/LICENSE"/>
-    <tar destfile="${downloads.dir}/connector-manager-${version}.tar">
+    <tar destfile="${downloads.dir}/connector-manager-${version}.tar"
+         longfile="gnu">
       <tarfileset dir="${connector-manager.dir}/dist/connector-manager"
         prefix="connector-manager-${version}">
         <include name="connector-manager.war"/>
@@ -97,7 +99,8 @@
       src="${downloads.dir}/connector-manager-${version}.tar"/>
     <delete file="${downloads.dir}/connector-manager-${version}.tar"/>
     <zip destfile="${downloads.dir}/connector-manager-${version}.zip">
-      <zipfileset dir="${connector-manager.dir}/dist/connector-manager" includes="connector-manager.war"
+      <zipfileset dir="${connector-manager.dir}/dist/connector-manager"
+        includes="connector-manager.war"
         prefix="connector-manager-${version}"/>
       <zipfileset dir="${trunk.dir}" includes="LICENSE,README,RELEASE_NOTES"
         prefix="connector-manager-${version}"/>
@@ -106,7 +109,8 @@
     </zip>
     <checksum file="${downloads.dir}/connector-manager-${version}.tar.gz"/>
     <checksum file="${downloads.dir}/connector-manager-${version}.zip"/>
-    <tar destfile="${downloads.dir}/connector-manager-${version}-src.tar">
+    <tar destfile="${downloads.dir}/connector-manager-${version}-src.tar"
+         longfile="gnu">
       <tarfileset dir="." prefix="connector-manager-${version}-src">
         <include name="build.xml"/>
       </tarfileset>
