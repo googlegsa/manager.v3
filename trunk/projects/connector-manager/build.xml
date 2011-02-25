@@ -93,6 +93,7 @@
     <!-- compile the spi java source files -->
     <javac sourcepath="" srcdir="${src}" destdir="${spi-classes}"
     	     includes="**/spi/**, **/spiimpl/**, **/util/**"
+           includeantruntime="false"
            debug="${COMPILE_DEBUG_FLAG}" debuglevel="${COMPILE_DEBUG_LEVEL}"
            target="${jvm.version}" source="${jvm.version}">
     	<classpath>
@@ -126,6 +127,7 @@
     <!-- compile java source files -->
     <javac sourcepath="" srcdir="${src}" destdir="${classes}"
            excludes="**/spi/**, **/spiimpl/**, **/util/**"
+           includeantruntime="false"
            debug="${COMPILE_DEBUG_FLAG}" debuglevel="${COMPILE_DEBUG_LEVEL}"
            target="${jvm.version}" source="${jvm.version}">
       <classpath>
@@ -190,6 +192,7 @@
   <target name="compile_tests" depends="init,jar-prod">
     <!-- compile java source files for tests -->
     <javac srcdir="${tests.src}" destdir="${tests.classes}"
+           includeantruntime="false"
            debug="${COMPILE_DEBUG_FLAG}" debuglevel="${COMPILE_DEBUG_LEVEL}"
            target="${jvm.version}" source="${jvm.version}">
       <classpath>
