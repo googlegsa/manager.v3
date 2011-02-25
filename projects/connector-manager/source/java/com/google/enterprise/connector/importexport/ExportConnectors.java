@@ -22,6 +22,7 @@ import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.persist.PersistentStore;
 import com.google.enterprise.connector.persist.StoreContext;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Logger;
@@ -49,12 +50,28 @@ public class ExportConnectors {
    * @return a ImportExportConnectorList
    */
   public ImportExportConnectorList getConnectors() {
+    return getConnectors(null);
+  }
+
+  /**
+   * Returns a ImportExportConnectorList representing the specified
+   * set of connectors.
+   *
+   * @param connectorNames Collection of names of connectors to include.
+   *        If {@code null}, all connectors are included.
+   * @return a ImportExportConnectorList
+   */
+  public ImportExportConnectorList getConnectors(Collection<String> connectorNames) {
     ImportExportConnectorList connectors = new ImportExportConnectorList();
     for (StoreContext storeContext : persistentStore.getInventory().keySet()) {
+      if (connectorNames != null &&
+          !connectorNames.contains(storeContext.getConnectorName())) {
+        continue;
+      }
+
       Configuration config =
           persistentStore.getConnectorConfiguration(storeContext);
       if (config != null) {
-
         // Encrypt sensitive properties before including them in the output.
         config = new Configuration(config.getTypeName(),
             encryptSensitiveProperties(config.getMap()), config.getXml());
