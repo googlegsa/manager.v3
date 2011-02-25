@@ -14,24 +14,30 @@
 
 package com.google.enterprise.connector.importexport;
 
+import com.google.common.collect.ImmutableSortedSet;
 import com.google.enterprise.connector.common.AbstractCommandLineApp;
 import com.google.enterprise.connector.instantiator.TypeMap;
 import com.google.enterprise.connector.manager.Context;
 
 import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.OptionBuilder;
+import org.apache.commons.cli.Options;
 
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.util.Collection;
 
 /**
  * A utility to dump connector configuration to a file.
  *
  * <pre>
- * usage: DumpConnectors [-?] [-v] output_file
- *        -?, --help      Display this help.
- *        -v, --version   Display version.
- *        output_file     Destination file output.
+ * usage: DumpConnectors [-?] [-v] [-c connector_name] output_file
+ *        -?, --help       Display this help.
+ *        -v, --version    Display version.
+ *        -l, --list       List available Connectors.
+ *        -c, --connector  Connector to include.
+ *        output_file      Destination file output.
  * </pre>
  */
 public class DumpConnectors extends AbstractCommandLineApp {
@@ -59,7 +65,20 @@ public class DumpConnectors extends AbstractCommandLineApp {
 
   @Override
   public String getCommandLineSyntax() {
-    return super.getCommandLineSyntax() + "<output_file>";
+    return super.getCommandLineSyntax() + "[-c connector] <output_file>";
+  }
+
+  @Override
+  public Options getOptions() {
+    Options options = super.getOptions();
+    options.addOption("l", "list", false, "List available connectors.");
+    options.addOption(OptionBuilder.withLongOpt("connector")
+                      .hasArg()
+                      .withArgName("connector_name")
+                      .withDescription("Connector to export.")
+                      .create('c'));
+    return options;
+
   }
 
   @Override
@@ -68,6 +87,9 @@ public class DumpConnectors extends AbstractCommandLineApp {
     builder.append(getName());
     builder.append(" writes an XML representation of the configurations of ");
     builder.append("all connector instances to the specified output_file.");
+    builder.append(NL).append(NL);
+    builder.append("One or more connectors to migrate may be specified using ");
+    builder.append("-c options.  If unspecified, all connectors are exported.");
     return builder.toString();
   }
 
@@ -75,23 +97,51 @@ public class DumpConnectors extends AbstractCommandLineApp {
   public void run(CommandLine commandLine) throws Exception {
     // Must specify output filename.
     String[] args = commandLine.getArgs();
-    if (args.length != 1) {
-      printUsageAndExit(-1);
-    }
 
     initStandAloneContext(false);
     // Since we did not start the Context, we need to init TypeMap.
     getTypeMap().init();
 
     try {
+      // If user asks for a list of available Connectors, print it and exit.
+      if (commandLine.hasOption("list")) {
+        listConnectors();
+        return;
+      }
+
+      // Determine which connectors to export.
+      Collection<String> connectors = null;
+      String[] connectorNames = commandLine.getOptionValues('c');
+      if (connectorNames != null) {
+        connectors = ImmutableSortedSet.copyOf(connectorNames);
+      }
+
+      // Must specify output file.
+      if (args.length != 1) {
+        printUsage();
+        return;
+      }
+
       // Write the connector configurations out to the specified file.
       PrintWriter out = new PrintWriter(new OutputStreamWriter(
           new FileOutputStream(args[0]), "UTF-8"));
-      getExportConnectors().getConnectors().toXml(out, 0);
+      getExportConnectors().getConnectors(connectors).toXml(out, 0);
       out.close();
     } finally {
       shutdown();
     }
+  }
+
+  /**
+   * Prints out a list of available Connectors.
+   */
+  private void listConnectors() {
+    printVersion();
+    System.out.println("Available Connectors:");
+    for (ImportExportConnector connector : getExportConnectors().getConnectors()) {
+      System.out.println("    " + connector.getName());
+    }
+    System.out.println("");
   }
 
   /**
