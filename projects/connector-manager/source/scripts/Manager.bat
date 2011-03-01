@@ -57,10 +57,10 @@ if "%JAVA_HOME%" == "" (
   if "%JRE_HOME%" == "" (
     set java=java
   ) else (
-    set java="%JRE_HOME%"\bin\java
+    set java=%JRE_HOME%\bin\java
   )
 ) else (
-  set java="%JAVA_HOME%"\bin\java
+  set java=%JAVA_HOME%\bin\java
 )
 
 rem  Locate the Tomcat 6 installation.  Note that this code requires a
