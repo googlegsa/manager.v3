@@ -149,7 +149,13 @@ public class SpringInstantiator implements Instantiator {
     ConnectorCoordinator connectorCoordinator =
         coordinatorMap.get(connectorName);
     if (connectorCoordinator == null) {
-      throw new ConnectorNotFoundException();
+      // If we are clustered, perhaps another CM created a new connector
+      // instance for this connector and we haven't detected it yet.
+      changeDetectorTask.run();
+      connectorCoordinator = coordinatorMap.get(connectorName);
+      if (connectorCoordinator == null) {
+        throw new ConnectorNotFoundException();
+      }
     }
     return connectorCoordinator;
   }
@@ -160,7 +166,15 @@ public class SpringInstantiator implements Instantiator {
       throw new IllegalStateException(
           "Init must be called before accessing connectors.");
     }
-    return coordinatorMap.getOrAdd(connectorName);
+    ConnectorCoordinator connectorCoordinator =
+        coordinatorMap.get(connectorName);
+    if (connectorCoordinator == null) {
+      // If we are clustered, perhaps another CM created a new connector
+      // instance for this connector and we haven't detected it yet.
+      changeDetectorTask.run();
+      connectorCoordinator = coordinatorMap.getOrAdd(connectorName);
+    }
+    return connectorCoordinator;
   }
 
   /* @Override */
