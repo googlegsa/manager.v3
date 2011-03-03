@@ -73,9 +73,10 @@ cd ${CATALINA_HOME}/bin
 cd ${CATALINA_HOME}/webapps/connector-manager/WEB-INF
 cp applicationContext.properties applicationContext.properties.backup
 }}}
-  # Deploy the new `connector-manager.war` over the old installation.  This is done by using the Java `jar` command to unpack the `war` file directly into the Tomcat deployment.
+  # Deploy the new `connector-manager.war` over the old installation.  This is done by using the Java `jar` command to unpack the `war` file directly into the Tomcat deployment.  *WARNING:* Some versions of the Google Connector Installer mark the installed connector JAR files as Read-Only.  Write permission for these files must be restored (using chmod or attrib) before deploying the patch.
 {{{
 cd ${CATALINA_HOME}/webapps/connector-manager
+chmod +w WEB-INF/lib/*.jar
 jar xvf ${WAR_DIR}/connector-manager.war
 }}}
   # Restore the Connector Manager configuration properties file that was backed up earlier.
