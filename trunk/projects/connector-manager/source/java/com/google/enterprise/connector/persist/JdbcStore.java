@@ -149,6 +149,29 @@ public class JdbcStore implements PersistentStore {
   }
 
   /**
+   * Returns {@code true} if the configured {@link JdbcDatabase} is unavailable.
+   *
+   * @return {@code true} if this PersistentStore is disabled, {@code false}
+   * otherwise.
+   */
+  /* @Override */
+  public boolean isDisabled() {
+    // Obviously disabled, if there is no database.
+    if (database == null) {
+      return true;
+    }
+    // If I can successfully establish a Connection to the database, assume
+    // the DataSource is functional.  Otherwise, consider it disabled.
+    try {
+      init();
+      database.getDataSource().getConnection().close();
+      return false;
+    } catch (SQLException e) {
+      return true;
+    }
+  }
+
+  /**
    * Gets the version stamps of all persistent objects.  Reads the entire
    * connector instance table and extracts the MODIFY_STAMPS for all peristed
    * data.
