@@ -53,7 +53,7 @@ public class ConnectorPersistentStoreFactory {
       ConnectorType connectorType) {
     return new ConnectorPersistentStoreImpl(
         new LocalDatabaseImpl(jdbcDatabase, connectorTypeName, connectorType),
-        new LocalDocumentStoreImpl(jdbcDatabase, connectorName));
+        null);
   }
 
   private class ConnectorPersistentStoreImpl

@@ -66,9 +66,9 @@
         <prop key="config.change.detect.interval">0</prop>
 
         <!-- JDBC DataSource configuration. -->
-        <prop key="jdbc.datasource.url">jdbc:h2:${catalina.base}/webapps/connector-manager/WEB-INF/connector_manager.dbstore/connector-manager;AUTO_SERVER=TRUE;TRACE_LEVEL_FILE=1;MVCC=TRUE;CACHE_SIZE=131072;MAX_OPERATION_MEMORY=0</prop>
-        <prop key="jdbc.datasource.user">sa</prop>
-        <prop key="jdbc.datasource.password"></prop>
+        <prop key="jdbc.datasource.h2.url">jdbc:h2:${catalina.base}/webapps/connector-manager/WEB-INF/connector_manager.dbstore/connector-manager;AUTO_SERVER=TRUE;TRACE_LEVEL_FILE=1;MVCC=TRUE;CACHE_SIZE=131072;MAX_OPERATION_MEMORY=0</prop>
+        <prop key="jdbc.datasource.h2.user">sa</prop>
+        <prop key="jdbc.datasource.h2.password"></prop>
 
       </props>
     </property>
@@ -176,42 +176,10 @@
   <!-- H2 embedded database configuration. -->
   <bean id="JdbcDataSource"
         class="org.h2.jdbcx.JdbcDataSource">
-    <property name="URL" value="${jdbc.datasource.url}"/>
-    <property name="user" value="${jdbc.datasource.user}"/>
-    <property name="password" value="${jdbc.datasource.password}"/>
+    <property name="URL" value="${jdbc.datasource.h2.url}"/>
+    <property name="user" value="${jdbc.datasource.h2.user}"/>
+    <property name="password" value="${jdbc.datasource.h2.password}"/>
   </bean>
-
-  <!-- Microsoft SQL Server database configuration. -->
-  <!--
-  <bean id="JdbcDataSource"
-        class="com.microsoft.sqlserver.jdbc.SQLServerDataSource">
-    <property name="URL" value="${jdbc.datasource.url}"/>
-    <property name="user" value="${jdbc.datasource.user}"/>
-    <property name="password" value="${jdbc.datasource.password}"/>
-  </bean>
-  -->
-
-  <!-- Oracle 9i, 10g, 11g database configuration. -->
-  <!-- Note that our implementation supports CLOB upto 32,765 bytes. -->
-  <!--
-  <bean id="JdbcDataSource"
-        class="oracle.jdbc.pool.OracleDataSource">
-    <property name="URL" value="${jdbc.datasource.url}"/>
-    <property name="user" value="${jdbc.datasource.user}"/>
-    <property name="password" value="${jdbc.datasource.password}"/>
-  </bean>
-  -->
-
-  <!-- MySQL database configuration. -->
-  <!-- Requires MySQL 5.0.3 or greater for support of VARCHAR upto 65,535 bytes. -->
-  <!--
-  <bean id="JdbcDataSource"
-        class="com.mysql.jdbc.jdbc2.optional.MysqlDataSource">
-    <property name="URL" value="${jdbc.datasource.url}"/>
-    <property name="user" value="${jdbc.datasource.user}"/>
-    <property name="password" value="${jdbc.datasource.password}"/>
-  </bean>
-  -->
 
   <bean id="JdbcDatabase" class="com.google.enterprise.connector.util.database.JdbcDatabase">
     <constructor-arg ref="JdbcDataSource" />
@@ -219,20 +187,9 @@
 
   <!-- Persistent Store mechanism used to store the Connector Configuration,
        Connector Schedule, and Connector Traversal State.  This implementation
-       stores the information in a JDBC accessible database.
-       One and only one bean named "PersistentStore" should be defined at any
-       time.
-  -->
-  <bean id="JdbcPersistentStore" name="PersistentStore"
-        class="com.google.enterprise.connector.persist.JdbcStore">
-    <property name="database" ref="JdbcDatabase"/>
-  </bean>
-
-  <!-- Persistent Store mechanism used to store the Connector Configuration,
-       Connector Schedule, and Connector Traversal State.  This implementation
        stores the information in files in the Connector instance directory.
   -->
-  <bean id="FilePersistentStore"
+  <bean id="FilePersistentStore" name="PersistentStore"
         class="com.google.enterprise.connector.persist.FileStore">
     <property name="typeMap" ref="TypeMap"/>
   </bean>
