@@ -30,8 +30,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Collection;
-import java.util.Map;
-import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -133,13 +131,11 @@ public class MigrateStore extends AbstractCommandLineApp {
         sourceName = args[0];
         destName = args[1];
       } else {
-        Collection<String> storeNames = getStoreNames();
-        sourceName = selectStoreName("source", storeNames);
+        sourceName = selectStoreName("source");
         if (sourceName == null) {
           return;
         }
-        storeNames.remove(sourceName);
-        destName = selectStoreName("destination", storeNames);
+        destName = selectStoreName("destination");
         if (destName == null) {
           return;
         }
@@ -197,10 +193,10 @@ public class MigrateStore extends AbstractCommandLineApp {
   /**
    * Returns a storeName selected by the user.
    */
-  private String selectStoreName(String which, Collection<String> choices) {
+  private String selectStoreName(String which) {
     return pickMenu("Available PersistentStores:",
                     "Please select the " + which + " PersistentStore: ",
-                    choices);
+                    getStoreNames());
   }
 
   /**
@@ -224,64 +220,51 @@ public class MigrateStore extends AbstractCommandLineApp {
   }
 
   /**
-   * Returns a Collection of the names of configured, but not disabled,
-   * PersistentStores.
+   * Returns a list of the names of configured PersistentStores.
    */
-  @SuppressWarnings("unchecked")
-  private Collection<String> getStoreNames() {
-    TreeSet<String> names = new TreeSet<String>();
-    Map<String, PersistentStore> stores = (Map<String, PersistentStore>)
-        Context.getInstance().getApplicationContext()
-        .getBeansOfType(PersistentStore.class);
-    for (Map.Entry<String, PersistentStore> entry : stores.entrySet()) {
-      // Only include PersistentStores that are not disabled.
-      if (!entry.getValue().isDisabled()) {
-        names.add(entry.getKey());
-      }
-    }
-    return names;
+  private String[] getStoreNames() {
+    return Context.getInstance().getApplicationContext()
+        .getBeanNamesForType(PersistentStore.class);
   }
 
   /**
    * Returns a connector name to migrate selected by the user.
    */
-  private String selectConnectorName(Collection<String> connectorNames) {
+  private String selectConnectorName(String[] connectorNames) {
     return pickMenu("Available Connector Instances:",
                     "Please select Connectors to migrate [All]: ",
                     connectorNames);
   }
 
   /**
-   * Returns a Collection of the names of configured PersistentStores.
+   * Returns a list of the names of configured PersistentStores.
    */
-  private Collection<String> getConnectorNames(PersistentStore  sourceStore) {
+  private String[] getConnectorNames(PersistentStore  sourceStore) {
     ImmutableMap<StoreContext, ConnectorStamps> inventory =
         sourceStore.getInventory();
-    TreeSet<String> names = new TreeSet<String>();
+    String[] connectorNames = new String[inventory.size()];
+    int i = 0;
     for (StoreContext context : inventory.keySet()) {
-      names.add(context.getConnectorName());
+      connectorNames[i++] = context.getConnectorName();
     }
-    return names;
+    return connectorNames;
   }
 
   /**
-   * Prints a menu from a Collection of choices, asks the user to pick one.
+   * Prints a menu from a list of choices, asks the user to pick one.
    *
    * @param header Text to display above the list of choices.
    * @param prompt Text to display on the prompt line.
    * @param choices Available choices.
-   * @return item chosen from the choices, or null if none was selected.
+   * @return item chosen from list, or null if none was selected.
    */
-  private String pickMenu(String header, String prompt,
-                          Collection<String> choices) {
+  private String pickMenu(String header, String prompt, String[] choices) {
     try {
-      String[] items = choices.toArray(new String[0]);
       BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
       do {
-        System.out.println("");
         System.out.println(header);
-        for (int i = 0; i < items.length; i++) {
-          System.out.println("  " + (i + 1) + ")  " + items[i]);
+        for (int i = 0; i < choices.length; i++) {
+          System.out.println("  " + (i + 1) + ")  " + choices[i]);
         }
         System.out.print(prompt);
 
@@ -295,8 +278,8 @@ public class MigrateStore extends AbstractCommandLineApp {
         } catch (NumberFormatException nfe) {
           choiceNum = -1; // Force chose again.
         }
-        if (choiceNum >= 0 && choiceNum < items.length) {
-          return items[choiceNum];
+        if (choiceNum >= 0 && choiceNum < choices.length) {
+          return choices[choiceNum];
         }
         System.err.println("Invalid choice.\n");
       } while (true);

@@ -117,10 +117,6 @@ public class MockPersistentStore implements PersistentStore {
     storeMap.remove(new StoreKey(context, property));
   }
 
-  /* @Override */
-  public boolean isDisabled() {
-    return false;
-  }
 
   /* @Override */
   public ImmutableMap<StoreContext, ConnectorStamps> getInventory() {

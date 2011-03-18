@@ -52,11 +52,6 @@ public class FileStore implements PersistentStore {
     this.typeMap = typeMap;
   }
 
-  /* @Override */
-  public boolean isDisabled() {
-    return (typeMap == null);
-  }
-
   /**
    * Gets the version stamps of all persistent objects.
    *
