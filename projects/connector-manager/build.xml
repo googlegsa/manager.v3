@@ -3,7 +3,7 @@
 <project name="connector-manager" default="connector_manager" basedir=".">
 
   <!-- ========================= PROPERTIES ============================= -->
-  <property name="version" value="2.0" />
+  <property name="version" value="2.8.0" />
   <property name="jvm.version" value="1.5" />
 
   <!-- Define Directories. -->
