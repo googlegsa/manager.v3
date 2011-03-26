@@ -79,4 +79,56 @@ public class JdbcDatabaseTest extends TestCase {
     connection.close();
     database.getConnectionPool().releaseConnection(connection);
   }
+
+  // Tests getting the maximum table name length.
+  public void testGetMaxTableNameLength() {
+    // H2 has no max table name length, so we expect the default 255.
+    assertEquals(255, database.getMaxTableNameLength());
+  }
+
+  // Checks that a bad connector name is encoded into valid SQL identifier
+  // table name.
+  private void checkMakeTableName(String prefix, String connectorName,
+                                    int maxLength) throws Exception {
+    String tableName =
+        JdbcDatabase.makeTableName(prefix, connectorName, maxLength);
+    assertEquals(-1, tableName.indexOf(connectorName));
+    assertTrue(tableName.matches("[a-z0-9]+[a-z0-9_]*"));
+    assertTrue(tableName.length() <= maxLength);
+  }
+
+  // Tests makeTableName with a connector name a safe name.
+  public void testMakeTableNameSimpleConnectorName() throws Exception {
+    String prefix = "googe_documents_";
+    String connectorName = "connector_name";
+    String tableName = database.makeTableName(prefix, connectorName);
+    assertEquals(prefix + connectorName, tableName);
+  }
+
+  // Tests makeTableName with invalid SQL identifier characters in the
+  // connector name.
+  public void testMakeTableNameInvalidConnectorName() throws Exception {
+    checkMakeTableName(null, "A!@#$T^Y&*-+", 64);
+  }
+
+  // Tests makeTableName with too long connector name.
+  public void testMakeTableNameLongConnectorName() throws Exception {
+    checkMakeTableName("gdoc_",
+         "qwertyuiopasdfghjklzxcvbnmqwertyuiopasdfghjklzxcvbnmqwertyuiopasdfg",
+         30);
+  }
+
+  // Tests makeTableName with too long connector name.
+  public void testMakeTableNameLongerConnectorName() throws Exception {
+    checkMakeTableName("gdoc_",
+         "qwertyuiopasdfghjklzxcvbnmqwertyuiopasdfghjklzxcvbnmqwertyuiopasdfg",
+         64);
+  }
+
+  // Tests makeTableName with a connector name that has hyphens.
+  // Hyphens are allowed in connector names, but not SQL identifiers.
+  public void testMakeTableNameHyphenatedConnectorName() throws Exception {
+    checkMakeTableName("googe_documents_", "hyphenated-name", 64);
+  }
 }
+

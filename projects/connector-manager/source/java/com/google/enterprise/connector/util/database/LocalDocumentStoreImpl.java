@@ -27,7 +27,6 @@ import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.SimpleProperty;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.Value;
-import com.google.enterprise.connector.util.BasicChecksumGenerator;
 import com.google.enterprise.connector.util.Clock;
 import com.google.enterprise.connector.util.SystemClock;
 
@@ -125,8 +124,8 @@ public class LocalDocumentStoreImpl implements DocumentStore {
     }
 
     // Verify that the connector instance table exists.
-    tableName = makeTableName(getResource("table.name.prefix"), connectorName,
-                              getMaxTableNameLength());
+    tableName =
+        database.makeTableName(getResource("table.name.prefix"), connectorName);
     String[] ddl = resourceBundle.getStringArray("table.create.ddl");
     if (ddl != null) {
       Object[] params = { tableName };
@@ -155,56 +154,6 @@ public class LocalDocumentStoreImpl implements DocumentStore {
       LOGGER.log(Level.WARNING, "Failed to resolve SQL resource " + key);
     }
     return value;
-  }
-
-  /**
-   * Returns the maximum table name length for this database vendor.
-   */
-  private int getMaxTableNameLength() {
-    int maxTableNameLength;
-    try {
-      Connection connection = database.getConnectionPool().getConnection();
-      try {
-        DatabaseMetaData metaData = connection.getMetaData();
-        maxTableNameLength = metaData.getMaxTableNameLength();
-        if (maxTableNameLength == 0) {
-          maxTableNameLength = 255;
-        }
-      } finally {
-        database.getConnectionPool().releaseConnection(connection);
-      }
-    } catch (SQLException e) {
-      LOGGER.warning("Failed to fetch database maximum table name length.");
-      maxTableNameLength = 30;  // Assume the worst. Oracle is 30 chars.
-    }
-    return maxTableNameLength;
-  }
-
-  /**
-   * Constructs a database table name based up the configured table name prefix
-   * and the Connector name.  All attempts are made to make this a straight
-   * concatenation.  However if the connector name is too long or contains
-   * invalid SQL identifier characters, then we hash it.
-   *
-   * @param prefix the generated table name will begin with this prefix
-   * @param connectorName the connector name
-   * @param maxLength the maximum length of the generated table name
-   */
-  @VisibleForTesting
-  static String makeTableName(String prefix, String connectorName, int maxLength) {
-    prefix = Strings.nullToEmpty(prefix);
-    String suffix;
-    if ((connectorName.matches("[a-z0-9]+[a-z0-9_]*")) &&
-        ((connectorName.length() + prefix.length()) <= maxLength)) {
-      suffix = connectorName;
-    } else {
-      BasicChecksumGenerator sumGen = new BasicChecksumGenerator("MD5");
-      suffix = sumGen.getChecksum(connectorName);
-      if (prefix.length() + suffix.length() > maxLength) {
-        suffix = suffix.substring(0, maxLength - prefix.length());
-      }
-    }
-    return (prefix + suffix).toLowerCase();
   }
 
   /**
