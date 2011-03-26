@@ -26,6 +26,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -43,15 +44,25 @@ public class StartUp extends HttpServlet {
       Logger.getLogger(StartUp.class.getName());
 
   @Override
-  public void init() {
+  public void init() throws ServletException {
     NDC.push("Init");
     try {
       LOGGER.info("init");
       ServletContext servletContext = this.getServletContext();
       doConnectorManagerStartup(servletContext);
       LOGGER.info("init done");
-    } catch (IOException e) {
+    } catch (IOException ioe) {
+      LOGGER.log(Level.SEVERE, "Connector Manager Startup failed: ", ioe);
+      Context.getInstance().setInitFailureCause(ioe);
+      throw new ServletException("Connector Manager Startup failed", ioe);
+    } catch (RuntimeException re) {
+      LOGGER.log(Level.SEVERE, "Connector Manager Startup failed: ", re);
+      Context.getInstance().setInitFailureCause(re);
+      throw re;
+    } catch (Error e) {
       LOGGER.log(Level.SEVERE, "Connector Manager Startup failed: ", e);
+      Context.getInstance().setInitFailureCause(e);
+      throw e;
     } finally {
       NDC.remove();
     }
