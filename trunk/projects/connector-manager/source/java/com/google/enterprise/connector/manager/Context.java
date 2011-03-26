@@ -276,6 +276,8 @@ public class Context {
 
   private static Context INSTANCE = new Context();
 
+  private Throwable initFailureCause = null;
+
   private boolean started = false;
 
   private boolean isServletContext = false;
@@ -348,13 +350,20 @@ public class Context {
     LOGGER.info("context base directory: " + standaloneContextBaseDir);
     LOGGER.info("common dir path: " + commonDirPath);
 
-    applicationContext = new AnchoredFileSystemXmlApplicationContext(
-        standaloneContextBaseDir, standaloneContextLocation);
+    try {
+      applicationContext = new AnchoredFileSystemXmlApplicationContext(
+          standaloneContextBaseDir, standaloneContextLocation);
+    } catch (Throwable t) {
+      setInitFailureCause(t);
+      LOGGER.log(Level.SEVERE, "Connector Manager Startup failed: ", t);
+      throw new IllegalStateException("Connector Manager Startup failed", t);
+    }
   }
 
   /**
    * Establishes that we are operating within the standalone context. In
    * this case, we use a FileSystemApplicationContext.
+   *
    * @param contextLocation the name of the context XML file used for
    * instantiation.
    * @param commonDirPath the location of the common directory which contains
@@ -368,6 +377,7 @@ public class Context {
   /**
    * Establishes that we are operating within the standalone context. In
    * this case, we use a FileSystemApplicationContext.
+   *
    * @param contextLocation the name of the context XML file used for
    * instantiation.
    * @param contextBaseDir base directory for relative file paths in
@@ -388,6 +398,10 @@ public class Context {
    * Establishes that we are operating from a servlet context. In this case, we
    * use an XmlWebApplicationContext, which finds its config from the servlet
    * context - WEB-INF/applicationContext.xml.
+   *
+   * @param servletApplicationContext the web application servlet context.
+   * @param commonDirPath the location of the common directory which contains
+   * ConnectorType and Connector instantiation configuration data.
    */
   public void setServletContext(ApplicationContext servletApplicationContext,
                                 String commonDirPath) {
@@ -396,16 +410,28 @@ public class Context {
     isServletContext = true;
   }
 
+  /**
+   * Saves the cause of a Connector Manager initialization failure.
+   * That cause will be rethrown upon further attempts to use the
+   * unitialized Context.
+   *
+   * @param cause the cause of initialization failure
+   */
+  public void setInitFailureCause(Throwable cause) {
+    this.initFailureCause = cause;
+  }
+
   /*
    * Choose a default context, if it wasn't specified in any other way. For now,
    * we choose servlet context by default.
    */
   private void initApplicationContext() {
     if (applicationContext == null) {
+      if (initFailureCause != null) {
+        throw new IllegalStateException("Connector Manager Startup failed",
+                                        initFailureCause);
+      }
       initializeStandaloneApplicationContext();
-    }
-    if (applicationContext == null) {
-      throw new IllegalStateException("Spring failure - no application context");
     }
   }
 
