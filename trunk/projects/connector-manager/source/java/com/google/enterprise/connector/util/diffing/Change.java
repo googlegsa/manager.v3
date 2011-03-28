@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.util.diffing;
 
+import com.google.common.base.Preconditions;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -52,9 +53,9 @@ public class Change {
 
   public Change(FactoryType factoryType, DocumentHandle documentHandle,
       MonitorCheckpoint monitorCheckpoint) {
-    Check.notNull(factoryType);
-    Check.notNull(documentHandle);
-    Check.notNull(monitorCheckpoint);
+    Preconditions.checkNotNull(factoryType);
+    Preconditions.checkNotNull(documentHandle);
+    Preconditions.checkNotNull(monitorCheckpoint);
     this.factoryType = factoryType;
     this.documentHandle = documentHandle;
     this.monitorCheckpoint = monitorCheckpoint;
