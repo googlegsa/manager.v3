@@ -14,6 +14,8 @@
 
 package com.google.enterprise.connector.util.diffing;
 
+import com.google.common.base.Preconditions;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -64,7 +66,7 @@ public class SnapshotStore {
   public SnapshotStore(File snapshotDirectory,
       DocumentSnapshotFactory documentSnapshotFactory)
       throws SnapshotStoreException {
-    Check.notNull(snapshotDirectory);
+    Preconditions.checkNotNull(snapshotDirectory);
     if (!snapshotDirectory.exists()) {
       if (!snapshotDirectory.mkdirs()) {
         throw new SnapshotStoreException("failed to create snapshot directory: "
@@ -139,7 +141,7 @@ public class SnapshotStore {
     Comparator<Long> comparator = new Comparator<Long>() {
       /* @Override */
       public int compare(Long o1, Long o2) {
-        Check.isTrue(!o1.equals(o2), "two snapshots with the same number");
+        Preconditions.checkState(!o1.equals(o2), "two snapshots with the same number");
         return (o1 > o2) ? -1 : +1;
       }
     };
