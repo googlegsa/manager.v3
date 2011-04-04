@@ -27,7 +27,7 @@ import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.traversal.FileSizeLimitInfo;
 import com.google.enterprise.connector.util.Base64FilterInputStream;
-import com.google.enterprise.connector.util.database.DocumentStore;
+import com.google.enterprise.connector.database.DocumentStore;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileOutputStream;

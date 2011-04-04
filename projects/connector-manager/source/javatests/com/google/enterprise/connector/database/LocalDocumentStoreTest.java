@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.connector.util.database;
+package com.google.enterprise.connector.database;
 
 import com.google.common.collect.Lists;
 import com.google.enterprise.connector.spi.Document;
@@ -21,6 +21,7 @@ import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
+import com.google.enterprise.connector.util.database.JdbcDatabase;
 import com.google.enterprise.connector.util.database.testing.TestJdbcDatabase;
 import com.google.enterprise.connector.util.database.testing.TestResourceClassLoader;
 import com.google.enterprise.connector.util.SystemClock;

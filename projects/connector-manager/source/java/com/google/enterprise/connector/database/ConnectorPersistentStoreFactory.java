@@ -20,7 +20,6 @@ import com.google.enterprise.connector.spi.LocalDatabase;
 import com.google.enterprise.connector.spi.LocalDocumentStore;
 import com.google.enterprise.connector.util.database.JdbcDatabase;
 import com.google.enterprise.connector.util.database.LocalDatabaseImpl;
-import com.google.enterprise.connector.util.database.LocalDocumentStoreImpl;
 
 /**
  * Factory used to construct {@link ConnectorPersistentStore} instances for
