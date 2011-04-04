@@ -115,9 +115,8 @@ public class LocalDocumentStoreImpl implements DocumentStore {
 
     // Locate our SQL DatabaseResourceBundle.
     DatabaseResourceBundleManager mgr = new DatabaseResourceBundleManager();
-    DatabaseInfo dbInfo = database.getDatabaseInfo();
-    resourceBundle =
-        mgr.getResourceBundle(RESOURCE_BUNDLE_NAME, dbInfo, classLoader);
+    resourceBundle = mgr.getResourceBundle(RESOURCE_BUNDLE_NAME,
+        database.getResourceBundleExtension(), classLoader);
     if (resourceBundle == null) {
       throw new RuntimeException("Failed to load SQL ResourceBundle "
                                  + RESOURCE_BUNDLE_NAME);

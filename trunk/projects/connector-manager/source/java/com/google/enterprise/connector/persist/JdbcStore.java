@@ -23,7 +23,6 @@ import com.google.enterprise.connector.instantiator.Configuration;
 import com.google.enterprise.connector.scheduler.Schedule;
 import com.google.enterprise.connector.spi.DatabaseResourceBundle;
 import com.google.enterprise.connector.util.database.JdbcDatabase;
-import com.google.enterprise.connector.util.database.DatabaseInfo;
 import com.google.enterprise.connector.util.database.DatabaseResourceBundleManager;
 
 import java.sql.Connection;
@@ -86,8 +85,8 @@ public class JdbcStore implements PersistentStore {
 
     // Locate our SQL DatabaseResourceBundle.
     DatabaseResourceBundleManager mgr = new DatabaseResourceBundleManager();
-    DatabaseInfo dbInfo = database.getDatabaseInfo();
-    resourceBundle = mgr.getResourceBundle(RESOURCE_BUNDLE_NAME, dbInfo, classLoader);
+    resourceBundle = mgr.getResourceBundle(RESOURCE_BUNDLE_NAME,
+        database.getResourceBundleExtension(), classLoader);
     if (resourceBundle == null) {
       // TODO: PersistentStore interface methods should be able to throw PersistentStoreExceptions.
       throw new RuntimeException("Failed to load SQL ResourceBundle "

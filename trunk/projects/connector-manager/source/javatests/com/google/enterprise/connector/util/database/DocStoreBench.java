@@ -143,7 +143,7 @@ public class DocStoreBench extends AbstractCommandLineApp {
     baseDirectory.mkdirs();
 
     jdbcDatabase = new JdbcDatabase(getDataSource());
-    System.out.println(jdbcDatabase.getDatabaseInfo().getDescription());
+    System.out.println(jdbcDatabase.getDescription());
 
     // Create a set of plausible Parent IDs.
     parents = new String[10000];
