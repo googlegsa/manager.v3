@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.connector.util.database;
+package com.google.enterprise.connector.database;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -29,6 +29,8 @@ import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.util.Clock;
 import com.google.enterprise.connector.util.SystemClock;
+import com.google.enterprise.connector.util.database.DatabaseResourceBundleManager;
+import com.google.enterprise.connector.util.database.JdbcDatabase;
 
 import java.io.OutputStream;
 import java.text.MessageFormat;
