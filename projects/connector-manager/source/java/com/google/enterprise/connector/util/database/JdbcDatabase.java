@@ -19,6 +19,8 @@ import com.google.common.base.Strings;
 import com.google.enterprise.connector.spi.SpiConstants.DatabaseType;
 import com.google.enterprise.connector.util.BasicChecksumGenerator;
 
+import com.google.common.base.Strings;
+
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
@@ -40,55 +42,154 @@ public class JdbcDatabase {
 
   private final DataSource dataSource;
   private final DatabaseConnectionPool connectionPool;
+
   private DatabaseType databaseType;
-  private DatabaseInfo databaseInfo;
+  private String productName;
+  private String description;
+  private String resourceBundleExtension;
 
   public JdbcDatabase(DataSource dataSource) {
     this.dataSource = dataSource;
     this.connectionPool = new DatabaseConnectionPool(dataSource);
-    // TODO: Fetch the DataSource description property.
     LOGGER.config("Using JDBC DataSource: " + dataSource.toString());
+    getDatabaseInfo();
   }
 
+  @Override
+  public synchronized void finalize() throws Exception {
+    if (getConnectionPool() != null) {
+      connectionPool.closeConnections();
+    }
+  }
+
+  /**
+   * Return the underlying {@link javax.sql.DataSource JDBC DataSource}
+   * for the database instance.
+   *
+   * @return the underlying {@link javax.sql.DataSource JDBC DataSource}
+   */
   public DataSource getDataSource() {
     return dataSource;
   }
 
+  /**
+   * Return the {@link ConnectionPool} used to maintain a collection
+   * of opened {@link Connection}s to the {@link DataSource}.
+   *
+   * @return the {@link ConnectionPool} for this database
+   */
   public DatabaseConnectionPool getConnectionPool() {
     return connectionPool;
   }
 
-  public DatabaseInfo getDatabaseInfo() {
-    getInfo();
-    return databaseInfo;
-  }
-
+  /**
+   * Return the {@link DatabaseType} for this database.
+   *
+   * @return the {@link DatabaseType} for this database
+   */
   public DatabaseType getDatabaseType() {
-    getInfo();
     return databaseType;
   }
 
-  private void getInfo() {
-    if (databaseInfo != null) {
-      return;
+  /**
+   * Return a sanitzed version of the vendor product name.
+   * This sanitized string is used to create the resourceBundleExtension
+   * and will generally match one of the supported DatabaseTypes.
+   *
+   * @return the sanitized product name
+   */
+  public String getProductName() {
+    return productName;
+  }
+
+  /**
+   * Return a description string for this database.
+   * This may be a vendor-supplied string or simply the unsanitized
+   * product name and version string.
+   *
+   * @return the {@code description} string
+   */
+  public String getDescription() {
+    return description;
+  }
+
+  @Override
+  public String toString() {
+    return description;
+  }
+
+  /**
+   * Returns the {@link DatabaseResourceBundle} extension that may be added
+   * to a {@code ResourceBundle baseName} to build the name of the resource
+   * that is specific to the database implementation identified by this
+   * {@code JdbcDatabase} instance.
+   * <p>
+   * This is will be constructed from the database {@code productName},
+   * {@code majorVersion}, and {@code minorVersion} separated by underbars
+   * ({@code '_'}), for instance MySQL v5.6 will return "{@code _mysql_5_6}".
+   *
+   * @return the resource bundle extension
+   */
+  public String getResourceBundleExtension() {
+    return resourceBundleExtension;
+  }
+
+  /**
+   * If the supplied string is not {@code null} or empty, prepend an underscore,
+   * else return the empty string.
+   */
+  private String bundleNameFragment(String string) {
+    return Strings.isNullOrEmpty(string) ? "" : "_" + string;
+  }
+
+  /**
+   * Sanitizes the supplied string for use as a portion of a
+   * ResourceBundleExtension.  Specifically, a sanitized string
+   * should consist of nothing other than lowercase alphabetics
+   * [a-z], numerics [0-9], underscore '_', and hyphen '-'.
+   * <p>
+   * The following actions are taken sanitize the input string:
+   * <ul><li>Alphabetics are converted to lowercase.</li>
+   * <li>Leading and trailing invalid characters are removed.</li>
+   * <li>The remaining invalid characters are converted to hyphens.</li>
+   * </ul>
+   * <p>
+   * For example, the string "Hello World!" would sanitize to "hello-world".
+   *
+   * @param string the {@code String} to be sanitized.
+   * @return sanitized version of the supplied {@code string}
+   */
+  private String sanitize(String string) {
+    if (string != null) {
+      return string.toLowerCase().replaceAll("[^a-z0-9_]+", " ").trim()
+             .replace(' ', '-');
     }
+    return string;
+  }
+
+  /**
+   * Extract vendor-specific infromation about this database from
+   * the DataBaseMetaData.  This will be used to identify the DatabaseType
+   * and build the DatabaseResourceBundle extenstion for the database.
+   */
+  private void getDatabaseInfo() {
     // TODO: Support Manual Configuration of this information,
     // which would override this detection.
     try {
       Connection connection = getConnectionPool().getConnection();
       try {
         DatabaseMetaData metaData = connection.getMetaData();
+        productName = metaData.getDatabaseProductName();
+        String productVersion = metaData.getDatabaseProductVersion();
         int majorVersion = metaData.getDatabaseMajorVersion();
         int minorVersion = metaData.getDatabaseMinorVersion();
-        String productName = metaData.getDatabaseProductName();
-        String productVersion = metaData.getDatabaseProductVersion();
         LOGGER.config("JDBC Database ProductName: " + productName);
         LOGGER.config("JDBC Database ProductVersion: " + productVersion);
         LOGGER.config("JDBC Database MajorVersion: " + majorVersion);
         LOGGER.config("JDBC Database MinorVersion: " + minorVersion);
 
-        String description = productName + " " + productVersion;
-        productName = DatabaseInfo.sanitize(productName);
+        description = productName + " " + productVersion;
+        productName = sanitize(productName);
         if (productName.equals(DatabaseType.ORACLE.toString())) {
           // Oracle already has a really long description string.
           description = productVersion.replace("\n", " ");
@@ -112,9 +213,12 @@ public class JdbcDatabase {
         // Most of the others have simple, one-word product names.
 
         databaseType = DatabaseType.findDatabaseType(productName);
-        databaseInfo =
-            new DatabaseInfo(productName, Integer.toString(majorVersion),
-            Integer.toString(minorVersion), description);
+
+        // Determine the DatabaseResourceBundle extension for this DB.
+        resourceBundleExtension = bundleNameFragment(productName)
+            + bundleNameFragment(Integer.toString(majorVersion))
+            + bundleNameFragment(Integer.toString(minorVersion));
+
         return;
       } finally {
         getConnectionPool().releaseConnection(connection);
@@ -125,14 +229,8 @@ public class JdbcDatabase {
 
     // Fallback in case we can't get anything from DatabaseMetaData.
     databaseType = DatabaseType.OTHER;
-    databaseInfo = new DatabaseInfo(null, null, null, "Unknown Database");
-  }
-
-  @Override
-  public synchronized void finalize() throws Exception {
-    if (getConnectionPool() != null) {
-      connectionPool.closeConnections();
-    }
+    productName = description = "Unknown Database";
+    resourceBundleExtension = "";
   }
 
   /**

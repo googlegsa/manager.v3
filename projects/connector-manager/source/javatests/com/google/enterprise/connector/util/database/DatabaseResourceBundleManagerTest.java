@@ -148,12 +148,10 @@ public class DatabaseResourceBundleManagerTest extends TestCase {
         "NonExistentDatabasePropertyResourceBundle", null, classLoader));
   }
 
-  public void testGetResourceBundleWithDbInfo1() throws Exception {
+  public void testGetResourceBundleWithExtension1() throws Exception {
     String name = BASE_PATH + "BaseName";
-    DatabaseInfo dbInfo = new DatabaseInfo("dbname", null, null, null);
-
     DatabasePropertyResourceBundle bundle =
-        mgr.getResourceBundle(name, dbInfo, classLoader);
+        mgr.getResourceBundle(name, "_dbname", classLoader);
     assertNotNull(bundle);
     assertEquals("BaseName_dbname", bundle.getString("bundle.name"));
 
@@ -165,12 +163,10 @@ public class DatabaseResourceBundleManagerTest extends TestCase {
     assertNull(bundle);
   }
 
-  public void testGetResourceBundleWithDbInfo2() throws Exception {
+  public void testGetResourceBundleWithExtension2() throws Exception {
     String name = BASE_PATH + "BaseName";
-    DatabaseInfo dbInfo = new DatabaseInfo("dbname", "dbversion", null, null);
-
     DatabasePropertyResourceBundle bundle =
-        mgr.getResourceBundle(name, dbInfo, classLoader);
+        mgr.getResourceBundle(name, "_dbname_dbversion", classLoader);
     assertNotNull(bundle);
     assertEquals("BaseName_dbname_dbversion", bundle.getString("bundle.name"));
 
@@ -188,11 +184,8 @@ public class DatabaseResourceBundleManagerTest extends TestCase {
 
   public void testGetResourceBundleWithDbInfo3() throws Exception {
     String name = BASE_PATH + "BaseName";
-    DatabaseInfo dbInfo =
-        new DatabaseInfo("dbname", "dbversion", "dbvariant", null);
-
     DatabasePropertyResourceBundle bundle =
-        mgr.getResourceBundle(name, dbInfo, classLoader);
+        mgr.getResourceBundle(name, "_dbname_dbversion_dbvariant", classLoader);
     assertNotNull(bundle);
     assertEquals("BaseName_dbname_dbversion_dbvariant",
                  bundle.getString("bundle.name"));
@@ -215,11 +208,9 @@ public class DatabaseResourceBundleManagerTest extends TestCase {
 
   public void testBestFallbackForNonExistentResourceBundle() throws Exception {
     String name = BASE_PATH + "BaseName";
-    DatabaseInfo dbInfo =
-        new DatabaseInfo("dbname", "dbversion", "non_existent_variant", null);
-
     DatabasePropertyResourceBundle bundle =
-        mgr.getResourceBundle(name, dbInfo, classLoader);
+        mgr.getResourceBundle(name, "_dbname_dbversion_non_existent_variant",
+                              classLoader);
     assertNotNull(bundle);
     assertEquals("BaseName_dbname_dbversion", bundle.getString("bundle.name"));
 
@@ -237,11 +228,8 @@ public class DatabaseResourceBundleManagerTest extends TestCase {
 
   public void testSubstitutionFromParentBundles() throws Exception {
     String name = BASE_PATH + "BaseName";
-    DatabaseInfo dbInfo =
-        new DatabaseInfo("dbname", "dbversion", "dbvariant", null);
-
     DatabasePropertyResourceBundle bundle =
-        mgr.getResourceBundle(name, dbInfo, classLoader);
+        mgr.getResourceBundle(name, "_dbname_dbversion_dbvariant", classLoader);
     assertNotNull(bundle);
     assertEquals("BaseName_dbname_dbversion_dbvariant",
                  bundle.getString("bundle.name"));
@@ -274,22 +262,17 @@ public class DatabaseResourceBundleManagerTest extends TestCase {
   // rather than loading it again.
   public void testCacheParentBundles() throws Exception {
     String name = BASE_PATH + "BaseName";
-    DatabaseInfo dbInfo =
-        new DatabaseInfo("dbname", "dbversion", "dbvariant", null);
-
     DatabasePropertyResourceBundle bundle =
-        mgr.getResourceBundle(name, dbInfo, classLoader);
+        mgr.getResourceBundle(name, "_dbname_dbversion_dbvariant", classLoader);
     assertNotNull(bundle);
 
-    dbInfo = new DatabaseInfo("dbname", "dbversion", null, null);
     DatabasePropertyResourceBundle parent =
-        mgr.getResourceBundle(name, dbInfo, classLoader);
+        mgr.getResourceBundle(name, "_dbname_dbversion", classLoader);
     assertNotNull(parent);
     assertSame(parent, bundle.getParent());
 
     bundle = parent;
-    dbInfo = new DatabaseInfo("dbname", null, null, null);
-    parent = mgr.getResourceBundle(name, dbInfo, classLoader);
+    parent = mgr.getResourceBundle(name, "_dbname", classLoader);
     assertNotNull(parent);
     assertSame(parent, bundle.getParent());
 
@@ -304,22 +287,17 @@ public class DatabaseResourceBundleManagerTest extends TestCase {
   // first bundle, rather than loading it again.
   public void testCacheParentBundlesAlternateChild() throws Exception {
     String name = BASE_PATH + "BaseName";
-    DatabaseInfo dbInfo =
-        new DatabaseInfo("dbname", "dbversion", "dbvariant", null);
-
     DatabasePropertyResourceBundle bundle =
-        mgr.getResourceBundle(name, dbInfo, classLoader);
+        mgr.getResourceBundle(name, "_dbname_dbversion_dbvariant", classLoader);
     assertNotNull(bundle);
 
-    dbInfo = new DatabaseInfo("dbname", "dbversion", null, null);
     DatabasePropertyResourceBundle parent =
-        mgr.getResourceBundle(name, dbInfo, classLoader);
+        mgr.getResourceBundle(name, "_dbname_dbversion", classLoader);
     assertNotNull(parent);
     assertSame(parent, bundle.getParent());
 
-    dbInfo = new DatabaseInfo("dbname", "dbversion", "dbvariant2", null);
     DatabasePropertyResourceBundle bundle2 =
-        mgr.getResourceBundle(name, dbInfo, classLoader);
+        mgr.getResourceBundle(name, "_dbname_dbversion_dbvariant2", classLoader);
     assertNotNull(bundle);
     assertSame(parent, bundle2.getParent());
   }
