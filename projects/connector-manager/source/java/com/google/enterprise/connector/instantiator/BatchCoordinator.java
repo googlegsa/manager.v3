@@ -91,7 +91,7 @@ class BatchCoordinator implements TraversalStateStore,
       try {
         if ((connectorCoordinator.currentBatchKey == requiredBatchKey) &&
             isCheckpointUnmodified()) {
-          connectorCoordinator.setConnectorState(state);  // TODO: PStore eventual Setter
+          connectorCoordinator.setConnectorState(state);
           cachedState = state;
         } else {
           throw new BatchCompletedException();
