@@ -461,17 +461,20 @@ public class Context {
   /**
    * Do everything necessary to start up the application.
    */
-  public void start() {
+  public synchronized void start() {
     if (started) {
       return;
     }
     initApplicationContext();
-    startInstantiator();
-    if (isFeeding) {
-      startScheduler();
+    try {
+      startInstantiator();
+      if (isFeeding) {
+        startScheduler();
+      }
+      startServices();
+    } finally {
+      started = true;
     }
-    startServices();
-    started = true;
   }
 
   /**
