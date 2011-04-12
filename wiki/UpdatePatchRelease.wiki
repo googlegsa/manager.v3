@@ -17,17 +17,19 @@ Before applying an update you should have the following available to you.
   * A binary distribution of a Connector Manager patch release, available on the [http://code.google.com/p/google-enterprise-connector-manager/downloads/list Downloads page].
   * Familiarity with the command line environment of the deployment computer (cmd.exe on Windows or a shell environment on Unix/Linux).
 
+*Note:* These instructions use environment variable syntax as an allusion. These are not actual environment variables, and you must substitute the actual path when entering the commands.
+
 == Updating a Connector Manager deployed on Windows ==
 
 *Note:* `%CATALINA_HOME%` refers to the Apache Tomcat deployment directory for your Connector installation.  If you installed the Connector using the Google Connector Installer (GCI), then `%CATALINA_HOME%` will be the `Tomcat` directory inside the Connector Installation (for instance: `C:\GoogleConnectors\myConnector\Tomcat`).
 
-You will need to stop and restart the Tomcat web application server during the upgrade.  The instructions here assume that Tomcat is not running as a *Windows Service*.  The instructions for doing so differ if Tomcat is running as a Windows service.  You would typically stop and start the service via the `Windows->Settings->Control Panel->Administrative Tools->Services` menu.
+You will need to stop and restart the Tomcat web application server during the upgrade.  The instructions here assume that Tomcat is running as a *Windows Service*.  The instructions for doing so differ if Tomcat is running as a console application.  You would typically stop and start the service via the `Windows->Settings->Control Panel->Administrative Tools->Services` control panel.
 
   # Download the _Google Connector Manager Binary Distribution_ from the [http://code.google.com/p/google-enterprise-connector-manager/downloads/list Downloads page], and unzip it.  Note the location of the `connector-manager.war` file that was extracted from the binary distribution.  These notes will use `%WAR_DIR%` to refer to the directory that contains the `connector-manager.war` file.
-  # Shutdown the Tomcat web application server, either via the Services menu, by using the `Stop_*_Connector_Console` command in the Connector installation directory, or by using Tomcat's `shutdown` or  `stopService` command. 
+  # Shutdown the Tomcat web application server, either via the Services control panel, by using the `Stop_*_Connector_Console` command in the Connector installation directory, or by using Tomcat's `shutdown` or  `stopService` command. 
 {{{
 cd %CATALINA_HOME%\bin
-shutdown.bat
+stopService.bat
 }}}
   # Make a backup copy of the Connector Manager configuration properties file %CATALINA_HOME%\webapps\connector-manager\WEB-INF\applicationContext.properties.
 {{{
@@ -45,10 +47,10 @@ jar xvf %WAR_DIR%\connector-manager.war
 cd %CATALINA_HOME%\webapps\connector-manager\WEB-INF
 copy applicationContext.properties.backup applicationContext.properties
 }}}
-  # Restart the Tomcat web application server, either via the Services menu, by using the `Start_*_Connector_Console` command in the Connector installation directory, or by using Tomcat's `startup` command or `startService` command.
+  # Restart the Tomcat web application server, either via the Services control panel, by using the `Start_*_Connector_Console` command in the Connector installation directory, or by using Tomcat's `startup` command or `startService` command.
 {{{
 cd %CATALINA_HOME%\bin
-startup.bat
+startService.bat
 }}}
 
 == Updating a Connector Manager deployed on Unix or Linux ==
@@ -64,7 +66,7 @@ wget http://google-enterprise-connector-manager.googlecode.com/files/connector-m
 tar xzf connector-manager-2.0.2.tar.gz
 WAR_DIR=`pwd`/connector-manager-2.0.2
 }}}
-  # Shutdown the Tomcat web application server either via the Services menu, by using the `Stop_*_Connector_Console` command in the Connector installation directory, or by using Tomcat's `shutdown` command.
+  # Shutdown the Tomcat web application server either by using the `Stop_*_Connector_Console` command in the Connector installation directory, or by using Tomcat's `shutdown` command.
 {{{
 cd ${CATALINA_HOME}/bin
 ./shutdown.sh
