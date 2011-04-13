@@ -63,6 +63,23 @@ public class JdbcDatabase {
   }
 
   /**
+   * Returns {@code true} if the configured {@code JdbcDatabase} is unavailable.
+   *
+   * @return {@code true} if this {@code JdbcDatabase} is disabled, {@code false}
+   * otherwise.
+   */
+  public boolean isDisabled() {
+    // If I can successfully establish a Connection to the database, assume
+    // the DataSource is functional.  Otherwise, consider it disabled.
+    try {
+      dataSource.getConnection().close();
+      return false;
+    } catch (SQLException e) {
+      return true;
+    }
+  }
+
+  /**
    * Return the underlying {@link javax.sql.DataSource JDBC DataSource}
    * for the database instance.
    *
@@ -175,6 +192,15 @@ public class JdbcDatabase {
   private void getDatabaseInfo() {
     // TODO: Support Manual Configuration of this information,
     // which would override this detection.
+
+    // If the database is unavailable, don't try to fetch its metadata.
+    if (isDisabled()) {
+      databaseType = DatabaseType.OTHER;
+      productName = description = "Disabled Database";
+      resourceBundleExtension = "";
+      return;
+    }
+
     try {
       Connection connection = getConnectionPool().getConnection();
       try {
