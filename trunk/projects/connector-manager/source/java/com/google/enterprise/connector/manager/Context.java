@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.manager;
 
+import com.google.common.base.Strings;
 import com.google.enterprise.connector.common.PropertiesException;
 import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.instantiator.Instantiator;
@@ -774,7 +775,7 @@ public class Context {
       throw new InstantiatorException("Spring exception while getting "
           + APPLICATION_CONTEXT_PROPERTIES_BEAN_NAME + " bean", e);
     }
-    if (propFileName == null || propFileName.length() < 1) {
+    if (Strings.isNullOrEmpty(propFileName)) {
       throw new InstantiatorException("Null or empty file name returned from "
           + "Spring while getting " + APPLICATION_CONTEXT_PROPERTIES_BEAN_NAME
           + " bean");
@@ -797,24 +798,57 @@ public class Context {
    * Returns the configuration Properties for the Connector Manager.
    */
   public Properties getConnectorManagerProperties() {
+    try {
+      return loadConnectorManagerProperties();
+    } catch (PropertiesException pe) {
+      LOGGER.log(Level.WARNING, "Unable to read application context"
+                 + " properties.", pe);
+      return new Properties();
+    }
+  }
+
+  /**
+   * Loads the configuration Properties for the Connector Manager.
+   *
+   * @return the configuration Properties for the Connector Manager.
+   * @throws PropertiesException if error loading properties
+   */
+  public Properties loadConnectorManagerProperties()
+      throws PropertiesException {
     initApplicationContext();
+    String propFileName = "";
     try {
       // Get the properties out of the CM properties file if present.
-      String propFileName = getPropFileName();
+      propFileName = getPropFileName();
       File propFile = getPropFile(propFileName);
-      try {
-        Properties props = PropertiesUtils.loadFromFile(propFile);
-        propertiesVersion = PropertiesUtils.getPropertiesVersion(props);
-        return props;
-      } catch (PropertiesException pe) {
-        LOGGER.log(Level.WARNING, "Unable to read application context"
-                   + " properties file " + propFileName, pe);
-      }
+      Properties props = PropertiesUtils.loadFromFile(propFile);
+      propertiesVersion = PropertiesUtils.getPropertiesVersion(props);
+      return props;
     } catch (InstantiatorException ie) {
-      LOGGER.log(Level.WARNING, "Unable to read application context"
-                 + " properties", ie);
+      throw new PropertiesException("Unable to read application context"
+          + " properties file " + propFileName, ie);
     }
-    return new Properties();
+  }
+
+  /**
+   * Stores the configuration Properties for the Connector Manager.
+   *
+   * @param props  the configuration Properties to store
+   * @throws PropertiesException if error storing properties
+   */
+  public void storeConnectorManagerProperties(Properties props)
+      throws PropertiesException {
+    String propFileName = "";
+    try {
+      // Get the properties out of the CM properties file if present.
+      propFileName = getPropFileName();
+      File propFile = getPropFile(propFileName);
+      PropertiesUtils.storeToFile(props, propFile,
+                                  CONNECTOR_MANGER_CONFIG_HEADER);
+    } catch (InstantiatorException ie) {
+      throw new PropertiesException("Unable to save application context"
+          + " properties file " + propFileName, ie);
+    }
   }
 
   /**
