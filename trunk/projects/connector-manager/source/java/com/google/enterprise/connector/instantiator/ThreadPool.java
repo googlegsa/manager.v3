@@ -89,7 +89,7 @@ public class ThreadPool {
   /**
    * Flag indicating shutdown was called.  Don't spawn new tasks even if asked.
    */
-  private boolean didShutdown = false;
+  private boolean isShutdown = false;
 
   /**
    * The lazily constructed LazyThreadPool instance.
@@ -121,20 +121,19 @@ public class ThreadPool {
    *        be interrupted; otherwise, in-progress tasks are allowed to complete
    *        normally.
    * @param waitMillis maximum amount of time to wait for tasks to complete.
-   * @return <tt>true</tt> if this all the running tasks terminated and
+   * @return <tt>true</tt> if all the running tasks terminated and
    *         <tt>false</tt> if the some running task did not terminate.
    * @throws InterruptedException if interrupted while waiting.
    */
   synchronized boolean shutdown(boolean interrupt, long waitMillis)
       throws InterruptedException {
-    didShutdown = true;
+    isShutdown = true;
     if (lazyThreadPool == null) {
       return true;
     } else {
       return lazyThreadPool.shutdown(interrupt, waitMillis);
     }
   }
-
 
   /**
    * Return a LazyThreadPool.
@@ -153,7 +152,7 @@ public class ThreadPool {
    * will always return null.
    */
   public TaskHandle submit(TimedCancelable cancelable) {
-    if (didShutdown) {
+    if (isShutdown) {
       return null;
     }
     return getInstance().submit(cancelable);
@@ -164,7 +163,6 @@ public class ThreadPool {
    * Lazily constructed ThreadPool implementation.
    */
   private class LazyThreadPool {
-
     /**
      * ExecutorService for running submitted tasks. Tasks are only submitted
      * through completionService.
@@ -211,7 +209,7 @@ public class ThreadPool {
      *        be interrupted; otherwise, in-progress tasks are allowed to complete
      *        normally.
      * @param waitMillis maximum amount of time to wait for tasks to complete.
-     * @return <tt>true</tt> if this all the running tasks terminated and
+     * @return <tt>true</tt> if all the running tasks terminated and
      *         <tt>false</tt> if the some running task did not terminate.
      * @throws InterruptedException if interrupted while waiting.
      */
@@ -305,32 +303,6 @@ public class ThreadPool {
    }
 
    /**
-    * A task that cancels another task that is running a {@link TimedCancelable}.
-    * The {@link TimeoutTask} should be scheduled to run when the interval for
-    * the {@link TimedCancelable} to run expires.
-    */
-   private class TimeoutTask implements Runnable {
-     final TimedCancelable timedCancelable;
-     private volatile TaskHandle taskHandle;
-
-     TimeoutTask(TimedCancelable timedCancelable) {
-       this.timedCancelable = timedCancelable;
-     }
-
-     public void run() {
-       if (taskHandle == null) {
-         throw new IllegalStateException(
-             "Run TimeoutTask called with null taskHandle.");
-       }
-       timedCancelable.timeout(taskHandle);
-     }
-
-     void setTaskHandle(TaskHandle taskHandle) {
-       this.taskHandle = taskHandle;
-     }
-   }
-
-   /**
     * A task that gets completion information from all the tasks that run in a
     * {@link CompletionService} and logs uncaught exceptions that cause the tasks
     * to fail.
@@ -364,23 +336,49 @@ public class ThreadPool {
        LOGGER.info("Completion task shutdown.");
      }
    }
+  }
 
-   /**
-    * A {@link ThreadFactory} that adds a prefix to thread names assigned
-    * by {@link Executors#defaultThreadFactory()} to provide diagnostic
-    * context in stack traces.
-    */
-   private class ThreadNamingThreadFactory implements ThreadFactory {
-     private final ThreadFactory delegate = Executors.defaultThreadFactory();
-     private final String namePrefix;
-     ThreadNamingThreadFactory(String namePrefix) {
-       this.namePrefix = namePrefix + "-";
-     }
-     public Thread newThread(Runnable r) {
-       Thread t = delegate.newThread(r);
-       t.setName(namePrefix + t.getName());
-       return t;
-     }
-   }
+  /**
+   * A task that cancels another task that is running a {@link TimedCancelable}.
+   * The {@link TimeoutTask} should be scheduled to run when the interval for
+   * the {@link TimedCancelable} to run expires.
+   */
+  private static class TimeoutTask implements Runnable {
+    final TimedCancelable timedCancelable;
+    private volatile TaskHandle taskHandle;
+
+    TimeoutTask(TimedCancelable timedCancelable) {
+      this.timedCancelable = timedCancelable;
+    }
+
+    public void run() {
+      if (taskHandle == null) {
+        throw new IllegalStateException(
+            "Run TimeoutTask called with null taskHandle.");
+      }
+      timedCancelable.timeout(taskHandle);
+    }
+
+    void setTaskHandle(TaskHandle taskHandle) {
+      this.taskHandle = taskHandle;
+    }
+  }
+
+  /**
+   * A {@link ThreadFactory} that adds a prefix to thread names assigned
+   * by {@link Executors#defaultThreadFactory()} to provide diagnostic
+   * context in stack traces.
+   */
+  private static class ThreadNamingThreadFactory implements ThreadFactory {
+    private final ThreadFactory delegate = Executors.defaultThreadFactory();
+    private final String namePrefix;
+    ThreadNamingThreadFactory(String namePrefix) {
+      this.namePrefix = namePrefix + "-";
+    }
+    public Thread newThread(Runnable r) {
+      Thread t = delegate.newThread(r);
+      t.setName(namePrefix + t.getName());
+      return t;
+    }
   }
 }
