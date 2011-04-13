@@ -155,19 +155,7 @@ public class JdbcStore implements PersistentStore {
    */
   /* @Override */
   public boolean isDisabled() {
-    // Obviously disabled, if there is no database.
-    if (database == null) {
-      return true;
-    }
-    // If I can successfully establish a Connection to the database, assume
-    // the DataSource is functional.  Otherwise, consider it disabled.
-    try {
-      init();
-      database.getDataSource().getConnection().close();
-      return false;
-    } catch (SQLException e) {
-      return true;
-    }
+    return (database == null) ? true : database.isDisabled();
   }
 
   /**
