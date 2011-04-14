@@ -88,7 +88,7 @@ public class LocalDocumentStoreTest extends TestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
-      jdbcDatabase.finalize();
+      jdbcDatabase.shutdown();
     } finally {
       super.tearDown();
     }
