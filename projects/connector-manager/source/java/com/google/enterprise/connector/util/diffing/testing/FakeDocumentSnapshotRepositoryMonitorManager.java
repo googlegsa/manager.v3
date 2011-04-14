@@ -12,8 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.connector.util.diffing;
-import com.google.enterprise.connector.util.diffing.testing.TestDirectoryManager;
+package com.google.enterprise.connector.util.diffing.testing;
+
+import com.google.enterprise.connector.util.diffing.ChangeSource;
+import com.google.enterprise.connector.util.diffing.CheckpointAndChangeQueue;
+import com.google.enterprise.connector.util.diffing.DocumentHandleFactory;
+import com.google.enterprise.connector.util.diffing.DocumentSnapshotRepositoryMonitorManager;
+import com.google.enterprise.connector.util.diffing.MonitorCheckpoint;
 
 import junit.framework.TestCase;
 
