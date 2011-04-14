@@ -20,6 +20,7 @@ import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.TraversalContext;
 import com.google.enterprise.connector.spi.Value;
+import com.google.enterprise.connector.util.diffing.testing.FakeDocumentSnapshotRepositoryMonitorManager;
 import com.google.enterprise.connector.util.diffing.testing.FakeTraversalContext;
 
 import junit.framework.TestCase;
