@@ -56,10 +56,12 @@ public class JdbcDatabase {
   }
 
   @Override
-  public synchronized void finalize() throws Exception {
-    if (getConnectionPool() != null) {
-      connectionPool.closeConnections();
-    }
+  protected void finalize() throws Throwable {
+    shutdown();
+  }
+
+  public synchronized void shutdown() {
+    connectionPool.closeConnections();
   }
 
   /**
@@ -202,7 +204,7 @@ public class JdbcDatabase {
     }
 
     try {
-      Connection connection = getConnectionPool().getConnection();
+      Connection connection = connectionPool.getConnection();
       try {
         DatabaseMetaData metaData = connection.getMetaData();
         productName = metaData.getDatabaseProductName();
@@ -247,7 +249,7 @@ public class JdbcDatabase {
 
         return;
       } finally {
-        getConnectionPool().releaseConnection(connection);
+        connectionPool.releaseConnection(connection);
       }
     } catch (SQLException e) {
       LOGGER.log(Level.SEVERE, "Failed to retrieve DatabaseMetaData", e);
@@ -265,7 +267,7 @@ public class JdbcDatabase {
   public int getMaxTableNameLength() {
     int maxTableNameLength;
     try {
-      Connection connection = getConnectionPool().getConnection();
+      Connection connection = connectionPool.getConnection();
       try {
         DatabaseMetaData metaData = connection.getMetaData();
         maxTableNameLength = metaData.getMaxTableNameLength();
@@ -273,7 +275,7 @@ public class JdbcDatabase {
           maxTableNameLength = 255;
         }
       } finally {
-        getConnectionPool().releaseConnection(connection);
+        connectionPool.releaseConnection(connection);
       }
     } catch (SQLException e) {
       LOGGER.warning("Failed to fetch database maximum table name length.");
@@ -369,7 +371,7 @@ public class JdbcDatabase {
   private boolean verifyTableAndThrow(String tableName, String[] createTableDdl)
       throws SQLException {
     boolean originalAutoCommit = true;
-    Connection connection = getConnectionPool().getConnection();
+    Connection connection = connectionPool.getConnection();
     try {
       originalAutoCommit = connection.getAutoCommit();
       connection.setAutoCommit(false);
@@ -431,7 +433,7 @@ public class JdbcDatabase {
         connection.setAutoCommit(originalAutoCommit);
       } catch (SQLException ignored) {
       }
-      getConnectionPool().releaseConnection(connection);
+      connectionPool.releaseConnection(connection);
     }
   }
 }

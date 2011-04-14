@@ -36,7 +36,7 @@ public class DatabaseConnectionPool {
   }
 
   @Override
-  public synchronized void finalize() throws Exception {
+  protected void finalize() throws Throwable {
     closeConnections();
   }
 

@@ -51,7 +51,7 @@ public class JdbcDatabaseTest extends TestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
-      database.finalize();
+      database.shutdown();
     } finally {
       super.tearDown();
     }
