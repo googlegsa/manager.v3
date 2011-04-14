@@ -15,6 +15,7 @@
 package com.google.enterprise.connector.common;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.JarURLConnection;
 import java.net.URL;
 import java.util.jar.Attributes;
@@ -23,7 +24,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class JarUtils {
-
   private static final Logger LOGGER =
       Logger.getLogger(JarUtils.class.getName());
 
@@ -40,23 +40,33 @@ public class JarUtils {
    * ("") if none found.
    */
   public static String getJarVersion(Class<?> clazz) {
-    URL url = null;
+    String classPath = "/" + clazz.getName().replace('.', '/') + ".class";
+    URL classUrl = clazz.getResource(classPath);
+    if (classUrl == null) {
+      LOGGER.warning("Error accessing Jar Manifest for " + clazz);
+      return "";
+    }
+
+    // The classUrl may not be a jar: URL, depending on the servlet
+    // container, so we can't just open it and assume we'll get a
+    // JarURLConnection to get the manifest from. So we construct an
+    // URL directly to the manifest we want.
+    String classUrlRep = classUrl.toString();
+    String path = classUrlRep.replace(classPath, "/META-INF/MANIFEST.MF");
+    if (path.equals(classUrlRep)) {
+      // The replace failed; we don't have an URL to read the manifest from.
+      LOGGER.warning("Error accessing Jar Manifest for " + classUrlRep);
+      return "";
+    }
     try {
-      String resName = "/" + clazz.getName().replace('.', '/') + ".class";
-      url = clazz.getResource(resName);
-      try {
-        JarURLConnection connection = (JarURLConnection) url.openConnection();
-        Manifest manifest = connection.getManifest();
-        Attributes attrs = manifest.getMainAttributes();
-        String version = attrs.getValue("Implementation-Version");
-        return (version == null) ? "" : version;
-      } catch (ClassCastException cce) {
-        // It looks like we are running JUnit tests, pulling classes out
-        // of classes directory instead of a Jar file.
-        LOGGER.warning("Unable to access Jar Manifest for " + url);
-      }
+      URL url = new URL(path);
+      InputStream in = url.openStream();
+      Manifest manifest = new Manifest(in);
+      Attributes attrs = manifest.getMainAttributes();
+      String version = attrs.getValue("Implementation-Version");
+      return (version == null) ? "" : version;
     } catch (IOException e) {
-      LOGGER.log(Level.WARNING, "Error accessing Jar Manifest for " + url, e);
+      LOGGER.log(Level.WARNING, "Error accessing Jar Manifest for " + path, e);
     }
     return "";  // Can't get version string.
   }
