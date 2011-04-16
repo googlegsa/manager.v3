@@ -40,7 +40,7 @@
   <property name="thirdparty.prod.jars" value="third-party/prod" />
   <property name="thirdparty.tests.jars" value="third-party/tests" />
 
-  <property name="junit.jarfile" value="${thirdparty.prod.jars}/junit.jar" />
+  <property name="junit.jarfile" value="${thirdparty.tests.jars}/junit.jar" />
   <property name="junit.logging.properties" value="${tests.config}/logging.properties" />
 
   <!-- The directory where all war-files are collected -->
@@ -70,6 +70,7 @@
              splitindex="true" use="true" version="true">
       <classpath>
         <fileset dir="${thirdparty.prod.jars}" includes="**/*.jar" />
+        <pathelement location="${junit.jarfile}"/>
       </classpath>
       <package name="com.google.enterprise.connector.spi"/>
       <package name="com.google.enterprise.connector.util"/>
@@ -98,7 +99,7 @@
            target="${jvm.version}" source="${jvm.version}">
     	<classpath>
         <fileset dir="${thirdparty.prod.jars}" includes="**/*.jar" />
-        <fileset dir="${thirdparty.tests.jars}" includes="**/*.jar" />
+        <pathelement location="${junit.jarfile}"/>
      </classpath>
       <compilerarg value="-Xlint"/>
       <compilerarg value="-Xlint:-serial"/>
