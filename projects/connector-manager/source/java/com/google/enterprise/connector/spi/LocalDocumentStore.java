@@ -84,6 +84,15 @@ public interface LocalDocumentStore {
    * <p/>
    * The documents returned will be non-null and will contain only the
    * persisted attributes. See {@link SpiConstants#PERSISTABLE_ATTRIBUTES}.
+   * <p/>
+   * <strong>Note:</strong> The {@code LocalDocumentStore} implementation
+   * buffers information stored via {@link #storeDocument(Document)}, then
+   * writes records out in batches.  Consequently unflushed documents will
+   * not yet be available for retrieval.  Consider calling {@link #flush()}
+   * before getting an Iterator.  Similarly, the document {@code Iterator}
+   * implementation fetches documents in batches, so the Iterator may
+   * return documents that were committed to the document store after the
+   * {@code Iterator} was created.
    *
    * @return an {@link Iterator} of all documents created by this connector
    *         instance, in order by docid.
@@ -99,6 +108,15 @@ public interface LocalDocumentStore {
    * <p/>
    * The documents returned will be non-null and will contain only the
    * persisted attributes. See {@link SpiConstants#PERSISTABLE_ATTRIBUTES}.
+   * <p/>
+   * <strong>Note:</strong> The {@code LocalDocumentStore} implementation
+   * buffers information stored via {@link #storeDocument(Document)}, then
+   * writes records out in batches.  Consequently unflushed documents will
+   * not yet be available for retrieval.  Consider calling {@link #flush()}
+   * before getting an Iterator.  Similarly, the document {@code Iterator}
+   * implementation fetches documents in batches, so the Iterator may
+   * return documents that were committed to the document store after the
+   * {@code Iterator} was created.
    *
    * @param docid the docid after which to start the iteration, if {@code null}
    *        or empty, all documents created by this connector are returned.
@@ -110,6 +128,12 @@ public interface LocalDocumentStore {
   /**
    * Persists information about a document. Any attributes that are not keys in
    * the {@link SpiConstants#PERSISTABLE_ATTRIBUTES} table will be ignored.
+   * <p/>
+   * <strong>Note:</strong> The {@code LocalDocumentStore} implementation
+   * buffers information stored via {@link #storeDocument(Document)}, then
+   * writes records out in batches for improved document store performance.
+   * The buffered records are flushed to the document store periodically
+   * and at the end of processing a traversal batch.  See {@link #flush()}.
    *
    * @param document a {@link Document}
    */
