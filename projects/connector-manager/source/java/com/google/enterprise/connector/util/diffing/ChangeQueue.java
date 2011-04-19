@@ -15,8 +15,10 @@
 package com.google.enterprise.connector.util.diffing;
 
 
+import java.sql.Timestamp;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.logging.Logger;
 
 /**
  * Bounded buffer of {@link Change} objects for buffering between the
@@ -30,6 +32,122 @@ public class ChangeQueue implements ChangeSource {
 
   /** Milliseconds to sleep after a scan that finds no changes. */
   private final long sleepInterval;
+  
+  private final CrawlActivityLogger activityLogger;
+
+  /**
+   * Interface to log the crawl activity for each crawl.
+   */
+  public static interface CrawlActivityLogger {
+    
+    /**Records the start time of the scan.
+     * @param time timestamp of the start time
+     */
+    void scanBeginAt(Timestamp time);
+    
+    /**
+     * Records the end time of the scan.
+     * @param time timestamp of the end time
+     */
+    void scanEndAt(Timestamp time);
+    
+    /**
+     * To record that crawling thread just received a document for
+     * which either the content or the meta data or both have changed since the 
+     * last scan. 
+     * @param documentId Id for the changed document 
+     */
+    void gotChangedDocument(String documentId);
+    
+    /**
+     * To record that crawling thread just received a new document
+     * which was not present in the last scan.
+     * @param documentId Id of the newly added document
+     */
+    void gotNewDocument(String documentId);
+    
+    /**
+     * To record that crawling thread just found out that the 
+     * previously existing document got deleted and is no longer present.
+     * @param documentId id of the deleted document
+     */
+    void gotDeletedDocument(String documentId);
+    
+  }
+  
+  public static class DefaultCrawlActivityLogger implements CrawlActivityLogger {
+    
+    private int newDocumentCount, changedDocumentCount, deletedDocumentCount;
+    private Timestamp startTime, endTime;
+    private static final Logger LOG = Logger.getLogger(
+        DefaultCrawlActivityLogger.class.getName());
+    
+    /* @Override */
+    public void scanBeginAt(Timestamp time) {
+      logCrawlStatistics();
+      resetLogStatistics();
+      startTime = time;
+      LOG.info("Scan started at : " + time);
+    }
+
+    /* @Override */
+    public void scanEndAt(Timestamp time) {
+      endTime = time;
+      LOG.info("Scan completed at : " + endTime);
+      logCrawlStatistics();
+      resetLogStatistics();
+    }
+
+    /**
+     * This method resets all the variable that keep track of scans.
+     */
+    private void resetLogStatistics() {
+      newDocumentCount = changedDocumentCount = deletedDocumentCount = 0;
+      startTime = endTime = null;
+    }
+
+    /**
+     * This method logs all the important information related to each scan of
+     * the crawling thread. It logs following information for each scan 
+     * 1. Time taken to perform the complete scan. <br>
+     * 2. No. of new documents found. <br>
+     * 3. No. of changed documents found. <br>
+     * 4. No. of deleted documents found.
+     */
+    private void logCrawlStatistics() {
+      if (startTime != null) {
+        LOG.info("Crawl statistics for this scan");
+        if (endTime == null) {
+          LOG.info("The scan failed to complete. The crawl statistics reflect the figures at the time of starting next scan");
+          endTime = new Timestamp(System.currentTimeMillis());
+        } 
+        String duration = (new Long((endTime.getTime() - startTime.getTime()) / 1000)).toString();
+        LOG.info("Scan duration : " + duration + " seconds");
+        LOG.info("# of new documents found : " + newDocumentCount);
+        LOG.info("# of changed documents found : " + changedDocumentCount);
+        LOG.info("# of deleted documents found : " + deletedDocumentCount);
+      }
+    }
+
+    /* @Override */
+    public void gotChangedDocument(String documentId) {
+      ++changedDocumentCount;
+      LOG.fine("Changed document found during the crawl; document id is : " + documentId);
+    }
+
+    /* @Override */
+    public void gotDeletedDocument(String documentId) {
+      ++deletedDocumentCount;
+      LOG.fine("Deleted document found during the crawl; document id is : " + documentId);
+    }
+
+    /* @Override */
+    public void gotNewDocument(String documentId) {
+      ++newDocumentCount;
+      LOG.fine("New document found during the crawl; document id is : " + documentId);
+    }
+    
+  }
 
   /**
    * Adds changes to this queue.
@@ -39,6 +157,7 @@ public class ChangeQueue implements ChangeSource {
 
     public void passBegin() {
       changeCount = 0;
+      activityLogger.scanBeginAt(new Timestamp(System.currentTimeMillis()));
     }
 
     /* @Override */
@@ -46,6 +165,7 @@ public class ChangeQueue implements ChangeSource {
         throws InterruptedException {
       ++changeCount;
       pendingChanges.put(new Change(Change.FactoryType.CLIENT, dh, mcp));
+      activityLogger.gotChangedDocument(dh.getDocumentId());
     }
 
      /* @Override */
@@ -53,6 +173,7 @@ public class ChangeQueue implements ChangeSource {
         throws InterruptedException {
       ++changeCount;
       pendingChanges.put(new Change(Change.FactoryType.INTERNAL, dh, mcp));
+      activityLogger.gotDeletedDocument(dh.getDocumentId());
     }
 
     /* @Override */
@@ -60,10 +181,12 @@ public class ChangeQueue implements ChangeSource {
         throws InterruptedException {
       ++changeCount;
       pendingChanges.put(new Change(Change.FactoryType.CLIENT, dh, mcp));
+      activityLogger.gotNewDocument(dh.getDocumentId());
     }
 
     /* @Override */
     public void passComplete(MonitorCheckpoint mcp) throws InterruptedException {
+      activityLogger.scanEndAt(new Timestamp(System.currentTimeMillis()));
       if (changeCount == 0) {
         Thread.sleep(sleepInterval);
       }
@@ -74,9 +197,10 @@ public class ChangeQueue implements ChangeSource {
     }
   }
 
-  public ChangeQueue(int size, long sleepInterval) {
+  public ChangeQueue(int size, long sleepInterval, CrawlActivityLogger activityLogger) {
     pendingChanges = new ArrayBlockingQueue<Change>(size);
     this.sleepInterval = sleepInterval;
+    this.activityLogger = activityLogger;
   }
 
   /**

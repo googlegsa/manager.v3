@@ -48,7 +48,7 @@ public class DiffingConnectorTraversalManagerTest extends TestCase {
     private final LinkedList<Change> changes = new LinkedList<Change>();
 
     public MockChangeQueue(int count) {
-      super(1, 0);
+      super(1, 0, new DefaultCrawlActivityLogger());
 
       for (int k = 0; k < count; ++k) {
         String id = mkDocumentId(k);
