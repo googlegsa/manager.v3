@@ -15,8 +15,9 @@
 package com.google.enterprise.connector.spi;
 
 /**
- * Gives connectors access to a local storage area
+ * Gives connectors access to a local storage area.
  *
+ * @since 2.8
  */
 public interface ConnectorPersistentStore {
 
@@ -24,7 +25,8 @@ public interface ConnectorPersistentStore {
    * Gets a {@link LocalDocumentStore} through which the connector can access
    * the Connector Manager's persisted store of document metadata.
    *
-   * @return a {@link LocalDocumentStore}.
+   * @return a {@link LocalDocumentStore} or {@code null} for Connector Manager
+   *         versions prior to 3.0
    */
   public LocalDocumentStore getLocalDocumentStore();
 
@@ -35,5 +37,4 @@ public interface ConnectorPersistentStore {
    * @return a {@link LocalDatabase}.
    */
   public LocalDatabase getLocalDatabase();
-
 }

@@ -1,4 +1,4 @@
-// Copyright (C) 2009 Google Inc.
+// Copyright 2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@ package com.google.enterprise.connector.spi;
  * A {@link Connector} object may implement this interface if it wishes
  * to be informed when the Connector instance is being shut down
  * or deleted.
- *
- * <b>WARNING:</b> This Interface is in development, and may change,
+ * <p/>
+ * <strong>WARNING:</strong> This Interface is in development, and may change,
  * be replaced, or even removed in the near future.  Its use is not
  * recommended at this time.
  */
@@ -41,9 +41,8 @@ public interface ConnectorShutdownAware {
   /**
    * The Connector instance is being removed.  The Connector should delete
    * any files it may have created in its work directory (as specified by
-   * the <code>googleConnectorWorkDir</code> configuration property), stored
+   * the {@code googleConnectorWorkDir} configuration property), stored
    * Preferences, etc.
    */
   public void delete() throws RepositoryException;
-
 }

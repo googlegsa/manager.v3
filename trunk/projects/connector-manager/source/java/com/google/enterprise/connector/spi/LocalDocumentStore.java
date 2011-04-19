@@ -52,13 +52,10 @@ import javax.sql.DataSource;
  * document table in the database implementation of this store by:
  * <ul>
  * <li>getting it's name through the
- * {@link LocalDocumentStore#getDocTableName()} call
- * </li>
+ * {@link LocalDocumentStore#getDocTableName()} call</li>
  * <li>getting a {@link DataSource} object by calling
- * {@link LocalDatabase#getDataSource()}
- * </li>
- * <li>constructing SQL queries and submitting them through JDBC
- * </li>
+ * {@link LocalDatabase#getDataSource()}</li>
+ * <li>constructing SQL queries and submitting them through JDBC</li>
  * </ul>
  * The connector implementor should not create records in this table through
  * JDBC.
@@ -95,7 +92,7 @@ public interface LocalDocumentStore {
    * {@code Iterator} was created.
    *
    * @return an {@link Iterator} of all documents created by this connector
-   *         instance, in order by docid.
+   *         instance, in order by docid
    */
   public Iterator<Document> getDocumentIterator();
 
@@ -119,9 +116,9 @@ public interface LocalDocumentStore {
    * {@code Iterator} was created.
    *
    * @param docid the docid after which to start the iteration, if {@code null}
-   *        or empty, all documents created by this connector are returned.
+   *        or empty, all documents created by this connector are returned
    * @return an {@link Iterator} of all documents created by this connector
-   *         instance whose docid exceeds the supplied docid, in order by docid.
+   *         instance whose docid exceeds the supplied docid, in order by docid
    */
   public Iterator<Document> getDocumentIterator(String docid);
 
@@ -154,7 +151,7 @@ public interface LocalDocumentStore {
    * this to be used to do queries with non-updatable cursors, involving joins
    * between this table and other tables independently managed by the connector.
    *
-   * @return the table name of the underlying table.
+   * @return the table name of the underlying table
    */
   public String getDocTableName();
 }

@@ -17,14 +17,15 @@ package com.google.enterprise.connector.spi;
 /**
  * Thrown for documents that should be skipped for non-error reasons.
  * The Connector Manager skips over documents that throw
- * RepositoryDocumentExceptions, proceeding on to the next document.
- * Although the parent class RepositoryDocumentExceptions are logged at
+ * {@link RepositoryDocumentException RepositoryDocumentExceptions},
+ * proceeding on to the next document.
+ * Although the parent class {@code RepositoryDocumentExceptions} are logged at
  * WARNING level, due to their potential error conditions, these
- * SkippedDocumentExceptions are logged at FINER level as they can be
+ * {@code SkippedDocumentExceptions} are logged at FINER level as they can be
  * considered expected per-document events.
  * It is the responsibility of the Connector to construct a checkpoint
- * that skips over the offending Document if DocumentList.checkpoint()
- * is called after SkippedDocumentException is thrown.
+ * that skips over the offending Document if {@link DocumentList#checkpoint()}
+ * is called after {@code SkippedDocumentException} is thrown.
  *
  * @since 2.4
  */
@@ -36,7 +37,7 @@ public class SkippedDocumentException extends RepositoryDocumentException {
    * Constructs a SkippedDocumentException with a supplied message.
    * The message should indicate the reason this document was skipped.
    *
-   * @param message the message.
+   * @param message the message indicating the reason this document was skipped
    */
   public SkippedDocumentException(String message) {
     super(message);
