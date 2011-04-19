@@ -18,18 +18,24 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * Provide checksums.
+ * Provide checksums over input.
+ *
+ * @since 2.8
  */
 public interface ChecksumGenerator {
   /**
-   * @param in
+   * Return a checksum of the bytes read from the supplied input stream.
+   *
+   * @param in an {@code InputStream}
    * @return a checksum of bytes read from {@code in}.
-   * @throws IOException
+   * @throws IOException if there was an error reading the input stream
    */
   String getChecksum(InputStream in) throws IOException;
 
   /**
-   * @param input
+   * Return a checksum of the bytes of the supplied input string.
+   *
+   * @param input the String to checksum
    * @return a checksum for the UTF_8 bytes of {@code input}.
    */
   String getChecksum(String input);

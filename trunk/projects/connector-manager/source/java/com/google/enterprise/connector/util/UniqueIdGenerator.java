@@ -16,10 +16,14 @@ package com.google.enterprise.connector.util;
 
 /**
  * Interface for providers of a unique String ID.
+ *
+ * @since 2.8
  */
 public interface UniqueIdGenerator {
   /**
-   * Generates a reasonably unique ID string on each call.
+   * Generates a unique ID string on each call.
+   *
+   * @return a unique String value
    */
   public String uniqueId();
 }

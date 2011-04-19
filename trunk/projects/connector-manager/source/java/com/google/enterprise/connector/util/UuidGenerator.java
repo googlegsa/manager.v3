@@ -15,7 +15,9 @@
 package com.google.enterprise.connector.util;
 
 /**
- * A {@link UniqueIdGenerator} implementation backed by java.util.UUID.
+ * A {@link UniqueIdGenerator} implementation backed by {@link java.util.UUID}.
+ *
+ * @since 2.8
  */
 public class UuidGenerator implements UniqueIdGenerator {
   /* @Override */
