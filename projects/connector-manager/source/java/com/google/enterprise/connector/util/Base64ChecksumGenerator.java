@@ -18,14 +18,24 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * An implementation of ChecksumGenerator that return Base64-encoded
- * checksums using algorithms from java.security.MessageDigest.
+ * An implementation of {@link ChecksumGenerator} that return Base64-encoded
+ * checksums using algorithms from {@code java.security.MessageDigest}.
  *
  * @see java.security.MessageDigest
+ * @since 2.8
  */
 public class Base64ChecksumGenerator extends BasicChecksumGenerator {
 
   /**
+   * Constructs a {@code Base64ChecksumGenerator} that uses the specified
+   * message digest algorithm.  The supported algorithms are:
+   * {@link BasicChecksumGenerator#MD2 "MD2"},
+   * {@link BasicChecksumGenerator#MD5 "MD5"},
+   * {@link BasicChecksumGenerator#SHA1 "SHA-1"},
+   * {@link BasicChecksumGenerator#SHA256 "SHA-256"},
+   * {@link BasicChecksumGenerator#SHA384 "SHA-384"}, and
+   * {@link BasicChecksumGenerator#SHA512 "SHA-512"}
+   *
    * @param algorithm message digest algorithm
    */
   public Base64ChecksumGenerator(String algorithm) {
@@ -38,7 +48,7 @@ public class Base64ChecksumGenerator extends BasicChecksumGenerator {
    *
    * @param in input stream to create a checksum for
    * @return a checksum for the bytes of {@code in}
-   * @throws IOException
+   * @throws IOException if there is an error reading the input stream
    */
   @Override
   public String getChecksum(InputStream in) throws IOException {

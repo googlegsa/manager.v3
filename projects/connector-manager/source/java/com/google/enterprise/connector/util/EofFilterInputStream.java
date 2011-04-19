@@ -20,10 +20,12 @@ import java.io.InputStream;
 
 /**
  * This Filter protects against the poorly behaved Apache Commons IO
- * AutoCloseInputStream, which can close a stream out from underneath us.
- * When that happens, reads while at EOF throw IOException rather than
- * returning -1.  This filter avoids calling read() on the source stream
- * if we know we are at EOF.
+ * {@code AutoCloseInputStream}, which can close a stream out from underneath
+ * us. When that happens, reads while at EOF throw {@code IOException} rather
+ * than returning -1.  This filter avoids calling {@code read()} on the
+ * source stream once it is known to be at End-Of-File.
+ *
+ * @since 2.8
  */
 public class EofFilterInputStream extends FilterInputStream {
   private boolean atEOF;

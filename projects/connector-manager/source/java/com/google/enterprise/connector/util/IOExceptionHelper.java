@@ -17,9 +17,11 @@ package com.google.enterprise.connector.util;
 import java.io.IOException;
 
 /**
- * Compatibility Utility for creating an {@link IOException}.
- * with a cause. This is needed because in Java 5
- * IOException does not provide a constructor with a cause.
+ * Compatibility utility for creating an {@link IOException} with a cause.
+ * This is needed because in Java 5 {@code IOException} does not provide
+ * a constructor that takes a {@code cause} parameter.
+ *
+ * @since 2.8
  */
 public class IOExceptionHelper {
   // Prevents instantiation.
@@ -27,12 +29,14 @@ public class IOExceptionHelper {
   }
 
   /**
-   * Makes a new IOException with the supplied
-   * message and cause in a manner that is supported by
-   * java 5.
+   * Makes a new {@code IOException} with the supplied {@code message} and
+   * {@code cause} in a manner that is supported by Java 5.
+   *
+   * @param message the message
+   * @param cause root failure cause
    */
-  public static IOException newIOException(String msg, Throwable cause) {
-    IOException result = new IOException(msg);
+  public static IOException newIOException(String message, Throwable cause) {
+    IOException result = new IOException(message);
     result.initCause(cause);
     return result;
   }
