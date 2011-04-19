@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright 2006 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -27,8 +27,9 @@ public class RepositoryException extends Exception {
 
   /**
    * Constructs a RepositoryException with a supplied message but no root cause.
+   *
    * @param message the message. Can be retrieved by the {@link #getMessage()}
-   *          method.
+   *        method.
    */
   public RepositoryException(String message) {
     super(message);
@@ -36,8 +37,9 @@ public class RepositoryException extends Exception {
 
   /**
    * Constructs a RepositoryException with message and root cause.
+   *
    * @param message the message. Can be retrieved by the {@link #getMessage()}
-   *          method.
+   *        method.
    * @param rootCause root failure cause
    */
   public RepositoryException(String message, Throwable rootCause) {
@@ -46,6 +48,7 @@ public class RepositoryException extends Exception {
 
   /**
    * Constructs a RepositoryException with the specified root cause.
+   *
    * @param rootCause root failure cause
    */
   public RepositoryException(Throwable rootCause) {

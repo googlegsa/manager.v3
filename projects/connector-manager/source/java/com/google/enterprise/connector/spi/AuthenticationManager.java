@@ -29,19 +29,19 @@ public interface AuthenticationManager {
    * {@code Collection} of group names representing any groups for which
    * the user is a member.
    *
-   * If the password supplied in the AuthenticationIdentity is {@code null},
-   * the connector may skip authentication, but still return a valid
-   * {@link AuthenticationResponse} containing a {@code Collection} of
-   * group names representing any groups for which the user is a member.
+   * If the password supplied in the {@link AuthenticationIdentity}
+   * is {@code null}, the connector may skip authentication, but still return
+   * a valid {@link AuthenticationResponse} containing a {@code Collection}
+   * of group names representing any groups for which the user is a member.
    *
    * If an exception is thrown, the implementor should provide
    * an explanatory message.
    *
-   * @param  identity An AuthenticationIdentity object that encapsulates the
-   *         user's identity
-   * @return an AuthenticationResponse indicating whether authentication was
-   *         successful, or if the identity password was {@code null}, the
-   *         Collection of groups to which the user belongs.
+   * @param  identity an {@link AuthenticationIdentity} object that encapsulates
+   *         the user's identity
+   * @return an {@link AuthenticationResponse} indicating whether authentication
+   *         was successful, or if the identity password was {@code null}, the
+   *         {@code Collection} of groups to which the user belongs
    *
    * @throws RepositoryLoginException if there is a credentials-related problem
    *         that prohibits authentication

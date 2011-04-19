@@ -15,15 +15,14 @@
 package com.google.enterprise.connector.spi;
 
 /**
- * Interface that represents a property. A property is a list of Values. Values
- * are accessed through an iterator-like method:
- * <code>{@link #nextValue()}</code>, which returns the next available Value
- * or null if there are no more. Note: Value objects are immutable, unlike
- * <code>{@link DocumentList}</code> and <code>{@link Document}</code>
- * objects.
- * <p>
- * The typical pattern for consuming an object that implements this interface is
- * this (disregarding exception handling):
+ * Interface that represents a property. A property is a list of
+ * {@link Value Values}. Values are accessed through an iterator-like method:
+ * {@link #nextValue()}, which returns the next available {@link Value}
+ * or {@code null} if there are no more. Note: {@link Value} objects are
+ * immutable, unlike {@link DocumentList} and {@link Document} objects.
+ * <p/>
+ * The typical pattern for consuming an object that implements this interface
+ * is this (disregarding exception handling):
  *
  * <pre>
  * Property prop = ...
@@ -36,10 +35,9 @@ package com.google.enterprise.connector.spi;
 public interface Property {
 
   /**
-   * Returns the next Value in this property, if there is one.
+   * Returns the next {@link Value} in this property, if there is one.
    *
-   * @return The new current value, if there is one; <code>null</code>
-   *         otherwise
+   * @return the new current value, if there is one; {@code null} otherwise
    * @throws RepositoryException if a repository access error occurs
    */
   public Value nextValue() throws RepositoryException;

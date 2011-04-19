@@ -18,7 +18,8 @@ import java.util.Map;
 
 /**
  * The response for most configuration methods, such as
- * {@code getConfigForm} and {@code validateConfig}.
+ * {@link ConnectorType#getConfigForm ConnectorType.getConfigForm} and
+ * {@link ConnectorType#validateConfig ConnectorType.validateConfig}.
  *
  * @see ConnectorType
  */
@@ -31,16 +32,16 @@ public class ConfigureResponse {
    * Simple constructor.
    *
    * @param message A message to be included to the user along with the form.
-   *        This message may be null or empty - no distinction is made between
-   *        those cases. The message should be plain text - may not contain
-   *        script directives.
+   *        This message may be {@code null} or empty - no distinction is made
+   *        between those cases. The message should be plain text - may not
+   *        contain script directives.
    * @param formSnippet A well formed snippet of XHTML containing a sequence of
    *        &lt;tr&gt; elements to be displayed within a form. Each &lt;tr&gt;
    *        should contain two &lt;td&gt; fields. First is the description of
    *        configuration element, and second is the form element. The snippet
-   *        may be null or empty. Script elements should be avoided, however, if
-   *        they are used the script code must be contained within a CDATA
-   *        section.
+   *        may be {@code null} or empty. Script elements should be avoided,
+   *        however, if they are used the script code must be contained within
+   *        a CDATA section.
    */
   public ConfigureResponse(String message, String formSnippet) {
     super();
@@ -53,21 +54,21 @@ public class ConfigureResponse {
    * Complete constructor.
    *
    * @param message
-   *          A message to be included to the user along with the form. This
-   *          message may be null or empty - no distinction is made between
-   *          those cases. The message should be plain text - may not contain
-   *          script directives.
+   *        A message to be included to the user along with the form. This
+   *        message may be {@code null} or empty - no distinction is made
+   *        between those cases. The message should be plain text - may not
+   *        contain script directives.
    * @param formSnippet A well formed snippet of XHTML containing a sequence of
    *        &lt;tr&gt; elements to be displayed within a form. Each &lt;tr&gt;
    *        should contain two &lt;td&gt; fields. First is the description of
    *        configuration element, and second is the form element. The snippet
-   *        may be null or empty. Script elements should be avoided, however, if
-   *        they are used the script code must be contained within a CDATA
-   *        section.
+   *        may be {@code null} or empty. Script elements should be avoided,
+   *        however, if they are used the script code must be contained within
+   *        a CDATA section.
    * @param configData
-   *          A {@link java.util.Map} of name, value pairs (String, String) of
-   *          configuration data.  If supplied, where appropriate, the Connector
-   *          Manager will use this data.
+   *        A {@link java.util.Map} of name, value pairs
+   *        {@code (String, String)} of configuration data. If supplied,
+   *        where appropriate, the Connector Manager will use this data.
    */
   public ConfigureResponse(String message, String formSnippet,
                            Map<String, String> configData) {
@@ -78,9 +79,9 @@ public class ConfigureResponse {
   }
 
   /**
-   * Gets the message
+   * Gets the message.
    *
-   * @return the message - may be null or empty
+   * @return the message - may be {@code null} or empty
    */
   public String getMessage() {
     return message;
@@ -89,7 +90,7 @@ public class ConfigureResponse {
   /**
    * Gets the form snippet.
    *
-   * @return the form snippet - may be null or empty
+   * @return the form snippet - may be {@code null} or empty
    */
   public String getFormSnippet() {
     return formSnippet;
@@ -98,7 +99,7 @@ public class ConfigureResponse {
   /**
    * Gets the config data.
    *
-   * @return the config data - may be null or empty
+   * @return the config data - may be {@code null} or empty
    */
   public Map<String, String> getConfigData() {
     return configData;
