@@ -14,9 +14,7 @@
 
 package com.google.enterprise.connector.util.diffing;
 
-import com.google.enterprise.connector.util.diffing.Change;
-import com.google.enterprise.connector.util.diffing.DeleteDocumentHandle;
-import com.google.enterprise.connector.util.diffing.DocumentSnapshotRepositoryMonitor;
+import com.google.enterprise.connector.util.diffing.ChangeQueue.DefaultCrawlActivityLogger;
 
 import junit.framework.TestCase;
 
@@ -31,7 +29,7 @@ public class ChangeQueueTest extends TestCase {
 
   @Override
   public void setUp() {
-    this.queue = new ChangeQueue(10, 0L);
+    this.queue = new ChangeQueue(10, 0L, new DefaultCrawlActivityLogger());
     this.callback = queue.newCallback();
   }
 
