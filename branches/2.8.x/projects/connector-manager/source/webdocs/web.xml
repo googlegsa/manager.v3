@@ -119,6 +119,11 @@
   -->
 
   <servlet>
+    <servlet-name>LogLevel</servlet-name>
+    <servlet-class>com.google.enterprise.connector.servlet.LogLevel</servlet-class>
+  </servlet>
+
+  <servlet>
     <servlet-name>GetConnectorLogs</servlet-name>
     <servlet-class>com.google.enterprise.connector.servlet.GetConnectorLogs</servlet-class>
   </servlet>
@@ -246,6 +251,23 @@
     <url-pattern>/getSchema</url-pattern>
   </servlet-mapping>
   -->
+
+  <servlet-mapping>
+    <servlet-name>LogLevel</servlet-name>
+    <url-pattern>/getConnectorLogLevel</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>LogLevel</servlet-name>
+    <url-pattern>/setConnectorLogLevel</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>LogLevel</servlet-name>
+    <url-pattern>/getFeedLogLevel</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>LogLevel</servlet-name>
+    <url-pattern>/setFeedLogLevel</url-pattern>
+  </servlet-mapping>
 
   <servlet-mapping>
     <servlet-name>GetConnectorLogs</servlet-name>

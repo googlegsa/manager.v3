@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.manager;
 
+import com.google.common.base.Strings;
 import com.google.enterprise.connector.common.PropertiesException;
 import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.instantiator.Instantiator;
@@ -232,6 +233,8 @@ public class Context {
 
   private static Context INSTANCE = new Context();
 
+  private Throwable initFailureCause = null;
+
   private boolean started = false;
 
   private boolean isServletContext = false;
@@ -304,13 +307,20 @@ public class Context {
     LOGGER.info("context base directory: " + standaloneContextBaseDir);
     LOGGER.info("common dir path: " + commonDirPath);
 
-    applicationContext = new AnchoredFileSystemXmlApplicationContext(
-        standaloneContextBaseDir, standaloneContextLocation);
+    try {
+      applicationContext = new AnchoredFileSystemXmlApplicationContext(
+          standaloneContextBaseDir, standaloneContextLocation);
+    } catch (Throwable t) {
+      setInitFailureCause(t);
+      LOGGER.log(Level.SEVERE, "Connector Manager Startup failed: ", t);
+      throw new IllegalStateException("Connector Manager Startup failed", t);
+    }
   }
 
   /**
    * Establishes that we are operating within the standalone context. In
    * this case, we use a FileSystemApplicationContext.
+   *
    * @param contextLocation the name of the context XML file used for
    * instantiation.
    * @param commonDirPath the location of the common directory which contains
@@ -324,6 +334,7 @@ public class Context {
   /**
    * Establishes that we are operating within the standalone context. In
    * this case, we use a FileSystemApplicationContext.
+   *
    * @param contextLocation the name of the context XML file used for
    * instantiation.
    * @param contextBaseDir base directory for relative file paths in
@@ -344,6 +355,10 @@ public class Context {
    * Establishes that we are operating from a servlet context. In this case, we
    * use an XmlWebApplicationContext, which finds its config from the servlet
    * context - WEB-INF/applicationContext.xml.
+   *
+   * @param servletApplicationContext the web application servlet context.
+   * @param commonDirPath the location of the common directory which contains
+   * ConnectorType and Connector instantiation configuration data.
    */
   public void setServletContext(ApplicationContext servletApplicationContext,
                                 String commonDirPath) {
@@ -352,16 +367,28 @@ public class Context {
     isServletContext = true;
   }
 
+  /**
+   * Saves the cause of a Connector Manager initialization failure.
+   * That cause will be rethrown upon further attempts to use the
+   * unitialized Context.
+   *
+   * @param cause the cause of initialization failure
+   */
+  public void setInitFailureCause(Throwable cause) {
+    this.initFailureCause = cause;
+  }
+
   /*
    * Choose a default context, if it wasn't specified in any other way. For now,
    * we choose servlet context by default.
    */
   private void initApplicationContext() {
     if (applicationContext == null) {
+      if (initFailureCause != null) {
+        throw new IllegalStateException("Connector Manager Startup failed",
+                                        initFailureCause);
+      }
       initializeStandaloneApplicationContext();
-    }
-    if (applicationContext == null) {
-      throw new IllegalStateException("Spring failure - no application context");
     }
   }
 
@@ -391,17 +418,20 @@ public class Context {
   /**
    * Do everything necessary to start up the application.
    */
-  public void start() {
+  public synchronized void start() {
     if (started) {
       return;
     }
     initApplicationContext();
-    startInstantiator();
-    if (isFeeding) {
-      startScheduler();
+    try {
+      startInstantiator();
+      if (isFeeding) {
+        startScheduler();
+      }
+      startServices();
+    } finally {
+      started = true;
     }
-    startServices();
-    started = true;
   }
 
   /**
@@ -701,7 +731,7 @@ public class Context {
       throw new InstantiatorException("Spring exception while getting "
           + APPLICATION_CONTEXT_PROPERTIES_BEAN_NAME + " bean", e);
     }
-    if (propFileName == null || propFileName.length() < 1) {
+    if (Strings.isNullOrEmpty(propFileName)) {
       throw new InstantiatorException("Null or empty file name returned from "
           + "Spring while getting " + APPLICATION_CONTEXT_PROPERTIES_BEAN_NAME
           + " bean");
@@ -724,24 +754,57 @@ public class Context {
    * Returns the configuration Properties for the Connector Manager.
    */
   public Properties getConnectorManagerProperties() {
+    try {
+      return loadConnectorManagerProperties();
+    } catch (PropertiesException pe) {
+      LOGGER.log(Level.WARNING, "Unable to read application context"
+                 + " properties.", pe);
+      return new Properties();
+    }
+  }
+
+  /**
+   * Loads the configuration Properties for the Connector Manager.
+   *
+   * @return the configuration Properties for the Connector Manager.
+   * @throws PropertiesException if error loading properties
+   */
+  public Properties loadConnectorManagerProperties()
+      throws PropertiesException {
     initApplicationContext();
+    String propFileName = "";
     try {
       // Get the properties out of the CM properties file if present.
-      String propFileName = getPropFileName();
+      propFileName = getPropFileName();
       File propFile = getPropFile(propFileName);
-      try {
-        Properties props = PropertiesUtils.loadFromFile(propFile);
-        propertiesVersion = PropertiesUtils.getPropertiesVersion(props);
-        return props;
-      } catch (PropertiesException pe) {
-        LOGGER.log(Level.WARNING, "Unable to read application context"
-                   + " properties file " + propFileName, pe);
-      }
+      Properties props = PropertiesUtils.loadFromFile(propFile);
+      propertiesVersion = PropertiesUtils.getPropertiesVersion(props);
+      return props;
     } catch (InstantiatorException ie) {
-      LOGGER.log(Level.WARNING, "Unable to read application context"
-                 + " properties", ie);
+      throw new PropertiesException("Unable to read application context"
+          + " properties file " + propFileName, ie);
     }
-    return new Properties();
+  }
+
+  /**
+   * Stores the configuration Properties for the Connector Manager.
+   *
+   * @param props  the configuration Properties to store
+   * @throws PropertiesException if error storing properties
+   */
+  public void storeConnectorManagerProperties(Properties props)
+      throws PropertiesException {
+    String propFileName = "";
+    try {
+      // Get the properties out of the CM properties file if present.
+      propFileName = getPropFileName();
+      File propFile = getPropFile(propFileName);
+      PropertiesUtils.storeToFile(props, propFile,
+                                  CONNECTOR_MANGER_CONFIG_HEADER);
+    } catch (InstantiatorException ie) {
+      throw new PropertiesException("Unable to save application context"
+          + " properties file " + propFileName, ie);
+    }
   }
 
   /**

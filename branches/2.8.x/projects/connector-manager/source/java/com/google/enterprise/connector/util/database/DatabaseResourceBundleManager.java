@@ -40,9 +40,9 @@ public class DatabaseResourceBundleManager {
 
   /**
    * Gets a resource bundle using the specified {@code baseName}, and the
-   * specified {@link DatabaseInfo}.  The {@code baseName}
+   * specified {@code resourceBundleExtension}.  The {@code baseName}
    * identifies the specific set of resources to load, while the
-   * {@code DatabaseInfo} is used to locate database-specific
+   * {@code resourceBundleExtension} is used to locate database-specific
    * localizations of those resources.
    * <p>
    * The passed base name and resource bundle extension are used to
@@ -51,9 +51,9 @@ public class DatabaseResourceBundleManager {
    * From this name all parent bundle names are derived. This results in a
    * list of possible bundle names.
    * <p>
-   * <strong>Example</strong> For the baseName "BaseName", and the
-   * {@code databaseInfo} for {@code MySQL 5.1}, the list
-   * would look something like this:
+   * <strong>Example</strong> For the {@code baseName "BaseName"}, and the
+   * {@code resourceBundleExtension "_mysql_5_1"} (for {@code MySQL 5.1}),
+   * the list would look something like this:
    *
    * <ol>
    * <li>BaseName_mysql_5_1</li>
@@ -77,7 +77,7 @@ public class DatabaseResourceBundleManager {
    *
    * @param baseName the base name of the resource bundle, a fully qualified
    *        class name.
-   * @param databaseInfo the database-specific localization of the
+   * @param resourceBundleExtension the database-specific localization of the
    *        resource bundle, or {@code null} if no localized bundle should
    *        be searched for.
    * @param classLoader the ClassLoader to use when locating the requested
@@ -89,12 +89,11 @@ public class DatabaseResourceBundleManager {
    * @throws java.lang.NullPointerException if {@code baseName} is {@code null}
    */
   public synchronized DatabasePropertyResourceBundle getResourceBundle(
-      String baseName, DatabaseInfo databaseInfo,
+      String baseName, String resourceBundleExtension,
       ClassLoader classLoader) {
     Preconditions.checkNotNull(baseName);
-    String extension = (databaseInfo == null) ? "" :
-      Strings.nullToEmpty(databaseInfo.getResourceBundleExtension());
-    String key = baseName + extension;
+    String extension = Strings.nullToEmpty(resourceBundleExtension);
+    String key = getKey(baseName, extension);
     if (!cache.containsKey(key)) {
       List<String> bundleNames = getBundleNames(baseName, extension);
       loadBundles(bundleNames, getClassLoader(classLoader));
@@ -107,14 +106,8 @@ public class DatabaseResourceBundleManager {
    * {@code databaseInfo}.
    */
   @VisibleForTesting
-  String getKey(String baseName,
-      DatabaseInfo databaseInfo) {
-    if (databaseInfo == null) {
-      return baseName;
-    } else {
-      return baseName + Strings.nullToEmpty(databaseInfo
-                                            .getResourceBundleExtension());
-    }
+  String getKey(String baseName, String resourceBundleExtension) {
+    return baseName + Strings.nullToEmpty(resourceBundleExtension);
   }
 
   /**

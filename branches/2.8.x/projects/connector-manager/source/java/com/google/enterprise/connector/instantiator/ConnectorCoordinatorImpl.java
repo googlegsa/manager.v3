@@ -42,7 +42,7 @@ import com.google.enterprise.connector.traversal.QueryTraverser;
 import com.google.enterprise.connector.traversal.TraversalDelayPolicy;
 import com.google.enterprise.connector.traversal.Traverser;
 import com.google.enterprise.connector.util.Clock;
-import com.google.enterprise.connector.util.database.DocumentStore;
+import com.google.enterprise.connector.database.DocumentStore;
 
 import java.io.File;
 import java.io.IOException;
@@ -341,8 +341,6 @@ class ConnectorCoordinatorImpl implements
    *
    * @param schedule new Connector Schedule
    */
-  // TODO: What happens on create connector if setConfig servlet goes to
-  // some other CM, then I get the setSchedule?
   /* @Override */
   public synchronized void connectorScheduleChanged(Schedule schedule) {
     // Refresh the cached Schedule.
@@ -546,7 +544,7 @@ class ConnectorCoordinatorImpl implements
   @VisibleForTesting
   synchronized boolean shouldRun() {
     // If we do not have a traversing instance, don't run.
-    if (instanceInfo == null) {   // TODO: handle setSchedule before connectorAdded
+    if (instanceInfo == null) {
       return false;
     }
 
@@ -617,7 +615,7 @@ class ConnectorCoordinatorImpl implements
     try {
       TraversalManager traversalManager =
           getConnectorInterfaces().getTraversalManager();
-      if (traversalManager == null) { // TODO: handle setSchedule before connectorAdded
+      if (traversalManager == null) {
         return false;
       }
       currentBatchKey = new Object();

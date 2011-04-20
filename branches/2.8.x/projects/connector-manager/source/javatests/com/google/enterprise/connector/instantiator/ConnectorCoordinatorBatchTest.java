@@ -31,7 +31,7 @@ import com.google.enterprise.connector.traversal.BatchResult;
 import com.google.enterprise.connector.traversal.BatchSize;
 import com.google.enterprise.connector.traversal.TraversalDelayPolicy;
 import com.google.enterprise.connector.util.SystemClock;
-import com.google.enterprise.connector.util.database.DocumentStore;
+import com.google.enterprise.connector.database.DocumentStore;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;

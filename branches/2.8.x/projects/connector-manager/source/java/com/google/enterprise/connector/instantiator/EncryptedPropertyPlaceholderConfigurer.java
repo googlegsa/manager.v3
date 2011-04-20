@@ -83,6 +83,10 @@ public class EncryptedPropertyPlaceholderConfigurer extends
   private static final Logger LOGGER =
       Logger.getLogger(EncryptedPropertyPlaceholderConfigurer.class.getName());
 
+  private static final String ENCRYPT_MSG = "Could not encrypt ";
+  private static final String DECRYPT_MSG = "Could not decrypt ";
+  private static final String GENERIC_PROP_NAME = "password";
+
   private static final String KEY_NAME = "EXTERNAL_CM_KEY";
 
   private static String keyStorePath = "external_cm.keystore";
@@ -113,7 +117,7 @@ public class EncryptedPropertyPlaceholderConfigurer extends
       String prop = (String) props.nextElement();
       if (SecurityUtils.isKeySensitive(prop)) {
         properties.setProperty(prop,
-            encryptString(properties.getProperty(prop)));
+            encryptString(prop, properties.getProperty(prop)));
       }
     }
   }
@@ -130,7 +134,7 @@ public class EncryptedPropertyPlaceholderConfigurer extends
           (SecurityUtils.isKeySensitive(prop));
       if (doCrypt) {
         properties.setProperty(prop,
-            decryptString(properties.getProperty(prop)));
+            decryptString(prop, properties.getProperty(prop)));
       }
     }
   }
@@ -267,9 +271,13 @@ public class EncryptedPropertyPlaceholderConfigurer extends
   }
 
   public static String encryptString(String plainText) {
+    return encryptString(GENERIC_PROP_NAME, plainText);
+  }
+
+  public static String encryptString(String name, String plainText) {
     try {
       // Convert the String into bytes using utf-8
-      return encryptBytes(plainText.getBytes("UTF8"));
+      return encryptBytes(name, plainText.getBytes("UTF8"));
     } catch (UnsupportedEncodingException e) {
       // Can't happen with UTF-8.
     }
@@ -277,12 +285,20 @@ public class EncryptedPropertyPlaceholderConfigurer extends
   }
 
   public static String encryptChars(char[] plainText) {
+    return encryptChars(GENERIC_PROP_NAME, plainText);
+  }
+
+  public static String encryptChars(String name, char[] plainText) {
     // Convert the char[] into bytes using utf-8
-    return encryptBytes(
+    return encryptBytes(name,
         Charset.forName("UTF8").encode(CharBuffer.wrap(plainText)).array());
   }
 
   public static String encryptBytes(byte[] plainText) {
+    return encryptBytes(GENERIC_PROP_NAME, plainText);
+  }
+
+  public static String encryptBytes(String name, byte[] plainText) {
     try {
       SecretKey key = getSecretKey();
       Cipher encryptor = Cipher.getInstance(keyStoreCryptoAlgo);
@@ -293,42 +309,33 @@ public class EncryptedPropertyPlaceholderConfigurer extends
       // Encode bytes to base64 to get a string
       return Base64.encode(enc);
     } catch (NoSuchAlgorithmException e) {
-      String msg =
-          "Could not encrypt password: provider does not have algorithm";
-      LOGGER.severe(msg);
-      throw new RuntimeException(msg);
+      throw logAndThrow(ENCRYPT_MSG, name, "provider does not have algorithm");
     } catch (IOException e) {
-      LOGGER.severe("Could not encrypt password: I/O error");
-      throw new RuntimeException("Could not encrypt password: I/O error");
+      throw logAndThrow(ENCRYPT_MSG, name, "I/O error");
     } catch (NoSuchPaddingException e) {
-      LOGGER.severe("Could not encrypt password");
-      throw new RuntimeException("Could not encrypt password");
+      throw logAndThrow(ENCRYPT_MSG, name, null);
     } catch (InvalidKeyException e) {
-      LOGGER.severe("Could not encrypt password");
-      throw new RuntimeException("Could not encrypt password");
+      throw logAndThrow(ENCRYPT_MSG, name, null);
     } catch (UnrecoverableKeyException e) {
-      LOGGER.severe(
-          "Could not encrypt password: Key cannot be recovered from keystore");
-      throw new RuntimeException("Could not encrypt password");
+      throw logAndThrow(ENCRYPT_MSG, name, "key cannot be recovered from keystore");
     } catch (KeyStoreException e) {
-      LOGGER.severe("Could not encrypt password");
-      throw new RuntimeException("Could not encrypt password");
+      throw logAndThrow(ENCRYPT_MSG, name, null);
     } catch (CertificateException e) {
-      LOGGER.severe("Could not encrypt password");
-      throw new RuntimeException("Could not encrypt password");
+      throw logAndThrow(ENCRYPT_MSG, name, null);
     } catch (IllegalStateException e) {
-      LOGGER.severe("Could not encrypt password");
-      throw new RuntimeException("Could not encrypt password");
+      throw logAndThrow(ENCRYPT_MSG, name, null);
     } catch (IllegalBlockSizeException e) {
-      LOGGER.severe("Could not encrypt password");
-      throw new RuntimeException("Could not encrypt password");
+      throw logAndThrow(ENCRYPT_MSG, name, null);
     } catch (BadPaddingException e) {
-      LOGGER.severe("Could not encrypt password");
-      throw new RuntimeException("Could not encrypt password");
+      throw logAndThrow(ENCRYPT_MSG, name, null);
     }
   }
 
   public static String decryptString(String cipherText) {
+    return decryptString(GENERIC_PROP_NAME, cipherText);
+  }
+
+  public static String decryptString(String name, String cipherText) {
     try {
       Key secretKey = getSecretKey();
       Cipher decryptor = Cipher.getInstance(keyStoreCryptoAlgo);
@@ -341,41 +348,36 @@ public class EncryptedPropertyPlaceholderConfigurer extends
       // Decode using utf-8
       return new String(utf8, "UTF8");
     } catch (NoSuchAlgorithmException e) {
-      String msg =
-          "Could not decrypt password: provider does not have algorithm";
-      LOGGER.severe(msg);
-      throw new RuntimeException(msg);
+      throw logAndThrow(DECRYPT_MSG, name, "provider does not have algorithm");
     } catch (IOException e) {
-      LOGGER.severe("Could not decrypt password: I/O error");
-      throw new RuntimeException("Could not decrypt password: I/O error");
+      throw logAndThrow(DECRYPT_MSG, name, "I/O error");
     } catch (KeyStoreException e) {
-      LOGGER.severe("Could not decrypt password");
-      throw new RuntimeException("Could not decrypt password");
+      throw logAndThrow(DECRYPT_MSG, name, null);
     } catch (CertificateException e) {
-      LOGGER.severe("Could not decrypt password");
-      throw new RuntimeException("Could not decrypt password");
+      throw logAndThrow(DECRYPT_MSG, name, null);
     } catch (NoSuchPaddingException e) {
-      LOGGER.severe("Could not decrypt password");
-      throw new RuntimeException("Could not decrypt password");
+      throw logAndThrow(DECRYPT_MSG, name, null);
     } catch (InvalidKeyException e) {
-      LOGGER.severe("Could not decrypt password");
-      throw new RuntimeException("Could not decrypt password");
+      throw logAndThrow(DECRYPT_MSG, name, null);
     } catch (UnrecoverableKeyException e) {
-      LOGGER.severe(
-          "Could not decrypt password: Key cannot be recovered from keystore");
-      throw new RuntimeException("Could not decrypt password");
-    } catch (BadPaddingException e) {
-      LOGGER.severe("Could not decrypt password");
-      throw new RuntimeException("Could not decrypt password");
+      throw logAndThrow(DECRYPT_MSG, name, "key cannot be recovered from keystore");
     } catch (IllegalStateException e) {
-      LOGGER.severe("Could not decrypt password");
-      throw new RuntimeException("Could not decrypt password");
+      throw logAndThrow(DECRYPT_MSG, name, null);
+    } catch (BadPaddingException e) {
+      throw logAndThrow(DECRYPT_MSG, name,
+          "it might be unencrypted or encrypted with a different algoritm");
     } catch (IllegalBlockSizeException e) {
-      LOGGER.severe("Could not decrypt password");
-      throw new RuntimeException("Could not decrypt password");
+      throw logAndThrow(DECRYPT_MSG, name,
+          "it might be unencrypted or encrypted with a different algoritm");
     } catch (Base64DecoderException e) {
-      LOGGER.severe("Could not decrypt password");
-      throw new RuntimeException("Could not decrypt password");
+      throw logAndThrow(DECRYPT_MSG, name, "it might not be encrypted at all");
     }
+  }
+
+  private static RuntimeException logAndThrow(String prefix, String name,
+                                              String suffix) {
+    String msg = prefix + name + ((suffix == null) ? "" : ( ": " + suffix));
+    LOGGER.severe(msg);
+    return new RuntimeException(msg);
   }
 }

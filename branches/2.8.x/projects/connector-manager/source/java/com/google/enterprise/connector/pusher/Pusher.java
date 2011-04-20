@@ -17,7 +17,7 @@ package com.google.enterprise.connector.pusher;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.RepositoryDocumentException;
 import com.google.enterprise.connector.spi.RepositoryException;
-import com.google.enterprise.connector.util.database.DocumentStore;
+import com.google.enterprise.connector.database.DocumentStore;
 
 /**
  * Interface for a Pusher - something that takes spi Documents
