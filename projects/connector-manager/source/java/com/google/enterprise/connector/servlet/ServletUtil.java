@@ -90,6 +90,7 @@ public class ServletUtil {
   public static final String XMLTAG_LAST_MODIFIED = "LastModified";
   public static final String XMLTAG_VERSION = "Version";
   public static final String XMLTAG_INFO = "Info";
+  public static final String XMLTAG_LEVEL = "Level";
 
   public static final String XMLTAG_CONNECTOR_INSTANCES = "ConnectorInstances";
   public static final String XMLTAG_CONNECTOR_INSTANCE = "ConnectorInstance";

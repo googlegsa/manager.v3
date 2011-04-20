@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.connector.util.database;
+package com.google.enterprise.connector.database;
 
 import com.google.common.collect.Lists;
 import com.google.enterprise.connector.spi.Document;
@@ -21,6 +21,7 @@ import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
+import com.google.enterprise.connector.util.database.JdbcDatabase;
 import com.google.enterprise.connector.util.database.testing.TestJdbcDatabase;
 import com.google.enterprise.connector.util.database.testing.TestResourceClassLoader;
 import com.google.enterprise.connector.util.SystemClock;
@@ -215,47 +216,10 @@ public class LocalDocumentStoreTest extends TestCase {
     assertFalse(iter.hasNext());
   }
 
-  // Checks that a bad connector name is encoded into valid SQL identifier
-  // table name.
-  private void checkMakeEncodedTableName(String prefix, String connectorName,
-                                         int maxLength) throws Exception {
-    String tableName =
-        LocalDocumentStoreImpl.makeTableName(prefix, connectorName, maxLength);
-    assertEquals(-1, tableName.indexOf(connectorName));
-    assertTrue(tableName.matches("[a-z0-9]+[a-z0-9_]*"));
-    assertTrue(tableName.length() <= maxLength);
-  }
-
   // Tests getDocTableName with a connector name a safe name.
   public void testGetDocTableNameSimpleConnectorName() throws Exception {
     String tableName = store.getDocTableName();
     assertEquals(TABLE_NAME, tableName);
-  }
-
-  // Tests getDocTableName with invalid SQL identifier characters in the
-  // connector name.
-  public void testGetDocTableNameInvalidConnectorName() throws Exception {
-    checkMakeEncodedTableName(null, "A!@#$T^Y&*-+", 64);
-  }
-
-  // Tests getDocTableName with too long connector name.
-  public void testGetDocTableNameLongConnectorName() throws Exception {
-    checkMakeEncodedTableName("gdoc_",
-         "qwertyuiopasdfghjklzxcvbnmqwertyuiopasdfghjklzxcvbnmqwertyuiopasdfg",
-         30);
-  }
-
-  // Tests getDocTableName with too long connector name.
-  public void testGetDocTableNameLongerConnectorName() throws Exception {
-    checkMakeEncodedTableName("gdoc_",
-         "qwertyuiopasdfghjklzxcvbnmqwertyuiopasdfghjklzxcvbnmqwertyuiopasdfg",
-         64);
-  }
-
-  // Tests getDocTableName with a connector name that has hyphens.
-  // Hyphens are allowed in connector names, but not SQL identifiers.
-  public void testGetDocTableNameHyphenatedConnectorName() throws Exception {
-    checkMakeEncodedTableName("googe_documents_", "hyphenated-name", 64);
   }
 
   // Tests creating Documents Table lazily.

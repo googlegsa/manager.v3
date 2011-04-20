@@ -32,7 +32,7 @@ import com.google.enterprise.connector.spi.TraversalContextAware;
 import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.util.Clock;
-import com.google.enterprise.connector.util.database.DocumentStore;
+import com.google.enterprise.connector.database.DocumentStore;
 
 import java.util.Set;
 import java.util.logging.Level;

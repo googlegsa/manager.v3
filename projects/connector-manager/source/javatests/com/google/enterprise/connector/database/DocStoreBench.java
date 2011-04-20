@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.connector.util.database;
+package com.google.enterprise.connector.database;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.enterprise.connector.common.AbstractCommandLineApp;
@@ -143,7 +143,7 @@ public class DocStoreBench extends AbstractCommandLineApp {
     baseDirectory.mkdirs();
 
     jdbcDatabase = new JdbcDatabase(getDataSource());
-    System.out.println(jdbcDatabase.getDatabaseInfo().getDescription());
+    System.out.println(jdbcDatabase.getDescription());
 
     // Create a set of plausible Parent IDs.
     parents = new String[10000];

@@ -62,6 +62,10 @@ import java.util.logging.Logger;
  * <LI>Log exceptions that indicate the task did not complete normally.
  * </OL>
  */
+/* This class is a thin wrapper around a lazily constructed instance of a
+ * LazyThreadPool implementation.  This was done to avoid Tomcat shutdown
+ * hangs after Spring application Context initialization failures.
+ */
 public class ThreadPool {
   private static final Logger LOGGER =
       Logger.getLogger(ThreadPool.class.getName());
@@ -83,40 +87,14 @@ public class ThreadPool {
   private final Clock clock;
 
   /**
-   * ExecutorService for running submitted tasks. Tasks are only submitted
-   * through completionService.
+   * Flag indicating shutdown was called.  Don't spawn new tasks even if asked.
    */
-  private final ExecutorService executor =
-    Executors.newCachedThreadPool(
-        new ThreadNamingThreadFactory("ThreadPoolExecutor"));
+  private boolean isShutdown = false;
 
   /**
-   * CompletionService for running submitted tasks. All tasks are submitted
-   * through this CompletionService to provide blocking, queued access to
-   * completion information.
+   * The lazily constructed LazyThreadPool instance.
    */
-  private final CompletionService<?> completionService =
-      new ExecutorCompletionService<Object>(executor);
-
-  /**
-   * Dedicated ExecutorService for running the CompletionTask. The completion
-   * task is run in its own ExecutorService so that it can be shut down after
-   * the executor for submitted tasks has been shut down and drained of running
-   * tasks.
-   */
-  private final ExecutorService completionExecutor =
-      Executors.newSingleThreadExecutor(
-          new ThreadNamingThreadFactory("ThreadPoolCompletion"));
-
-  /**
-   * Dedicated ScheduledThreadPoolExecutor for running time out tasks. Each
-   * primary task is guarded by a time out task that is scheduled to run when
-   * the primary tasks maximum life time expires. When the time out task runs it
-   * cancels the primary task.
-   */
-  private final ScheduledThreadPoolExecutor timeoutService =
-      new ScheduledThreadPoolExecutor(1,
-          new ThreadNamingThreadFactory("ThreadPoolTimeout"));
+  private LazyThreadPool lazyThreadPool;
 
   /**
    * Create a {@link ThreadPool}.
@@ -133,7 +111,6 @@ public class ThreadPool {
   public ThreadPool(int taskLifeSeconds, Clock clock) {
     this.maximumTaskLifeMillis = taskLifeSeconds * 2 * 1000L;
     this.clock = clock;
-    completionExecutor.execute(new CompletionTask());
   }
 
   /**
@@ -144,24 +121,28 @@ public class ThreadPool {
    *        be interrupted; otherwise, in-progress tasks are allowed to complete
    *        normally.
    * @param waitMillis maximum amount of time to wait for tasks to complete.
-   * @return <tt>true</tt> if this all the running tasks terminated and
+   * @return <tt>true</tt> if all the running tasks terminated and
    *         <tt>false</tt> if the some running task did not terminate.
    * @throws InterruptedException if interrupted while waiting.
    */
-  boolean shutdown(boolean interrupt, long waitMillis)
+  synchronized boolean shutdown(boolean interrupt, long waitMillis)
       throws InterruptedException {
-    if (interrupt) {
-      executor.shutdownNow();
+    isShutdown = true;
+    if (lazyThreadPool == null) {
+      return true;
     } else {
-      executor.shutdown();
+      return lazyThreadPool.shutdown(interrupt, waitMillis);
     }
-    timeoutService.shutdown();
-    try {
-      return executor.awaitTermination(waitMillis, TimeUnit.MILLISECONDS);
-    } finally {
-      completionExecutor.shutdownNow();
-      timeoutService.shutdownNow();
+  }
+
+  /**
+   * Return a LazyThreadPool.
+   */
+  private synchronized LazyThreadPool getInstance() {
+    if (lazyThreadPool == null) {
+      lazyThreadPool = new LazyThreadPool();
     }
+    return lazyThreadPool;
   }
 
   /**
@@ -171,70 +152,190 @@ public class ThreadPool {
    * will always return null.
    */
   public TaskHandle submit(TimedCancelable cancelable) {
-    // When timeoutTask is run it will cancel 'cancelable'.
-    TimeoutTask timeoutTask = new TimeoutTask(cancelable);
-    // timeoutFuture will be used to cancel timeoutTask when 'cancelable'
-    // completes.
-    FutureTask<?> timeoutFuture = new FutureTask<Object>(timeoutTask, null);
-    // cancelTimeoutRunnable runs 'cancelable'. When 'cancelable' completes
-    // cancelTimeoutRunnable cancels 'timeoutTask'. This saves system
-    // resources. In addition it prevents timeout task from running and
-    // calling cancel after 'cancelable' completes successfully.
-    CancelTimeoutRunnable cancelTimeoutRunnable =
-        new CancelTimeoutRunnable(cancelable, timeoutFuture);
-    // taskFuture is used to cancel 'cancelable' and to determine if
-    // 'cancelable' is done.
-    FutureTask<?> taskFuture =
-        new FutureTask<Object>(cancelTimeoutRunnable, null);
-    TaskHandle handle =
-        new TaskHandle(cancelable, taskFuture, clock.getTimeMillis());
-    timeoutTask.setTaskHandle(handle);
-    try {
-      // Schedule timeoutTask to run when 'cancelable's maximum run interval
-      // has expired.
-      timeoutService.schedule(timeoutFuture, maximumTaskLifeMillis,
-          TimeUnit.MILLISECONDS);
-      // TODO(strellis): test/handle timer pop/cancel before submit. In
-      // production with a 30 minute timeout this should never happen.
-      completionService.submit(taskFuture, null);
-    } catch (RejectedExecutionException re) {
-      if (!executor.isShutdown()) {
-        LOGGER.log(Level.SEVERE, "Unable to execute task", re);
-      }
-      handle = null;
+    if (isShutdown) {
+      return null;
     }
-    return handle;
+    return getInstance().submit(cancelable);
   }
 
+
   /**
-   * A {@link Runnable} for running {@link TimedCancelable} that has been
-   * guarded by a timeout task. This will cancel the timeout task when the
-   * {@link TimedCancelable} completes. If the timeout task has already run then
-   * canceling it has no effect.
+   * Lazily constructed ThreadPool implementation.
    */
-  private class CancelTimeoutRunnable implements Runnable {
-    private final Future<?> timeoutFuture;
-    private final TimedCancelable cancelable;
+  private class LazyThreadPool {
+    /**
+     * ExecutorService for running submitted tasks. Tasks are only submitted
+     * through completionService.
+     */
+    private final ExecutorService executor;
 
     /**
-     * Constructs a {@link CancelTimeoutRunnable}.
-     *
-     * @param cancelable the {@link TimedCancelable} this runs.
-     * @param timeoutFuture the {@link Future} for canceling the timeout task.
+     * CompletionService for running submitted tasks. All tasks are submitted
+     * through this CompletionService to provide blocking, queued access to
+     * completion information.
      */
-    CancelTimeoutRunnable(TimedCancelable cancelable, Future<?> timeoutFuture) {
-      this.timeoutFuture = timeoutFuture;
-      this.cancelable = cancelable;
+    private final CompletionService<?> completionService;
+
+    /**
+     * Dedicated ExecutorService for running the CompletionTask. The completion
+     * task is run in its own ExecutorService so that it can be shut down after
+     * the executor for submitted tasks has been shut down and drained of running
+     * tasks.
+     */
+    private final ExecutorService completionExecutor;
+
+    /**
+     * Dedicated ScheduledThreadPoolExecutor for running time out tasks. Each
+     * primary task is guarded by a time out task that is scheduled to run when
+     * the primary tasks maximum life time expires. When the time out task runs it
+     * cancels the primary task.
+     */
+    private final ScheduledThreadPoolExecutor timeoutService;
+
+    LazyThreadPool() {
+      executor = Executors.newCachedThreadPool(
+          new ThreadNamingThreadFactory("ThreadPoolExecutor"));
+      completionService = new ExecutorCompletionService<Object>(executor);
+      completionExecutor = Executors.newSingleThreadExecutor(
+          new ThreadNamingThreadFactory("ThreadPoolCompletion"));
+      timeoutService = new ScheduledThreadPoolExecutor(1,
+          new ThreadNamingThreadFactory("ThreadPoolTimeout"));
+      completionExecutor.execute(new CompletionTask());
     }
 
-    public void run() {
+    /**
+     * Shut down the LazyThreadPool.
+     * @param interrupt <tt>true</tt> if the threads executing tasks task should
+     *        be interrupted; otherwise, in-progress tasks are allowed to complete
+     *        normally.
+     * @param waitMillis maximum amount of time to wait for tasks to complete.
+     * @return <tt>true</tt> if all the running tasks terminated and
+     *         <tt>false</tt> if the some running task did not terminate.
+     * @throws InterruptedException if interrupted while waiting.
+     */
+    boolean shutdown(boolean interrupt, long waitMillis)
+      throws InterruptedException {
+      if (interrupt) {
+        executor.shutdownNow();
+      } else {
+        executor.shutdown();
+      }
+      timeoutService.shutdown();
       try {
-        cancelable.run();
+        return executor.awaitTermination(waitMillis, TimeUnit.MILLISECONDS);
       } finally {
-        timeoutFuture.cancel(true);
-        timeoutService.purge();
+        completionExecutor.shutdownNow();
+        timeoutService.shutdownNow();
       }
     }
+
+    /**
+     * Submit a {@link TimedCancelable} for execution and return a
+     * {@link TaskHandle} for the running task or null if the task has not been
+     * accepted. After {@link LazyThreadPool#shutdown(boolean, long)} returns
+     * this will always return null.
+     */
+    TaskHandle submit(TimedCancelable cancelable) {
+      // When timeoutTask is run it will cancel 'cancelable'.
+      TimeoutTask timeoutTask = new TimeoutTask(cancelable);
+      // timeoutFuture will be used to cancel timeoutTask when 'cancelable'
+      // completes.
+      FutureTask<?> timeoutFuture = new FutureTask<Object>(timeoutTask, null);
+      // cancelTimeoutRunnable runs 'cancelable'. When 'cancelable' completes
+      // cancelTimeoutRunnable cancels 'timeoutTask'. This saves system
+      // resources. In addition it prevents timeout task from running and
+      // calling cancel after 'cancelable' completes successfully.
+      CancelTimeoutRunnable cancelTimeoutRunnable =
+        new CancelTimeoutRunnable(cancelable, timeoutFuture);
+      // taskFuture is used to cancel 'cancelable' and to determine if
+      // 'cancelable' is done.
+      FutureTask<?> taskFuture =
+          new FutureTask<Object>(cancelTimeoutRunnable, null);
+      TaskHandle handle =
+          new TaskHandle(cancelable, taskFuture, clock.getTimeMillis());
+      timeoutTask.setTaskHandle(handle);
+      try {
+        // Schedule timeoutTask to run when 'cancelable's maximum run interval
+        // has expired.
+        timeoutService.schedule(timeoutFuture, maximumTaskLifeMillis,
+                                TimeUnit.MILLISECONDS);
+        // TODO(strellis): test/handle timer pop/cancel before submit. In
+        // production with a 30 minute timeout this should never happen.
+        completionService.submit(taskFuture, null);
+      } catch (RejectedExecutionException re) {
+        if (!executor.isShutdown()) {
+          LOGGER.log(Level.SEVERE, "Unable to execute task", re);
+        }
+        handle = null;
+      }
+      return handle;
+    }
+
+   /**
+    * A {@link Runnable} for running {@link TimedCancelable} that has been
+    * guarded by a timeout task. This will cancel the timeout task when the
+    * {@link TimedCancelable} completes. If the timeout task has already run then
+    * canceling it has no effect.
+    */
+   private class CancelTimeoutRunnable implements Runnable {
+     private final Future<?> timeoutFuture;
+     private final TimedCancelable cancelable;
+
+     /**
+      * Constructs a {@link CancelTimeoutRunnable}.
+      *
+      * @param cancelable the {@link TimedCancelable} this runs.
+      * @param timeoutFuture the {@link Future} for canceling the timeout task.
+      */
+     CancelTimeoutRunnable(TimedCancelable cancelable, Future<?> timeoutFuture) {
+       this.timeoutFuture = timeoutFuture;
+       this.cancelable = cancelable;
+     }
+
+     public void run() {
+       try {
+         cancelable.run();
+       } finally {
+         timeoutFuture.cancel(true);
+         timeoutService.purge();
+       }
+     }
+   }
+
+   /**
+    * A task that gets completion information from all the tasks that run in a
+    * {@link CompletionService} and logs uncaught exceptions that cause the tasks
+    * to fail.
+    */
+   private class CompletionTask implements Runnable {
+     private void completeTask() throws InterruptedException {
+       Future<?> future = completionService.take();
+       try {
+         future.get();
+       } catch (ExecutionException e) {
+         Throwable cause = e.getCause();
+         // TODO(strellis): Should we call cancelable.cancel() if we get an
+         // exception?
+         if (cause instanceof InterruptedException) {
+           LOGGER.log(Level.INFO, "Batch termiated due to an interrupt.", cause);
+         } else {
+           LOGGER.log(Level.SEVERE, "Batch failed with unhandled exception",
+               cause);
+         }
+       }
+     }
+
+     public void run() {
+       try {
+         while (!Thread.currentThread().isInterrupted()) {
+           completeTask();
+         }
+       } catch (InterruptedException ie) {
+         Thread.currentThread().interrupt();
+       }
+       LOGGER.info("Completion task shutdown.");
+     }
+   }
   }
 
   /**
@@ -260,41 +361,6 @@ public class ThreadPool {
 
     void setTaskHandle(TaskHandle taskHandle) {
       this.taskHandle = taskHandle;
-    }
-  }
-
-  /**
-   * A task that gets completion information from all the tasks that run in a
-   * {@link CompletionService} and logs uncaught exceptions that cause the tasks
-   * to fail.
-   */
-  private class CompletionTask implements Runnable {
-    private void completeTask() throws InterruptedException {
-      Future<?> future = completionService.take();
-      try {
-        future.get();
-      } catch (ExecutionException e) {
-        Throwable cause = e.getCause();
-        // TODO(strellis): Should we call cancelable.cancel() if we get an
-        // exception?
-        if (cause instanceof InterruptedException) {
-          LOGGER.log(Level.INFO, "Batch termiated due to an interrupt.", cause);
-        } else {
-          LOGGER.log(Level.SEVERE, "Batch failed with unhandled exception",
-              cause);
-        }
-      }
-    }
-
-    public void run() {
-      try {
-        while (!Thread.currentThread().isInterrupted()) {
-          completeTask();
-        }
-      } catch (InterruptedException ie) {
-        Thread.currentThread().interrupt();
-      }
-      LOGGER.info("Completion task shutdown.");
     }
   }
 

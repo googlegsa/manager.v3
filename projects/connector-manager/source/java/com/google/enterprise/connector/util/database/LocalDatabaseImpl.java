@@ -110,7 +110,7 @@ public class LocalDatabaseImpl implements LocalDatabase {
   /* @Override */
   public DatabaseResourceBundle getDatabaseResourceBundle() {
     return resourceBundleManager.getResourceBundle(resourceBundleBaseName,
-        database.getDatabaseInfo(), classLoader);
+        database.getResourceBundleExtension(), classLoader);
   }
 
   /**
@@ -146,12 +146,7 @@ public class LocalDatabaseImpl implements LocalDatabase {
   /* @Override */
   public String getDescription() {
     // Return a not-really-descriptive description.
-    String resourceBundleExtension =
-        database.getDatabaseInfo().getResourceBundleExtension();
-    if ((resourceBundleExtension.length() > 0) &&
-        (resourceBundleExtension.charAt(0) == '_')) {
-      return resourceBundleExtension.substring(1);
-    }
-    return resourceBundleExtension;
+    return database.getProductName();
+    //     + " (" + database.getDescription() + ")";
   }
 }
