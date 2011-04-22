@@ -19,8 +19,10 @@ import com.google.enterprise.connector.util.database.JdbcDatabase;
 import org.h2.jdbcx.JdbcDataSource;
 
 /**
- * A {@link JdbcDatabase} implementation that uses an in-memory H2
- * database for storage.
+ * A {@link JdbcDatabase} implementation that uses an in-memory H2 database for
+ * storage. Connector developers may want to use this to implement unit tests.
+ *
+ * @since 2.8
  */
 public class TestJdbcDatabase extends JdbcDatabase {
   /**

@@ -17,6 +17,7 @@ package com.google.enterprise.connector.spi;
 /**
  * Gives connectors access to a local storage area.
  *
+ * @see ConnectorPersistentStoreAware
  * @since 2.8
  */
 public interface ConnectorPersistentStore {

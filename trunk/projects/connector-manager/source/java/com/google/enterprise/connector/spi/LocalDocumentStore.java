@@ -59,6 +59,9 @@ import javax.sql.DataSource;
  * </ul>
  * The connector implementor should not create records in this table through
  * JDBC.
+ *
+ * @see ConnectorPersistentStore
+ * @since 2.8
  */
 public interface LocalDocumentStore {
 

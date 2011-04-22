@@ -27,8 +27,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * A {@link DatabasePropertyResourceBundle} manager.  Loads and caches
- * DatabasePropertyResourceBundles.
+ * A {@link DatabasePropertyResourceBundle} manager which loads and caches
+ * {@code DatabasePropertyResourceBundles}.
+ *
+ * @since 2.8
  */
 public class DatabaseResourceBundleManager {
   private static final Logger LOGGER =
@@ -44,49 +46,50 @@ public class DatabaseResourceBundleManager {
    * identifies the specific set of resources to load, while the
    * {@code resourceBundleExtension} is used to locate database-specific
    * localizations of those resources.
-   * <p>
+   * <p/>
    * The passed base name and resource bundle extension are used to
-   * create resource bundle names.  The first name is created by concatenating
+   * create resource bundle names. The first name is created by concatenating
    * the base name with the resource bundle extension (if provided).
    * From this name all parent bundle names are derived. This results in a
    * list of possible bundle names.
-   * <p>
-   * <strong>Example</strong> For the {@code baseName "BaseName"}, and the
+   * <p/>
+   * For example, the {@code baseName "full.package.name.BaseName"}, and the
    * {@code resourceBundleExtension "_mysql_5_1"} (for {@code MySQL 5.1}),
-   * the list would look something like this:
-   *
+   * the list of resource bundles to load would look like this:
    * <ol>
-   * <li>BaseName_mysql_5_1</li>
-   * <li>BaseName_mysql_5</li>
-   * <li>BaseName_mysql</li>
-   * <li>BaseName</li>
+   * <li>full.package.name.BaseName_mysql_5_1.properties</li>
+   * <li>full.package.name.BaseName_mysql_5.properties</li>
+   * <li>full.package.name.BaseName_mysql.properties</li>
+   * <li>full.package.name.BaseName.properties</li>
    * </ol>
    *
    * This list also shows the order in which the bundles will be searched.
    * This implementation looks only for Properties file-backed
-   * {@link DatabasePropertyResourceBundle}s. The properties files supported
-   * by {@code DatabasePropertyResourceBundle} may be in the enhanced syntax
-   * supported by {@link http://eproperties.googlecode.com EProperties}.
-   * <p>
+   * {@link DatabasePropertyResourceBundle DatabasePropertyResourceBundles}.
+   * The properties files used by {@code DatabasePropertyResourceBundle}
+   * may use the enhanced syntax supported by
+   * <a href="http://code.google.com/p/eproperties">EProperties</a>
+   * <p/>
    * This method tries to load a {@code .properties} file with the names
    * by replacing dots in the base name with a slash and by appending
    * "{@code .properties}" to the end of the string. If such a resource can be
    * found by calling {@link ClassLoader#getResource(String)} it is used to
-   * initialize a {@link DatabasePropertyResourceBundle}.  If this succeeds,
-   * it will also load the parents of this resource bundle.
+   * initialize a {@link DatabasePropertyResourceBundle}.  The resource loader
+   * will also load all of the ancestors of this resource bundle (as
+   * described above).
    *
-   * @param baseName the base name of the resource bundle, a fully qualified
-   *        class name.
+   * @param baseName the base name of the resource bundle, including the full
+   *        package name
    * @param resourceBundleExtension the database-specific localization of the
    *        resource bundle, or {@code null} if no localized bundle should
-   *        be searched for.
+   *        be searched for
    * @param classLoader the ClassLoader to use when locating the requested
-   *        resource.  If {@code null}, then the default ClassLoader is used.
+   *        resource, or {@code null} to use the default ClassLoader
    *
-   * @return a resource bundle for the given base name and the locale, or
+   * @return a resource bundle for the given base name and bundle extension, or
    *         {@code null} if no resource bundle for the specified base name
    *         can be found.
-   * @throws java.lang.NullPointerException if {@code baseName} is {@code null}
+   * @throws NullPointerException if {@code baseName} is {@code null}
    */
   public synchronized DatabasePropertyResourceBundle getResourceBundle(
       String baseName, String resourceBundleExtension,
