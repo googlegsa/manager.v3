@@ -74,6 +74,12 @@
       </classpath>
       <package name="com.google.enterprise.connector.spi"/>
       <package name="com.google.enterprise.connector.util"/>
+      <package name="com.google.enterprise.connector.util.testing"/>
+      <package name="com.google.enterprise.connector.util.database.testing"/>
+      <fileset dir="${src}/com/google/enterprise/connector/util/database"
+               defaultexcludes="yes">
+        <exclude name="LocalDatabaseImpl.java"/>
+      </fileset>
     </javadoc>
   </target>
 

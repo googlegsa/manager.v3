@@ -18,6 +18,13 @@ import com.google.enterprise.connector.spi.SpiConstants.DatabaseType;
 
 import javax.sql.DataSource;
 
+/**
+ * Provides access to the Connector Manager's configured JDBC database
+ * which the connector implementer can use for any purpose.
+ *
+ * @see ConnectorPersistentStore
+ * @since 2.8
+ */
 public interface LocalDatabase {
 
   /**
