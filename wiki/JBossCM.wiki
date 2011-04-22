@@ -1,4 +1,4 @@
-How to: Deploying Connector manager on JBoss
+#summary How to: Deploying Connector manager on JBoss
 
 *Version Info:*
 Connector Manager 2.6.9, build 2727: Required for JBoss. 
