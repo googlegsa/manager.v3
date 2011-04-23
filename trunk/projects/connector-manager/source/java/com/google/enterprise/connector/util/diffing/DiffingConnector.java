@@ -24,7 +24,9 @@ import com.google.enterprise.connector.spi.TraversalManager;
 import java.util.logging.Logger;
 
 /**
- * Diffing connector implementation of the SPI Connector interface.
+ * Diffing connector implementation of the SPI {@link Connector} interface.
+ *
+ * @since 2.8
  */
 public class DiffingConnector implements Connector,
     ConnectorShutdownAware, Session {
@@ -32,22 +34,23 @@ public class DiffingConnector implements Connector,
       DiffingConnector.class.getName());
 
   private final AuthorizationManager authorizationManager;
-  private final DocumentSnapshotRepositoryMonitorManager fileSystemMonitorManager;
-  private final TraversalContextManager traversalContextmanager;
+  private final DocumentSnapshotRepositoryMonitorManager repositoryMonitorManager;
+  private final TraversalContextManager traversalContextManager;
   private DiffingConnectorTraversalManager traversalManager = null;
 
   /**
-   * Creates a file connector.
+   * Creates a DiffingConnector.
    *
-   * @param authorizationManager
-   * @param fileSystemMonitorManager
+   * @param authorizationManager an AuthorizationManager
+   * @param repositoryMonitorManager a DocumentSnapshotRepositoryMonitorManager
+   * @param traversalContextManager a TraversalContextManager
    */
   public DiffingConnector(AuthorizationManager authorizationManager,
-      DocumentSnapshotRepositoryMonitorManager fileSystemMonitorManager,
+      DocumentSnapshotRepositoryMonitorManager repositoryMonitorManager,
       TraversalContextManager traversalContextManager) {
     this.authorizationManager = authorizationManager;
-    this.fileSystemMonitorManager = fileSystemMonitorManager;
-    this.traversalContextmanager = traversalContextManager;
+    this.repositoryMonitorManager = repositoryMonitorManager;
+    this.traversalContextManager = traversalContextManager;
   }
 
   /**
@@ -62,14 +65,14 @@ public class DiffingConnector implements Connector,
   }
 
   /**
-   * Delete the snapshot and persist directory for this connector.
+   * Delete the snapshot and persistent storage for this connector.
    * Invokes shutdown() first.
    */
   /* @Override */
   public void delete() {
     LOG.info("Deleting connector");
     shutdown();
-    fileSystemMonitorManager.clean();
+    repositoryMonitorManager.clean();
     LOG.info("Connector deletion complete");
   }
 
@@ -96,20 +99,22 @@ public class DiffingConnector implements Connector,
   }
 
   /**
-   * Creates and returns a TraversalManager which can start and
+   * Creates and returns a {@link TraversalManager} which can start and
    * resume traversals. Getting a traversal manager invalidates
    * previously acquired TraversalManagers.  This operation
    * has the expense of stopping current crawls, forcing them
    * to be restarted (at initial or resume points) when further docs
    * are requested via returned TraversalManager.
+   *
+   * @return a Diffing Connector {@link TraversalManager}
    */
   /* @Override */
   public synchronized TraversalManager getTraversalManager() {
     if (traversalManager != null) {
       deactivate();
     }
-    traversalManager = new DiffingConnectorTraversalManager(fileSystemMonitorManager,
-        traversalContextmanager);
+    traversalManager = new DiffingConnectorTraversalManager(
+        repositoryMonitorManager, traversalContextManager);
     return traversalManager;
   }
 }

@@ -40,13 +40,15 @@ import java.util.logging.Logger;
 
 /**
  * Queue of {@link CheckpointAndChange} objects to be processed by the
- * {@link DiffingConnectorTraversalManager}. Objects are added to the queue from a
- * {@link ChangeSource} and assigned a {@link DiffingConnectorCheckpoint}. The
- * client accesses objects by calling {@link #resume}.
+ * {@link DiffingConnectorTraversalManager}. Objects are added to the queue from
+ * a {@link ChangeSource} and assigned a {@link DiffingConnectorCheckpoint}.
+ * The client accesses objects by calling {@link #resume(String)}.
  * To facilitate retry of processing for objects in the queue
  * {@link CheckpointAndChange} objects remain until the client
- * indicates they have completed processing by calling {@link #resume}
- * with the objects checkpoint or a later objects checkpoint.
+ * indicates they have completed processing by calling {@link #resume(String)}
+ * with the object's checkpoint or a later object's checkpoint.
+ *
+ * @since 2.8
  */
 public class CheckpointAndChangeQueue {
   public static final int DEFAULT_MAXIMUM_QUEUE_SIZE = 500;

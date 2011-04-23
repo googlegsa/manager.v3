@@ -29,67 +29,74 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * An generic implementation of com.google.enterprise.connector.spi.Document.
+ * An generic implementation of {@link Document}.
  *
- * @see com.google.enterprise.connector.spi.Document
+ * @since 2.8
  */
 public class GenericDocument implements Document {
-  private final Map<String, List<Value>> properties = new HashMap<String, List<Value>>();
+  private final Map<String, List<Value>> properties =
+      new HashMap<String, List<Value>>();
 
   /**
-   * Construct a document with no properties.
+   * Constructs a document with no properties.
    */
   public GenericDocument() {
   }
 
   /**
-   * Sets a property for this document. If propertyValue is null this does
-   * nothing.
+   * Sets a property for this Document. If {@code propertyValue} is
+   * {@code null}, this does nothing.
    *
-   * @param propertyName
-   * @param propertyValue
+   * @param propertyName the property name
+   * @param propertyValue the property value, as a String
    */
   public void setProperty(String propertyName, String propertyValue) {
     if (propertyValue != null) {
-      properties.put(propertyName, Collections.singletonList(Value.getStringValue(propertyValue)));
+      properties.put(propertyName,
+          Collections.singletonList(Value.getStringValue(propertyValue)));
     }
   }
 
   /**
-   * Sets a date/time property for this document. If {@code time} is null this
-   * does nothing.
+   * Sets a date/time property for this document. If {@code calendar} is
+   * {@code null}, this does nothing.
    *
-   * @param propertyName
-   * @param cal
+   * @param propertyName the property name
+   * @param calendar the property value, as a {@code Calendar}
    */
-  public void setProperty(String propertyName, Calendar cal) {
-    if (cal != null) {
-      properties.put(propertyName, Collections.singletonList(Value.getDateValue(cal)));
+  public void setProperty(String propertyName, Calendar calendar) {
+    if (calendar != null) {
+      properties.put(propertyName,
+          Collections.singletonList(Value.getDateValue(calendar)));
     }
   }
 
   /**
-   * Sets a property of type java.io.inputStream for this document. However, if
-   * propertyValue is null, do nothing.
+   * Sets a property of type {@code InputStream} for this Document.
+   * However, if propertyValue is {@code null}, do nothing.
    *
-   * @param propertyName
-   * @param propertyValue
+   * @param propertyName the property name
+   * @param propertyValue the property value, as an {@code InputStream}
    */
   public void setProperty(String propertyName, InputStream propertyValue) {
     if (propertyValue != null) {
-      properties.put(propertyName, Collections.singletonList(Value.getBinaryValue(propertyValue)));
+      properties.put(propertyName,
+          Collections.singletonList(Value.getBinaryValue(propertyValue)));
     }
   }
 
   /**
-   * Sets a repeating {@link String} property for this document. If the
-   * the property value is null this does nothing.
+   * Sets a multi-valued {@link String} property for this Document. If the
+   * the property value List is {@code null} or empty, this does nothing.
+
+   * @param propertyName the property name
+   * @param propertyValues a List of property values
    */
-  public void setProperty(String propertyName, List<String> repeatingValue) {
-    if (repeatingValue != null) {
-      List<Value> values = new ArrayList<Value>(repeatingValue.size());
-      for (String v : repeatingValue) {
-        values.add(Value.getStringValue(v));
+  public void setProperty(String propertyName, List<String> propertyValues) {
+    if (propertyValues != null && propertyValues.size() > 0) {
+      List<Value> values = new ArrayList<Value>(propertyValues.size());
+      for (String val : propertyValues) {
+        values.add(Value.getStringValue(val));
       }
       properties.put(propertyName, Collections.unmodifiableList(values));
     }
@@ -101,9 +108,6 @@ public class GenericDocument implements Document {
     return (property == null) ? null : new SimpleProperty(property);
   }
 
-  /*
-   * Return the set of all property names.
-   */
   /* @Override */
   public Set<String> getPropertyNames() {
     return Collections.unmodifiableSet(properties.keySet());

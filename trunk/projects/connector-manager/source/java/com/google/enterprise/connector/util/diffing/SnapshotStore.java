@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.util.diffing;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 
 import java.io.BufferedReader;
@@ -40,9 +41,12 @@ import java.util.regex.Pattern;
 
 /**
  * An API for storing and retrieving snapshots.
+ *
+ * @since 2.8
  */
 public class SnapshotStore {
-  private static final Logger LOG = Logger.getLogger(SnapshotStore.class.getName());
+  private static final Logger LOG =
+      Logger.getLogger(SnapshotStore.class.getName());
   private static final Charset UTF_8 = Charset.forName("UTF-8");
 
   static private File getSnapshotFile(File snapshotDir, long snapshotNumber) {
@@ -50,18 +54,22 @@ public class SnapshotStore {
     return new File(snapshotDir, name);
   }
 
-  private static final Pattern SNAPSHOT_PATTERN = Pattern.compile("snap.([0-9]*)");
+  private static final Pattern SNAPSHOT_PATTERN =
+      Pattern.compile("snap.([0-9]*)");
   private final File snapshotDir;
   private final DocumentSnapshotFactory documentSnapshotFactory;
-  private boolean aWriterIsActive = false;  // Whether there is a current writer or not.
+
+  // Whether there is a current writer or not.
+  private boolean aWriterIsActive = false;
 
   protected volatile long oldestSnapshotToKeep;
+
   /**
-   * @param snapshotDirectory directory in which to store the snapshots. Must be
-   *        non-null. If it does not exist, it will be created.
-   * @param documentSnapshotFactory
+   * @param snapshotDirectory the directory in which to store the snapshots.
+   *        Must be non-{@code null}. If it does not exist, it will be created.
+   * @param documentSnapshotFactory factory for creating DocumentSnapshots
    * @throws SnapshotStoreException if the snapshot directory does not exist and
-   *         cannot be created.
+   *         cannot be created
    */
   public SnapshotStore(File snapshotDirectory,
       DocumentSnapshotFactory documentSnapshotFactory)
@@ -167,7 +175,7 @@ public class SnapshotStore {
     return getExistingSnapshots(snapshotDir);
   }
 
-  /** public for FileSystemMonitorTest. */
+  @VisibleForTesting
   public void deleteOldSnapshots() {
     Iterator<Long> it = getExistingSnapshots().iterator();
     while (it.hasNext()) {
@@ -184,7 +192,7 @@ public class SnapshotStore {
     }
   }
 
-  /** For FileSystemMonitorTest. */
+  @VisibleForTesting
   public long getOldestSnapsotToKeep() {
     return oldestSnapshotToKeep;
   }
@@ -244,7 +252,7 @@ public class SnapshotStore {
     }
   }
 
-  /** public for FileSystemMonitorTest. */
+  @VisibleForTesting
   public static void stitch(File snapshotDir, MonitorCheckpoint checkpoint,
       DocumentSnapshotFactory documentSnapshotFactory)
       throws IOException, SnapshotStoreException, InterruptedException {

@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.util.diffing;
 
+import com.google.common.annotations.VisibleForTesting;
 
 import java.io.BufferedWriter;
 import java.io.FileDescriptor;
@@ -22,6 +23,8 @@ import java.io.Writer;
 
 /**
  * Write snapshot records in CSV format.
+ *
+ * @since 2.8
  */
 public class SnapshotWriter {
   static final char LENGTH_DELIMITER = '#';
@@ -35,8 +38,8 @@ public class SnapshotWriter {
    * Creates a SnapshotWriter that appends to {@code output}.
    *
    * @param output CSV writer that is being wrapped
-   * @param fileDescriptor if non-null, this will be flushed after each record
-   *        is written to disk.
+   * @param fileDescriptor if non-{code null}, this will be flushed after
+   *        each record is written to disk
    * @param path name of output, for logging purposes
    * @throws SnapshotWriterException on any error
    */
@@ -68,7 +71,7 @@ public class SnapshotWriter {
     }
   }
 
-  /** Visible for testing. */
+  @VisibleForTesting
   static void write(DocumentSnapshot snapshot, Writer writer)
       throws IOException, IllegalArgumentException {
     String stringForm = snapshot.toString();
@@ -111,12 +114,12 @@ public class SnapshotWriter {
     return count;
   }
 
-  /** Public for FileSystemMonitorTest */
+  @VisibleForTesting
   public Writer getOutput() {
     return output;
   }
 
-  /** Public for FileSystemMonitorTest */
+  @VisibleForTesting
   public FileDescriptor getFileDescriptor() {
     return fileDescriptor;
   }
