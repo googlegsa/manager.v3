@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.util.diffing;
 
+import com.google.common.annotations.VisibleForTesting;
 
 import java.sql.Timestamp;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -24,64 +25,65 @@ import java.util.logging.Logger;
  * Bounded buffer of {@link Change} objects for buffering between the
  * {@link DocumentSnapshotRepositoryMonitor} and the
  * {@link CheckpointAndChangeQueue}.
- * <p>
- * Public for testing.
+ *
+ * @since 2.8
  */
+@VisibleForTesting
 public class ChangeQueue implements ChangeSource {
   private final BlockingQueue<Change> pendingChanges;
 
   /** Milliseconds to sleep after a scan that finds no changes. */
   private final long sleepInterval;
-  
+
   private final CrawlActivityLogger activityLogger;
 
   /**
    * Interface to log the crawl activity for each crawl.
    */
   public static interface CrawlActivityLogger {
-    
+
     /**Records the start time of the scan.
      * @param time timestamp of the start time
      */
     void scanBeginAt(Timestamp time);
-    
+
     /**
      * Records the end time of the scan.
      * @param time timestamp of the end time
      */
     void scanEndAt(Timestamp time);
-    
+
     /**
      * To record that crawling thread just received a document for
-     * which either the content or the meta data or both have changed since the 
-     * last scan. 
-     * @param documentId Id for the changed document 
+     * which either the content or the meta data or both have changed since the
+     * last scan.
+     * @param documentId Id for the changed document
      */
     void gotChangedDocument(String documentId);
-    
+
     /**
      * To record that crawling thread just received a new document
      * which was not present in the last scan.
      * @param documentId Id of the newly added document
      */
     void gotNewDocument(String documentId);
-    
+
     /**
-     * To record that crawling thread just found out that the 
+     * To record that crawling thread just found out that the
      * previously existing document got deleted and is no longer present.
      * @param documentId id of the deleted document
      */
     void gotDeletedDocument(String documentId);
-    
+
   }
-  
+
   public static class DefaultCrawlActivityLogger implements CrawlActivityLogger {
-    
+
     private int newDocumentCount, changedDocumentCount, deletedDocumentCount;
     private Timestamp startTime, endTime;
     private static final Logger LOG = Logger.getLogger(
         DefaultCrawlActivityLogger.class.getName());
-    
+
     /* @Override */
     public void scanBeginAt(Timestamp time) {
       logCrawlStatistics();
@@ -108,7 +110,7 @@ public class ChangeQueue implements ChangeSource {
 
     /**
      * This method logs all the important information related to each scan of
-     * the crawling thread. It logs following information for each scan 
+     * the crawling thread. It logs following information for each scan
      * 1. Time taken to perform the complete scan. <br>
      * 2. No. of new documents found. <br>
      * 3. No. of changed documents found. <br>
@@ -120,7 +122,7 @@ public class ChangeQueue implements ChangeSource {
         if (endTime == null) {
           LOG.info("The scan failed to complete. The crawl statistics reflect the figures at the time of starting next scan");
           endTime = new Timestamp(System.currentTimeMillis());
-        } 
+        }
         String duration = (new Long((endTime.getTime() - startTime.getTime()) / 1000)).toString();
         LOG.info("Scan duration : " + duration + " seconds");
         LOG.info("# of new documents found : " + newDocumentCount);
@@ -146,11 +148,11 @@ public class ChangeQueue implements ChangeSource {
       ++newDocumentCount;
       LOG.fine("New document found during the crawl; document id is : " + documentId);
     }
-    
+
   }
 
   /**
-   * Adds changes to this queue.
+   * Adds {@link Change Changes} to this queue.
    */
   private class Callback implements DocumentSnapshotRepositoryMonitor.Callback {
     private int changeCount = 0;
@@ -197,6 +199,13 @@ public class ChangeQueue implements ChangeSource {
     }
   }
 
+  /**
+   * Create a new ChangeQueue.
+   *
+   * @param size the queue size
+   * @param sleepInterval how often to look for new changes, in milliseconds
+   * @param activityLogger a CrawlActivityLogger
+   */
   public ChangeQueue(int size, long sleepInterval, CrawlActivityLogger activityLogger) {
     pendingChanges = new ArrayBlockingQueue<Change>(size);
     this.sleepInterval = sleepInterval;
@@ -205,20 +214,22 @@ public class ChangeQueue implements ChangeSource {
 
   /**
    * @return the monitor callback. This is a factory method for use by Spring,
-   *         which needs a Callback to create a FileSystemMonitor.
+   *         which needs a Callback to create a
+   *         {@code DocumentSnapshotRepositoryMonitor}.
    */
   public DocumentSnapshotRepositoryMonitor.Callback newCallback() {
     return new Callback();
   }
 
   /**
-   * @return the next available change, or null if no changes are available.
+   * @return the next available change, or {@code null} if no changes are
+   *         available
    */
   public Change getNextChange() {
     return pendingChanges.poll();
   }
 
-  /** Makes empty by removing all references from data structure. */
+  /** Empties the queue of all pending changes. */
   void clear() {
     pendingChanges.clear();
   }

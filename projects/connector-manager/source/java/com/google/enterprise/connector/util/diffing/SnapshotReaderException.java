@@ -14,21 +14,28 @@
 
 package com.google.enterprise.connector.util.diffing;
 
-
 /**
- * Exception for reading {@link SnapshotStore}
+ * An {@link Exception} for errors reading the {@link SnapshotStore}.
+ *
+ * @since 2.8
  */
 public class SnapshotReaderException extends SnapshotStoreException {
   /**
-   * @param message
+   * Constructs a {@link SnapshotReaderException} with the supplied
+   * {@code message}.
+   *
+   * @param message the message
    */
   public SnapshotReaderException(String message) {
     super(message);
   }
 
   /**
-   * @param message
-   * @param cause
+   * Constructs a {@link SnapshotReaderException} with the supplied
+   * {@code message} and root {@code cause}.
+   *
+   * @param message the message
+   * @param cause the root cause of the exception
    */
   public SnapshotReaderException(String message, Throwable cause) {
     super(message, cause);

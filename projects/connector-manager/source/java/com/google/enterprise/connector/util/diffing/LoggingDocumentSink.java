@@ -14,16 +14,17 @@
 
 package com.google.enterprise.connector.util.diffing;
 
-
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
  * A {@link DocumentSink} that logs filtered documents.
+ *
+ * @since 2.8
  */
 public class LoggingDocumentSink implements DocumentSink {
-
-  private static final Logger LOG = Logger.getLogger(LoggingDocumentSink.class.getName());
+  private static final Logger LOG =
+      Logger.getLogger(LoggingDocumentSink.class.getName());
 
   /* @Override */
   public void add(String documentId, FilterReason reason) {

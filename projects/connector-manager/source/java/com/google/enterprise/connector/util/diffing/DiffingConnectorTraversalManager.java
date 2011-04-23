@@ -25,12 +25,17 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.logging.Logger;
 
-/** Implementation of TraversalManager the diffing connector. */
+/**
+ * Implementation of {@link TraversalManager} for the {@link DiffingConnector}.
+ *
+ * @since 2.8
+ */
 public class DiffingConnectorTraversalManager implements TraversalManager,
     TraversalContextAware {
   private static final Logger LOG = Logger.getLogger(
       DiffingConnectorTraversalManager.class.getName());
-  private final DocumentSnapshotRepositoryMonitorManager fileSystemMonitorManager;
+  private final DocumentSnapshotRepositoryMonitorManager
+      snapshotRepositoryMonitorManager;
   private final TraversalContextManager traversalContextManager;
   /**
    * Boolean to mark TraversalManager as invalid.
@@ -41,15 +46,18 @@ public class DiffingConnectorTraversalManager implements TraversalManager,
   private boolean isActive = true;
 
   /**
-   * Creates a {@link DiffingConnectorTraversalManager}
-   * @param fileSystemMonitorManager the {@link
-   *        DocumentSnapshotRepositoryMonitorManager} for use accessing a
-   *        {@link ChangeSource}
+   * Creates a {@link DiffingConnectorTraversalManager}.
+   *
+   * @param snapshotRepositoryMonitorManager the
+   *        {@link DocumentSnapshotRepositoryMonitorManager}
+   *        for use accessing a {@link ChangeSource}
+   * @param traversalContextManager {@link TraversalContextManager}
+   *        that holds the current {@link TraversalContext}
    */
   public DiffingConnectorTraversalManager(
-      DocumentSnapshotRepositoryMonitorManager fileSystemMonitorManager,
+      DocumentSnapshotRepositoryMonitorManager snapshotRepositoryMonitorManager,
       TraversalContextManager traversalContextManager) {
-    this.fileSystemMonitorManager = fileSystemMonitorManager;
+    this.snapshotRepositoryMonitorManager = snapshotRepositoryMonitorManager;
     this.traversalContextManager = traversalContextManager;
   }
 
@@ -57,7 +65,7 @@ public class DiffingConnectorTraversalManager implements TraversalManager,
       throws RepositoryException {
 
     CheckpointAndChangeQueue checkpointAndChangeQueue =
-        fileSystemMonitorManager.getCheckpointAndChangeQueue();
+        snapshotRepositoryMonitorManager.getCheckpointAndChangeQueue();
 
     try {
       DiffingConnectorDocumentList documentList = new DiffingConnectorDocumentList(
@@ -68,7 +76,7 @@ public class DiffingConnectorTraversalManager implements TraversalManager,
       Map<String, MonitorCheckpoint> guaranteesMade =
           checkpointAndChangeQueue.getMonitorRestartPoints();
 
-      fileSystemMonitorManager.acceptGuarantees(guaranteesMade);
+      snapshotRepositoryMonitorManager.acceptGuarantees(guaranteesMade);
 
       return new ConfirmActiveDocumentList(documentList);
     } catch (IOException e) {
@@ -79,7 +87,7 @@ public class DiffingConnectorTraversalManager implements TraversalManager,
   /* @Override */
   public synchronized void setBatchHint(int batchHint) {
     if (isActive()) {
-      fileSystemMonitorManager.getCheckpointAndChangeQueue()
+      snapshotRepositoryMonitorManager.getCheckpointAndChangeQueue()
           .setMaximumQueueSize(batchHint);
     }
   }
@@ -89,8 +97,8 @@ public class DiffingConnectorTraversalManager implements TraversalManager,
   public synchronized DocumentList startTraversal() throws RepositoryException {
     if (isActive()) {
       // Entirely reset connector's state.
-      fileSystemMonitorManager.stop();
-      fileSystemMonitorManager.clean();
+      snapshotRepositoryMonitorManager.stop();
+      snapshotRepositoryMonitorManager.clean();
       // With no state issue crawl command from null (beginning) checkpoint.
       return resumeTraversal(null);
     } else {
@@ -114,8 +122,8 @@ public class DiffingConnectorTraversalManager implements TraversalManager,
        is most common case; roll
     */
     if (isActive()) {
-      if (!fileSystemMonitorManager.isRunning()) {
-        fileSystemMonitorManager.start(checkpoint);
+      if (!snapshotRepositoryMonitorManager.isRunning()) {
+        snapshotRepositoryMonitorManager.start(checkpoint);
       }
       return newDocumentList(checkpoint);
     } else {
@@ -134,7 +142,7 @@ public class DiffingConnectorTraversalManager implements TraversalManager,
 
   public synchronized void deactivate() {
     isActive = false;
-    fileSystemMonitorManager.stop();
+    snapshotRepositoryMonitorManager.stop();
   }
 
   /** Public for testing. */

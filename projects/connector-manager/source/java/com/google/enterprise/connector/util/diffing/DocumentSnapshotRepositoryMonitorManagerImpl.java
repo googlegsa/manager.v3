@@ -28,7 +28,7 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 /**
- * {@link DocumentSnapshotRepositoryMonitorManager} implementation.  There is
+ * A {@link DocumentSnapshotRepositoryMonitorManager} implementation.  There is
  * one instance of this class per {@link DiffingConnector} created by Spring.
  * That instance gets signals from {@link DiffingConnectorTraversalManager}
  * to start (go from "cold" to "warm") and does so from scratch or from recovery
@@ -36,6 +36,8 @@ import java.util.logging.Logger;
  * their recovery method.  It creates and manages the
  * {@link DocumentSnapshotRepositoryMonitor} instances and passes guaranteed
  * checkpoints to these monitors.
+ *
+ * @since 2.8
  */
 public class DocumentSnapshotRepositoryMonitorManagerImpl
     implements DocumentSnapshotRepositoryMonitorManager {
@@ -67,7 +69,20 @@ public class DocumentSnapshotRepositoryMonitorManagerImpl
 
   private final DocumentSnapshotFactory documentSnapshotFactory;
 
-  /** Visible for testing. */
+  /**
+   * Constructs {@link DocumentSnapshotRepositoryMonitorManagerImpl}
+   * for the {@link DiffingConnector}.
+   *
+   * @param repositories a {@code List} of {@link SnapshotRepository
+   *        SnapshotRepositorys}
+   * @param documentSnapshotFactory a {@link DocumentSnapshotFactory}
+   * @param snapshotDir directory to store {@link SnapshotRepository}
+   * @param checksumGenerator a {@link ChecksumGenerator} used to
+   *        detect changes in a document's content
+   * @param changeQueue a {@link ChangeQueue}
+   * @param checkpointAndChangeQueue a
+   *        {@link CheckpointAndChangeQueue}
+   */
   public DocumentSnapshotRepositoryMonitorManagerImpl(
       List<? extends SnapshotRepository<
           ? extends DocumentSnapshot>> repositories,
@@ -210,7 +225,8 @@ public class DocumentSnapshotRepositoryMonitorManagerImpl
   }
 
   /**
-   * Creates a {@link DocumentSnapshotRepositoryMonitor} thread for the provided folder.
+   * Creates a {@link DocumentSnapshotRepositoryMonitor} thread for the provided
+   * folder.
    *
    * @throws RepositoryDocumentException if {@code startPath} is not readable,
    *         or if there is any problem reading or writing snapshots.
@@ -221,15 +237,16 @@ public class DocumentSnapshotRepositoryMonitorManagerImpl
       throws RepositoryDocumentException {
     String monitorName = makeMonitorNameFromStartPath(repository.getName());
     DocumentSnapshotRepositoryMonitor monitor =
-        new DocumentSnapshotRepositoryMonitor(monitorName, repository, snapshotStore,
-            changeQueue.newCallback(), DOCUMENT_SINK, startCp,
+        new DocumentSnapshotRepositoryMonitor(monitorName, repository,
+            snapshotStore, changeQueue.newCallback(), DOCUMENT_SINK, startCp,
             documentSnapshotFactory);
     fileSystemMonitorsByName.put(monitorName, monitor);
     return new Thread(monitor);
   }
 
   /**
-   * Creates a {@link DocumentSnapshotRepositoryMonitor} thread for each startPath.
+   * Creates a {@link DocumentSnapshotRepositoryMonitor} thread for each
+   * startPath.
    *
    * @throws RepositoryDocumentException if any of the threads cannot be
    *         started.
@@ -253,6 +270,7 @@ public class DocumentSnapshotRepositoryMonitorManagerImpl
     }
   }
 
+  /* @Override */
   public synchronized boolean isRunning() {
     return isRunning;
   }

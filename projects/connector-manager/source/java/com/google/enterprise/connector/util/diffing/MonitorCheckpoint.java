@@ -19,6 +19,8 @@ import org.json.JSONObject;
 
 /**
  * A checkpoint for a single {@link DocumentSnapshotRepositoryMonitor}.
+ *
+ * @since 2.8
  */
 public class MonitorCheckpoint {
   private static final String SNAPSHOT_NUMBER_TAG = "ssn";
@@ -31,18 +33,37 @@ public class MonitorCheckpoint {
   private final long offset1;
   private final long offset2;
 
-  public MonitorCheckpoint(String monitorName, long snapshotNumber, long offset1, long offset2) {
+  /**
+   * Constructs {@link DocumentSnapshotRepositoryMonitor} checkpoint.
+   *
+   * @param monitorName the {@link DocumentSnapshotRepositoryMonitor} name
+   * @param snapshotNumber the snapshot number
+   * @param offset1 the offset into the snapshot repository for snapshot
+   *        {@code snapshotNumber}
+   * @param offset2 the offset into the snapshot repository for snapshot
+   *        {@code snapshotNumber + 1}
+   */
+  public MonitorCheckpoint(String monitorName, long snapshotNumber,
+                           long offset1, long offset2) {
     this.monitorName = monitorName;
     this.snapshotNumber = snapshotNumber;
     this.offset1 = offset1;
     this.offset2 = offset2;
   }
 
-  public MonitorCheckpoint(JSONObject o) throws JSONException {
-    this.monitorName = o.getString(MONITOR_NAME_TAG);
-    this.snapshotNumber = o.getLong(SNAPSHOT_NUMBER_TAG);
-    this.offset1 = o.getLong(OFFSET_1_TAG);
-    this.offset2 = o.getLong(OFFSET_2_TAG);
+  /**
+   * Reconstructs {@link DocumentSnapshotRepositoryMonitor} checkpoint from
+   * a JSON object.
+   * <p/>
+   * See {@link #getJson()}
+   *
+   * @param json a JSON encoded {@link DocumentSnapshotRepositoryMonitor}
+   */
+  public MonitorCheckpoint(JSONObject json) throws JSONException {
+    this.monitorName = json.getString(MONITOR_NAME_TAG);
+    this.snapshotNumber = json.getLong(SNAPSHOT_NUMBER_TAG);
+    this.offset1 = json.getLong(OFFSET_1_TAG);
+    this.offset2 = json.getLong(OFFSET_2_TAG);
   }
 
   /**
@@ -79,14 +100,16 @@ public class MonitorCheckpoint {
   }
 
   /**
-   * @return the file offset in snapshot number {@code snapshotNumber}.
+   * @return the offset into the snapshot repository for snapshot number
+   *         {@code snapshotNumber}
    */
   public long getOffset1() {
     return offset1;
   }
 
   /**
-   * @return the file offset in snapshot number {@code snapshotNumber + 1}.
+   * @return the offset into the snapshot repository for snapshot number
+   *         {@code snapshotNumber + 1}
    */
   public long getOffset2() {
     return offset2;

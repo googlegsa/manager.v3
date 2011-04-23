@@ -21,7 +21,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
- * {@link DocumentHandle} for deleting documents.
+ * A {@link DocumentHandle} implementation for deleting documents.
+ *
+ * @since 2.8
  */
 public class DeleteDocumentHandle implements DocumentHandle {
   static enum Field {
@@ -30,6 +32,11 @@ public class DeleteDocumentHandle implements DocumentHandle {
 
   private final String documentId;
 
+  /**
+   * Construct a DeleteDocumentHandle for a {@code documentId}.
+   *
+   * @param documentId the deleted document
+   */
   DeleteDocumentHandle(String documentId) {
     if (documentId == null) {
       throw new IllegalArgumentException();
