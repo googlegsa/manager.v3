@@ -31,14 +31,14 @@ import java.util.logging.Logger;
  * method. The factory methods are named to reflect the type data they carry,
  * thus:
  * <ul>
- * <li> <code>getStringValue</code> creates an object carrying a string
- * <li> <code>getBinaryValue</code> creates an object carrying binary data
- * (stream or byte array)
- * <li> <code>getLongValue</code> creates an object carrying an integer
- * <li> <code>getDoubleValue</code> creates an object carrying a
- * floating-point value
- * <li> <code>getDateValue</code> creates an object carrying a date
- * <li> <code>getBooleanValue</code> creates an object carrying a boolean
+ * <li> {@code getStringValue} creates an object carrying a string</li>
+ * <li> {@code getBinaryValue} creates an object carrying binary data
+ * (stream or byte array)</li>
+ * <li> {@code getLongValue} creates an object carrying an integer</li>
+ * <li> {@code getDoubleValue} creates an object carrying a
+ * floating-point value</li>
+ * <li> {@code getDateValue} creates an object carrying a date</li>
+ * <li> {@code getBooleanValue} creates an object carrying a boolean</li>
  * </ul>
  * In addition, some of the factory methods are overloaded for the convenience
  * of the connector developer. The implementations attempt to convert from the
@@ -50,8 +50,8 @@ public abstract class Value {
   /**
    * Creates a value carrying a String.
    *
-   * @param stringValue The String value
-   * @return a Value instance carrying this value
+   * @param stringValue the {@code String} value
+   * @return a {@link Value} instance carrying this value
    */
   public static Value getStringValue(String stringValue) {
     return ValueImpl.getStringValue(stringValue);
@@ -60,8 +60,8 @@ public abstract class Value {
   /**
    * Creates a value carrying binary data.
    *
-   * @param inputStreamValue An <code>InputStream</code> containing the data
-   * @return a Value instance carrying this data
+   * @param inputStreamValue an {@code InputStream} containing the data
+   * @return a {@link Value} instance carrying this data
    */
   public static Value getBinaryValue(InputStream inputStreamValue) {
     return ValueImpl.getBinaryValue(inputStreamValue);
@@ -70,8 +70,8 @@ public abstract class Value {
   /**
    * Creates a value carrying binary data.
    *
-   * @param byteArrayValue An <code>byte</code> array containing the data
-   * @return a Value instance carrying this data
+   * @param byteArrayValue an {@code byte} array containing the data
+   * @return a {@link Value} instance carrying this data
    */
   public static Value getBinaryValue(byte[] byteArrayValue) {
     return ValueImpl.getBinaryValue(byteArrayValue);
@@ -80,8 +80,8 @@ public abstract class Value {
   /**
    * Creates a value carrying an integer.
    *
-   * @param longValue A <code>long</code> containing the data
-   * @return a Value instance carrying this data
+   * @param longValue a {@code long} containing the data
+   * @return a {@link Value} instance carrying this data
    */
   public static Value getLongValue(long longValue) {
     return ValueImpl.getLongValue(longValue);
@@ -90,8 +90,8 @@ public abstract class Value {
   /**
    * Creates a value carrying an integer.
    *
-   * @param doubleValue A <code>double</code> containing the data
-   * @return a Value instance carrying this data
+   * @param doubleValue a {@code double} containing the data
+   * @return a {@link Value} instance carrying this data
    */
   public static Value getDoubleValue(double doubleValue) {
     return ValueImpl.getDoubleValue(doubleValue);
@@ -100,8 +100,8 @@ public abstract class Value {
   /**
    * Creates a value carrying a date.
    *
-   * @param calendarValue A <code>Calendar</code> object containing the data
-   * @return a Value instance carrying this data
+   * @param calendarValue a {@code Calendar} object containing the data
+   * @return a {@link Value} instance carrying this data
    */
   public static Value getDateValue(Calendar calendarValue) {
     return ValueImpl.getDateValue(calendarValue);
@@ -110,8 +110,8 @@ public abstract class Value {
   /**
    * Creates a value carrying a boolean.
    *
-   * @param booleanValue A <code>boolean</code> containing the data
-   * @return a Value instance carrying this data
+   * @param booleanValue a {@code boolean} containing the data
+   * @return a {@link Value} instance carrying this data
    */
   public static Value getBooleanValue(boolean booleanValue) {
     return ValueImpl.getBooleanValue(booleanValue);
@@ -120,27 +120,29 @@ public abstract class Value {
   /**
    * Creates a value carrying a boolean.
    *
-   * @param stringValue A <code>String</code> containing the data. The String
+   * @param stringValue A {@code String} containing the data. The String
    *        is converted as follows:
    *        <ul>
    *        <li> Any case variant of the strings "t" and "true" return
-   *        <code>true</code>
-   *        <li> All other strings (including <code>null</code> and the empty
-   *        string) return <code>false<code>
+   *        {@code true}.</li>
+   *        <li> All other strings (including {@code null} and the empty
+   *        string) return {@code false}.</li>
    *        </ul>
-   * @return a Value instance carrying this data.
+   * @return a {@link Value} instance carrying this data
    */
   public static Value getBooleanValue(String stringValue) {
     return ValueImpl.getBooleanValue(stringValue);
   }
 
   /**
-   * Convenience function for access to a single named value from a DocumentList
+   * Convenience function for access to a single named value from a
+   * {@link Document}.
    *
-   * @param document the Document List from which to extract the Value
-   * @param propertyName the name of the Property
-   * @return The first Value of that named property, if there is one -
-   *         <code>null</code> otherwise
+   * @param document the {@link Document} from which to extract the
+   *        {@link Value}
+   * @param propertyName the name of the {@link Property}
+   * @return the first {@link Value} of that named property, if there is one -
+   *         {@code null} otherwise
    * @throws RepositoryException
    */
   public static Value getSingleValue(Document document,
@@ -153,12 +155,14 @@ public abstract class Value {
   }
 
   /**
-   * Convenience function for access to a single string value from a DocumentList
+   * Convenience function for access to a single string value from a 
+   * {@link Document}.
    *
-   * @param document the Document List from which to extract the Value
-   * @param propertyName the name of the Property
-   * @return The string Value of that named property, if there is one -
-   *         <code>null</code> otherwise
+   * @param document the {@link Document} from which to extract the
+   *        {@link Value}
+   * @param propertyName the name of the {@link Property}
+   * @return the String {@link Value} of that named property, if there is one -
+   *         {@code null} otherwise
    * @throws RepositoryException
    */
   public static String getSingleValueString(Document document,
@@ -171,10 +175,10 @@ public abstract class Value {
   }
 
   /**
-   * Returns a string representation of the Value. Connector developers may
-   * count on this for debugging.
+   * Returns a string representation of the {@link Value}. Connector developers
+   * may count on this for debugging.
    *
-   * @return a string representation of the Value.
+   * @return a string representation of the {@link Value}
    */
   @Override
   public abstract String toString();
@@ -209,8 +213,8 @@ public abstract class Value {
    * Sets the time zone used to format date values for the feed to the
    * given time zone.
    *
-   * @param id the time zone ID, or <code>null</code> or
-   * <code>""</code> (empty string) to specify the default time zone
+   * @param id the time zone ID, or {@code null} or
+   * {@code ""} (empty string) to specify the default time zone
    * @see TimeZone#getTimeZone
    * @see TimeZone#getDefault
    * @since 2.4.4
@@ -238,51 +242,54 @@ public abstract class Value {
 
   /**
    * Formats a calendar object for the Feeds Protocol, using the
-   * ISO-8601 format for just the date portion.  See
+   * <a href="http://www.iso.org/iso/support/faqs/faqs_widely_used_standards/widely_used_standards_other/date_and_time_format.htm">
+   * ISO-8601</a> format for just the date portion.  See
    * <a href="http://code.google.com/apis/searchappliance/documentation/feedsguide.html">
    * Feeds Protocol Developer's Guide</a>
    *
-   * @param c
+   * @param calendar a {@code Calendar}
    * @return a String in ISO-8601 date format
    */
-  public static synchronized String calendarToFeedXml(Calendar c) {
-    Date d = c.getTime();
-    String isoString = ISO8601_DATE_FORMAT_DATE.format(d);
-    return isoString;
+  public static synchronized String calendarToFeedXml(Calendar calendar) {
+    Date date = calendar.getTime();
+    return ISO8601_DATE_FORMAT_DATE.format(date);
   }
 
   /**
-   * Formats a calendar object as RFC 822.
+   * Formats a calendar object according to the
+   * <a href="http://www.w3.org/Protocols/rfc822/#z28">RFC 822</a>
+   * specification.
    *
-   * @param c
+   * @param calendar a {@code Calendar}
    * @return a String in RFC 822 format
    */
-  public static synchronized String calendarToRfc822(Calendar c) {
-    Date d = c.getTime();
-    String s = RFC822_DATE_FORMAT.format(d);
+  public static synchronized String calendarToRfc822(Calendar calendar) {
+    Date date = calendar.getTime();
     // Fix UTC time zone marker. The SimpleDateFormat Z pattern letter
     // always produces an offset string, e.g., "-0800" or "+000". For
     // UTC, the use of "GMT" (RFC 822) or "Z" (ISO 8601) is preferred.
-    return s.replaceFirst("\\+0000$", "GMT");
+    return RFC822_DATE_FORMAT.format(date).replaceFirst("\\+0000$", "GMT");
   }
 
   /**
-   * Formats a calendar object as ISO-8601.
+   * Formats a calendar object according to the
+   * <a href="http://www.iso.org/iso/support/faqs/faqs_widely_used_standards/widely_used_standards_other/date_and_time_format.htm">
+   * ISO-8601</a> specification.
    *
-   * @param c
+   * @param calendar a {@code Calendar}
    * @return a String in ISO-8601 format
    */
-  public static synchronized String calendarToIso8601(Calendar c) {
-    Date d = c.getTime();
+  public static synchronized String calendarToIso8601(Calendar calendar) {
+    Date date = calendar.getTime();
     String isoString;
-    if (c.isSet(Calendar.MILLISECOND)) {
-      isoString = ISO8601_DATE_FORMAT_MILLIS.format(d);
-    } else if (c.isSet(Calendar.SECOND)) {
-      isoString = ISO8601_DATE_FORMAT_SECS.format(d);
-    } else if (c.isSet(Calendar.MINUTE)) {
-      isoString = ISO8601_DATE_FORMAT_MINS.format(d);
+    if (calendar.isSet(Calendar.MILLISECOND)) {
+      isoString = ISO8601_DATE_FORMAT_MILLIS.format(date);
+    } else if (calendar.isSet(Calendar.SECOND)) {
+      isoString = ISO8601_DATE_FORMAT_SECS.format(date);
+    } else if (calendar.isSet(Calendar.MINUTE)) {
+      isoString = ISO8601_DATE_FORMAT_MINS.format(date);
     } else {
-      isoString = ISO8601_DATE_FORMAT_DATE.format(d);
+      isoString = ISO8601_DATE_FORMAT_DATE.format(date);
     }
     // Fix UTC time zone marker.
     return isoString.replaceFirst("\\+0000$", "Z");
@@ -290,38 +297,40 @@ public abstract class Value {
 
   private static synchronized Date iso8601ToDate(String s)
       throws ParseException {
-    Date d = null;
+    Date date = null;
     try {
-      d = ISO8601_DATE_FORMAT_MILLIS.parse(s);
+      date = ISO8601_DATE_FORMAT_MILLIS.parse(s);
     } catch (ParseException e1) {
       try {
-        d = ISO8601_DATE_FORMAT_SECS.parse(s);
+        date = ISO8601_DATE_FORMAT_SECS.parse(s);
       } catch (ParseException e2) {
         try {
-          d = ISO8601_DATE_FORMAT_MINS.parse(s);
+          date = ISO8601_DATE_FORMAT_MINS.parse(s);
         } catch (ParseException e3) {
-          d = ISO8601_DATE_FORMAT_DATE.parse(s);
+          date = ISO8601_DATE_FORMAT_DATE.parse(s);
         }
       }
     }
-    return d;
+    return date;
   }
 
   /**
-   * Parses a String in ISO-8601 format (GMT zone) and returns an equivalent
-   * java.util.Calendar object.
+   * Parses a String in
+   * <a href="http://www.iso.org/iso/support/faqs/faqs_widely_used_standards/widely_used_standards_other/date_and_time_format.htm">
+   * ISO-8601</a> format (GMT zone) and returns an equivalent
+   * {@code java.util.Calendar} object.
    *
-   * @param s
+   * @param dateString the date string to parse
    * @return a Calendar object
    * @throws ParseException if the the String can not be parsed
    */
-  public static synchronized Calendar iso8601ToCalendar(String s)
+  public static synchronized Calendar iso8601ToCalendar(String dateString)
       throws ParseException {
     // Fix UTC time zone marker. For parsing, the Z pattern letter
     // does not accept "Z" for UTC.
-    Date d = iso8601ToDate(s.replaceFirst("Z$", "+0000"));
-    Calendar c = Calendar.getInstance();
-    c.setTime(d);
-    return c;
+    Date date = iso8601ToDate(dateString.replaceFirst("Z$", "+0000"));
+    Calendar calendar = Calendar.getInstance();
+    calendar.setTime(date);
+    return calendar;
   }
 }

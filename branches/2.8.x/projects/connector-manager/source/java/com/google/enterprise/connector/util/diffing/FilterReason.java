@@ -17,6 +17,8 @@ package com.google.enterprise.connector.util.diffing;
 /**
  * Enumerations for reasons for filtering a document rather than
  * sending it to the GSA.
+ *
+ * @since 2.8
  */
 public enum FilterReason {
   /** File path does note match start patterns or matches exclude patterns. */

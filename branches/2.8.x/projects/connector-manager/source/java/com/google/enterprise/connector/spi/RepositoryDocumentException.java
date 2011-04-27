@@ -1,4 +1,4 @@
-// Copyright (C) 2008 Google Inc.
+// Copyright 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,14 +17,15 @@ package com.google.enterprise.connector.spi;
 /**
  * Thrown for problems accessing individual documents in a repository.
  * By default, the Connector Manager skips over documents that throw
- * RepositoryDocumentExceptions, proceeding on to the next document.
+ * {@code RepositoryDocumentExceptions}, proceeding on to the next document.
  * It is the responsibility of the Connector to construct a checkpoint
- * that skips over the offending Document if DocumentList.checkpoint()
- * is called after RepositoryDocumentException is thrown.
+ * that skips over the offending {@link Document} if
+ * {@link DocumentList#checkpoint()} is called after
+ * {@code RepositoryDocumentException} is thrown.
  */
 public class RepositoryDocumentException extends RepositoryException {
   /**
-   * Constructs a new RepositoryDocumentException with no message
+   * Constructs a new {@code RepositoryDocumentException} with no message
    * and no root cause.
    */
   public RepositoryDocumentException() {
@@ -32,17 +33,20 @@ public class RepositoryDocumentException extends RepositoryException {
   }
 
   /**
-   * Constructs a RepositoryDocumentException with a supplied message,
+   * Constructs a {@code RepositoryDocumentException} with a supplied message,
    * but no root cause.
-   * @param message the message.
+   *
+   * @param message the message
    */
   public RepositoryDocumentException(String message) {
     super(message);
   }
 
   /**
-   * Constructs a RepositoryDocumentException with message and root cause.
-   * @param message the message.
+   * Constructs a {@code RepositoryDocumentException} with message and root
+   * cause.
+   *
+   * @param message the message
    * @param rootCause root failure cause
    */
   public RepositoryDocumentException(String message, Throwable rootCause) {
@@ -50,7 +54,9 @@ public class RepositoryDocumentException extends RepositoryException {
   }
 
   /**
-   * Constructs a RepositoryDocumentException with the specified root cause.
+   * Constructs a {@code RepositoryDocumentException} with the specified root
+   * cause.
+   *
    * @param rootCause root failure cause
    */
   public RepositoryDocumentException(Throwable rootCause) {

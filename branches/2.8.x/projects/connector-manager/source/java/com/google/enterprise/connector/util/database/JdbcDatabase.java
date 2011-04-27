@@ -16,6 +16,7 @@ package com.google.enterprise.connector.util.database;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
+import com.google.enterprise.connector.spi.DatabaseResourceBundle;
 import com.google.enterprise.connector.spi.SpiConstants.DatabaseType;
 import com.google.enterprise.connector.util.BasicChecksumGenerator;
 
@@ -34,7 +35,22 @@ import java.util.logging.Logger;
 import javax.sql.DataSource;
 
 /**
- * Basic connectivity, table creation and connection pooling
+ * Basic database connectivity, table creation and connection pooling.
+ * <p/>
+ * The JdbcDatabase wraps a {@link javax.sql.DataSource} instance,
+ * adding additional features specifically beneficial to Connectors
+ * and the ConnectorManager, such as:
+ * <ul><li>Information regarding the underlying database implementation,
+ * including the vendor name, version information, and description.</li>
+ * <li>Maintaining a ConnectionPool for the DataSource.</li>
+ * <li>Manufacturing legal database table names base upon a Connector name.</li>
+ * <li>Creating database tables based upon a supplied DDL, or verifying
+ * that such a table exists.</li>
+ * <li>Methods useful for forming DatabaseResourceBundle filenames for
+ * the specific vendor implementation.</li>
+ * </ul>
+ *
+ * @since 2.8
  */
 public class JdbcDatabase {
   private static final Logger LOGGER =
@@ -56,27 +72,46 @@ public class JdbcDatabase {
   }
 
   @Override
-  public synchronized void finalize() throws Exception {
-    if (getConnectionPool() != null) {
-      connectionPool.closeConnections();
+  protected void finalize() throws Throwable {
+    shutdown();
+  }
+
+  public synchronized void shutdown() {
+    connectionPool.closeConnections();
+  }
+
+  /**
+   * Returns {@code true} if the configured {@code JdbcDatabase} is unavailable.
+   *
+   * @return {@code true} if this {@code JdbcDatabase} is disabled, {@code false}
+   * otherwise.
+   */
+  public boolean isDisabled() {
+    // If I can successfully establish a Connection to the database, assume
+    // the DataSource is functional.  Otherwise, consider it disabled.
+    try {
+      dataSource.getConnection().close();
+      return false;
+    } catch (SQLException e) {
+      return true;
     }
   }
 
   /**
-   * Return the underlying {@link javax.sql.DataSource JDBC DataSource}
-   * for the database instance.
+   * Return the underlying {@link DataSource} for the database instance.
    *
-   * @return the underlying {@link javax.sql.DataSource JDBC DataSource}
+   *
+   * @return the underlying {@link DataSource} for the database instance.
    */
   public DataSource getDataSource() {
     return dataSource;
   }
 
   /**
-   * Return the {@link ConnectionPool} used to maintain a collection
-   * of opened {@link Connection}s to the {@link DataSource}.
+   * Return the {@link DatabaseConnectionPool} used to maintain a collection
+   * of opened {@link Connection Connections} to the {@link DataSource}.
    *
-   * @return the {@link ConnectionPool} for this database
+   * @return the {@link DatabaseConnectionPool} for this database
    */
   public DatabaseConnectionPool getConnectionPool() {
     return connectionPool;
@@ -123,7 +158,7 @@ public class JdbcDatabase {
    * to a {@code ResourceBundle baseName} to build the name of the resource
    * that is specific to the database implementation identified by this
    * {@code JdbcDatabase} instance.
-   * <p>
+   * <p/>
    * This is will be constructed from the database {@code productName},
    * {@code majorVersion}, and {@code minorVersion} separated by underbars
    * ({@code '_'}), for instance MySQL v5.6 will return "{@code _mysql_5_6}".
@@ -147,13 +182,13 @@ public class JdbcDatabase {
    * ResourceBundleExtension.  Specifically, a sanitized string
    * should consist of nothing other than lowercase alphabetics
    * [a-z], numerics [0-9], underscore '_', and hyphen '-'.
-   * <p>
+   * <p/>
    * The following actions are taken sanitize the input string:
    * <ul><li>Alphabetics are converted to lowercase.</li>
    * <li>Leading and trailing invalid characters are removed.</li>
    * <li>The remaining invalid characters are converted to hyphens.</li>
    * </ul>
-   * <p>
+   * <p/>
    * For example, the string "Hello World!" would sanitize to "hello-world".
    *
    * @param string the {@code String} to be sanitized.
@@ -175,8 +210,17 @@ public class JdbcDatabase {
   private void getDatabaseInfo() {
     // TODO: Support Manual Configuration of this information,
     // which would override this detection.
+
+    // If the database is unavailable, don't try to fetch its metadata.
+    if (isDisabled()) {
+      databaseType = DatabaseType.OTHER;
+      productName = description = "Disabled Database";
+      resourceBundleExtension = "";
+      return;
+    }
+
     try {
-      Connection connection = getConnectionPool().getConnection();
+      Connection connection = connectionPool.getConnection();
       try {
         DatabaseMetaData metaData = connection.getMetaData();
         productName = metaData.getDatabaseProductName();
@@ -221,7 +265,7 @@ public class JdbcDatabase {
 
         return;
       } finally {
-        getConnectionPool().releaseConnection(connection);
+        connectionPool.releaseConnection(connection);
       }
     } catch (SQLException e) {
       LOGGER.log(Level.SEVERE, "Failed to retrieve DatabaseMetaData", e);
@@ -239,7 +283,7 @@ public class JdbcDatabase {
   public int getMaxTableNameLength() {
     int maxTableNameLength;
     try {
-      Connection connection = getConnectionPool().getConnection();
+      Connection connection = connectionPool.getConnection();
       try {
         DatabaseMetaData metaData = connection.getMetaData();
         maxTableNameLength = metaData.getMaxTableNameLength();
@@ -247,7 +291,7 @@ public class JdbcDatabase {
           maxTableNameLength = 255;
         }
       } finally {
-        getConnectionPool().releaseConnection(connection);
+        connectionPool.releaseConnection(connection);
       }
     } catch (SQLException e) {
       LOGGER.warning("Failed to fetch database maximum table name length.");
@@ -260,7 +304,8 @@ public class JdbcDatabase {
    * Constructs a database table name based up the configured table name prefix
    * and the Connector name.  All attempts are made to make this a straight
    * concatenation.  However if the connector name is too long or contains
-   * invalid SQL identifier characters, then we hash it.
+   * invalid SQL identifier characters, then it is constructed from an MD5 hash
+   * of the requested name.
    *
    * @param prefix the generated table name will begin with this prefix
    * @param connectorName the connector name
@@ -343,7 +388,7 @@ public class JdbcDatabase {
   private boolean verifyTableAndThrow(String tableName, String[] createTableDdl)
       throws SQLException {
     boolean originalAutoCommit = true;
-    Connection connection = getConnectionPool().getConnection();
+    Connection connection = connectionPool.getConnection();
     try {
       originalAutoCommit = connection.getAutoCommit();
       connection.setAutoCommit(false);
@@ -405,7 +450,7 @@ public class JdbcDatabase {
         connection.setAutoCommit(originalAutoCommit);
       } catch (SQLException ignored) {
       }
-      getConnectionPool().releaseConnection(connection);
+      connectionPool.releaseConnection(connection);
     }
   }
 }

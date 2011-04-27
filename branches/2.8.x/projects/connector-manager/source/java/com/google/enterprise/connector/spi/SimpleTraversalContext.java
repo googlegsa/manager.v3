@@ -21,7 +21,7 @@ import java.util.Set;
 /**
  * Simple implementation of the {@link TraversalContext} interface.
  * Connector developers may want to use this to implement unit tests.
- * <p>
+ * <p/>
  * By default, instances of this class accept all document sizes and
  * content types.
  *
@@ -53,14 +53,17 @@ public class SimpleTraversalContext implements TraversalContext {
     }
   }
 
+  /* @Override */
   public synchronized long maxDocumentSize() {
     return maxDocumentSize;
   }
 
+  /* @Override */
   public synchronized int mimeTypeSupportLevel(String mimeType) {
     return (mimeTypeSet == null || mimeTypeSet.contains(mimeType)) ? 1 : 0;
   }
 
+  /* @Override */
   public synchronized String preferredMimeType(Set<String> mimeTypes) {
     Set<String> choices = new HashSet<String>(mimeTypes);
     if (mimeTypeSet != null) {
@@ -70,6 +73,7 @@ public class SimpleTraversalContext implements TraversalContext {
     return (it.hasNext()) ? it.next() : null;
   }
 
+  /* @Override */
   public synchronized long traversalTimeLimitSeconds() {
     return traversalTimeLimitSeconds;
   }

@@ -24,6 +24,9 @@ import java.io.File;
  * A {@link LocalDatabase} implementation that uses an in-memory H2
  * database for storage and looks for {@link DatabaseResourceBundle}s
  * relative to the current directory or specified resource directory.
+ * Connector developers may want to use this to implement unit tests.
+ *
+ * @since 2.8
  */
 public class TestLocalDatabase extends LocalDatabaseImpl {
   /**

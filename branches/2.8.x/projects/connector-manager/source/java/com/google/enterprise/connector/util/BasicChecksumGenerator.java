@@ -21,20 +21,42 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 /**
- * An implementation of ChecksumGenerator that return hexadecimal-encoded
- * checksums using algorithms from java.security.MessageDigest.
+ * An implementation of {@link ChecksumGenerator} that return
+ * hexadecimal-encoded checksums using algorithms from
+ * {@code java.security.MessageDigest}.
  *
  * @see java.security.MessageDigest
+ * @since 2.8
  */
 public class BasicChecksumGenerator implements ChecksumGenerator {
-  /**
-   * Algorithms supported for MessageDigest.
-   */
+  /* Algorithms supported for MessageDigest. */
+  /** The MD2 message digest algorithm as defined in RFC 1319. */
   public static final String MD2 = "MD2";
+
+  /** The MD5 message digest algorithm as defined in RFC 1321. */
   public static final String MD5 = "MD5";
+
+  /** The Secure Hash Algorithm, as defined in NIST FIPS 180-1. */
   public static final String SHA1 = "SHA-1";
-  public static final String SHA286 = "SHA-256";
+
+  /**
+   * The Secure Hash Algorithm, as defined in NIST FIPS 180-2.
+   * SHA-256 is a 256-bit hash function intended to provide 128 bits of
+   * security against collision attacks.
+   */
+  public static final String SHA256 = "SHA-256";
+
+  /**
+   * The Secure Hash Algorithm, as defined in NIST FIPS 180-2.
+   * A 384-bit hash may be obtained by truncating the SHA-512 output.
+   */
   public static final String SHA384 = "SHA-384";
+
+  /**
+   * The Secure Hash Algorithm, as defined in NIST FIPS 180-2.
+   * SHA-512 is a 512-bit hash function intended to provide 256 bits of
+   * security.
+   */
   public static final String SHA512 = "SHA-512";
 
   private static final int BUF_SIZE = 32768;
@@ -53,6 +75,15 @@ public class BasicChecksumGenerator implements ChecksumGenerator {
   }
 
   /**
+   * Constructs a {@code BasicChecksumGenerator} that uses the specified
+   * message digest algorithm.  The supported algorithms are:
+   * {@link BasicChecksumGenerator#MD2 "MD2"},
+   * {@link BasicChecksumGenerator#MD5 "MD5"},
+   * {@link BasicChecksumGenerator#SHA1 "SHA-1"},
+   * {@link BasicChecksumGenerator#SHA256 "SHA-256"},
+   * {@link BasicChecksumGenerator#SHA384 "SHA-384"}, and
+   * {@link BasicChecksumGenerator#SHA512 "SHA-512"}
+   *
    * @param algorithm message digest algorithm
    */
   public BasicChecksumGenerator(String algorithm) {

@@ -26,48 +26,60 @@ import java.util.List;
 import java.util.Properties;
 
 /**
- * A class that supplies SQL language syntax variations
- * for the various database implementations.
- * This mirrors {@link java.util.PropertyResourceBundle} in form
- * and function, but is designed to supply SQL language translations
+ * Supplies SQL language syntax variations for the various database
+ * implementations.  This mirrors {@link java.util.PropertyResourceBundle}
+ * in form and function, but is designed to supply SQL language translations
  * rather than spoken language translations.
- * <p>
- * DatabasePropertyResourceBundles are typically loaded using a
- * {@link SqlResourceBundleManager}.
- * <p>
- * The DatabasePropertyResourceBundles are loaded using the
- * {@link http://code.google.com/p/eproperties EProperties}
+ * <p/>
+ * {@code DatabasePropertyResourceBundles} are typically loaded using a
+ * {@link DatabaseResourceBundleManager}.
+ * <p/>
+ * Like {@code java.util.PropertyResourceBundle}, {@code DatabaseResourceBundle}
+ * resources are specified in {@code Properties} files.  Unlike
+ * {@link java.util.PropertyResourceBundle}, {@code DatabaseResourceBundle} uses
+ * the <a href="http://code.google.com/p/eproperties">EProperties</a>
  * enhanced Properties package, which extends the standard
- * {@code java.util.Properties} object and syntax to include things like:
+ * {@code java.util.Properties} and syntax to include things like:
  * variable substitution, nesting, inclusion and lists.
- * <p>
- * These features should all the developer to write very powerful resource
- * property files.  For instance:
- * <ul><li> Substitution with syntax like shell scripts, ant, etc.:
+ * For instance:
+ * <ul>
+ * <li>Variable substitution syntax that mirrors the syntax used in
+ * shell scripts, ant, etc.:
  * <pre>
-   table.name = connector_instances
-   getvalue.query = "SELECT ${column.connector_name} FROM ${table.name} ..."
-   </pre></li>
- * <li>Lists that return a {@code List<String>} - great for multi-line DDL.
+ * table.name = connector_instances
+ * getvalue.query = "SELECT ${column.connector.name} FROM ${table.name} ..."
+ * </pre>
+ * Variables may be defined in the {@code DatabaseResourceBundle} in which they
+ * are used, or any of the ancestor {@code DatabaseResourceBundles} (see below).
+ * Variable substitution is done at the time of the call to
+ * {@link #getString(String)} or {@link #getStringArray(String)}, so the
+ * returned string(s) have all known substitutions resolved.<pre> </pre></li>
+ * <li>Lists that may be fetched as an array of Strings - great for potentially
+ * multi-statement DDL. For instance, this table creation DDL resource
+ * definition consists of three distinct SQL statements:
  * <pre>
-   create.table.ddl = ( "CREATE TABLE ....", "CREATE TRIGGER ...", "CREATE INDEX ..." )
-   ...
-   List<String> ddlStatements = bundle.getList("create.table.ddl");
-   </pre></li>
- * <li>Includes; properties files can include other properties files.
- * </li></ul>
+ * create.table.ddl = ( "CREATE TABLE ...", "CREATE TRIGGER ...", "CREATE INDEX ..." )
+ * </pre>
+ * which can be retrieved using {@link #getStringArray(String)}:
+ * <pre>
+ * String[] ddlStatements = bundle.getStringArray("create.table.ddl");
+ * </pre>
+ * </li>
+ * </ul>
+ *
+ * @since 2.8
  */
 public class DatabasePropertyResourceBundle implements DatabaseResourceBundle {
   private final EProperties properties;
   private DatabasePropertyResourceBundle parent = null;
 
   /**
-   * Creates a SqlPropertiesResouceBundle backed by the properties
+   * Creates a {@link DatabaseResourceBundle} backed by the properties
    * loaded from the {@code resourceUrl} and the given {@code parent}.
    *
-   * @param resourceUrl URL from which to read Properties.
-   * @param parent parent the DatabasePropertyResourceBundle to assign as parent.
-   *        may be null;
+   * @param resourceUrl the resource URL from which to read Properties
+   * @param parent parent the DatabasePropertyResourceBundle to assign as parent
+   *        - may be {@code null}
    * @throws NullPointerException if {@code resourceUrl} is {@code null}
    * @throws IOException if there is an error reading the resource file
    */
@@ -84,10 +96,10 @@ public class DatabasePropertyResourceBundle implements DatabaseResourceBundle {
   }
 
   /**
-   * Wraps a SqlPropertiesResouceBundle around the supplied set
+   * Wraps a {@code DatabasePropertyResouceBundle} around the supplied set
    * of {@link Properties}.
    *
-   * @param properties a Properties instance.
+   * @param properties a {@link Properties} instance
    * @throws NullPointerException if {@code properties} is {@code null}
    */
   @VisibleForTesting
@@ -128,9 +140,9 @@ public class DatabasePropertyResourceBundle implements DatabaseResourceBundle {
    * its parents.
    *
    * @param key the key for the desired string
+   * @return the String for the given key, or {@code null} if no
+   *         resource was found for this key
    * @throws NullPointerException if {@code key} is {@code null}
-   * @return the String for the given key or {@code null} if no
-   *         resource was found for this key.
    */
   /* @Override */
   public String getString(String key) {
@@ -140,12 +152,12 @@ public class DatabasePropertyResourceBundle implements DatabaseResourceBundle {
 
   private static final String[] EMPTY_STRING_ARRAY = new String[0];
   /**
-   * Gets a {@code String[]} for the given {@code key} from this resource
+   * Gets an array of Strings for the given {@code key} from this resource
    * bundle or one of its parents.
    *
    * @param key the key for the desired string array
    * @return a String[] for the given key, or {@code null} if no
-   *         resource was found for this key.
+   *         resource was found for this key
    * @throws NullPointerException if {@code key} is {@code null}
    */
   /* @Override */

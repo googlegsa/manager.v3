@@ -16,8 +16,8 @@ package com.google.enterprise.connector.spi;
 
 /**
  * The carrier type of the list returned by the
- * {@link AuthorizationManager}.authorizeDocids
- * method.
+ * {@link AuthorizationManager#authorizeDocids
+ * AuthorizationManager.authorizeDocids} method.
  */
 public class AuthorizationResponse {
 
@@ -30,9 +30,9 @@ public class AuthorizationResponse {
    * denied. If a consumer receives this code, it may decide to try other means
    * to get a positive decision, permit or deny.</li>
    * </ul>
-   * Note: at present (Connector Manager 2.0, GSA 6.2 and earlier),
-   * the {@code INDETERMINATE} status is treated exactly the same as the
-   * {@code DENY} status.  This is expected to change in the near future.
+   * <strong>Note:</strong> at present (Connector Manager 2.0, GSA 6.2 and
+   * earlier), the {@code INDETERMINATE} status is treated exactly the same as
+   * the {@code DENY} status.  This is expected to change in the near future.
    *
    * @since 2.4
    */
@@ -44,13 +44,14 @@ public class AuthorizationResponse {
   private final Status status;
 
   /**
-   * Makes an AuthorizationResponse. If {@code valid} is true, then
-   * {@code status} is set to {@code Status.PERMIT}. If {@code valid} is false,
-   * {@code status} is set to {@code Status.DENY}.
+   * Makes an {@code AuthorizationResponse}. If {@code valid} is {@code true},
+   * then {@code status} is set to {@link Status#PERMIT PERMIT}.
+   * If {@code valid} is {@code false}, {@code status} is set to
+   * {@link Status#DENY DENY}.
    *
-   * @param valid Indicates that authorization was successful (valid)
-   * @param docid The docid for which authorization succeeded - should not be
-   *        null or empty
+   * @param valid indicates that authorization was successful (valid)
+   * @param docid the docid for which authorization succeeded - should not be
+   *        {@code null} or empty
    */
   public AuthorizationResponse(boolean valid, String docid) {
     if (docid == null) {
@@ -61,11 +62,11 @@ public class AuthorizationResponse {
   }
 
   /**
-   * Makes an AuthorizationResponse.
+   * Makes an {@code AuthorizationResponse}.
    *
    * @param status the {@code Status} of this response
    * @param docid The docid for which authorization succeeded - should not be
-   *        null or empty
+   *        {@code null} or empty
    * @since 2.4
    */
   public AuthorizationResponse(Status status, String docid) {
@@ -79,7 +80,8 @@ public class AuthorizationResponse {
   /**
    * Tests whether authorization was valid (permitted).
    *
-   * @return true if {@code status} is {@code PERMIT}, false otherwise.
+   * @return {@code true} if {@code status} is {@link Status#PERMIT PERMIT},
+   * {@code false} otherwise
    */
   public boolean isValid() {
     return (status == Status.PERMIT);
@@ -88,7 +90,7 @@ public class AuthorizationResponse {
   /**
    * Gets the docid.
    *
-   * @return docid - should not be null or empty
+   * @return docid - should not be {@code null} or empty
    */
   public String getDocid() {
     return docid;
@@ -97,7 +99,7 @@ public class AuthorizationResponse {
   /**
    * Gets the status.
    *
-   * @return status the {@code Status}
+   * @return status the {@link Status Status}
    * @since 2.4
    */
   public Status getStatus() {
@@ -107,7 +109,7 @@ public class AuthorizationResponse {
   /**
    * Returns a hash code value for the object.
    *
-   * @return a hash code value for this object.
+   * @return a hash code value for this object
    */
   @Override
   public int hashCode() {
@@ -122,8 +124,8 @@ public class AuthorizationResponse {
    * Indicates whether some other object is "equal to" this one. Implemented by
    * running equals on the docid string and comparing the status.
    *
-   * @return true if this object is the same as the obj argument; false
-   *         otherwise.
+   * @return {@code true} if this object is the same as the {@code obj}
+   *         argument; {@code false} otherwise
    */
   @Override
   public boolean equals(Object obj) {

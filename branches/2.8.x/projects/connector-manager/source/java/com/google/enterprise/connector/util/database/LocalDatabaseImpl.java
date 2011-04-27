@@ -22,6 +22,12 @@ import com.google.enterprise.connector.spi.SpiConstants.DatabaseType;
 
 import javax.sql.DataSource;
 
+/**
+ * An implemenation of {@link LocalDatabase}, built as a thin wrapper upon
+ * {@link JdbcDatabase} and {@link DatabaseResourceBundleManager}.
+ *
+ * @since 2.8
+ */
 public class LocalDatabaseImpl implements LocalDatabase {
   private final JdbcDatabase database;
   private final ClassLoader classLoader;
@@ -49,9 +55,9 @@ public class LocalDatabaseImpl implements LocalDatabase {
    * Connector.
    *
    * @param jdbcDatabase backing database for this LocalDatabase
-   * @param connectorTypeName the Connector's ConnectorType name.
+   * @param connectorTypeName the Connector's ConnectorType name
    * @param connectorType a ConnectorType whose ClassLoader to use to locate
-   *        DatabaseResourceBundles. The may be specific to Connector type.
+   *        DatabaseResourceBundles. This may be specific to Connector type.
    *        If {@code null}, the default ClassLoader will be used.
    */
   public LocalDatabaseImpl(JdbcDatabase jdbcDatabase, String connectorTypeName,
@@ -141,12 +147,12 @@ public class LocalDatabaseImpl implements LocalDatabase {
    * The remainder of the string is reserved to hold additional information,
    * such as version.
    *
-   * @return a non-null String description of the database
+   * @return a non-{@code null} String description of the database
    */
   /* @Override */
   public String getDescription() {
     // Return a not-really-descriptive description.
     return database.getProductName();
-    //     + " (" + database.getDescription() + ")";
+    //  + " (" + database.getDescription() + ")";
   }
 }

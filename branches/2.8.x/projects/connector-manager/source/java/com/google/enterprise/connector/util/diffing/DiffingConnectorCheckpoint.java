@@ -14,12 +14,13 @@
 
 package com.google.enterprise.connector.util.diffing;
 
-
 import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
- * Checkpoint for the {@link DiffingConnector}
+ * Checkpoint for the {@link DiffingConnector}.
+ *
+ * @since 2.8
  */
 public class DiffingConnectorCheckpoint implements
     Comparable<DiffingConnectorCheckpoint> {

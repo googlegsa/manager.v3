@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright 2006 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,9 +26,11 @@ public class RepositoryLoginException extends RepositoryException {
   }
 
   /**
-   * Constructs a RepositoryLoginException with a supplied message but no root cause.
-   * @param message the message. Can be retrieved by the
-   * {@link #getMessage()} method.
+   * Constructs a RepositoryLoginException with a supplied message but no root
+   * cause.
+   *
+   * @param message the message. Can be retrieved by the {@link #getMessage()}
+   *        method.
    */
   public RepositoryLoginException(String message) {
     super(message);
@@ -36,8 +38,9 @@ public class RepositoryLoginException extends RepositoryException {
 
   /**
    * Constructs a RepositoryLoginException with message and root cause.
-   * @param message   the message. Can be retrieved by the
-   * {@link #getMessage()} method.
+   *
+   * @param message the message. Can be retrieved by the {@link #getMessage()}
+   *        method.
    * @param rootCause root failure cause
    */
   public RepositoryLoginException(String message, Throwable rootCause) {
@@ -46,6 +49,7 @@ public class RepositoryLoginException extends RepositoryException {
 
   /**
    * Constructs a RepositoryLoginException with the specified root cause.
+   *
    * @param rootCause root failure cause
    */
   public RepositoryLoginException(Throwable rootCause) {

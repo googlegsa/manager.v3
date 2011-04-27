@@ -64,7 +64,7 @@ public class LocalDatabaseTest extends TestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
-      database.finalize();
+      database.shutdown();
     } finally {
       super.tearDown();
     }

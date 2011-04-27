@@ -15,10 +15,16 @@
 package com.google.enterprise.connector.util;
 
 /**
- * {@link Clock} that returns {@link System#currentTimeMillis()}.
+ * {@link Clock} implementation that returns {@link System#currentTimeMillis()}.
+ *
+ * @since 2.8
  */
 public class SystemClock implements Clock {
+  /** A {@code SystemClock} instance. */
   public static Clock INSTANCE = new SystemClock();
+
+  /** @return the current time in milliseconds */
+  /* @Override */
   public long getTimeMillis() {
     return System.currentTimeMillis();
   }

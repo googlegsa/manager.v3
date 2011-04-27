@@ -17,7 +17,9 @@ package com.google.enterprise.connector.spi;
 import java.util.Collection;
 
 /**
- * The response for the {@link AuthenticationManager}.authenticate method.
+ * The response from the
+ * {@link AuthenticationManager#authenticate AuthenticationManager.authenticate}
+ * method.
  */
 public class AuthenticationResponse {
 
@@ -26,9 +28,9 @@ public class AuthenticationResponse {
   private final Collection<String> groups;
 
   /**
-   * Makes an AuthenticationResponse.
+   * Makes an {@code AuthenticationResponse}.
    *
-   * @param valid  Indicates that authentication was successful (valid).
+   * @param valid  indicates that authentication was successful (valid)
    * @param data   Reserved for future use.  May be set but will be ignored.
    */
   public AuthenticationResponse(boolean valid, String data) {
@@ -36,11 +38,11 @@ public class AuthenticationResponse {
   }
 
   /**
-   * Makes an AuthenticationResponse.
+   * Makes an {@code AuthenticationResponse}.
    *
-   * @param valid  Indicates that authentication was successful (valid).
+   * @param valid  indicates that authentication was successful (valid)
    * @param data   Reserved for future use.  May be set but will be ignored.
-   * @param groups A Collection of groups to which the user belongs.
+   * @param groups a {@code Collection} of groups to which the user belongs
    * @since 2.6.10
    */
   public AuthenticationResponse(boolean valid, String data,
@@ -53,7 +55,7 @@ public class AuthenticationResponse {
   /**
    * Tests whether authentication was valid.
    *
-   * @return true if authentication was valid
+   * @return {@code true} if authentication was valid
    */
   public boolean isValid() {
     return valid;
@@ -62,7 +64,7 @@ public class AuthenticationResponse {
   /**
    * Get the client data.
    *
-   * @return data - may be null
+   * @return data - may be {@code null}
    */
   public String getData() {
     return data;
@@ -71,7 +73,7 @@ public class AuthenticationResponse {
   /**
    * Gets the groups to which the user belongs.
    *
-   * @return Collection of group names - may be null
+   * @return {@code Collection} of group names - may be {@code null}
    * @since 2.6.10
    */
   public Collection<String> getGroups() {

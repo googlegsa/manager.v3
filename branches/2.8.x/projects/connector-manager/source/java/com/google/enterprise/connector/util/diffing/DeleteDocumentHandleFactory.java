@@ -19,11 +19,18 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
- * {@link DocumentHandleFactory} for {@link DeleteDocumentHandle} objects.
+ * A {@link DocumentHandleFactory} for {@link DeleteDocumentHandle} objects.
  * Since this is provided by the diffing connector framework it is referred
  * as the internal {@link DocumentHandleFactory}.
+ *
+ * @since 2.8
  */
 public class DeleteDocumentHandleFactory implements DocumentHandleFactory {
+  /**
+   * Reconstitute a {@link DeleteDocumentHandle} from its JSON representation.
+   *
+   * @param stringForm the JSON representation of a deleted document
+   */
   public DeleteDocumentHandle fromString(String stringForm) {
     try {
       JSONObject json = new JSONObject(stringForm);

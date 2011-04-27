@@ -19,7 +19,10 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * Base64 encodes an input stream.
+ * A {@code FilterInputStream} that Base64 encodes data read from an
+ * input stream.
+ *
+ * @since 2.8
  */
 public class Base64FilterInputStream extends FilterInputStream {
 
@@ -34,21 +37,21 @@ public class Base64FilterInputStream extends FilterInputStream {
   private boolean breakLines = false;
 
   /**
-   * Given some InputStream, create an InputStream that base64 encodes the
-   * input stream.  No line breaks are included in the output stream.
+   * Given some {@code InputStream}, create an {@code InputStream} that Base64
+   * encodes the input stream.  No line breaks are included in the output.
    *
-   * @param in an InputStream providing source data for encoding
+   * @param in an {@code InputStream} providing source data for encoding
    */
   public Base64FilterInputStream(InputStream in) {
     this (in, false);
   }
 
   /**
-   * Given some InputStream, create an InputStream that base64 encodes the
-   * input stream.
+   * Given some {@code InputStream}, create an {@code InputStream} that Base64
+   * encodes the input stream.
    *
    * @param in an InputStream providing source data for encoding
-   * @param breakLines if true, add line breaks
+   * @param breakLines if true, add line breaks in the output
    */
   public Base64FilterInputStream(InputStream in, boolean breakLines) {
     super(in);
@@ -60,6 +63,10 @@ public class Base64FilterInputStream extends FilterInputStream {
   private byte[] encodedBuffer = new byte[4];
   private int encodedBufPos = 4;  // Position of next byte to read.
 
+  /**
+   * Reads the next byte of data from the input stream and returns it.
+   * Returns (int) -1 if at EOF.
+   */
   @Override
   public int read() throws IOException {
     if (encodedBufPos >= 4) {
@@ -75,6 +82,10 @@ public class Base64FilterInputStream extends FilterInputStream {
     return encodedBuffer[encodedBufPos++];
   }
 
+  /**
+   * Reads up to {@code len} bytes of data from the input stream into an array
+   * of bytes.  Returns the actual number of bytes written to the array.
+   */
   @Override
   public int read(byte b[], int off, int len) throws IOException {
     // If there is some leftover morsel of encoded data, return that.
@@ -145,7 +156,9 @@ public class Base64FilterInputStream extends FilterInputStream {
   }
 
   /**
-   * We don't support mark() or reset().
+   * This implementation does not support {@code mark()} or {@code reset()}.
+   *
+   * @return {@code false}
    */
   @Override
   public boolean markSupported() {
@@ -170,8 +183,8 @@ public class Base64FilterInputStream extends FilterInputStream {
   /**
    * Skip over bytes in the input stream.
    *
-   * @param n number of bytes to skip.
-   * @return number of bytes skipped.
+   * @param n number of bytes to skip
+   * @return number of bytes skipped
    */
   @Override
   public long skip(long n) throws IOException {

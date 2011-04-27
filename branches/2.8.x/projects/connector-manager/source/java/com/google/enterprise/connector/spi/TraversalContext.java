@@ -17,10 +17,10 @@ package com.google.enterprise.connector.spi;
 import java.util.Set;
 
 /**
- * TraversalContext.  This is an interface to a callback object that
- * the Connector Manager will pass in to a TraversalManager, which
- * the manager can the use to call back to get information from the
- * Connector Manager.  Thus, a connector developer does not need to
+ * A callback interface that the
+ * Connector Manager will pass in to a {@link TraversalManager}, which
+ * the traversal manager can the use to call back to get information from the
+ * Connector Manager.  Thus, the connector developer does not need to
  * provide an implementation of this object.  However, for testing
  * purposes, the developer may want to provide a temporary implementation.
  *
@@ -34,7 +34,7 @@ public interface TraversalContext {
    * would save the developer the cost of fetching a content that is too
    * big to be used.
    *
-   * @return The size limit in bytes
+   * @return the maximum supported document size limit in bytes
    */
   long maxDocumentSize();
 
@@ -42,16 +42,16 @@ public interface TraversalContext {
    * Gets information about whether a mime type is supported.  Positive
    * values indicate possible support for this mime type, with larger
    * values indicating better support or preference.
-   * <p>
+   * <p/>
    * Non-positive numbers mean that there is no support for this mime type.
    * A zero value indicates the content encoding is not supported.
    * The connector may choose to supply meta-data for the document, but the
    * content should not be provided.
-   * <p>
+   * <p/>
    * A negative value indicates the document should be skipped entirely.
    * Neither the content, nor the meta-data should be provided.
    *
-   * @return The support level - non-positive means no support
+   * @return the support level - non-positive means no support
    */
   int mimeTypeSupportLevel(String mimeType);
 
@@ -61,21 +61,22 @@ public interface TraversalContext {
    * Mime types with "/vnd.*" subtypes are preferred over others, and
    * mime types registered with IANA are preferred over those with "/x-*"
    * experimental subtypes.
-   * <p>
+   * <p/>
    * If a repository contains multiple renditions of a particular item,
    * it may use this to select the best rendition to supply for indexing.
    *
-   * @param mimeTypes a set of mime types.
-   * @return the most preferred mime type from the Set.
+   * @param mimeTypes a {@code Set} of mime types
+   * @return the most preferred mime type from the Set
    */
   String preferredMimeType(Set<String> mimeTypes);
 
   /**
-   * Returns the time in seconds for traversals to complete. Both
+   * Returns the time in seconds for allotted traversals to complete. Both
    * {@link TraversalManager#startTraversal()} and
    * {@link TraversalManager#resumeTraversal(String)} can avoid interrupts due
    * to timeouts by returning within this amount of time.
    *
+   * @return the time in seconds allotted for traversals to complete
    * @since 2.4
    */
   long traversalTimeLimitSeconds();

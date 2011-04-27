@@ -18,6 +18,13 @@ import com.google.enterprise.connector.spi.SpiConstants.DatabaseType;
 
 import javax.sql.DataSource;
 
+/**
+ * Provides access to the Connector Manager's configured JDBC database
+ * which the connector implementer can use for any purpose.
+ *
+ * @see ConnectorPersistentStore
+ * @since 2.8
+ */
 public interface LocalDatabase {
 
   /**
@@ -56,8 +63,7 @@ public interface LocalDatabase {
    * flexibility. The SPI only guarantees that, if this object's database type is not
    * {@link DatabaseType#OTHER}, then this string begins with the string-value
    * of that {@link DatabaseType}. More formally, for any
-   * LocalDatabase object {@code
-   * db} then the following is true: {@code
+   * LocalDatabase object {@code db} then the following is true: {@code
    * (db.getDatabaseInfoString().startsWith(db.getDatabase().toString())) ||
    * (db.getDatabase() == DatabaseType.OTHER)}. If the database type is
    * "other", then the string should start with a simple name of the

@@ -54,7 +54,7 @@ public class JdbcStoreTest extends PersistentStoreTestAbstract {
   @Override
   protected void tearDown() throws Exception {
     try {
-      jdbcDatabase.finalize();
+      jdbcDatabase.shutdown();
     } finally {
       super.tearDown();
     }

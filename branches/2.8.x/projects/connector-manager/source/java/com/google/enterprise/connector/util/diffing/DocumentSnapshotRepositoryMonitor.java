@@ -14,6 +14,8 @@
 
 package com.google.enterprise.connector.util.diffing;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import com.google.enterprise.connector.spi.RepositoryException;
 
 import java.io.IOException;
@@ -23,15 +25,15 @@ import java.util.logging.Logger;
 /**
  * A service that monitors a {@link SnapshotRepository} and makes callbacks
  * when changes occur.
- *
- * <p>This implementation works as follows. It repeatedly scans all the
+ * <p/>
+ * This implementation works as follows. It repeatedly scans all the
  * {@link DocumentSnapshot} entries returned by
  * {@link SnapshotRepository#iterator()}. On each pass, it compares the current
  * contents of the repository to a record of what it saw on the previous pass.
  * The record is stored as a file in the local file system. Each discrepancy
  * is propagated to the client.
- *
- * <p>Using a local snapshot of the file system has some serious flaws for
+ * <p/>
+ * Using a local snapshot of the file system has some serious flaws for
  * continuous crawl:
  * <ul>
  * <li>The local snapshot can diverge from the actual contents of the GSA. This
@@ -44,9 +46,11 @@ import java.util.logging.Logger;
  * useful to keep local snapshots and only get an "authoritative" snapshot
  * from the cloud occasionally. E.g., once a week or if the local snapshot
  * is corrupted.)
- * <p>
+ * <p/>
  * When an API to do that is available, this implementation should be fixed
  * to use it.
+ *
+ * @since 2.8
  */
 // TODO: Retrieve authoritative snapshots from GSA when appropriate.
 public class DocumentSnapshotRepositoryMonitor implements Runnable {
@@ -102,15 +106,15 @@ public class DocumentSnapshotRepositoryMonitor implements Runnable {
   private MonitorCheckpoint guaranteeCheckpoint;
 
   /**
-   * Creates a FileSystemMonitor that monitors the file system rooted at {@code
-   * root}.
+   * Creates a FileSystemMonitor that monitors the file system rooted at
+   * {@code root}.
    *
    * @param name the name of this monitor (a hash of the start path)
    * @param query query for files
    * @param snapshotStore where snapshots are stored
    * @param callback client callback
    * @param documentSink destination for filtered out file info
-   * @param initialCp checkpoint when system initiated, could be null
+   * @param initialCp checkpoint when system initiated, could be {@code null}
    * @param documentSnapshotFactory for un-serializing
    *        {@link DocumentSnapshot} objects.
    */
@@ -282,8 +286,8 @@ public class DocumentSnapshotRepositoryMonitor implements Runnable {
 
   /**
    * Process snapshot entries as deletes until {@code current} catches up with
-   * {@code file}. Or, if {@code file} is null, process all remaining snapshot
-   * entries as deletes.
+   * {@code documentSnapshot}. Or, if {@code documentSnapshot} is {@code null},
+   * process all remaining snapshot entries as deletes.
    *
    * @param documentSnapshot where to stop
    * @throws SnapshotReaderException
@@ -313,7 +317,7 @@ public class DocumentSnapshotRepositoryMonitor implements Runnable {
   }
 
   /**
-   * Processes a file found in the file system.
+   * Processes a document found in the document repository.
    *
    * @param documentSnapshot
    * @throws RepositoryException
@@ -343,9 +347,9 @@ public class DocumentSnapshotRepositoryMonitor implements Runnable {
   }
 
   /**
-   * Processes a file in the file system that also appeared in the previous
-   * scan. Determines whether the file has changed, propagates changes to the
-   * client and writes the snapshot record.
+   * Processes a document found in the document repository that also appeared
+   * in the previous scan. Determines whether the document has changed,
+   * propagates changes to the client and writes the snapshot record.
    *
    * @param documentSnapshot
    * @throws RepositoryException
@@ -353,8 +357,9 @@ public class DocumentSnapshotRepositoryMonitor implements Runnable {
    * @throws SnapshotWriterException
    * @throws SnapshotReaderException
    */
-  private void processPossibleChange(DocumentSnapshot documentSnapshot) throws RepositoryException,
-      InterruptedException, SnapshotWriterException, SnapshotReaderException {
+  private void processPossibleChange(DocumentSnapshot documentSnapshot)
+      throws RepositoryException, InterruptedException, SnapshotWriterException,
+             SnapshotReaderException {
     DocumentHandle documentHandle = documentSnapshot.getUpdate(current);
     snapshotWriter.write(documentSnapshot);
     if (documentHandle == null) {
@@ -366,7 +371,8 @@ public class DocumentSnapshotRepositoryMonitor implements Runnable {
     current = snapshotReader.read();
   }
 
-  /** public for FileSystemMonitorTest */
+  // Public for FileSystemMonitorTest
+  @VisibleForTesting
   public void acceptGuarantee(MonitorCheckpoint cp) {
     snapshotStore.acceptGuarantee(cp);
     guaranteeCheckpoint = cp;

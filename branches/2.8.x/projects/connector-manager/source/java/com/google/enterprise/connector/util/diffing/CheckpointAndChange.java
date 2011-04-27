@@ -14,13 +14,14 @@
 
 package com.google.enterprise.connector.util.diffing;
 
-
 import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
- * Holder Object for a {@link Change} with its associated {@link
- * DiffingConnectorCheckpoint}.
+ * Holder Object for a {@link Change} with its associated
+ * {@link DiffingConnectorCheckpoint}.
+ *
+ * @since 2.8
  */
 class CheckpointAndChange {
   private static final String CHECKPOINT_LABEL = "cp";
@@ -29,6 +30,13 @@ class CheckpointAndChange {
   private final DiffingConnectorCheckpoint checkpoint;
   private final Change change;
 
+  /**
+   * Construct a holder object for a {@link Change} with its associated
+   * {@link DiffingConnectorCheckpoint}.
+   *
+   * @param checkpoint
+   * @param change
+   */
   CheckpointAndChange(DiffingConnectorCheckpoint checkpoint, Change change) {
     if (null == checkpoint) {
       throw new IllegalArgumentException("Checkpoint cannot be null.");
@@ -40,6 +48,13 @@ class CheckpointAndChange {
     this.change = change;
   }
 
+  /**
+   * Construct a CheckpointAndChange object.
+   *
+   * @param json the JSON representation of a DiffingConnectorCheckpoint
+   * @param internalFactory a DocumentHandleFactory
+   * @param clientFactory a DocumentHandleFactory
+   */
   CheckpointAndChange(JSONObject json, DocumentHandleFactory internalFactory,
       DocumentHandleFactory clientFactory) throws JSONException {
     this.checkpoint = DiffingConnectorCheckpoint.fromJson(
@@ -48,23 +63,23 @@ class CheckpointAndChange {
         clientFactory);
   }
 
+  /** @return the  {@link DiffingConnectorCheckpoint} */
   DiffingConnectorCheckpoint getCheckpoint() {
     return checkpoint;
   }
 
+  /** @return the {@link Change} */
   Change getChange() {
     return change;
   }
 
-  /**
-   * Converts this instance into a JSON object
-   * and return that object's string representation.
-   */
+  /** @return the string representation of the JSON object of this instance */
   @Override
   public String toString() {
     return "" + getJson();
   }
 
+  /** @return this instance as a JSON object */
   public JSONObject getJson() {
     JSONObject result = new JSONObject();
     try {

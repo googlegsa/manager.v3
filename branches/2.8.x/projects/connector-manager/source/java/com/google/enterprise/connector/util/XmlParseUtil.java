@@ -42,6 +42,11 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+/**
+ * Utility functions for parsing XML.
+ *
+ * @since 2.8
+ */
 public class XmlParseUtil {
 
   private XmlParseUtil() {
@@ -85,7 +90,12 @@ public class XmlParseUtil {
       put(XHTML_STRICT_DTD_URL, XHTML_STRICT_DTD_FILE).
       build();
 
+  /**
+   * An {@link EntityResolver} implementation that resolves
+   * entities using a selection of locally stored DTDs.
+   */
   public static class LocalEntityResolver implements EntityResolver {
+    /* @Override */
     public InputSource resolveEntity(String publicId, String systemId) {
       String filename = LOCAL_DTDS.get(systemId);
       if (filename == null) {
@@ -110,19 +120,21 @@ public class XmlParseUtil {
   private static final String HTML_SUFFIX = "</table></body></html>";
 
   /**
-   * A simple <code>ErrorHandler</code> implementation that always
-   * throws the <code>SAXParseException</code>.
+   * A simple {@link ErrorHandler} implementation that always
+   * throws the {@link SAXParseException}.
    */
   public static class ThrowingErrorHandler implements ErrorHandler {
+    /* @Override */
     public void error(SAXParseException exception) throws SAXException {
       throw exception;
     }
 
-    public void fatalError(SAXParseException exception)
-        throws SAXException {
+    /* @Override */
+    public void fatalError(SAXParseException exception) throws SAXException {
       throw exception;
     }
 
+    /* @Override */
     public void warning(SAXParseException exception) throws SAXException {
       throw exception;
     }
@@ -151,12 +163,12 @@ public class XmlParseUtil {
       DocumentBuilderFactory.newInstance();
 
   /**
-   * Parse an XML String to a Document.
+   * Parse an XML String to a {@code org.w3c.dom.Document}.
    *
    * @param fileContent the XML string
-   * @param errorHandler The error handle for SAX parser
-   * @param entityResolver The entity resolver to use
-   * @return A result Document object, null on error
+   * @param errorHandler the error handle for SAX parser
+   * @param entityResolver the entity resolver to use
+   * @return A result Document object, {@code null} on error
    */
   public static Document parse(String fileContent,
       SAXParseErrorHandler errorHandler,
@@ -166,11 +178,11 @@ public class XmlParseUtil {
   }
 
   /**
-   * Get a root element from the XML request body.
+   * Get a root {@code org.w3c.dom.Element} from the XML request body.
    *
-   * @param xmlBody String the XML request body
-   * @param rootTagName String the root element tag name
-   * @return a result Element object if successful, null on error
+   * @param xmlBody the XML request body as a String
+   * @param rootTagName the root Element tag name
+   * @return a result Element object if successful, {@code null} on error
    */
   public static Element parseAndGetRootElement(String xmlBody,
       String rootTagName) {
@@ -188,12 +200,12 @@ public class XmlParseUtil {
   }
 
   /**
-   * Parse an input stream to a Document.
+   * Parse an input stream to a {@code org.w3c.dom.Document}.
    *
    * @param in the input stream
-   * @param errorHandler The error handle for SAX parser
-   * @param entityResolver The entity resolver to use
-   * @return A result Document object, null on error
+   * @param errorHandler the error handle for SAX parser
+   * @param entityResolver the entity resolver to use
+   * @return a result Document object, {@code null} on error
    */
   public static Document parse(InputStream in,
       SAXParseErrorHandler errorHandler,
@@ -215,11 +227,11 @@ public class XmlParseUtil {
   }
 
   /**
-   * Get a root element from an XML input stream.
+   * Get a root {@code org.w3c.dom.Element} from an XML input stream.
    *
    * @param in the input stream
-   * @param rootTagName String the root element tag name
-   * @return a result Element object if successful, null on error
+   * @param rootTagName the root Element tag name
+   * @return a result Element object if successful, {@code null} on error
    */
   public static Element parseAndGetRootElement(InputStream in,
       String rootTagName) {
@@ -242,12 +254,12 @@ public class XmlParseUtil {
 
   /**
    * Get the attribute value of a given attribute name for
-   * the first XML element of given name
+   * the first XML {@code org.w3c.dom.Element} of given name.
    *
-   * @param elem Element The parent XML element
-   * @param name String name of the child text element
-   * @param attrName String Attribute name
-   * @return String attribute value of named child element
+   * @param elem the parent XML Element
+   * @param name the name of the child text Element
+   * @param attrName the attribute name
+   * @return attribute value of named child Element
    */
   public static String getFirstAttribute(Element elem, String name,
       String attrName) {
@@ -261,11 +273,11 @@ public class XmlParseUtil {
 
   /**
    * Get the attribute values of a given name/value pair for
-   * the first XML element of given name
+   * the first XML {@code org.w3c.dom.Element} of given name.
    *
-   * @param elem Element The parent XML element
-   * @param name String name of the child text element
-   * @return attribute name and value map of named child element
+   * @param elem the parent XML Element
+   * @param name the name of the child text Element
+   * @return attribute name and value Map of named child Element
    */
   public static Map<String, String> getAllAttributes(Element elem,
       String name) {
@@ -280,11 +292,11 @@ public class XmlParseUtil {
   }
 
   /**
-   * Get text data of first XML element of given name
+   * Get text data of first XML {@code org.w3c.dom.Element} of given name.
    *
-   * @param elem Element The parent XML element
-   * @param name String name of the child text element
-   * @return text data of named child element
+   * @param elem the parent XML Element
+   * @param name the name of the child text Element
+   * @return text data of named child Element
    */
   public static String getFirstElementByTagName(Element elem, String name) {
     NodeList nodeList = elem.getElementsByTagName(name);
@@ -301,12 +313,12 @@ public class XmlParseUtil {
   }
 
   /**
-   * Get a list of all child text element of given name directly
-   * under a given element
+   * Get a list of all child text Elements of given name directly
+   * under a given {@code org.w3c.dom.Element}.
    *
-   * @param elem the parent element
-   * @param name the given name of searched child elements
-   * @return a list of values of those child text elements
+   * @param elem the parent Element
+   * @param name the given name of searched child Elements
+   * @return a List of values of those child text Elements
    */
   public static List<String> getAllElementsByTagName(Element elem, String name) {
     NodeList nodeList = elem.getElementsByTagName(name);
@@ -323,10 +335,11 @@ public class XmlParseUtil {
   }
 
   /**
-   * Extracts the first CDATA child from the given element.
+   * Extracts the first CDATA child from the given {@code org.w3c.dom.Element}.
    *
-   * @param elem the parent element
-   * @return the String value of the CDATA section, or null if none found.
+   * @param elem the parent Element
+   * @return the String value of the CDATA section, or {@code null} if none
+   *         found
    */
   public static String getCdata(Element elem) {
     NodeList nodes = elem.getChildNodes();

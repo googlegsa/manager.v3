@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright 2006 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,9 +20,10 @@ import org.xml.sax.SAXParseException;
 import java.util.logging.*;
 
 /**
- * A simple <code>ErrorHandler</code> implementation
- * to be used for SAX Parser.
+ * A simple {@code ErrorHandler} implementation to be used with the
+ * the SAX Parser. This error handler simply logs the SAX parser errors.
  *
+ * @since 2.8
  */
 public class SAXParseErrorHandler implements ErrorHandler {
   private static final Logger LOG =
@@ -31,16 +32,18 @@ public class SAXParseErrorHandler implements ErrorHandler {
   public SAXParseErrorHandler() {
   }
 
+  /* @Override */
   public void error(SAXParseException exception) {
     LOG.log(Level.INFO, "Error", exception);
   }
 
+  /* @Override */
   public void fatalError(SAXParseException exception) {
     LOG.log(Level.INFO, "FatalError", exception);
   }
 
+  /* @Override */
   public void warning(SAXParseException exception) {
     LOG.log(Level.INFO, "Warning", exception);
   }
-
 }

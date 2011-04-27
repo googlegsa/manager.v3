@@ -19,8 +19,8 @@ import java.util.Map;
 
 /**
  * This factory provides a mechanism by which
- * {@link ConnectorType#validateConfig(Map, Locale, ConnectorFactory)
- * validateConfig} may create instances of the connector for the
+ * {@link ConnectorType#validateConfig ConnectorType.validateConfig}
+ * may create instances of the connector for the
  * purpose of validation. {@link Connector} instances created by the
  * factory are not added to the Connector Manager's list of running
  * connectors and do not have an on-disk representation.
@@ -28,11 +28,12 @@ import java.util.Map;
 public interface ConnectorFactory {
   /**
    * Make a {@link Connector} instance of the {@link ConnectorType}
-   * that owns this ConnectorFactory instance using the supplied
+   * that owns this {@code ConnectorFactory} instance using the supplied
    * {@link java.util.Map} of configuration properties.
    *
    * @param config a {@link java.util.Map} of configuration properties.
-   *         If null, the Map that was passed to validateConfig is used.
+   *         If {@code null}, the {@code Map} that was passed to
+   *         {@link ConnectorType#validateConfig validateConfig} is used.
    * @return a {@link Connector} instance, instantiated by the Connector
    *         Manager in exactly the same way as it would if this config
    *         were valid and persisted.

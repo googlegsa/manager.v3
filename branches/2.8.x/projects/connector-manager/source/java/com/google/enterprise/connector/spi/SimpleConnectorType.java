@@ -25,20 +25,21 @@ import java.util.TreeSet;
 import java.util.logging.Logger;
 
 /**
- * Simple implementation of the ConnectorType interface. Implementors may use
- * this directly or for reference. This implementation has no I18N. It is
- * initialized by being given a List of configuration keys uses a list of
- * configuration keys. These keys are used for both validation and display;
+ * Simple implementation of the {@link ConnectorType} interface. Implementors
+ * may use this directly or for reference. This implementation has no
+ * internationalization. It is initialized by being given a {@code List}
+ * of configuration keys uses a list of configuration keys.
+ * These keys are used for both validation and display;
  * i.e., the strings in the list are used to name the configuration elements
- * that this instance requires, and are used as display values in the html forms
- * this instance generates.
- * <p>
- * This simple implementation considers any parameter to be valid, so long as it
- * is non-null and non-empty.
- * <p>
+ * that this instance requires, and are used as display values in the html
+ * forms this instance generates.
+ * <p/>
+ * This simple implementation considers any parameter to be valid, so long as
+ * it is non-{@code null} and non-empty.
+ * <p/>
  * Implementors may want to override the
- * validateConfigPair(java.lang.String, java.lang.String) method. This is used
- * to validate a particular key-value pair.
+ * {@link #validateConfigPair(String, String)} method.
+ * This is used to validate a particular key-value pair.
  */
 public class SimpleConnectorType implements ConnectorType {
   private static final Logger LOGGER =
@@ -93,7 +94,7 @@ public class SimpleConnectorType implements ConnectorType {
    * Sets the form to be used by this configurer. This is optional. If this
    * method is used, it must be called before the SPI methods are used.
    *
-   * @param formSnippet A String snippet of html - see the Configurer interface
+   * @param formSnippet A String snippet of html
    */
   public void setInitialConfigForm(String formSnippet) {
     if (this.initialConfigForm != null) {
@@ -149,7 +150,7 @@ public class SimpleConnectorType implements ConnectorType {
 
   /**
    * Make a config form snippet using the keys (in the supplied order) and, if
-   * passed a non-null config map, pre-filling values in from that map
+   * passed a non-{@code null} config map, pre-filling values in from that map.
    *
    * @param configMap
    * @return config form snippet
@@ -240,20 +241,6 @@ public class SimpleConnectorType implements ConnectorType {
     buf.append(CLOSE_ELEMENT);
     buf.append(TD_END);
     buf.append(TR_END);
-  }
-
-  /**
-   * Returns an embedded configurer, which may depend on the configData already
-   * supplied. This method is here primarily so that implementors can override
-   * it.
-   *
-   * @param configData
-   * @param locale
-   * @return another Configurer, which may be null
-   */
-  ConnectorType getEmbeddedConfigurer(Map<String, String> configData,
-      Locale locale) {
-    return null;
   }
 
   /* @Override */

@@ -52,16 +52,16 @@ import javax.sql.DataSource;
  * document table in the database implementation of this store by:
  * <ul>
  * <li>getting it's name through the
- * {@link LocalDocumentStore#getDocTableName()} call
- * </li>
+ * {@link LocalDocumentStore#getDocTableName()} call</li>
  * <li>getting a {@link DataSource} object by calling
- * {@link LocalDatabase#getDataSource()}
- * </li>
- * <li>constructing SQL queries and submitting them through JDBC
- * </li>
+ * {@link LocalDatabase#getDataSource()}</li>
+ * <li>constructing SQL queries and submitting them through JDBC</li>
  * </ul>
  * The connector implementor should not create records in this table through
  * JDBC.
+ *
+ * @see ConnectorPersistentStore
+ * @since 2.8
  */
 public interface LocalDocumentStore {
 
@@ -84,9 +84,18 @@ public interface LocalDocumentStore {
    * <p/>
    * The documents returned will be non-null and will contain only the
    * persisted attributes. See {@link SpiConstants#PERSISTABLE_ATTRIBUTES}.
+   * <p/>
+   * <strong>Note:</strong> The {@code LocalDocumentStore} implementation
+   * buffers information stored via {@link #storeDocument(Document)}, then
+   * writes records out in batches.  Consequently unflushed documents will
+   * not yet be available for retrieval.  Consider calling {@link #flush()}
+   * before getting an Iterator.  Similarly, the document {@code Iterator}
+   * implementation fetches documents in batches, so the Iterator may
+   * return documents that were committed to the document store after the
+   * {@code Iterator} was created.
    *
    * @return an {@link Iterator} of all documents created by this connector
-   *         instance, in order by docid.
+   *         instance, in order by docid
    */
   public Iterator<Document> getDocumentIterator();
 
@@ -99,17 +108,32 @@ public interface LocalDocumentStore {
    * <p/>
    * The documents returned will be non-null and will contain only the
    * persisted attributes. See {@link SpiConstants#PERSISTABLE_ATTRIBUTES}.
+   * <p/>
+   * <strong>Note:</strong> The {@code LocalDocumentStore} implementation
+   * buffers information stored via {@link #storeDocument(Document)}, then
+   * writes records out in batches.  Consequently unflushed documents will
+   * not yet be available for retrieval.  Consider calling {@link #flush()}
+   * before getting an Iterator.  Similarly, the document {@code Iterator}
+   * implementation fetches documents in batches, so the Iterator may
+   * return documents that were committed to the document store after the
+   * {@code Iterator} was created.
    *
    * @param docid the docid after which to start the iteration, if {@code null}
-   *        or empty, all documents created by this connector are returned.
+   *        or empty, all documents created by this connector are returned
    * @return an {@link Iterator} of all documents created by this connector
-   *         instance whose docid exceeds the supplied docid, in order by docid.
+   *         instance whose docid exceeds the supplied docid, in order by docid
    */
   public Iterator<Document> getDocumentIterator(String docid);
 
   /**
    * Persists information about a document. Any attributes that are not keys in
    * the {@link SpiConstants#PERSISTABLE_ATTRIBUTES} table will be ignored.
+   * <p/>
+   * <strong>Note:</strong> The {@code LocalDocumentStore} implementation
+   * buffers information stored via {@link #storeDocument(Document)}, then
+   * writes records out in batches for improved document store performance.
+   * The buffered records are flushed to the document store periodically
+   * and at the end of processing a traversal batch.  See {@link #flush()}.
    *
    * @param document a {@link Document}
    */
@@ -130,7 +154,7 @@ public interface LocalDocumentStore {
    * this to be used to do queries with non-updatable cursors, involving joins
    * between this table and other tables independently managed by the connector.
    *
-   * @return the table name of the underlying table.
+   * @return the table name of the underlying table
    */
   public String getDocTableName();
 }

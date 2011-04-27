@@ -14,13 +14,14 @@
 
 package com.google.enterprise.connector.util.diffing;
 
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.CharBuffer;
 
 /**
- * Reader {@link SnapshotStore}.
+ * Reader for a {@link SnapshotStore}.
+ *
+ * @since 2.8
  */
 public class SnapshotReader {
   private final String inputPath;
@@ -30,13 +31,17 @@ public class SnapshotReader {
 
   private long recordNumber;
   private boolean done;
+
   /**
+   * Constructs a SnapshotReader.
+   *
    * @param in input for the reader
    * @param inputPath path to the snapshot
    * @param snapshotNumber the number of the snapshot being read
    * @throws SnapshotReaderException
    */
-  public SnapshotReader(BufferedReader in, String inputPath, long snapshotNumber,
+  public SnapshotReader(BufferedReader in, String inputPath,
+      long snapshotNumber,
       DocumentSnapshotFactory documentSnapshotFactory)
       throws SnapshotReaderException {
     this.in = in;
@@ -47,8 +52,8 @@ public class SnapshotReader {
   }
 
   /**
-   * @return the next record in this snapshot, or null if we have reached the
-   *         end of the snapshot.
+   * @return the next record in this snapshot, or {@code null} if we have
+   *         reached the end of the snapshot
    * @throws SnapshotReaderException
    */
   public DocumentSnapshot read() throws SnapshotReaderException {
@@ -151,14 +156,14 @@ public class SnapshotReader {
   }
 
   /**
-   * @return path to the input file, for logging purposes.
+   * @return path to the input file, for logging purposes
    */
   public String getPath() {
     return inputPath;
   }
 
   /**
-   * @return the number of the most recently returned record.
+   * @return the number of the most recently returned record
    */
   public long getRecordNumber() {
     return recordNumber;
@@ -187,12 +192,15 @@ public class SnapshotReader {
   }
 
   /**
-   * @return the number of the snapshot this reader is reading from.
+   * @return the number of the snapshot this reader is reading from
    */
   public long getSnapshotNumber() {
     return snapshotNumber;
   }
 
+  /**
+   * Closes the underlying input stream.
+   */
   public void close() throws IOException {
     in.close();
   }
