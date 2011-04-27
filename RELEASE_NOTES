@@ -10,6 +10,141 @@ issues and work-arounds.
 
 Web Site: http://code.google.com/p/google-enterprise-connector-manager/
 
+
+Release 2.8.0, 01 May 2011
+==========================
+
+Introduction
+------------
+This release has significant infrastructure changes, fixes several
+problems, and adds several new utility classes to the connector SPI
+for the benefit of connector developers.
+
+Summary of Changes
+------------------
+  * Issue 104 - Servlet to dynamically change logging levels.  New servlets
+    getConnectorLogLevel, setConnectorLogLevel, getFeedLogLevel and
+    setFeedLogLevel allow the connector administrator to adjust the connector
+    and feed logging verbosity without shutting down the connector.
+    These are especially useful in conjunction with the existing
+    getConnectorLogs and getFeedLogs servlets.
+
+  * Issue 168 - Make Base64 encode/decode available to the connector developer.
+    Base64, Base64FilterInputStream, and Base64ChecksumGenerator are several
+    of the new utility classes made available to connector developers.
+
+  * Issue 199 - SPI enhancement to expose JDBC to the connector developer.
+    Enabled by the new ConnectorPersistentStore SPI interface. Connectors
+    that wish to be given access to the JDBC DataSource should implement the
+    ConnectorPersistentStoreAware interface in their Connector implementation.
+    Given the DataSource, the connector developer may also take advantage
+    of several new database access utility classes, such as JdbcDatabase,
+    DatabaseConnectionPool, and DatabaseResourceBundle.
+    Note that ConnectorPersistentStore.getLocalDocumentStore() is disabled
+    in this release.
+
+  * The SPI AuthenticationManager and AuthenticationResponse classes have been
+    enhanced to allow the connector to return repository local groups for a user.
+
+  * Fixed a minor problem that prevented connectors from running in the
+    JBoss Application Server.  See the JBoss deployment wiki page:
+    http://code.google.com/p/google-enterprise-connector-manager/wiki/JBossCM
+
+  * The getConfig servlet now returns the Connector Manager and Connector
+    configuration data as an XML document rather than zip file archive.
+
+  * Added support for these Microsoft Office 2007 and later media types:
+      - application/vnd.ms-outlook
+      - application/vnd.ms-excel.sheet.12
+      - application/vnd.ms-powerpoint.presentation.12
+      - application/vnd.ms-word.document.12
+
+  * New additions to the SPI:
+      - ConnectorPersistentStore - Provides access to the LocalDatabase
+      - ConnectorPersistentStoreAware - Advertises that the Connector
+        wishes access to the LocalDatabase
+      - DatabaseResourceBundle - Vendor-specific SQL language translations
+      - LocalDatabase - Provides access to the configured JDBC DataSource and
+        DatabaseResourceBundles
+    For additional information, please refer to the JavaDoc at:
+    http://google-enterprise-connector-manager.googlecode.com/svn/docs/javadoc/2.8.0/index.html
+
+  * New utility package additions to the SPI for use by connector developers:
+    (available in package com.google.enterprise.connector.util)
+      - Base64 - Base64 encode/decode utility
+      - Base64DecoderException
+      - Base64FilterInputStream - InputStream filter that Base64 encodes
+        data read from its input
+
+      - ChecksumGenerator - Interface for checksum generators
+      - BasicChecksumGenerator - Generates MD2, MD5, SHA-1, SHA-256, SHA-384
+        and SHA-512 message digest checksums of data from an InputStream
+      - Base64ChecksumGenerator - Derived from BasicChecksumGenerator, but
+        returns Base64 encoded checksums
+
+      - Clock - a interface for getting the time; useful to replace for testing
+      - SystemClock - a Clock implementation using System.getCurrentTimeMillis()
+
+      - EofFilterInputStream - InputStream filter that avoids a read at
+        end-of-file problem with Apache Commons IO AutoCloseInputStream
+      - IOExceptionHelper - creates IOExceptions with a root cause on Java 5
+
+      - UniqueIdGenerator - Interface for producing unique IDs
+      - UuidGenerator - UniqueIdGenerator implementation based on UUID
+
+      - XmlParseUtil - utility methods for parsing XML data
+      - SAXParseErrorHandler
+    For additional information, please refer to the JavaDoc at:
+    http://google-enterprise-connector-manager.googlecode.com/svn/docs/javadoc/2.8.0/index.html
+
+  * New utility database package additions to the SPI for use by connector
+    developers:
+    (available in package com.google.enterprise.connector.util.database)
+      - JdbcDatabase - database info, utilities for creating and maintaining
+        database tables for connector instances.
+      - DatabaseConnectionPool - a pool of connections to the JDBC DataSource
+      - DatabasePropertyResourceBundle - DatabaseResourceBundles implemented
+        as properties files
+      - DatabaseResourceBundleManager - loads DatabaseResourceBundles
+    For additional information, please refer to the JavaDoc at:
+    http://google-enterprise-connector-manager.googlecode.com/svn/docs/javadoc/2.8.0/index.html
+
+  * New utility diffing package addition to the SPI provides a snapshot
+    diffing connector framework for use by connector developers:
+    (available in package com.google.enterprise.connector.util.diffing)
+      - Change, ChangeQueue, ChangeSource
+      - CheckpointAndChange, CheckpointAndChangeQueue
+      - DeleteDocumentHandle, DeleteDocumentHandleFactory
+      - DocumentHandle, DocumentHandleFactory
+      - DiffingConnector, DiffingConnectorTraversalManager
+      - DiffingConnectorCheckpoint, DiffingConnectorDocumentList
+      - DocIdUtil
+      - FilterReason
+      - GenericDocument
+      - DocumentSink, LoggingDocumentSink
+      - DocumentSnapshot, DocumentSnapshotFactory
+      - DocumentSnapshotRepositoryMonitor
+      - DocumentSnapshotRepositoryMonitorManager
+      - DocumentSnapshotRepositoryMonitorManagerImpl
+      - MonitorCheckpoint
+      - SnapshotRepository, SnapshotRepositoryRuntimeException
+      - SnapshotStore, SnapshotStoreException
+      - SnapshotReader, SnapshotReaderException
+      - SnapshotWriter, SnapshotWriterException
+      - TraversalContextManager
+    For additional information, please refer to the JavaDoc at:
+    http://google-enterprise-connector-manager.googlecode.com/svn/docs/javadoc/2.8.0/index.html
+
+  * The Connector Manager now ships with several new third party JARs.
+    The connector developer may find these functionally useful, however
+    they should note that these are now distributed with the Connector
+    Manager and the connectors should take care not to replace them
+    with older or incompatible versions.
+      - commons-cli.jar  v1.2    http://commons.apache.org/cli
+      - eproperties.jar  v1.1.0  http://code.google.com/p/eproperties
+      - h2.jar  v1.2.147  http://www.h2database.com
+
+
 Release 2.6.10, 04 February 2011
 ================================
 
