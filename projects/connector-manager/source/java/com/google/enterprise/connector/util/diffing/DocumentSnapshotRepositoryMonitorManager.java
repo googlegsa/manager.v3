@@ -14,13 +14,14 @@
 
 package com.google.enterprise.connector.util.diffing;
 
-
 import com.google.enterprise.connector.spi.RepositoryException;
 
 import java.util.Map;
 
 /**
  * Management interface to {@link DocumentSnapshotRepositoryMonitor} threads.
+ *
+ * @since 2.8
  */
 public interface DocumentSnapshotRepositoryMonitorManager {
   /**
@@ -30,22 +31,24 @@ public interface DocumentSnapshotRepositoryMonitorManager {
    *        been completed.
    * @throws RepositoryException
    */
-
   void start(String checkpoint) throws RepositoryException;
 
-  /** Stops all the configured {@link DocumentSnapshotRepositoryMonitor} threads. */
+  /**
+   * Stops all the configured {@link DocumentSnapshotRepositoryMonitor} threads.
+   */
   void stop();
 
   /**
-   * Removes persisted state for {@link DocumentSnapshotRepositoryMonitor} threads. After
-   * calling this {@link DocumentSnapshotRepositoryMonitor} threads will no longer be
-   * able to resume from where they left off last time.
+   * Removes persisted state for {@link DocumentSnapshotRepositoryMonitor}
+   * threads. After calling this {@link DocumentSnapshotRepositoryMonitor}
+   * threads will no longer be able to resume from where they left off last
+   * time.
    */
   void clean();
 
   /**
-   * Returns the number of {@link DocumentSnapshotRepositoryMonitor} threads that are alive.
-   * This method is for testing purposes.
+   * Returns the number of {@link DocumentSnapshotRepositoryMonitor} threads
+   * that are alive. This method is for testing purposes.
    */
   int getThreadCount();
 
@@ -57,7 +60,6 @@ public interface DocumentSnapshotRepositoryMonitorManager {
 
   /** Returns whether we are after a start() call and before a stop(). */
   boolean isRunning();
-
 
   /**
    * Receives information specifying what is guaranteed to be delivered to GSA.

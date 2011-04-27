@@ -21,17 +21,19 @@ import com.google.enterprise.connector.spi.RepositoryException;
  * Interface for constructing a {@link Document} representing a change
  * to be applied to the GSA after fetching any needed information from
  * the repository holding the document.
+ *
+ * @since 2.8
  */
 public interface DocumentHandle {
   /**
-   * Returns the Documents id. The returned id may not be null and
+   * Returns the Document's id. The returned id may not be {@code null} and
    * and must match the value returned by calling
-   * <code>getDocument().findProperty(PROPNAME_DOCID))</code>
+   * {@code getDocument().findProperty(PROPNAME_DOCID))}
    */
   String getDocumentId();
 
   /**
-   * Returns the non null {@link Document} for applying this change
+   * Returns the non-{@code null} {@link Document} for applying this change
    * to the Google Search Appliance.
    */
   Document getDocument() throws RepositoryException;
@@ -40,7 +42,7 @@ public interface DocumentHandle {
    * Returns serialized {@link String} representation of this {@link
    * DocumentHandle} suitable for deserialization using {@link
    * DocumentHandleFactory#fromString(String)}. The return value must
-   * not be null.
+   * not be {@code null}.
    */
   @Override
   String toString();

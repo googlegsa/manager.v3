@@ -40,7 +40,7 @@
   <property name="thirdparty.prod.jars" value="third-party/prod" />
   <property name="thirdparty.tests.jars" value="third-party/tests" />
 
-  <property name="junit.jarfile" value="${thirdparty.prod.jars}/junit.jar" />
+  <property name="junit.jarfile" value="${thirdparty.tests.jars}/junit.jar" />
   <property name="junit.logging.properties" value="${tests.config}/logging.properties" />
 
   <!-- The directory where all war-files are collected -->
@@ -70,9 +70,18 @@
              splitindex="true" use="true" version="true">
       <classpath>
         <fileset dir="${thirdparty.prod.jars}" includes="**/*.jar" />
+        <pathelement location="${junit.jarfile}"/>
       </classpath>
       <package name="com.google.enterprise.connector.spi"/>
       <package name="com.google.enterprise.connector.util"/>
+      <package name="com.google.enterprise.connector.util.testing"/>
+      <package name="com.google.enterprise.connector.util.diffing"/>
+      <package name="com.google.enterprise.connector.util.diffing.testing"/>
+      <package name="com.google.enterprise.connector.util.database.testing"/>
+      <fileset dir="${src}/com/google/enterprise/connector/util/database"
+               defaultexcludes="yes">
+        <exclude name="LocalDatabaseImpl.java"/>
+      </fileset>
     </javadoc>
   </target>
 
@@ -98,7 +107,7 @@
            target="${jvm.version}" source="${jvm.version}">
     	<classpath>
         <fileset dir="${thirdparty.prod.jars}" includes="**/*.jar" />
-        <fileset dir="${thirdparty.tests.jars}" includes="**/*.jar" />
+        <pathelement location="${junit.jarfile}"/>
      </classpath>
       <compilerarg value="-Xlint"/>
       <compilerarg value="-Xlint:-serial"/>

@@ -16,7 +16,10 @@ package com.google.enterprise.connector.util;
 
 /**
  * Injectable clock to allow better testing.
+ *
+ * @since 2.8
  */
 public interface Clock {
+  /** Return the current time, in milliseconds. */
   long getTimeMillis();
 }

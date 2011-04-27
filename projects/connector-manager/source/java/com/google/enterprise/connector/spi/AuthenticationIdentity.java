@@ -15,8 +15,9 @@
 package com.google.enterprise.connector.spi;
 
 /**
- * Interface for the identity parameter of the
- * {@link AuthenticationManager}.authenticate method.
+ * Interface for the {@code identity} parameter of the
+ * {@link AuthenticationManager#authenticate AuthenticationManager.authenticate}
+ * method.
  */
 public interface AuthenticationIdentity {
 

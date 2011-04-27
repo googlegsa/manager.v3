@@ -33,7 +33,7 @@ import javax.servlet.http.HttpServletResponse;
  * either localhost or gsa.feed.host, based upon the HTTP RemoteAddress.</p>
  *
  * <p><b>Usage:</b>
- * <br>To retrieve the zipped configuration archive:
+ * <br>To retrieve the configuration as an XML document:
  * <br><pre>  http://[cm_host_addr]/connector-manager/getConfig</pre>
  * </p>
  */
@@ -54,7 +54,8 @@ public class GetConfig extends HttpServlet {
   }
 
   /**
-   * Retrieves the log files for a connector instance.
+   * Retrieves the configuration data for the Connector Manager and all
+   * Connector instances.
    *
    * @param req
    * @param res

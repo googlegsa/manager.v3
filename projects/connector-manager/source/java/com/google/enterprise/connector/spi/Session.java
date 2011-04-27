@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright 2006 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,50 +15,53 @@
 package com.google.enterprise.connector.spi;
 
 /**
- * The primary access point to information from the
- * repository.  In the future, we may add access to the root
- * node of the repository, for crawling, or to a listener-registry for event
- * notification.
+ * The primary access point to information from the repository.
+ * In the future, we may add access to the root node of the repository,
+ * for crawling, or to a listener-registry for event notification.
  */
 public interface Session {
 
   /**
-   * Gets a TraversalManager to implement query-based traversal.
-   * @return    a TraversalManager - should not be null
+   * Gets a {@link TraversalManager} to implement query-based traversal.
+   *
+   * @return a {@link TraversalManager} - should not be {@code null}
    * @throws RepositoryException
    */
   public TraversalManager getTraversalManager()
       throws RepositoryException;
 
   /**
-   * Gets an AuthenticationManager.  It is permissible to return null.
-   * A null return means that this implementation does not support an
-   * Authentication Manager.  This may be for one of these reasons:
+   * Gets an {@link AuthenticationManager}.  It is permissible to return
+   * {@code null}.  A {@code null} return means that this implementation does
+   * not support an authentication manager.  This may be for one of these
+   * reasons:
    * <ul>
-   * <li> Authentication is not needed for this data source
+   * <li> Authentication is not needed for this data source</li>
    * <li> Authentication is handled through another Search Appliance-supported
-   * mechanism, such as LDAP
+   * mechanism, such as LDAP</li>
    * </ul>
-   * @return    a AuthenticationManager - may be null
+   *
+   * @return an {@link AuthenticationManager} - may be {@code null}
    * @throws RepositoryException
    */
   public AuthenticationManager getAuthenticationManager()
       throws RepositoryException;
 
   /**
-   * Gets an AuthorizationManager.  It is permissible to return null.
-   * A null return means that this implementation does not support an
-   * Authorization Manager.  This may be for one of these reasons:
+   * Gets an {@link AuthorizationManager}.  It is permissible to return
+   * {@code null}.  A {@code null} return means that this implementation does
+   * not support an authorization manager.  This may be for one of these
+   * reasons:
    * <ul>
    * <li> Authorization is not needed for this data source - all documents are
-   * public
+   * public</li>
    * <li> Authorization is handled through another Search Appliance-supported
-   * mechanism, such as NTLM or Basic Auth
+   * mechanism, such as NTLM or Basic Auth</li>
    * </ul>
-   * @return    a AuthorizationManager - may be null
+   *
+   * @return an {@link AuthorizationManager} - may be {@code null}
    * @throws RepositoryException
    */
   public AuthorizationManager getAuthorizationManager()
       throws RepositoryException;
-
 }

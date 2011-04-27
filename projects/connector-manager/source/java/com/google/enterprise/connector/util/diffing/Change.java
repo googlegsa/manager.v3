@@ -20,7 +20,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
- * Description of a change to be sent to the GSA.
+ * Description of a change to be sent to the Search Appliance.
+ *
+ * @since 2.8
  */
 public class Change {
   /**
@@ -28,9 +30,7 @@ public class Change {
    * un-serialize a {@link Change} from its JSON representation.
    */
   public static enum FactoryType {
-    /**
-     * Indicates the client provided {@link DocumentHandleFactory}
-     */
+    /** Indicates the client provided {@link DocumentHandleFactory} */
     CLIENT,
     /**
      * Indicates the internal {@link DocumentHandleFactory}. Currently
@@ -39,10 +39,7 @@ public class Change {
     INTERNAL
   }
 
-  /**
-   * Enumeration of fields in the JSON representation of a
-   * {@link Change}
-   */
+  /** Enumeration of fields in the JSON representation of a {@link Change}. */
   static enum Field {
     FACTORY_TYPE, DOCUMENT_HANDLE, MONITOR_CHECKPOINT
   }
@@ -50,7 +47,13 @@ public class Change {
   private final FactoryType factoryType;
   private final DocumentHandle documentHandle;
   private final MonitorCheckpoint monitorCheckpoint;
-
+  /**
+   * Create a new {@code Change}.
+   *
+   * @param factoryType
+   * @param documentHandle
+   * @param monitorCheckpoint
+   */
   public Change(FactoryType factoryType, DocumentHandle documentHandle,
       MonitorCheckpoint monitorCheckpoint) {
     Preconditions.checkNotNull(factoryType);
@@ -62,9 +65,11 @@ public class Change {
   }
 
   /**
-   * Create a new Change based on a JSON-encoded object.
+   * Create a new {@code Change} based on a JSON-encoded object.
    *
-   * @param json
+   * @param json a JSON-encoded object
+   * @param internalFactory a DocumentHandleFactory
+   * @param clientFactory a DocumentHandleFactory
    * @throws JSONException
    */
   Change(JSONObject json, DocumentHandleFactory internalFactory,
@@ -83,7 +88,7 @@ public class Change {
   }
 
   /**
-   * @return the monitor checkpoint associated with this change.
+   * @return the monitor checkpoint associated with this change
    */
   MonitorCheckpoint getMonitorCheckpoint() {
     return monitorCheckpoint;
@@ -171,6 +176,4 @@ public class Change {
     }
     return true;
   }
-
-
 }

@@ -14,13 +14,14 @@
 
 package com.google.enterprise.connector.util.diffing;
 
-
 /**
- * A Source of {@link Change} objects.
+ * A source of {@link Change} objects.
+ *
+ * @since 2.8
  */
 public interface ChangeSource {
   /**
-   * @return the next change, or null if there is no change available.
+   * @return the next change, or {@code null} if there is no change available
    */
   public Change getNextChange();
 }

@@ -17,10 +17,15 @@ package com.google.enterprise.connector.util.diffing;
 /**
  * A destination for tracking documents that are filtered and not
  * sent on to the GSA.
+ *
+ * @since 2.8
  */
 public interface DocumentSink {
   /**
    * Adds a filtered document and the reason it was filtered.
+   *
+   * @param documentId identifies the filtered document
+   * @param reason the reason the document was filtered
    */
   public void add(String documentId, FilterReason reason);
 }

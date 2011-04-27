@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.util.diffing.testing;
 
+import com.google.common.base.Preconditions;
 import com.google.enterprise.connector.util.diffing.ChangeSource;
 import com.google.enterprise.connector.util.diffing.CheckpointAndChangeQueue;
 import com.google.enterprise.connector.util.diffing.DocumentHandleFactory;
@@ -28,7 +29,9 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * {@Link FileSystemMonitorManager} for testing.
+ * A {@link DocumentSnapshotRepositoryMonitorManager} for testing.
+ *
+ * @since 2.8
  */
 public class FakeDocumentSnapshotRepositoryMonitorManager
     implements DocumentSnapshotRepositoryMonitorManager {
@@ -39,11 +42,19 @@ public class FakeDocumentSnapshotRepositoryMonitorManager
   private final CheckpointAndChangeQueue checkpointAndChangeQueue;
   private boolean isRunning = false;
 
+  /**
+   * Construct a {@link FakeDocumentSnapshotRepositoryMonitorManager} for
+   * testing.
+   *
+   * @param changeSource {@link ChangeSource}
+   * @param testCase a JUnit {@code TestCase}
+   * @param internalFactory a {@link DocumentHandleFactory}
+   * @param clientFactory a {@link DocumentHandleFactory}
+   * @throws IOException
+   */
   public FakeDocumentSnapshotRepositoryMonitorManager(ChangeSource changeSource,
-      TestCase testCase,
-      DocumentHandleFactory internalFactory,
-      DocumentHandleFactory clientFactory)
-      throws IOException {
+      TestCase testCase, DocumentHandleFactory internalFactory,
+      DocumentHandleFactory clientFactory) throws IOException {
     File persistDir = new TestDirectoryManager(testCase).makeDirectory("queue");
     checkpointAndChangeQueue = (changeSource == null) ? null :
         new CheckpointAndChangeQueue(changeSource, persistDir, internalFactory,
@@ -109,13 +120,12 @@ public class FakeDocumentSnapshotRepositoryMonitorManager
 
   /* @Override */
   public CheckpointAndChangeQueue getCheckpointAndChangeQueue() {
-    if (checkpointAndChangeQueue == null) {
-      throw new IllegalStateException(
-          "getCheckpointAndChangeQueue not supported with null checkpointAndChangeQueue");
-    }
+    Preconditions.checkState((checkpointAndChangeQueue != null),
+        "getCheckpointAndChangeQueue not supported with null ChangeSource");
     return checkpointAndChangeQueue;
   }
 
+  /* @Override */
   public synchronized boolean isRunning() {
     return isRunning;
   }

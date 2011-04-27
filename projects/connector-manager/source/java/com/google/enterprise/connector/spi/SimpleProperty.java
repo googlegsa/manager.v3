@@ -18,23 +18,34 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+/**
+ * Simple implementation of the {@link Property} interface.
+ * Implementors may use this directly or for reference.
+ */
 public class SimpleProperty implements Property {
 
   final Iterator<Value> iterator;
 
-  /*
+  /**
    * Constructs a property with a single value.
    *
+   * @param value the property's {@link Value}
    * @since 2.4
    */
   public SimpleProperty(Value value) {
     this(Collections.singletonList(value));
   }
 
+  /**
+   * Constructs a property with multiple values.
+   *
+   * @param values a {@code List} of the property's {@link Value Values}
+   */
   public SimpleProperty(List<Value> values) {
     this.iterator = values.iterator();
   }
 
+  /* @Override */
   public Value nextValue() {
     return (iterator.hasNext()) ? iterator.next() : null;
   }

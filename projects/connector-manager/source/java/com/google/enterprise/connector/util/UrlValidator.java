@@ -34,7 +34,7 @@ import javax.net.ssl.X509TrustManager;
 /**
  * Validates URLs by making an HTTP request.
  *
- * @since 3.0
+ * @since 2.8
  */
 /*
  * TODO: We might want to merge XmlFeed#validateSearchUrl into this class.
@@ -43,28 +43,27 @@ import javax.net.ssl.X509TrustManager;
  * testing of this class.
  */
 public class UrlValidator {
-    /** The logger for this class. */
-    private static final Logger LOGGER =
-        Logger.getLogger(UrlValidator.class.getName());
+  /** The logger for this class. */
+  private static final Logger LOGGER =
+      Logger.getLogger(UrlValidator.class.getName());
 
-    /** An all-trusting TrustManager for SSL URL validation. */
-    private static final TrustManager[] trustAllCerts =
-        new TrustManager[] {
-            new X509TrustManager() {
-                public X509Certificate[] getAcceptedIssuers() {
-                    return null;
-                }
-                public void checkServerTrusted(
-                    X509Certificate[] certs, String authType) {
+  /** An all-trusting TrustManager for SSL URL validation. */
+  private static final TrustManager[] trustAllCerts =
+      new TrustManager[] {
+          new X509TrustManager() {
+              public X509Certificate[] getAcceptedIssuers() {
+                  return null;
+              }
+              public void checkServerTrusted(
+                  X509Certificate[] certs, String authType) {
                     return;
-                }
-                public void checkClientTrusted(
-                    X509Certificate[] certs,
-                    String authType) {
+              }
+              public void checkClientTrusted(
+                  X509Certificate[] certs, String authType) {
                     return;
-                }
-            }
-        };
+              }
+          }
+      };
 
   /** An all-trusting HostnameVerifier for SSL URL validation. */
   private static final HostnameVerifier trustAllHosts =
@@ -105,11 +104,11 @@ public class UrlValidator {
 
   /**
    * Sets whether to follow HTTP redirects, or return them as the
-   * response. The default is <code>false</code>, which returns the
+   * response. The default is {@code false}, which returns the
    * redirect as the HTTP response.
    *
-   * @param followRedirects <code>true</code> to follow HTTP
-   *     redirects, or <code>false</code> to return them as the HTTP
+   * @param followRedirects {@code true} to follow HTTP
+   *     redirects, or {@code false} to return them as the HTTP
    *     response
    * @see HttpURLConnection#setInstanceFollowRedirects
    */
@@ -120,11 +119,11 @@ public class UrlValidator {
   /**
    * Sets whether fully qualified host names are required in the URL.
    * IP addresses are still OK, but host names must be fully qualified.
-   * The default is <code>false</code>, which allows non-fully qualified
+   * The default is {@code false}, which allows non-fully qualified
    * host names, even thought the GSA requires one in most cases.
    *
-   * @param requireFullyQualifiedHostNames <code>true</code> if host
-   *        names must be fully qualified, <code>false</code> if not.
+   * @param requireFullyQualifiedHostNames {@code true} if host
+   *        names must be fully qualified, {@code false} if not
    */
   public void setRequireFullyQualifiedHostNames(
       boolean requireFullyQualifiedHostNames) {
@@ -153,26 +152,26 @@ public class UrlValidator {
 
   /**
    * Attempts to validate the given URL by making an HTTP request. In
-   * this case, we're mostly trying to catch typos, so "valid" means
-   *
+   * this case, we're mostly trying to catch typos, so "valid" means:
    * <ol>
-   * <li>The URL syntax is valid.
+   * <li>The URL syntax is valid.</li>
    * <li>If fully qualified host names are required, check that the
-   *     host name looks fully qualified (contains a '.').
+   *     host name looks fully qualified (contains a '.').</li>
    * <li>If the URL uses HTTP or HTTPS:
    *   <ol>
-   *   <li>A connection can be made and the response read.
+   *   <li>A connection can be made and the response read.</li>
    *   <li>The response code was not 404,
    *   or any of the following related but less common errors:
-   *   400, 405, 410, or 414.
+   *   400, 405, 410, or 414.</li>
    *   </ol>
+   * </li>
    * </ol>
-   *
+   * <p/>
    * The 405 (Method Not Allowed) is related because the Sun Java
    * System Web Server, and possibly Apache, return this code rather
    * than a 404 if you attempt to access a CGI program in an unknown
    * directory.
-   *
+   * <p/>
    * When testing an HTTPS URL, we override server certificate
    * validation to skip trying to verify the server's certificate,
    * and we accept hostname mismatches. In this case, all we care
@@ -181,9 +180,9 @@ public class UrlValidator {
    *
    * @param urlString the URL to test
    * @throws GeneralSecurityException if there is an error configuring
-   *     the HTTPS connection
+   *         the HTTPS connection
    * @throws IOException if the URL is malformed, or if there is an
-   *     error connecting or reading the response
+   *         error connecting or reading the response
    * @throws UrlValidatorException if the HTTP status code was invalid
    */
   /*
@@ -197,8 +196,9 @@ public class UrlValidator {
    */
   public int validate(String urlString)
       throws GeneralSecurityException, IOException, UrlValidatorException {
-    if (urlString == null || urlString.trim().length() == 0)
+    if (urlString == null || urlString.trim().length() == 0) {
       return 0;
+    }
 
     URL url = new URL(urlString);
 
@@ -267,9 +267,9 @@ public class UrlValidator {
   }
 
   /**
-   * Replaces the default <code>TrustManager</code> for this
+   * Replaces the default {@code TrustManager} for this
    * connection with one that trusts all certificates, and the default
-   * <code>HostnameVerifier</code> with one that accepts all
+   * {@code HostnameVerifier} with one that accepts all
    * hostnames.
    *
    * @param conn the HTTPS URL connection
@@ -281,13 +281,11 @@ public class UrlValidator {
     sc.init(null, trustAllCerts, null);
     SSLSocketFactory factory = sc.getSocketFactory();
     conn.setSSLSocketFactory(factory);
-
     conn.setHostnameVerifier(trustAllHosts);
   }
 
   /**
-   * Sets the connect and read timeouts of the given
-   * <code>URLConnection</code>.
+   * Sets the connect and read timeouts of the given {@code URLConnection}.
    *
    * @param conn the URL connection
    */

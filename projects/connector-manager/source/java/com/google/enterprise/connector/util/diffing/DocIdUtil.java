@@ -19,15 +19,26 @@ import java.net.URLEncoder;
 
 /**
  * Static methods to convert paths to doc-ids and vice-versa.
- * Raison d'Etre: CM puts doc ids into URLs without encoding them and
+ * <p/>
+ * The Connector Manager embeds docids into URLs without encoding them and
  * FileConnector URLs have "special" characters.
+ *
+ * @since 2.8
  */
+/* see http://code.google.com/p/google-enterprise-connector-manager/issues/detail?id=214 */
 public class DocIdUtil {
   private static final String UTF_8 = "UTF-8";
 
+  // Private to prevent instantiation.
   private DocIdUtil() {
   }
 
+  /**
+   * URL encodes the supplied {@code path}.
+   *
+   * @param path the path as a String
+   * @return the URL encoded path
+   */
   public static String pathToId(String path) {
     try {
       return URLEncoder.encode(path, UTF_8);
@@ -36,6 +47,12 @@ public class DocIdUtil {
     }
   }
 
+  /**
+   * URL decodes the supplied {@code id}.
+   *
+   * @param id the URL encoded path
+   * @return the reconstitued path as a String
+   */
   public static String idToPath(String id) {
     try {
       return URLDecoder.decode(id, UTF_8);

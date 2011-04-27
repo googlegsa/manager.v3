@@ -16,18 +16,26 @@ package com.google.enterprise.connector.util.diffing;
 
 /**
  * An {@link Exception} for problems accessing a {@link SnapshotStore}.
+ *
+ * @since 2.8
  */
 public class SnapshotStoreException extends Exception {
   /**
-   * @param message
+   * Constructs a {@link SnapshotStoreException} with the supplied
+   * {@code message}.
+   *
+   * @param message the message
    */
   public SnapshotStoreException(String message) {
     super(message);
   }
 
   /**
-   * @param message
-   * @param cause
+   * Constructs a {@link SnapshotStoreException} with the supplied
+   * {@code message} and root {@code cause}.
+   *
+   * @param message the message
+   * @param cause the root cause of the exception
    */
   public SnapshotStoreException(String message, Throwable cause) {
     super(message, cause);

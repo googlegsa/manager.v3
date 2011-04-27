@@ -61,8 +61,8 @@ public class XmlUtils {
    * XML encodes an attribute value, encoding some characters as
    * character entities, and dropping invalid control characters.
    *
-   * @param attrValue the attribute value.
-   * @param buf the StringBuffer to append the attribute.
+   * @param attrValue the attribute value
+   * @param buf the {@code StringBuffer} to which to append the attribute
    *
    * @deprecated - Use {@link #xmlAppendAttrValue(String, Appendable)}.
    */
@@ -78,15 +78,15 @@ public class XmlUtils {
 
   /**
    * Used to write out an attribute for an element.  Surrounding whitespace will
-   * not be added to the buffer.  The given value will be XML Encoded before
+   * not be added to the buffer.  The given value will be XML encoded before
    * appending to the buffer.
-   *
-   * <p>For example, given attrName="foo" and attrValue="val&lt;bar" writes out:
+   * <p/>
+   * For example, given attrName="foo" and attrValue="val&lt;bar" writes out:
    * <pre>foo="val&amp;lt;bar"</pre>
    *
-   * @param attrName the attribute name.
-   * @param attrValue the attribute value.
-   * @param buf the StringBuffer to append the attribute.
+   * @param attrName the attribute name
+   * @param attrValue the attribute value
+   * @param buf the {@code StringBuffer} to which to append the attribute
    *
    * @deprecated - Use {@link #xmlAppendAttr(String, String, Appendable)}.
    */
@@ -105,10 +105,10 @@ public class XmlUtils {
   /**
    * Wraps an xm tag with '&lt;' and '&gt;'.
    *
-   * @param tag the XML tag to wrap with '&lt;' and '&gt;'.
-   * @param buf the Appendable to which is appended the start tag.
-   * @throws IOException from Appendable (but StringBuffer or
-   *         StringBuilder will never actually throw IOException).
+   * @param tag the XML tag to wrap with '&lt;' and '&gt;'
+   * @param buf the {@code Appendable} to which to append the start tag
+   * @throws IOException from {@code Appendable} (but {@code StringBuffer} or
+   *        {@code StringBuilder} will never actually throw {@code IOException})
    * @since 2.4
    */
   public static void xmlAppendStartTag(String tag, Appendable buf)
@@ -121,10 +121,10 @@ public class XmlUtils {
   /**
    * Wraps an xm tag with '&lt;/' and '&gt;'.
    *
-   * @param tag the XML tag to wrap with '&lt;/' and '&gt;'.
-   * @param buf the Appedable to which is appended the end tag.
-   * @throws IOException from Appendable (but StringBuffer or
-   *         StringBuilder will never actually throw IOException).
+   * @param tag the XML tag to wrap with '&lt;/' and '&gt;'
+   * @param buf the {@code Appendable} to which to append the start tag
+   * @throws IOException from {@code Appendable} (but {@code StringBuffer} or
+   *        {@code StringBuilder} will never actually throw {@code IOException})
    * @since 2.4
    */
   public static void xmlAppendEndTag(String tag, Appendable buf)
@@ -135,19 +135,20 @@ public class XmlUtils {
   }
 
   /**
-   * Used to write out an attribute for an element.  If the attribute
-   * value is non-null and non-empty, then the attribute is written out,
+   * Writes out an attribute for an element.  If the attribute value
+   * is non-{@code null} and non-empty, then the attribute is written out,
    * preceded by a single space.
-   * The given value will be XML Encoded before appending to the buffer.
-   *
-   * <p>For example, given attrName="foo" and attrValue="val&lt;bar" writes out:
+   * The given value will be XML encoded before appending to the buffer.
+   * <p/>
+   * For example, given attrName="foo" and attrValue="val&lt;bar" writes out:
    * <pre>foo="val&amp;lt;bar"</pre>
    *
-   * @param attrName the attribute name.
-   * @param attrValue the attribute value.
-   * @param buf the Appendable to which is appended the attribute value pair.
-   * @throws IOException from Appendable (but StringBuffer or
-   *         StringBuilder will never actually throw IOException).
+   * @param attrName the attribute name
+   * @param attrValue the attribute value
+   * @param buf the {@code Appendable} to which to append the attribute
+   *        name-value pair
+   * @throws IOException from {@code Appendable} (but {@code StringBuffer} or
+   *        {@code StringBuilder} will never actually throw {@code IOException})
    * @since 2.4
    */
   public static void xmlAppendAttr(String attrName, String attrValue,
@@ -164,15 +165,19 @@ public class XmlUtils {
   /**
    * XML encodes an attribute value, escaping some characters as
    * character entities, and dropping invalid control characters.
-   * <p>
-   * Only four characters need to be encoded, according to
-   * http://www.w3.org/TR/REC-xml/#NT-AttValue: &lt; &amp; " '.
+   * <p/>
+   * Only four characters need to be encoded, according to the
+   * <a href="http://www.w3.org/TR/2000/REC-xml-20001006#NT-Char">
+   * W3C XML 1.0 Specification Character definition</a>: {@code < & " '}
+   * (less-than, ampersand, double-quote, single-quote).
+   * <p/>
    * Actually, we could only encode one of the quote characters if
    * we knew that that was the one used to wrap the value, but we'll
    * play it safe and encode both.
-   * <p>
-   * We drop invalid XML characters, following
-   * http://www.w3.org/TR/2000/REC-xml-20001006#NT-Char :
+   * <p/>
+   * We drop invalid XML characters, following the
+   * <a href="http://www.w3.org/TR/2000/REC-xml-20001006#NT-Char">
+   * W3C XML 1.0 Specification Character definition</a>:
    * <pre>
    * Char ::= #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] | [#x10000-#x10FFFF]
    * </pre>
@@ -181,10 +186,10 @@ public class XmlUtils {
    * above, 0xD800 to 0xDFFF. So we allow just 0x09, 0x0A, 0x0D,
    * and the range 0x20 to 0xFFFD.
    *
-   * @param attrValue the attribute value.
-   * @param buf the Appedable to which is appended the attribute value.
-   * @throws IOException from Appendable (but StringBuffer or
-   *         StringBuilder will never actually throw IOException).
+   * @param attrValue the attribute value
+   * @param buf the {@code Appendable} to which to append the attribute value
+   * @throws IOException from {@code Appendable} (but {@code StringBuffer} or
+   *        {@code StringBuilder} will never actually throw {@code IOException})
    * @since 2.4
    */
   public static void xmlAppendAttrValue(String attrValue, Appendable buf)

@@ -17,13 +17,18 @@ package com.google.enterprise.connector.util.diffing;
 /**
  * Interface for constructing a {@link DocumentHandle} from its
  * {@link String} representation.
+ *
+ * @since 2.8
  */
 public interface DocumentHandleFactory {
   /**
    * Creates a {@link DocumentHandle} from its {@link String}
    * representation created using {@link DocumentHandle#toString()}.
-   * This may not return null.
-   * @throws IllegalArgumentException if stringForm is not valid.
+   * This may not return {@code null}.
+   *
+   * @param stringForm the String representation of the DocumentHandle
+   * @return the reconstituted {@link DocumentHandle}
+   * @throws IllegalArgumentException if {@code stringForm} is not valid.
    */
   DocumentHandle fromString(String stringForm);
 }

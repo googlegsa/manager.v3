@@ -25,6 +25,7 @@ import com.google.enterprise.connector.pusher.GsaFeedConnection;
 import com.google.enterprise.connector.scheduler.TraversalScheduler;
 import com.google.enterprise.connector.spi.TraversalContext;
 import com.google.enterprise.connector.traversal.ProductionTraversalContext;
+import com.google.enterprise.connector.util.database.JdbcDatabase;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.ListableBeanFactory;
@@ -39,6 +40,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -694,7 +696,24 @@ public class Context {
             ThreadPool.DEFAULT_SHUTDOWN_TIMEOUT_MILLIS);
         instantiator = null;
       }
+      closeDatabases();
       started = false;
+    }
+  }
+
+  /**
+   * Shuts down any Spring-configured JdbcDatabase instances.
+   */
+  @SuppressWarnings("unchecked")
+  private void closeDatabases() {
+    Collection<JdbcDatabase> databases = (Collection<JdbcDatabase>)
+        applicationContext.getBeansOfType(JdbcDatabase.class).values();
+    for (JdbcDatabase database : databases) {
+      try {
+        database.shutdown();
+      } catch (Exception e) {
+        LOGGER.log(Level.WARNING, "Failed to shut down database connection", e);
+      }
     }
   }
 

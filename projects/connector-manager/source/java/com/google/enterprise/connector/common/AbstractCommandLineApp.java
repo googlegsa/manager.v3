@@ -180,6 +180,7 @@ public abstract class AbstractCommandLineApp {
   // TODO: Look for logging levels on the command line via -D...
   protected void setLoggingLevels() {
     // Turn down the logging output to the console.
+    Logger.getLogger("").setLevel(Level.WARNING);
     Logger.getLogger("com.google.enterprise.connector").setLevel(Level.WARNING);
     Logger.getLogger("org.springframework").setLevel(Level.WARNING);
   }

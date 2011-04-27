@@ -44,7 +44,7 @@ public class SimpleAuthenticationIdentity implements AuthenticationIdentity {
   /**
    * Constructs a {@code SimpleAuthenticationIdentity} using just a user-name.
    *
-   * @param username The user's name
+   * @param username the user's name
    */
   public SimpleAuthenticationIdentity(final String username) {
     this(username, null, null);
@@ -54,8 +54,8 @@ public class SimpleAuthenticationIdentity implements AuthenticationIdentity {
    * Constructs a {@code SimpleAuthenticationIdentity} using only a user-name
    * and a password.
    *
-   * @param username The user's name
-   * @param password The password associated with the user's name
+   * @param username the user's name
+   * @param password the password associated with the user's name
    */
   public SimpleAuthenticationIdentity(final String username,
       final String password) {
@@ -66,9 +66,9 @@ public class SimpleAuthenticationIdentity implements AuthenticationIdentity {
    * Constructs a {@code SimpleAuthenticationIdentity} using user-name,
    * and password and domain.
    *
-   * @param username The user's name
-   * @param password The password associated with the user's name
-   * @param domain The domain associated with this user
+   * @param username the user's name
+   * @param password the password associated with the user's name
+   * @param domain the domain associated with this user
    */
   public SimpleAuthenticationIdentity(final String username,
       final String password, final String domain) {

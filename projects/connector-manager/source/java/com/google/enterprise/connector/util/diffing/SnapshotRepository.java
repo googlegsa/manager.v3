@@ -19,6 +19,8 @@ import java.util.Iterator;
  * Interface for accessing a sequence of {@link DocumentSnapshot}
  * objects from a repository. The returned objects are are sorted
  * by {@link DocumentSnapshot#getDocumentId()} values.
+ *
+ * @since 2.8
  */
 public interface  SnapshotRepository<T extends DocumentSnapshot> extends
     Iterable<T> {
@@ -29,11 +31,11 @@ public interface  SnapshotRepository<T extends DocumentSnapshot> extends
   String getName();
 
   /**
-   * Returns an {@link Iterator} to access the
+   * Returns an {@link Iterator} to access the collection
    * of {@link DocumentSnapshot} objects from the repository.
    * The returned {@link Iterator} must return {@link DocumentSnapshot}
    * objects in {@link DocumentSnapshot#getDocumentId()} order.
-   * <p>
+   * <p/>
    * The returned {@link Iterator} may throw the unchecked
    * {@link SnapshotRepositoryRuntimeException} if
    * {@link Iterator#hasNext()} or {@link Iterator#next()} fails. The returned

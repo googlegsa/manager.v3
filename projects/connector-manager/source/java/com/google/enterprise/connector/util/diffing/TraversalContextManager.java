@@ -13,30 +13,39 @@
 // limitations under the License.
 package com.google.enterprise.connector.util.diffing;
 
+import com.google.common.base.Preconditions;
 import com.google.enterprise.connector.spi.TraversalContext;
 
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Holder for the {@link TraversalContext}.
+ *
+ * @since 2.8
  */
 public class TraversalContextManager {
-  private final AtomicReference<TraversalContext> traversalContext
-    = new AtomicReference<TraversalContext>();
+  private final AtomicReference<TraversalContext> traversalContext =
+      new AtomicReference<TraversalContext>();
 
+  /**
+   * Sets the {@link TraversalContext}.
+   *
+   * @param traversalContext the {@link TraversalContext} to hold - must not be
+   *        {@code null}
+   */
   public void setTraversalContext(TraversalContext traversalContext) {
-    if (traversalContext == null) {
-      throw new NullPointerException("traversalContext must not be null");
-    }
+    Preconditions.checkNotNull(traversalContext,
+                               "traversalContext must not be null.");
     this.traversalContext.set(traversalContext);
   }
 
+  /**
+   * @return the {@link TraversalContext}
+   */
   public TraversalContext getTraversalContext() {
     TraversalContext result = traversalContext.get();
-    if (result == null) {
-      throw new IllegalStateException(
-          "setTraversalContext has not been called.");
-    }
+    Preconditions.checkState((result != null),
+                             "setTraversalContext has not been called.");
     return result;
   }
 }

@@ -23,8 +23,9 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * An implementation of DocumentList for {@link DiffingConnector}.
+ * An implementation of {@link DocumentList} for the {@link DiffingConnector}.
  *
+ * @since 2.8
  */
 public class DiffingConnectorDocumentList implements DocumentList {
   private final Iterator<CheckpointAndChange> checkpointAndChangeIterator;
@@ -34,6 +35,9 @@ public class DiffingConnectorDocumentList implements DocumentList {
    * Creates a document list that returns a batch of documents from the provided
    * {@link CheckpointAndChangeQueue}.
    *
+   * @param queue a CheckpointAndChangeQueue containing document changes
+   * @param checkpoint point into the change queue after which to start
+   *        returning documents
    * @throws IOException if persisting fails
    */
   public DiffingConnectorDocumentList(CheckpointAndChangeQueue queue,

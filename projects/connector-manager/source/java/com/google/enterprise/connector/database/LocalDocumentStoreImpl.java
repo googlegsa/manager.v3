@@ -707,7 +707,7 @@ public class LocalDocumentStoreImpl implements DocumentStore {
     }
 
     @Override
-    public synchronized void finalize() throws Exception {
+    protected synchronized void finalize() throws Throwable {
       close();
     }
   }

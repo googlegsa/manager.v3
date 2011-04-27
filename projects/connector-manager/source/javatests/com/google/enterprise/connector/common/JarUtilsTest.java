@@ -1,10 +1,10 @@
-// Copyright 2010 Google Inc.
+// Copyright (C) 2011 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-// http://www.apache.org/licenses/LICENSE-2.0
+//      http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -12,16 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.connector.util;
+package com.google.enterprise.connector.common;
 
-/**
- * A {@link UniqueIdGenerator} implementation backed by {@link java.util.UUID}.
- *
- * @since 2.8
- */
-public class UuidGenerator implements UniqueIdGenerator {
-  /* @Override */
-  public String uniqueId() {
-    return java.util.UUID.randomUUID().toString().replace("-", "");
+import junit.framework.TestCase;
+
+public class JarUtilsTest extends TestCase {
+  /** Basic smoke test for a non-null, non-empty version. */
+  public void testJarVersion() {
+    String version = JarUtils.getJarVersion(this.getClass());
+    assertNotNull(version);
+    assertTrue(version.length() > 0);
   }
 }

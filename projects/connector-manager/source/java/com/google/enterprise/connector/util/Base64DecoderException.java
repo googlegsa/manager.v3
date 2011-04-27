@@ -16,13 +16,23 @@ package com.google.enterprise.connector.util;
 
 /**
  * Exception thrown when encountering an invalid Base64 input character.
+ *
+ * @since 2.8
  */
 public class Base64DecoderException extends Exception {
+  /**
+   * Constructs a Base64DecoderException exception with no message.
+   */
   public Base64DecoderException() {
     super();
   }
 
-  public Base64DecoderException(String s) {
-    super(s);
+  /**
+   * Constructs a Base64DecoderException exception with a message.
+   *
+   * @param message the error message
+   */
+  public Base64DecoderException(String message) {
+    super(message);
   }
 }
