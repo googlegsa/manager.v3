@@ -135,6 +135,17 @@ Summary of Changes
     For additional information, please refer to the JavaDoc at:
     http://google-enterprise-connector-manager.googlecode.com/svn/docs/javadoc/2.8.0/index.html
 
+  * New utility database and diffing testing packages additions to the SPI
+    provides test classes for use by connector developers:
+    (available in package com.google.enterprise.connector.util.database.testing)
+      - TestJdbcDatabase
+      - TestLocalDatabase
+      - TestResourceClassLoader
+    (available in package com.google.enterprise.connector.util.diffing.testing)
+      - FakeDocumentSnapshotRepositoryMonitorManager
+      - FakeTraversalContext
+      - TestDirectoryManager
+
   * The Connector Manager now ships with several new third party JARs.
     The connector developer may find these functionally useful, however
     they should note that these are now distributed with the Connector
