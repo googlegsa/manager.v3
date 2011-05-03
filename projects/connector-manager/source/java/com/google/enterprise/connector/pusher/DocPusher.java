@@ -16,6 +16,7 @@ package com.google.enterprise.connector.pusher;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.enterprise.connector.common.CompressedFilterInputStream;
+import com.google.enterprise.connector.database.DocumentStore;
 import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.spi.Document;
@@ -27,7 +28,7 @@ import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.traversal.FileSizeLimitInfo;
 import com.google.enterprise.connector.util.Base64FilterInputStream;
-import com.google.enterprise.connector.database.DocumentStore;
+import com.google.enterprise.connector.util.filter.DocumentFilterFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileOutputStream;
@@ -77,6 +78,17 @@ public class DocPusher implements Pusher {
    * FeedConnection that is the sink for our generated XmlFeeds.
    */
   private final FeedConnection feedConnection;
+
+  /**
+   * The {@link DocumentFilterFactory} is used to construct
+   * {@code Document} instances that act as filters on a source
+   * document.  Document filters may add, remove, or modify
+   * {@code Properties}.  The DocumentFilterFactory set here
+   * is typically a {@link DocumentFilterChain} - a chain of
+   * DocumentFilterFactory beans that is used to construct a
+   * Document manipulation pipeline.
+   */
+  private final DocumentFilterFactory documentFilterFactory;
 
   /**
    * Encoding method to use for Document content.
@@ -131,12 +143,16 @@ public class DocPusher implements Pusher {
    * @param connectorName The connector name that is the source of the feed
    * @param fileSizeLimitInfo FileSizeLimitInfo constraints on document content
    *        and feed size.
+   * @param documentFilterFactory a {@link DocumentFilterFactory} that creates
+   *        document processing filters.
    */
   public DocPusher(FeedConnection feedConnection, String connectorName,
-                   FileSizeLimitInfo fileSizeLimitInfo) {
+                   FileSizeLimitInfo fileSizeLimitInfo,
+                   DocumentFilterFactory documentFilterFactory) {
     this.feedConnection = feedConnection;
     this.connectorName = connectorName;
     this.fileSizeLimit = fileSizeLimitInfo;
+    this.documentFilterFactory = documentFilterFactory;
 
     // Check to see if the GSA supports compressed content feeds.
     String supportedEncodings =
@@ -184,6 +200,9 @@ public class DocPusher implements Pusher {
       throw new IllegalStateException("Pusher is shut down");
     }
     checkSubmissions();
+
+    // Apply any configured Document filters to the document.
+    document = documentFilterFactory.newDocumentFilter(document);
 
     String feedType;
     try {

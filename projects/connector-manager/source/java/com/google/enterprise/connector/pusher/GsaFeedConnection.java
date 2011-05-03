@@ -103,6 +103,11 @@ public class GsaFeedConnection implements FeedConnection {
     this.setFeedHostAndPort(host, port);
   }
 
+  @Override
+  public String toString() {
+    return "FeedConnection: feedUrl = " + feedUrl;
+  }
+
   public synchronized void setFeedHostAndPort(String host, int port)
       throws MalformedURLException {
     feedUrl = new URL("http", host, port, "/xmlfeed");
