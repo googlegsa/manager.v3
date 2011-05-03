@@ -64,4 +64,10 @@ public class FileSizeLimitInfo {
   public long maxFeedSize() {
     return maxFeedSize;
   }
+
+  @Override
+  public String toString() {
+    return "FileSizeLimitInfo: maxDocumentSize = " + maxDocumentSize
+           + "  maxFeedSize = " + maxFeedSize;
+  }
 }

@@ -2,6 +2,8 @@
 <!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
 <beans>
 
+  <import resource="documentFilters.xml"/>
+
   <bean id="ApplicationContextProperties" class="java.lang.String">
     <constructor-arg value="/WEB-INF/applicationContext.properties"/>
   </bean>
@@ -366,6 +368,7 @@
         class="com.google.enterprise.connector.pusher.DocPusherFactory">
     <constructor-arg index="0" ref="FeedConnection" />
     <constructor-arg index="1" ref="FileSizeLimitInfo"/>
+    <constructor-arg index="2" ref="DocumentFilters"/>
   </bean>
 
   <bean id="LoadManagerFactory"
