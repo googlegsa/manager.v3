@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.test;
 
+import com.google.enterprise.connector.instantiator.Configuration;
 import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.spi.SimpleDocument;
 import com.google.enterprise.connector.spi.SpiConstants;
@@ -71,6 +72,20 @@ public class ConnectorTestUtils {
     for (T key : set1) {
       Assert.assertEquals(map1.get(key), map2.get(key));
     }
+  }
+
+  /**
+   * Compares two Configurations for equality.
+   *
+   * @param expected the expected configuration.
+   * @param config the configuration that should match expected.
+   */
+  public static void compareConfigurations(Configuration expected,
+                                           Configuration config) {
+    Assert.assertNotNull(config);
+    Assert.assertEquals(expected.getTypeName(), config.getTypeName());
+    Assert.assertEquals(expected.getXml(), config.getXml());
+    compareMaps(expected.getMap(), config.getMap());
   }
 
   public static boolean deleteAllFiles(File dir) {
