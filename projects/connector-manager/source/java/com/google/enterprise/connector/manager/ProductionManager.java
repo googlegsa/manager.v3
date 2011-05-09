@@ -17,6 +17,7 @@ package com.google.enterprise.connector.manager;
 import com.google.common.collect.Maps;
 import com.google.enterprise.connector.common.I18NUtil;
 import com.google.enterprise.connector.instantiator.Configuration;
+import com.google.enterprise.connector.instantiator.ExtendedConfigureResponse;
 import com.google.enterprise.connector.instantiator.Instantiator;
 import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
@@ -134,11 +135,19 @@ public class ProductionManager implements Manager {
     ConnectorType connectorType =
         instantiator.getConnectorType(connectorTypeName);
     Locale locale = I18NUtil.getLocaleFromStandardLocaleString(language);
+    ConfigureResponse response;
     try {
-      return connectorType.getConfigForm(locale);
+      response = connectorType.getConfigForm(locale);
     } catch (Exception e) {
       throw new InstantiatorException("Failed to get configuration form.", e);
     }
+
+    // Include the connectorInstance.xml in the response.
+    if (response != null) {
+      return new ExtendedConfigureResponse(response,
+          instantiator.getConnectorInstancePrototype(connectorTypeName));
+    }
+    return response;
   }
 
   /* @Override */
@@ -192,20 +201,11 @@ public class ProductionManager implements Manager {
   }
 
   /* @Override */
-  public ConfigureResponse setConnectorConfig(String connectorName,
-      String connectorTypeName, Map<String, String> configMap,
-      String language, boolean update) throws ConnectorNotFoundException,
-      PersistentStoreException, InstantiatorException {
-    String configXml = null;
-    if (update) {
-      Configuration configuration =
-          instantiator.getConnectorConfiguration(connectorName);
-      if (connectorTypeName.equals(configuration.getTypeName())) {
-        configXml = configuration.getXml();
-      }
-    }
-    return instantiator.setConnectorConfiguration(connectorName,
-        new Configuration(connectorTypeName, configMap, configXml),
+  public ConfigureResponse setConnectorConfiguration(String connectorName,
+      Configuration configuration, String language, boolean update)
+      throws ConnectorNotFoundException, PersistentStoreException,
+      InstantiatorException {
+    return instantiator.setConnectorConfiguration(connectorName, configuration,
         I18NUtil.getLocaleFromStandardLocaleString(language), update);
   }
 
@@ -245,15 +245,9 @@ public class ProductionManager implements Manager {
   }
 
   /* @Override */
-  public Map<String, String> getConnectorConfig(String connectorName)
+  public Configuration getConnectorConfiguration(String connectorName)
       throws ConnectorNotFoundException {
-    Configuration configuration =
-        instantiator.getConnectorConfiguration(connectorName);
-    if (configuration == null) {
-      return Maps.newHashMap();
-    } else {
-      return configuration.getMap();
-    }
+    return instantiator.getConnectorConfiguration(connectorName);
   }
 
   /* @Override */

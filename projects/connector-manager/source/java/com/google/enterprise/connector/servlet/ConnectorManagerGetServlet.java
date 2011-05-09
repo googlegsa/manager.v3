@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.servlet;
 
+import com.google.enterprise.connector.instantiator.ExtendedConfigureResponse;
 import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.manager.Manager;
@@ -156,7 +157,19 @@ public abstract class ConnectorManagerGetServlet extends HttpServlet {
       if (formSnippet != null) {
         ServletUtil.writeXMLElement(
             out, 2, ServletUtil.XMLTAG_FORM_SNIPPET,
-            "<![CDATA[" + formSnippet + "]]>");
+            ServletUtil.XML_CDATA_START + formSnippet
+            + ServletUtil.XML_CDATA_END);
+      }
+      if (configRes instanceof ExtendedConfigureResponse) {
+        String configXml =
+            ((ExtendedConfigureResponse) configRes).getConfigXml();
+        if (configXml != null) {
+          ServletUtil.writeXMLElement(
+              out, 2, ServletUtil.XMLTAG_CONNECTOR_CONFIG_XML,
+              ServletUtil.XML_CDATA_START
+              + ServletUtil.escapeEndMarkers(configXml)
+              + ServletUtil.XML_CDATA_END);
+        }
       }
       if (configRes.getMessage() != null &&
           configRes.getMessage().length() > 0) {

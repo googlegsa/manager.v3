@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.instantiator;
 
+import com.google.common.base.Preconditions;
 import com.google.enterprise.connector.spi.Connector;
 import com.google.enterprise.connector.spi.ConnectorFactory;
 import com.google.enterprise.connector.spi.ConnectorShutdownAware;
@@ -59,6 +60,9 @@ class ConnectorInstanceFactory implements ConnectorFactory {
    */
   public ConnectorInstanceFactory(String connectorName, TypeInfo typeInfo,
       Configuration config) {
+    Preconditions.checkArgument((typeInfo.getConnectorTypeName()
+                                 .equals(config.getTypeName())),
+                                "TypeInfo must match Configuration type");
     this.connectorName = connectorName;
     this.typeInfo = typeInfo;
     this.origConfig = config;
@@ -76,13 +80,8 @@ class ConnectorInstanceFactory implements ConnectorFactory {
   public Connector makeConnector(Map<String, String> config)
       throws RepositoryException {
     try {
-      Configuration configuration = new Configuration(
-          typeInfo.getConnectorTypeName(),
-          ((config == null) ? origConfig.getMap() : config),
-          origConfig.getXml());
-
       Connector connector = InstanceInfo.makeConnectorWithSpring(
-          connectorName, typeInfo, configuration);
+          connectorName, typeInfo, new Configuration(config, origConfig));
       synchronized (this) {
         connectors.add(connector);
       }

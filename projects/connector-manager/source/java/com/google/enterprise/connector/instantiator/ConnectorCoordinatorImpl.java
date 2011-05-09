@@ -15,6 +15,7 @@
 package com.google.enterprise.connector.instantiator;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.database.ConnectorPersistentStoreFactory;
@@ -263,11 +264,26 @@ class ConnectorCoordinatorImpl implements
   /* @Override */
   public synchronized ConfigureResponse getConfigForm(Locale locale)
       throws ConnectorNotFoundException, InstantiatorException {
-    Configuration config = getInstanceInfo().getConnectorConfiguration();
-    Map<String, String> configMap = (config == null) ? null : config.getMap();
+    Configuration config = getConnectorConfiguration();
     ConnectorType connectorType = typeInfo.getConnectorType();
     try {
-      return connectorType.getPopulatedConfigForm(configMap, locale);
+      ConfigureResponse response;
+      // If config is null, the connector was deleted behind our back.
+      // Treat this a new connector configuration.
+      if (config == null) {
+        response = connectorType.getConfigForm(locale);
+        if (response != null) {
+          return new ExtendedConfigureResponse(response,
+              getConnectorInstancePrototype(name, typeInfo));
+        }
+      } else {
+        response =
+            connectorType.getPopulatedConfigForm(config.getMap(), locale);
+        if (response != null) {
+          return new ExtendedConfigureResponse(response, config.getXml());
+        }
+      }
+      return response;
     } catch (Exception e) {
       throw new InstantiatorException("Failed to get configuration form", e);
     }
@@ -448,6 +464,9 @@ class ConnectorCoordinatorImpl implements
       throws ConnectorNotFoundException, ConnectorExistsException,
       InstantiatorException {
     LOGGER.info("Configuring connector " + name);
+    String typeName = newTypeInfo.getConnectorTypeName();
+    Preconditions.checkArgument(typeName.equals(configuration.getTypeName()),
+        "TypeInfo must match Configuration type");
     ConfigureResponse response = null;
     synchronized(this) {
       resetBatch();
@@ -455,19 +474,25 @@ class ConnectorCoordinatorImpl implements
         if (!update) {
           throw new ConnectorExistsException();
         }
-        if (newTypeInfo.getConnectorTypeName().equals(
-            typeInfo.getConnectorTypeName())) {
-          File connectorDir = instanceInfo.getConnectorDir();
-          response = resetConfig(connectorDir, typeInfo, configuration, locale);
+        if (typeName.equals(typeInfo.getConnectorTypeName())) {
+          configuration =
+              new Configuration(configuration, getConnectorConfiguration());
+          response = resetConfig(instanceInfo.getConnectorDir(), typeInfo,
+              configuration, locale);
         } else {
           // An existing connector is being given a new type - drop then add.
+          // TODO: This shouldn't be called from within the synchronized block
+          // because it will kick the change detector.
           removeConnector();
           response = createNewConnector(newTypeInfo, configuration, locale);
           if (response != null) {
             // TODO: We need to restore original Connector config. This is
             // necessary once we allow update a Connector with new ConnectorType.
-            LOGGER.severe("Failed to update Connector configuration."
-                + " Restoring original Connector configuration.");
+            // However, when doing so consider: createNewConnector could have
+            // thrown InstantiatorException as well.  Also, you need to kick
+            // the changeDetector (but not in this synchronized block).
+            LOGGER.severe("Failed to update Connector configuration.");
+            //    + " Restoring original Connector configuration.");
           }
         }
       } else {
@@ -480,6 +505,8 @@ class ConnectorCoordinatorImpl implements
     if (response == null) {
       // This must not be called while holding the lock.
       changeDetector.detect();
+    } else {
+      return new ExtendedConfigureResponse(response, configuration.getXml());
     }
     return response;
   }
@@ -487,7 +514,12 @@ class ConnectorCoordinatorImpl implements
   /* @Override */
   public synchronized Configuration getConnectorConfiguration()
       throws ConnectorNotFoundException {
-    return getInstanceInfo().getConnectorConfiguration();
+    Configuration config = getInstanceInfo().getConnectorConfiguration();
+    if (config != null && config.getXml() == null) {
+      return new Configuration(config,
+                               getConnectorInstancePrototype(name, typeInfo));
+    }
+    return config;
   }
 
   /**
@@ -763,10 +795,8 @@ class ConnectorCoordinatorImpl implements
           "Create new connector when one already exists.");
     }
     File connectorDir = makeConnectorDirectory(name, newTypeInfo);
-    String configXml = (config.getXml() != null) ? config.getXml() :
-        getConnectorInstancePrototype(name, newTypeInfo);
-    Configuration configuration = new Configuration(
-        newTypeInfo.getConnectorTypeName(), config.getMap(), configXml);
+    Configuration configuration = new Configuration(config,
+        getConnectorInstancePrototype(name, newTypeInfo));
     try {
       ConfigureResponse result =
           resetConfig(connectorDir, newTypeInfo, configuration, locale);
@@ -816,8 +846,7 @@ class ConnectorCoordinatorImpl implements
     newConfig.put(PropertiesUtils.GOOGLE_WORK_DIR, Context.getInstance()
         .getCommonDirPath());
 
-    Configuration newConfiguration =
-        new Configuration(config.getTypeName(), newConfig, config.getXml());
+    Configuration newConfiguration = new Configuration(newConfig, config);
 
     // Validate the configuration.
     ConfigureResponse response =
@@ -840,8 +869,7 @@ class ConnectorCoordinatorImpl implements
       if (response.getConfigData() != null) {
         LOGGER.config("A modified configuration for connector " + name
             + " was returned.");
-        newConfiguration = new Configuration(config.getTypeName(),
-            response.getConfigData(), config.getXml());
+        newConfiguration = new Configuration(response.getConfigData(), config);
       }
     }
 
@@ -917,7 +945,7 @@ class ConnectorCoordinatorImpl implements
         new ConnectorInstanceFactory(name, typeInfo, config);
     try {
       return typeInfo.getConnectorType()
-          .validateConfig(config.getMap(), locale, factory);
+             .validateConfig(config.getMap(), locale, factory);
     } catch (Exception e) {
       throw new InstantiatorException("Unexpected validateConfig failure.", e);
     } finally {
