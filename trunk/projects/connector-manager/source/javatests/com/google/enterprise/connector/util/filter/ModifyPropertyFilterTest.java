@@ -118,7 +118,7 @@ public class ModifyPropertyFilterTest extends DocumentFilterTest {
   }
 
   /**
-   * Tests that the filter doesn't molest values in other properties
+   * Tests that the filter doesn't modify values in other properties
    * that do match.
    */
   public void testFilterOtherMatchingValuesInSingleValueProperty() throws Exception {
@@ -127,7 +127,7 @@ public class ModifyPropertyFilterTest extends DocumentFilterTest {
   }
 
   /**
-   * Tests that the filter doesn't molest values in other properties
+   * Tests that the filter doesn't modify values in other properties
    * that do match.
    */
   public void testFilterOtherMatchingValuesInMultiValueProperty() throws Exception {
