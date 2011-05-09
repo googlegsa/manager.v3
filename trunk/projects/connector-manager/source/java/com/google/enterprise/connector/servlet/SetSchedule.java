@@ -73,7 +73,7 @@ public class SetSchedule extends ConnectorManagerServlet {
     // schedule for a newly created connector or an existing connector.
     if (!connectorName.equals(connectorName.toLowerCase())) {
       try {
-        manager.getConnectorConfig(connectorName);
+        manager.getConnectorConfiguration(connectorName);
       } catch (ConnectorNotFoundException e) {
         connectorName = connectorName.toLowerCase();
       }

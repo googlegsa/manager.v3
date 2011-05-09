@@ -1,4 +1,4 @@
-// Copyright (C) 2006-2008 Google Inc.
+// Copyright 2006 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,6 +22,8 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import com.google.enterprise.connector.common.StringUtils;
+import com.google.enterprise.connector.instantiator.Configuration;
+import com.google.enterprise.connector.instantiator.Instantiator;
 import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.manager.Manager;
@@ -29,22 +31,83 @@ import com.google.enterprise.connector.manager.MockManager;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.PersistentStoreException;
+import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
 
 import junit.framework.TestCase;
 
 /**
- * Tests GetConnectorConfigToEdit Servlet.
+ * Tests {@link GetConnectorConfigToEdit} Servlet.
  */
 public class GetConnectorConfigToEditTest extends TestCase {
-  private static final Logger LOG =
+  private static final Logger LOGGER =
       Logger.getLogger(GetConnectorConfigToEditTest.class.getName());
+
+  private String connectorType = "TestConnectorA";
+  private File connectorDir = new File(Context.DEFAULT_JUNIT_COMMON_DIR_PATH
+      + "connectors/" + connectorType);
+  private Manager manager;
+  private Instantiator instantiator;
+
+  @Override
+  protected void setUp() {
+    // Clear out any old connector state files.
+    ConnectorTestUtils.deleteAllFiles(connectorDir);
+
+    // Create a stand alone context with real ProductionManager.
+    Context.refresh();
+    Context context = Context.getInstance();
+    context.setStandaloneContext(Context.DEFAULT_JUNIT_CONTEXT_LOCATION,
+        Context.DEFAULT_JUNIT_COMMON_DIR_PATH);
+    context.setFeeding(false);
+    context.start();
+    manager = context.getManager();
+    instantiator = context.getInstantiator();
+  }
+
+  @Override
+  protected void tearDown() {
+    // Clear out any old connector state files.
+    ConnectorTestUtils.deleteAllFiles(connectorDir);
+  }
+
+  /** Test ConnectorNotFound returns status code. */
+  public void testConnectorNotFound() throws Exception {
+    String connectorName = "UnknownConnector";
+    String expectedResult =
+      "<CmResponse>\n" +
+      "  <StatusId>5303</StatusId>\n" +
+      "  <CMParams Order=\"0\" CMParam=\""+ connectorName + "\"/>\n" +
+      "</CmResponse>\n";
+    doTest(connectorName, expectedResult);
+  }
+
+  /** Test InstantiatorException returns status code. */
+  public void testInstantiatorException() throws Exception {
+    manager = new ExceptionThrowingManager();
+    String connectorName = "UnknownConnector";
+    String expectedResult =
+      "<CmResponse>\n" +
+      "  <StatusId>5305</StatusId>\n" +
+      "</CmResponse>\n";
+    doTest(connectorName, expectedResult);
+  }
+
+  /** A MockManager that throws exception when getting config form. */
+  private class ExceptionThrowingManager extends MockManager {
+    @Override
+    public ConfigureResponse getConfigFormForConnector(String connectorName,
+        String language) throws InstantiatorException {
+      throw new InstantiatorException("getConfigFormForConnector: "
+          + "connectorName = " + connectorName);
+    }
+  }
 
   /**
    * Test method for {@link com.google.enterprise.connector.servlet.
    * GetConnectorConfigToEdit#handleDoGet(String, String, Manager, PrintWriter)}.
    */
-  public void testHandleDoGet() {
+  public void testHandleDoGet() throws Exception {
     String expectedResult =
         "<CmResponse>\n"
         + "  <StatusId>0</StatusId>\n"
@@ -78,26 +141,16 @@ public class GetConnectorConfigToEditTest extends TestCase {
         + "  </ConfigureResponse>\n"
         + "</CmResponse>\n";
     String connectorName = "connectorA";
-    Manager manager = MockManager.getInstance();
-    StringWriter writer = new StringWriter();
-    PrintWriter out = new PrintWriter(writer);
-    GetConnectorConfigToEdit.handleDoGet(connectorName, "en", manager, out);
-    StringBuffer result = writer.getBuffer();
-    LOG.info(result.toString());
-    LOG.info(expectedResult);
-    out.flush();
-    assertEquals (StringUtils.normalizeNewlines(expectedResult),
-        StringUtils.normalizeNewlines(result.toString()));
-    out.close();
+    manager = MockManager.getInstance();
+    doTest(connectorName, expectedResult);
   }
 
   /**
-   * Tests case where config values have reserved XML characters. 
+   * Tests case where config values have reserved XML characters.
    */
-  public void testHandleDoGetWithXml()
-      throws ConnectorNotFoundException, ConnectorExistsException,
-      PersistentStoreException, InstantiatorException {
-    String expected =
+  public void testHandleDoGetWithXml() throws Exception {
+    String connectorName = "xml-con-01";
+    String expectedResult =
         "<CmResponse>\n"
         + "  <StatusId>0</StatusId>\n"
         + "  <ConfigureResponse>\n"
@@ -122,24 +175,11 @@ public class GetConnectorConfigToEditTest extends TestCase {
         + " type=\"text\" value=\"MockRepositoryEventLog1.txt\"></td>\n"
         + "</tr>\n"
         + "]]></FormSnippet>\n"
+        + "    <ConnectorConfigXml><![CDATA["
+        + instantiator.getConnectorInstancePrototype(connectorType)
+        + "]]></ConnectorConfigXml>\n"
         + "  </ConfigureResponse>\n"
-        + "</CmResponse>\n";      
-    String connectorName = "xml-con-01";
-    File connectorDir = new File(Context.DEFAULT_JUNIT_COMMON_DIR_PATH
-        + "connectors/TestConnectorA/"
-        + connectorName);
-
-    // Clear out any old connector state files.
-    ConnectorTestUtils.deleteAllFiles(connectorDir);
-
-    // Create a stand alone context with real ProductionManager.
-    Context.refresh();
-    Context context = Context.getInstance();
-    context.setStandaloneContext(Context.DEFAULT_JUNIT_CONTEXT_LOCATION,
-        Context.DEFAULT_JUNIT_COMMON_DIR_PATH);
-    context.setFeeding(false);
-    context.start();
-    Manager manager = context.getManager();
+        + "</CmResponse>\n";
 
     // Use the manager directly to create a connector with properties that have
     // reserved XML characters in them.
@@ -149,29 +189,99 @@ public class GetConnectorConfigToEditTest extends TestCase {
     configData.put("Password", evilValue);
     configData.put("Color", evilValue);
     configData.put("RepositoryFile", "MockRepositoryEventLog1.txt");
-    manager.setConnectorConfig(connectorName, "TestConnectorA", configData,
+    manager.setConnectorConfiguration(connectorName,
+        new Configuration(connectorType, configData, null),
         "en", false);
-    
-    // Use the Servlet to get the populated config form.  Make sure it can be
-    // parsed and make sure the reserved XML properties are preserved.
-    StringWriter writer = new StringWriter();
-    PrintWriter out = new PrintWriter(writer);
-    GetConnectorConfigToEdit.handleDoGet(connectorName, "en", manager, out);
-    StringBuffer result = writer.getBuffer();
-    LOG.info(result.toString());
-    out.flush();
-    assertEquals (StringUtils.normalizeNewlines(expected),
-        StringUtils.normalizeNewlines(result.toString()));
-    out.close();
-    
+
     // Check the properties values to make sure they were not encoded.
     Map<String, String> retrievedData =
-        manager.getConnectorConfig(connectorName);
+        manager.getConnectorConfiguration(connectorName).getMap();
     assertEquals(evilValue, retrievedData.get("Username"));
     assertEquals(evilValue, retrievedData.get("Password"));
     assertEquals(evilValue, retrievedData.get("Color"));
 
-    // Cleanup.
-    ConnectorTestUtils.deleteAllFiles(connectorDir);
+    // Use the Servlet to get the populated config form.  Make sure it can be
+    // parsed and make sure the reserved XML properties are preserved.
+    doTest(connectorName, expectedResult);
+  }
+
+  /**
+   * Tests case where config values have reserved XML characters.
+   */
+  public void testHandleDoGetWithModifiedXml() throws Exception {
+    String connectorName = "xml-con-02";
+    String connectorInstancePrototype =
+        instantiator.getConnectorInstancePrototype(connectorType);
+    String connectorInstanceXml = connectorInstancePrototype.replace(
+        "TestConnectorAInstance", "ModifiedTestConnectorAInstance");
+    String expectedResult =
+        "<CmResponse>\n"
+        + "  <StatusId>0</StatusId>\n"
+        + "  <ConfigureResponse>\n"
+        + "    <FormSnippet><![CDATA[<tr>\n"
+        + "<td colspan=\"1\" rowspan=\"1\">Username</td>\n"
+        + "<td colspan=\"1\" rowspan=\"1\"><input name=\"Username\""
+        + " type=\"text\" value=\" &quot;>bob>&amp;<alice;'\"></td>\n"
+        + "</tr>\n"
+        + "<tr>\n"
+        + "<td colspan=\"1\" rowspan=\"1\">Password</td>\n"
+        + "<td colspan=\"1\" rowspan=\"1\"><input name=\"Password\""
+        + " type=\"password\" value=\"****************\"></td>\n"
+        + "</tr>\n"
+        + "<tr>\n"
+        + "<td colspan=\"1\" rowspan=\"1\">Color</td>\n"
+        + "<td colspan=\"1\" rowspan=\"1\"><input name=\"Color\""
+        + " type=\"text\" value=\" &quot;>bob>&amp;<alice;'\"></td>\n"
+        + "</tr>\n"
+        + "<tr>\n"
+        + "<td colspan=\"1\" rowspan=\"1\">RepositoryFile</td>\n"
+        + "<td colspan=\"1\" rowspan=\"1\"><input name=\"RepositoryFile\""
+        + " type=\"text\" value=\"MockRepositoryEventLog1.txt\"></td>\n"
+        + "</tr>\n"
+        + "]]></FormSnippet>\n"
+        + "    <ConnectorConfigXml><![CDATA["
+        + connectorInstanceXml
+        + "]]></ConnectorConfigXml>\n"
+        + "  </ConfigureResponse>\n"
+        + "</CmResponse>\n";
+
+
+    // Use the manager directly to create a connector with properties that have
+    // reserved XML characters in them.
+    Map<String, String> configData = new HashMap<String, String>();
+    String evilValue = " \">bob>&<alice;'";
+    configData.put("Username", evilValue);
+    configData.put("Password", evilValue);
+    configData.put("Color", evilValue);
+    configData.put("RepositoryFile", "MockRepositoryEventLog1.txt");
+    manager.setConnectorConfiguration(connectorName,
+        new Configuration(connectorType, configData, connectorInstanceXml),
+        "en", false);
+
+    // Check the modifed connectorInstance.xml is used.
+    assertEquals(connectorInstanceXml,
+        manager.getConnectorConfiguration(connectorName).getXml());
+
+    // Use the Servlet to get the populated config form.  Make sure it can be
+    // parsed and make sure the reserved XML properties are preserved.
+    doTest(connectorName, expectedResult);
+  }
+
+  private void doTest(String connectorName, String expectedResult)
+      throws Exception {
+    StringWriter writer = new StringWriter();
+    PrintWriter out = new PrintWriter(writer);
+
+    // Use the Servlet to get the populated config form.  Make sure it can
+    // be parsed and make sure the reserved XML properties are preserved.
+    GetConnectorConfigToEdit.handleDoGet(connectorName, "en", manager, out);
+    out.flush();
+    StringBuffer result = writer.getBuffer();
+    out.close();
+    LOGGER.info("Result:\n" + result.toString());
+    LOGGER.info("ExpectedResult:\n" + expectedResult);
+
+    assertEquals (StringUtils.normalizeNewlines(expectedResult),
+                  StringUtils.normalizeNewlines(result.toString()));
   }
 }

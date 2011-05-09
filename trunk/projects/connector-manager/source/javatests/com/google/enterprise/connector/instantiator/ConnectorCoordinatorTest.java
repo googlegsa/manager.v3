@@ -22,6 +22,7 @@ import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.scheduler.Schedule;
 import com.google.enterprise.connector.spi.ConfigureResponse;
+import com.google.enterprise.connector.test.ConnectorTestUtils;
 import com.google.enterprise.connector.test.JsonObjectAsMap;
 import com.google.enterprise.connector.traversal.TraversalDelayPolicy;
 
@@ -156,10 +157,11 @@ public class ConnectorCoordinatorTest extends TestCase {
     TypeInfo typeInfo = getTypeMap().getTypeInfo(typeName);
     Resource resource = typeInfo.getConnectorInstancePrototype();
     String configXml = StringUtils.streamToString(resource.getInputStream());
-    configXml.replace("TestConnectorAInstance", "NewTestConnectorAInstance");
 
     Configuration configuration = new Configuration(typeName,
-        new JsonObjectAsMap(new JSONObject(jsonConfigString)), configXml);
+        new JsonObjectAsMap(new JSONObject(jsonConfigString)),
+        configXml.replace("TestConnectorAInstance",
+                          "NewTestConnectorAInstance"));
 
     // This knows that updateConnectorTest passes null for configXml.
     updateConnectorTest(instance, configuration, false);
@@ -193,10 +195,11 @@ public class ConnectorCoordinatorTest extends TestCase {
     TypeInfo typeInfo = getTypeMap().getTypeInfo(typeName);
     Resource resource = typeInfo.getConnectorInstancePrototype();
     String configXml = StringUtils.streamToString(resource.getInputStream());
-    configXml.replace("TestConnectorAInstance", "NewTestConnectorAInstance");
 
     Configuration newConfiguration = new Configuration(typeName,
-        new JsonObjectAsMap(new JSONObject(jsonConfigString)), configXml);
+        new JsonObjectAsMap(new JSONObject(jsonConfigString)),
+        configXml.replace("TestConnectorAInstance",
+                          "NewTestConnectorAInstance"));
 
     // This knows that updateConnectorTest passes null for configXml.
     updateConnectorTest(instance, newConfiguration, true);
