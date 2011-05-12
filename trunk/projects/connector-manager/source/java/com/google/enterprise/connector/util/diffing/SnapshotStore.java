@@ -30,6 +30,7 @@ import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
 import java.nio.charset.Charset;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.SortedSet;
@@ -258,17 +259,28 @@ public class SnapshotStore {
       throws IOException, SnapshotStoreException, InterruptedException {
     long readSnapshotIndex = checkpoint.getSnapshotNumber();
     long writeSnapshotIndex = readSnapshotIndex + 1;
+    boolean listSnapshotDir = false;
     for (long snapshotIndex : getExistingSnapshots(snapshotDir)) {
       handleInterrupt();
       if (snapshotIndex > writeSnapshotIndex) {
-        if (getSnapshotFile(snapshotDir, snapshotIndex).delete()) {
+        File snapshotFile = getSnapshotFile(snapshotDir, snapshotIndex); 
+        if (snapshotFile.delete()) {
           LOG.info("Deleted snapshot # " + snapshotIndex + ".");
         } else {
-          throw new IllegalStateException("Failed deleting snapshot file.");
+          //TODO : find a better solution for scenarios where connector can't 
+          // delete the snapshot file.
+          LOG.severe("Couldn't delete: " + snapshotFile);
+          listSnapshotDir = true;
         }
       }
     }
-
+    // If connector can't delete the old snapshot files,
+    // then following information is logged to get more information.
+    if (listSnapshotDir) {
+      LOG.info("Connector couldn't delete one or more old snapshot files; listing snapshot directory for more information");
+      logSnapshotDirectoryDetails(snapshotDir);
+    }
+    
     long recoveryFileIndex = checkpoint.getSnapshotNumber() + 2;
     File out = getSnapshotFile(snapshotDir, recoveryFileIndex);
     FileOutputStream os = new FileOutputStream(out);
@@ -303,6 +315,25 @@ public class SnapshotStore {
       iMadeIt = true;
     } finally {
       writer.close();
+    }
+  }
+
+  /**
+   * Logs the details of snapshot directory 
+   * @param snapshotDir snapshot directory
+   */
+  private static void logSnapshotDirectoryDetails(File snapshotDir) {
+    if (!snapshotDir.exists()) {
+      LOG.severe("Snapshot directory does not exist : " + snapshotDir.getPath());
+    } else {
+      LOG.info("Trying to list the contents of snapshot directory: " + snapshotDir);
+      File [] fileArray = snapshotDir.listFiles();
+      if (fileArray == null) {
+        LOG.severe("Connector couldn't list the files in the snapshot directory : " + snapshotDir.getPath());
+      } else {
+        LOG.info("Number of files present in snapshot directory is: " + fileArray.length);
+        LOG.info("Files present in the snapshot directory: " + Arrays.asList(fileArray));
+      }
     }
   }
 
