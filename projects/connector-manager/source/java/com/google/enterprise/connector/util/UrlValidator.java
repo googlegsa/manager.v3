@@ -34,7 +34,7 @@ import javax.net.ssl.X509TrustManager;
 /**
  * Validates URLs by making an HTTP request.
  *
- * @since 2.8
+ * @since 2.6.6
  */
 /*
  * TODO: We might want to merge XmlFeed#validateSearchUrl into this class.
