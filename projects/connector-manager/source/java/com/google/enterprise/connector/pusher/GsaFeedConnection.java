@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.pusher;
 
+import com.google.common.base.Strings;
 import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.util.Clock;
 import com.google.enterprise.connector.util.SslUtil;
@@ -104,8 +105,12 @@ public class GsaFeedConnection implements FeedConnection {
   /** Whether HTTPS connections validate the server certificate. */
   private boolean validateCertificate = true;
 
-  public GsaFeedConnection(String host, int port) throws MalformedURLException {
-    this.setFeedHostAndPort(host, port);
+  public GsaFeedConnection(String protocol, String host, int port,
+      int securePort) throws MalformedURLException {
+    if (Strings.isNullOrEmpty(protocol)) {
+      protocol = (securePort < 0) ? "http" : "https";
+  }
+    this.setFeedHostAndPort(protocol, host, port, securePort);
   }
 
   @Override
@@ -113,13 +118,28 @@ public class GsaFeedConnection implements FeedConnection {
     return "FeedConnection: feedUrl = " + feedUrl;
   }
 
-  public synchronized void setFeedHostAndPort(String host, int port)
+  public synchronized void setFeedHostAndPort(String protocol, String host,
+      int port, int securePort) throws MalformedURLException {
+    setUrls(protocol, host, (protocol.equals("https")) ? securePort : port);
+  }
+
+  /**
+   * Sets the URLs. This separate helper method ensures that only one
+   * port value is available, to avoid grabbing the wrong port by
+   * accident.
+   */
+  private void setUrls(String protocol, String host, int port)
       throws MalformedURLException {
-    feedUrl = new URL("http", host, port, "/xmlfeed");
-    dtdUrl = new URL("http", host, port, "/getdtd");
+    feedUrl = new URL(protocol, host, port, "/xmlfeed");
+    dtdUrl = new URL(protocol, host, port, "/getdtd");
     contentEncodings = null;
-    backlogUrl = new URL("http", host, port, "/getbacklogcount");
+    backlogUrl = new URL(protocol, host, port, "/getbacklogcount");
     lastBacklogCheck = 0L;
+  }
+
+  /** For the unit tests to verify the correct URLs. */
+  public synchronized URL getFeedUrl() {
+    return feedUrl;
   }
 
   public void setClock(Clock clock) {

@@ -16,8 +16,14 @@
       <props>
         <prop key="feedLoggingLevel">OFF</prop>
 
-        <!-- Default Feeder gate port on a GSA -->
+        <!-- Default Feeder gate URL protocol on a GSA. -->
+        <prop key="gsa.feed.protocol"></prop>
+
+        <!-- Default Feeder gate HTTP port on a GSA. -->
         <prop key="gsa.feed.port">19900</prop>
+
+        <!-- Default Feeder gate HTTPS port on a GSA. -->
+        <prop key="gsa.feed.securePort">-1</prop>
 
         <!-- Whether to validate the GSA certificate on SSL feeds. -->
         <prop key="gsa.feed.validateCertificate">false</prop>
@@ -105,8 +111,10 @@
 
   <bean id="FeedConnection"
         class="com.google.enterprise.connector.pusher.GsaFeedConnection">
-    <constructor-arg index="0" type="java.lang.String" value="${gsa.feed.host}"/>
-    <constructor-arg index="1" type="int" value="${gsa.feed.port}"/>
+    <constructor-arg index="0" type="java.lang.String" value="${gsa.feed.protocol}"/>
+    <constructor-arg index="1" type="java.lang.String" value="${gsa.feed.host}"/>
+    <constructor-arg index="2" type="int" value="${gsa.feed.port}"/>
+    <constructor-arg index="3" type="int" value="${gsa.feed.securePort}"/>
     <property name="clock" ref="Clock"/>
     <property name="validateCertificate" 
               value="${gsa.feed.validateCertificate}"/>
