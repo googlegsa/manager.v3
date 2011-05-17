@@ -63,13 +63,20 @@ import java.util.logging.Logger;
  * functionality of the established context.
  */
 public class Context {
-
+  public static final String GSA_FEED_PROTOCOL_PROPERTY_KEY =
+      "gsa.feed.protocol";
   public static final String GSA_FEED_HOST_PROPERTY_KEY = "gsa.feed.host";
   public static final String GSA_FEED_PORT_PROPERTY_KEY = "gsa.feed.port";
   public static final String GSA_FEED_PORT_DEFAULT = "19900";
   public static final String GSA_FEED_VALIDATE_CERTIFICATE_PROPERTY_KEY =
       "gsa.feed.validateCertificate";
   public static final String GSA_FEED_VALIDATE_CERTIFICATE_DEFAULT = "false";
+
+  /** Indicates that the HTTPS port has not been set or should not be used. */
+  public static final int GSA_FEED_SECURE_PORT_INVALID = -1;
+  public static final String GSA_FEED_SECURE_PORT_PROPERTY_KEY =
+      "gsa.feed.securePort";
+  public static final String GSA_FEED_SECURE_PORT_DEFAULT = "19902";
 
   public static final String GSA_ADMIN_REQUIRES_PREFIX_KEY =
       "gsa.admin.requiresPrefix";
@@ -95,15 +102,28 @@ public class Context {
   private static final String CONNECTOR_MANGER_CONFIG_HEADER =
       " Google Search Appliance Connector Manager Configuration\n"
       + "\n"
+      + " The 'gsa.feed.protocol' property specifies the URL protocol for\n"
+      + " the feed host on the GSA. The supported values are 'http' and\n"
+      + " 'https'.\n"
+      + " For example:\n"
+      + "   gsa.feed.protocol=http\n"
+      + " gsa.feed.protocol=http\n"
+      + "\n"
       + " The 'gsa.feed.host' property specifies the host name or IP address\n"
       + " for the feed host on the GSA.\n"
       + " For example:\n"
       + "   gsa.feed.host=172.24.2.0\n"
       + "\n"
-      + " The 'gsa.feed.port' property specifies the host port for the feed\n"
-      + " host on the GSA.\n"
+      + " The 'gsa.feed.port' property specifies the HTTP host port for the\n"
+      + " feed host on the GSA.\n"
       + " For example:\n"
       + "   gsa.feed.port=19900\n"
+      + "\n"
+      + " The 'gsa.feed.securePort' property specifies the HTTPS host port\n"
+      + " for the feed host on the GSA. This port will be used if the\n"
+      + " 'gsa.feed.protocol property' is set to 'https'.\n"
+      + " For example:\n"
+      + "   gsa.feed.securePort=19902\n"
       + "\n"
       + " The 'gsa.feed.validateCertificate' property specifies whether to\n"
       + " validate the GSA certificate when sending SSL feeds. If the GSA\n"
@@ -882,21 +902,30 @@ public class Context {
   }
 
   /**
-   * Returns a Properties containing just the GSA feed host and port properties.
+   * Returns a Properties containing just the GSA feed URL properties.
    */
   public Properties getConnectorManagerConfig() {
     // Get the properties out of the CM properties file if present.
     Properties props = getConnectorManagerProperties();
     Properties result = new Properties();
+    String protocol = props.getProperty(GSA_FEED_PROTOCOL_PROPERTY_KEY);
+    if (protocol != null) {
+      result.setProperty(GSA_FEED_PROTOCOL_PROPERTY_KEY, protocol);
+    }
     result.setProperty(GSA_FEED_HOST_PROPERTY_KEY,
         props.getProperty(GSA_FEED_HOST_PROPERTY_KEY));
     result.setProperty(GSA_FEED_PORT_PROPERTY_KEY,
         props.getProperty(GSA_FEED_PORT_PROPERTY_KEY, GSA_FEED_PORT_DEFAULT));
+    String securePort = props.getProperty(GSA_FEED_SECURE_PORT_PROPERTY_KEY);
+    if (securePort != null && Integer.parseInt(securePort) >= 0) {
+      result.setProperty(GSA_FEED_SECURE_PORT_PROPERTY_KEY, securePort);
+    }
     return result;
   }
 
-  public void setConnectorManagerConfig(String feederGateHost,
-      int feederGatePort) throws InstantiatorException {
+  public void setConnectorManagerConfig(String feederGateProtocol,
+      String feederGateHost, int feederGatePort, int feederGateSecurePort)
+      throws InstantiatorException {
     initApplicationContext();
 
     GsaFeedConnection feeder;
@@ -910,11 +939,13 @@ public class Context {
       feeder = null;
     }
 
-    setConnectorManagerConfig(feederGateHost, feederGatePort, feeder);
+    setConnectorManagerConfig(feederGateProtocol, feederGateHost,
+        feederGatePort, feederGateSecurePort, feeder);
   }
 
   @VisibleForTesting
-  void setConnectorManagerConfig(String feederGateHost, int feederGatePort,
+  void setConnectorManagerConfig(String feederGateProtocol,
+      String feederGateHost, int feederGatePort, int feederGateSecurePort,
       GsaFeedConnection feeder) throws InstantiatorException {
     // Update the feed host and port in the CM properties file.
     String propFileName = getPropFileName();
@@ -930,6 +961,39 @@ public class Context {
     }
     props.put(GSA_FEED_HOST_PROPERTY_KEY, feederGateHost);
     props.put(GSA_FEED_PORT_PROPERTY_KEY, Integer.toString(feederGatePort));
+
+    // Do not overwrite the protocol or secure port if we didn't get a
+    // value from the GSA. This is for backward compatibility when
+    // manually setting the securePort or protocol for older GSAs.
+    int explicitSecurePort;
+    if (feederGateSecurePort < 0) {
+      String securePort = props.getProperty(GSA_FEED_SECURE_PORT_PROPERTY_KEY);
+      if (Strings.isNullOrEmpty(securePort)) {
+        // If no secure port is specified, use the default in case the
+        // protocol is set to "https", but do not store this value.
+        feederGateSecurePort = Integer.parseInt(GSA_FEED_SECURE_PORT_DEFAULT);
+        explicitSecurePort = GSA_FEED_SECURE_PORT_INVALID;
+      } else {
+        feederGateSecurePort = Integer.parseInt(securePort);
+        explicitSecurePort = feederGateSecurePort;
+      }
+    } else {
+      props.put(GSA_FEED_SECURE_PORT_PROPERTY_KEY,
+          Integer.toString(feederGateSecurePort));
+      explicitSecurePort = feederGateSecurePort;
+    }
+    if (Strings.isNullOrEmpty(feederGateProtocol)) {
+      String protocol = props.getProperty(GSA_FEED_PROTOCOL_PROPERTY_KEY);
+      if (Strings.isNullOrEmpty(protocol)) {
+        // Pick a protocol based on an explicitly configured secure port.
+        feederGateProtocol = (explicitSecurePort < 0) ? "http" : "https";
+      } else {
+        feederGateProtocol = protocol;
+      }
+    } else {
+      props.put(GSA_FEED_PROTOCOL_PROPERTY_KEY, feederGateProtocol);
+    }
+
     // Lock down the manager at this point.
     props.put(MANAGER_LOCKED_PROPERTY_KEY, Boolean.TRUE.toString());
     try {
@@ -946,10 +1010,12 @@ public class Context {
             GSA_FEED_VALIDATE_CERTIFICATE_PROPERTY_KEY,
             GSA_FEED_VALIDATE_CERTIFICATE_DEFAULT));
     LOGGER.info("Updated Connector Manager Config: "
+        + GSA_FEED_PROTOCOL_PROPERTY_KEY + "=" + feederGateProtocol + "; "
         + GSA_FEED_HOST_PROPERTY_KEY + "=" + feederGateHost + "; "
         + GSA_FEED_PORT_PROPERTY_KEY + "=" + feederGatePort + "; "
         + GSA_FEED_VALIDATE_CERTIFICATE_PROPERTY_KEY + "="
         + validateCertificate + "; "
+        + GSA_FEED_SECURE_PORT_PROPERTY_KEY + "=" + feederGateSecurePort + "; "
         + MANAGER_LOCKED_PROPERTY_KEY + "="
         + props.getProperty(MANAGER_LOCKED_PROPERTY_KEY));
 
@@ -960,7 +1026,8 @@ public class Context {
     // Notify the GsaFeedConnection of new host and port.
     if (feeder != null) {
       try {
-        feeder.setFeedHostAndPort(feederGateHost, feederGatePort);
+        feeder.setFeedHostAndPort(feederGateProtocol, feederGateHost,
+            feederGatePort, feederGateSecurePort);
 
         // Update the validateCertificate flag. We do this here so that
         // the value can be updated without restarting Tomcat.

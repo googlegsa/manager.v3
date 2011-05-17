@@ -215,11 +215,12 @@ public class ProductionManager implements Manager {
   }
 
   /* @Override */
-  public void setConnectorManagerConfig(String feederGateHost,
-      int feederGatePort) throws PersistentStoreException {
+  public void setConnectorManagerConfig(String feederGateProtocol,
+      String feederGateHost, int feederGatePort, int feederGateSecurePort)
+      throws PersistentStoreException {
     try {
-      Context.getInstance().setConnectorManagerConfig(feederGateHost,
-          feederGatePort);
+      Context.getInstance().setConnectorManagerConfig(feederGateProtocol,
+          feederGateHost, feederGatePort, feederGateSecurePort);
     } catch (InstantiatorException e) {
       throw new PersistentStoreException(e);
     }

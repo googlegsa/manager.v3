@@ -49,13 +49,17 @@ public interface Manager {
   /**
    * Stores configuration changes to the Connector Manager itself.
    *
+   * @param feederGateProtocol The GSA feeder gate protocol; one of
+   * {@code "http"}, {@code "https"}, {@code ""}, or {@code null}
    * @param feederGateHost The GSA host expressed as a String
-   * @param feederGatePort The GSA feeder port number
+   * @param feederGatePort The GSA feeder gate HTTP port number
+   * @param feederGateSecurePort The GSA feeder gate HTTP port number
    * @throws PersistentStoreException If there was a problem storing the
    *         configuration
    */
-  public void setConnectorManagerConfig(String feederGateHost,
-      int feederGatePort) throws PersistentStoreException;
+  public void setConnectorManagerConfig(String feederGateProtocol,
+      String feederGateHost, int feederGatePort, int feederGateSecurePort)
+      throws PersistentStoreException;
 
   /**
    * Returns a list of connector types that this manager knows about.
