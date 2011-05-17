@@ -19,6 +19,9 @@
         <!-- Default Feeder gate port on a GSA -->
         <prop key="gsa.feed.port">19900</prop>
 
+        <!-- Whether to validate the GSA certificate on SSL feeds. -->
+        <prop key="gsa.feed.validateCertificate">false</prop>
+
         <!-- These are used to throttle back the document feed if the
              GSA has fallen behind processing outstanding feed items.
         -->
@@ -105,6 +108,8 @@
     <constructor-arg index="0" type="java.lang.String" value="${gsa.feed.host}"/>
     <constructor-arg index="1" type="int" value="${gsa.feed.port}"/>
     <property name="clock" ref="Clock"/>
+    <property name="validateCertificate" 
+              value="${gsa.feed.validateCertificate}"/>
   </bean>
 
   <!-- This is used to throttle back the document feed if the GSA has fallen

@@ -15,6 +15,7 @@
 package com.google.enterprise.connector.manager;
 
 import com.google.common.base.Strings;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.enterprise.connector.common.PropertiesException;
 import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.instantiator.Instantiator;
@@ -66,6 +67,9 @@ public class Context {
   public static final String GSA_FEED_HOST_PROPERTY_KEY = "gsa.feed.host";
   public static final String GSA_FEED_PORT_PROPERTY_KEY = "gsa.feed.port";
   public static final String GSA_FEED_PORT_DEFAULT = "19900";
+  public static final String GSA_FEED_VALIDATE_CERTIFICATE_PROPERTY_KEY =
+      "gsa.feed.validateCertificate";
+  public static final String GSA_FEED_VALIDATE_CERTIFICATE_DEFAULT = "false";
 
   public static final String GSA_ADMIN_REQUIRES_PREFIX_KEY =
       "gsa.admin.requiresPrefix";
@@ -87,7 +91,7 @@ public class Context {
   private static final String APPLICATION_CONTEXT_PROPERTIES_BEAN_NAME =
       "ApplicationContextProperties";
 
-  // This is the comment written to the ApplicationContextProperties file.
+  /** This is the comment written to the ApplicationContextProperties file. */
   private static final String CONNECTOR_MANGER_CONFIG_HEADER =
       " Google Search Appliance Connector Manager Configuration\n"
       + "\n"
@@ -100,6 +104,13 @@ public class Context {
       + " host on the GSA.\n"
       + " For example:\n"
       + "   gsa.feed.port=19900\n"
+      + "\n"
+      + " The 'gsa.feed.validateCertificate' property specifies whether to\n"
+      + " validate the GSA certificate when sending SSL feeds. If the GSA\n"
+      + " certificate is installed in the Tomcat keystore, this should be\n"
+      + " set to 'true', otherwise it must be set to 'false'.\n"
+      + " For example:\n"
+      + "   gsa.feed.validateCertificate=false\n"
       + "\n"
       + " The 'manager.locked' property is used to lock out the Admin Servlet\n"
       + " and prevent it from making changes to this configuration file.\n"
@@ -888,6 +899,23 @@ public class Context {
       int feederGatePort) throws InstantiatorException {
     initApplicationContext();
 
+    GsaFeedConnection feeder;
+    try {
+      feeder = (GsaFeedConnection)
+        applicationContext.getBean("FeedConnection", GsaFeedConnection.class);
+    } catch (BeansException be) {
+      // The configured FeedConnection isn't a GSA, so it doesn't care
+      // about the GSA host and port.
+      LOGGER.config("The FeedConnection is not to a GSA: " + be.getMessage());
+      feeder = null;
+    }
+
+    setConnectorManagerConfig(feederGateHost, feederGatePort, feeder);
+  }
+
+  @VisibleForTesting
+  void setConnectorManagerConfig(String feederGateHost, int feederGatePort,
+      GsaFeedConnection feeder) throws InstantiatorException {
     // Update the feed host and port in the CM properties file.
     String propFileName = getPropFileName();
     File propFile = getPropFile(propFileName);
@@ -912,9 +940,16 @@ public class Context {
           + " file " + propFileName + ". ", e);
       throw new InstantiatorException(e);
     }
+
+    // This property is not overwritten, but is logged.
+    boolean validateCertificate = Boolean.parseBoolean(props.getProperty(
+            GSA_FEED_VALIDATE_CERTIFICATE_PROPERTY_KEY,
+            GSA_FEED_VALIDATE_CERTIFICATE_DEFAULT));
     LOGGER.info("Updated Connector Manager Config: "
         + GSA_FEED_HOST_PROPERTY_KEY + "=" + feederGateHost + "; "
-        + GSA_FEED_PORT_PROPERTY_KEY + "=" + feederGatePort + ";"
+        + GSA_FEED_PORT_PROPERTY_KEY + "=" + feederGatePort + "; "
+        + GSA_FEED_VALIDATE_CERTIFICATE_PROPERTY_KEY + "="
+        + validateCertificate + "; "
         + MANAGER_LOCKED_PROPERTY_KEY + "="
         + props.getProperty(MANAGER_LOCKED_PROPERTY_KEY));
 
@@ -923,15 +958,16 @@ public class Context {
     isGsaFeedHostInitialized = true;
 
     // Notify the GsaFeedConnection of new host and port.
-    try {
-      GsaFeedConnection feeder = (GsaFeedConnection)
-        applicationContext.getBean("FeedConnection", GsaFeedConnection.class);
-      feeder.setFeedHostAndPort(feederGateHost, feederGatePort);
-    } catch (BeansException be) {
-      // The configured FeedConnection isn't a GSA, so it doesn't care
-      // about the GSA host and port.
-    } catch (MalformedURLException e) {
-      throw new InstantiatorException("Invalid GSA Feed specification", e);
+    if (feeder != null) {
+      try {
+        feeder.setFeedHostAndPort(feederGateHost, feederGatePort);
+
+        // Update the validateCertificate flag. We do this here so that
+        // the value can be updated without restarting Tomcat.
+        feeder.setValidateCertificate(validateCertificate);
+      } catch (MalformedURLException e) {
+        throw new InstantiatorException("Invalid GSA Feed specification", e);
+      }
     }
   }
 

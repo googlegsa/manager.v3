@@ -1,4 +1,4 @@
-// Copyright (C) 2006-2008 Google Inc.
+// Copyright 2006 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.connector.instantiator;
+package com.google.enterprise.connector.manager;
 
-import com.google.enterprise.connector.manager.Context;
+import com.google.enterprise.connector.instantiator.InstantiatorException;
+import com.google.enterprise.connector.pusher.GsaFeedConnection;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
 
 import junit.framework.TestCase;
@@ -122,10 +123,16 @@ public class SetManagerConfigTest extends TestCase {
         context.getIsManagerLocked());
   }
 
-  private void setLockedProperty(String isLocked) throws Exception {
+  private void setLockedProperty(String isLocked) throws IOException {
+    updateProperty(Context.MANAGER_LOCKED_PROPERTY_KEY, isLocked,
+        "Updating lock");
+  }
+
+  private void updateProperty(String key, String value, String comment)
+      throws IOException {
     Properties props = loadProperties(propFile);
-    props.setProperty(Context.MANAGER_LOCKED_PROPERTY_KEY, isLocked);
-    storeProperties(props, propFile, "Updating lock");
+    props.setProperty(key, value);
+    storeProperties(props, propFile, comment);
   }
 
   private void verifyPropsValues(String expectedHost, int expectedPort,
@@ -139,6 +146,31 @@ public class SetManagerConfigTest extends TestCase {
     String isManagerLocked =
         props.getProperty(Context.MANAGER_LOCKED_PROPERTY_KEY);
     assertEquals("Manager is locked", Boolean.TRUE.toString(), isManagerLocked);
+  }
+
+  /** The field default is true, to make the code safer to use. */
+  public void testDefaultFieldValidateCertificate() throws Exception {
+    GsaFeedConnection feeder = new GsaFeedConnection("fubar", 25);
+    assertTrue(feeder.getValidateCertificate());
+  }
+
+  /**
+   * The property default is false, so that the code will run without
+   * certificates, and so that we can change this default to true when
+   * the installer installs the GSA certificate.
+   */
+  public void testDefaultPropertyValidateCertificate() throws Exception {
+    GsaFeedConnection feeder = new GsaFeedConnection("fubar", 25);
+    context.setConnectorManagerConfig("shme", 14, feeder);
+    assertFalse(feeder.getValidateCertificate());
+  }
+
+  public void testSetPropertyValidateCertificate() throws Exception {
+    updateProperty(Context.GSA_FEED_VALIDATE_CERTIFICATE_PROPERTY_KEY,
+        "true", "Updating validateCertificate");
+    GsaFeedConnection feeder = new GsaFeedConnection("fubar", 25);
+    context.setConnectorManagerConfig("shme", 14, feeder);
+    assertTrue(feeder.getValidateCertificate());
   }
 
   private Properties loadProperties(File propFile) throws IOException {

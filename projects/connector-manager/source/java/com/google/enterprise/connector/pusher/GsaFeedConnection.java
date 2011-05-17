@@ -16,6 +16,7 @@ package com.google.enterprise.connector.pusher;
 
 import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.util.Clock;
+import com.google.enterprise.connector.util.SslUtil;
 import com.google.enterprise.connector.util.SystemClock;
 
 import java.io.BufferedReader;
@@ -26,13 +27,17 @@ import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.HttpURLConnection;
+import java.security.GeneralSecurityException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.net.ssl.HttpsURLConnection;
 
 /**
  * Opens a connection to a url and sends data to it.
  */
 public class GsaFeedConnection implements FeedConnection {
+  private static final Logger LOGGER =
+      Logger.getLogger(GsaFeedConnection.class.getName());
 
   /**
    * The GSA's response when it successfully receives a feed.
@@ -96,8 +101,8 @@ public class GsaFeedConnection implements FeedConnection {
   // How often to check for backlog (in milliseconds).
   private long backlogCheckInterval = 15 * 60 * 1000L;
 
-  private static final Logger LOGGER =
-      Logger.getLogger(GsaFeedConnection.class.getName());
+  /** Whether HTTPS connections validate the server certificate. */
+  private boolean validateCertificate = true;
 
   public GsaFeedConnection(String host, int port) throws MalformedURLException {
     this.setFeedHostAndPort(host, port);
@@ -143,6 +148,18 @@ public class GsaFeedConnection implements FeedConnection {
 
   public void setContentEncodings(String contentEncodings) {
     this.contentEncodings = contentEncodings;
+  }
+
+  /**
+   * Sets whether HTTPS connections to the GSA validate the GSA certificate.
+   */
+  public void setValidateCertificate(boolean validateCertificate) {
+    this.validateCertificate = validateCertificate;
+  }
+
+  /** For the unit tests. */
+  public boolean getValidateCertificate() {
+    return validateCertificate;
   }
 
   private static final void controlHeader(StringBuilder builder,
@@ -194,6 +211,9 @@ public class GsaFeedConnection implements FeedConnection {
       synchronized (this) {
         uc = (HttpURLConnection) feedUrl.openConnection();
       }
+      if (uc instanceof HttpsURLConnection && !validateCertificate) {
+        SslUtil.setTrustingHttpsOptions((HttpsURLConnection) uc);
+      }
       uc.setDoInput(true);
       uc.setDoOutput(true);
       uc.setFixedLengthStreamingMode(prefix.length + feed.size()
@@ -203,6 +223,8 @@ public class GsaFeedConnection implements FeedConnection {
       outputStream = uc.getOutputStream();
     } catch (IOException ioe) {
       throw new FeedException(ioe);
+    } catch (GeneralSecurityException e) {
+      throw new FeedException(e);
     }
 
     boolean isThrowing = false;
@@ -429,6 +451,9 @@ public class GsaFeedConnection implements FeedConnection {
         LOGGER.finest("Opening " + name + " connection.");
       }
       conn = (HttpURLConnection)url.openConnection();
+      if (conn instanceof HttpsURLConnection && !validateCertificate) {
+        SslUtil.setTrustingHttpsOptions((HttpsURLConnection) conn);
+      }
       conn.connect();
       int responseCode = conn.getResponseCode();
       if (responseCode == HttpURLConnection.HTTP_OK) {
@@ -450,6 +475,8 @@ public class GsaFeedConnection implements FeedConnection {
       }
     } catch (IOException ioe) {
       LOGGER.finest("Error while reading " + name + ": " + ioe.getMessage());
+    } catch (GeneralSecurityException e) {
+      LOGGER.finest("Error while reading " + name + ": " + e.getMessage());
     } finally {
       try {
         if (br != null) {
