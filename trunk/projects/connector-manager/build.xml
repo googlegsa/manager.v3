@@ -3,11 +3,12 @@
 <project name="connector-manager" default="connector_manager" basedir=".">
 
   <!-- ========================= PROPERTIES ============================= -->
-  <property name="version" value="2.0" />
   <property name="jvm.version" value="1.5" />
 
   <!-- Define Directories. -->
   <property name="projects.dir" value=".." />
+
+  <property file="${projects.dir}/version.properties"/>
 
   <property name="COMPILE_DEBUG_FLAG" value="true" />
   <property name="COMPILE_DEBUG_LEVEL" value="source,lines,vars" />
@@ -98,6 +99,15 @@
     <mkdir dir="${jar.dir}" />
   </target>
 
+  <target name="prebuild" unless="svnversion">
+    <exec executable="svnversion" spawn="false"
+      failifexecutionfails="false"
+      dir="${projects.dir}"
+      outputproperty="svnversion">
+      <arg line="."/>
+    </exec>
+  </target>
+
   <target name="compile-spi" depends="init">
     <!-- compile the spi java source files -->
     <javac sourcepath="" srcdir="${src}" destdir="${spi-classes}"
@@ -114,7 +124,7 @@
     </javac>
   </target>
 
-  <target name="jar-spi" depends="compile-spi"
+  <target name="jar-spi" depends="prebuild,compile-spi"
           description="Create production spi jar">
     <tstamp />
     <jar jarfile="${spi.jarfile}">
@@ -148,7 +158,7 @@
     </javac>
   </target>
 
-  <target name="jar-prod" depends="compile,jar-spi"
+  <target name="jar-prod" depends="prebuild,compile,jar-spi"
           description="Create production jars for the Connector SPI project">
     <tstamp />
     <jar jarfile="${logging.jarfile}">
