@@ -60,16 +60,26 @@ public class DeletePropertyFilter extends AbstractDocumentFilter {
     this.propertyNames = propertyNames;
   }
 
+  /**
+   * Finds a {@link Property} by {@code name}. If the {@link Document} has a
+   * property of that name, and that property has not been deleted, then the
+   * property is returned.
+   */
   @Override
-  protected Property findProperty(Document source, String name)
+  public Property findProperty(Document source, String name)
       throws RepositoryException {
     Preconditions.checkState(propertyNames != null, "must set propertyNames");
 
     return (propertyNames.contains(name)) ? null : source.findProperty(name);
   }
 
+  /**
+   * Gets the set of names of all {@link Property Properties} in the
+   * {@link Document}, removing the names of deleted Properties from
+   * the Set returned by the {@code source} {@link Document}.
+   */
   @Override
-  protected Set<String> getPropertyNames(Document source)
+  public Set<String> getPropertyNames(Document source)
       throws RepositoryException {
     Preconditions.checkState(propertyNames != null, "must set propertyNames");
 
