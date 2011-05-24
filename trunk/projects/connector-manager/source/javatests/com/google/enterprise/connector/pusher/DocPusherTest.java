@@ -38,6 +38,7 @@ import com.google.enterprise.connector.util.SystemClock;
 import com.google.enterprise.connector.util.UniqueIdGenerator;
 import com.google.enterprise.connector.util.XmlParseUtil;
 import com.google.enterprise.connector.util.filter.DocumentFilterChain;
+import com.google.enterprise.connector.util.filter.DocumentFilterFactory;
 import com.google.enterprise.connector.util.filter.ModifyPropertyFilter;
 
 
@@ -474,13 +475,7 @@ public class DocPusherTest extends TestCase {
         + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
         + ",\"google:contenturl\":\"http://www.sometesturl.com/test\""
         + "}\r\n" + "";
-    Document document = JcrDocumentTest.makeDocumentFromJson(json1);
-
-    MockFeedConnection mockFeedConnection = new MockFeedConnection();
-    DocPusher dpusher = new DocPusher(mockFeedConnection, "junit", fsli, dfc);
-    dpusher.take(document, null);
-    dpusher.flush();
-    String resultXML = mockFeedConnection.getFeed();
+    String resultXML = feedJsonEvent(json1);
 
     assertStringContains("last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\"",
         resultXML);
@@ -555,17 +550,13 @@ public class DocPusherTest extends TestCase {
         + "}\r\n" + "";
     Document document = JcrDocumentTest.makeDocumentFromJson(json1);
 
-    MockFeedConnection mockFeedConnection = new MockFeedConnection();
     ModifyPropertyFilter mpf = new ModifyPropertyFilter();
     mpf.setPropertyName("author");
     mpf.setPattern("ziff");
     mpf.setReplacement("johnson");
     mpf.setOverwrite(true);
 
-    DocPusher dpusher = new DocPusher(mockFeedConnection, "junit", fsli, mpf);
-    dpusher.take(document, null);
-    dpusher.flush();
-    String resultXML = mockFeedConnection.getFeed();
+    String resultXML = feedDocument(document, mpf);
 
     assertStringContains("last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\"",
         resultXML);
@@ -586,13 +577,7 @@ public class DocPusherTest extends TestCase {
         + ",\"author\":{type:string, value:[ziff,bjohnson,jlacey]}"
         + ",\"google:contenturl\":\"http://www.sometesturl.com/test\""
         + "}\r\n" + "";
-    Document document = JcrDocumentTest.makeDocumentFromJson(json1);
-
-    MockFeedConnection mockFeedConnection = new MockFeedConnection();
-    DocPusher dpusher = new DocPusher(mockFeedConnection, "junit", fsli, dfc);
-    dpusher.take(document, null);
-    dpusher.flush();
-    String resultXML = mockFeedConnection.getFeed();
+    String resultXML = feedJsonEvent(json1);
 
     assertStringContains("last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\"",
         resultXML);
@@ -616,13 +601,7 @@ public class DocPusherTest extends TestCase {
         + ",\"author\":\"Google, Inc.\""
         + ",\"google:contenturl\":\"http://www.sometesturl.com/test\""
         + "}\r\n" + "";
-    Document document = JcrDocumentTest.makeDocumentFromJson(json1);
-
-    MockFeedConnection mockFeedConnection = new MockFeedConnection();
-    DocPusher dpusher = new DocPusher(mockFeedConnection, "junit", fsli, dfc);
-    dpusher.take(document, null);
-    dpusher.flush();
-    String resultXML = mockFeedConnection.getFeed();
+    String resultXML = feedJsonEvent(json1);
 
     assertStringContains("last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\"",
         resultXML);
@@ -641,13 +620,7 @@ public class DocPusherTest extends TestCase {
         + ",\"google:searchurl\":\"http://www.sometesturl.com/docid\""
         + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
         + "}\r\n" + "";
-    Document document = JcrDocumentTest.makeDocumentFromJson(json1);
-
-    MockFeedConnection mockFeedConnection = new MockFeedConnection();
-    DocPusher dpusher = new DocPusher(mockFeedConnection, "junit", fsli, dfc);
-    dpusher.take(document, null);
-    dpusher.flush();
-    String resultXML = mockFeedConnection.getFeed();
+    String resultXML = feedJsonEvent(json1);
 
     assertStringNotContains("googleconnector://", resultXML);
     assertStringContains("url=\"http://www.sometesturl.com/docid\"", resultXML);
@@ -675,12 +648,7 @@ public class DocPusherTest extends TestCase {
       + "}\r\n" + "";
 
     // Web feed with searchurl.
-    Document document = JcrDocumentTest.makeDocumentFromJson(json1);
-    MockFeedConnection mockFeedConnection = new MockFeedConnection();
-    DocPusher dpusher = new DocPusher(mockFeedConnection, "junit", fsli, dfc);
-    dpusher.take(document, null);
-    dpusher.flush();
-    String resultXML = mockFeedConnection.getFeed();
+    String resultXML = feedJsonEvent(json1);
 
     assertStringNotContains("googleconnector://", resultXML);
     assertStringContains("url=\"http://www.sometesturl.com/docid\"", resultXML);
@@ -690,11 +658,7 @@ public class DocPusherTest extends TestCase {
     assertStringNotContains("<content encoding=\"base64binary\">", resultXML);
 
     // Content feed with searchurl.
-    document = JcrDocumentTest.makeDocumentFromJson(json2);
-    dpusher = new DocPusher(mockFeedConnection, "junit", fsli, dfc);
-    dpusher.take(document, null);
-    dpusher.flush();
-    resultXML = mockFeedConnection.getFeed();
+    resultXML = feedJsonEvent(json2);
 
     assertStringNotContains("googleconnector://", resultXML);
     assertStringContains("url=\"http://www.sometesturl.com/docid\"", resultXML);
@@ -725,12 +689,7 @@ public class DocPusherTest extends TestCase {
       + "}\r\n" + "";
 
     // Content feed without searchurl.
-    Document document = JcrDocumentTest.makeDocumentFromJson(json1);
-    MockFeedConnection mockFeedConnection = new MockFeedConnection();
-    DocPusher dpusher = new DocPusher(mockFeedConnection, "junit", fsli, dfc);
-    dpusher.take(document, null);
-    dpusher.flush();
-    String resultXML = mockFeedConnection.getFeed();
+    String resultXML = feedJsonEvent(json1);
 
     assertStringContains("url=\"" + ServletUtil.PROTOCOL + "junit.localhost"
         + ServletUtil.DOCID + "doc1\"", resultXML);
@@ -740,11 +699,7 @@ public class DocPusherTest extends TestCase {
     assertStringContains("<content encoding=\"base64binary\">", resultXML);
 
     // Web feed without searchurl.
-    document = JcrDocumentTest.makeDocumentFromJson(json2);
-    dpusher = new DocPusher(mockFeedConnection, "junit", fsli, dfc);
-    dpusher.take(document, null);
-    dpusher.flush();
-    resultXML = mockFeedConnection.getFeed();
+    resultXML = feedJsonEvent(json2);
 
     assertStringContains("url=\"" + ServletUtil.PROTOCOL + "junit.localhost"
         + ServletUtil.DOCID + "doc1\"", resultXML);
@@ -754,11 +709,7 @@ public class DocPusherTest extends TestCase {
     assertStringNotContains("<content encoding=\"base64binary\">", resultXML);
 
     // Content feed without searchurl and without content.
-    document = JcrDocumentTest.makeDocumentFromJson(json3);
-    dpusher = new DocPusher(mockFeedConnection, "junit", fsli, dfc);
-    dpusher.take(document, null);
-    dpusher.flush();
-    resultXML = mockFeedConnection.getFeed();
+    resultXML = feedJsonEvent(json3);
 
     assertStringContains("url=\"" + ServletUtil.PROTOCOL + "junit.localhost"
         + ServletUtil.DOCID + "doc1\"", resultXML);
@@ -777,13 +728,7 @@ public class DocPusherTest extends TestCase {
         + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
         + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
         + "}\r\n" + "";
-    Document document = JcrDocumentTest.makeDocumentFromJson(json1);
-
-    MockFeedConnection mockFeedConnection = new MockFeedConnection();
-    DocPusher dpusher = new DocPusher(mockFeedConnection, "junit", fsli, dfc);
-    dpusher.take(document, null);
-    dpusher.flush();
-    String resultXML = mockFeedConnection.getFeed();
+    String resultXML = feedJsonEvent(json1);
 
     assertStringContains("displayurl=\"http://www.sometesturl.com/test\"",
         resultXML);
@@ -799,13 +744,7 @@ public class DocPusherTest extends TestCase {
         + ",\"special\":\"`~!@#$%^&*()_+-={}[]|\\\\:\\\";'<>?,./\""
         + ",\"japanese\":\"\u5317\u6d77\u9053\""
         + ",\"chinese\":\"\u5317\u4eac\u5e02\"" + "}\r\n" + "";
-    Document document = JcrDocumentTest.makeDocumentFromJson(json1);
-
-    MockFeedConnection mockFeedConnection = new MockFeedConnection();
-    DocPusher dpusher = new DocPusher(mockFeedConnection, "junit", fsli, dfc);
-    dpusher.take(document, null);
-    dpusher.flush();
-    String resultXML = mockFeedConnection.getFeed();
+    String resultXML = feedJsonEvent(json1);
 
     assertStringContains("<meta name=\"special\" " +
     // only single escapes here, because this is not a json string
@@ -879,11 +818,7 @@ public class DocPusherTest extends TestCase {
    */
   private void assertParsedFeedContains(Document document, String expected)
       throws Exception {
-    MockFeedConnection mockFeedConnection = new MockFeedConnection();
-    DocPusher dpusher = new DocPusher(mockFeedConnection, "junit", fsli, dfc);
-    dpusher.take(document, null);
-    dpusher.flush();
-    String resultXML = mockFeedConnection.getFeed();
+    String resultXML = feedDocument(document);
 
     // Strip off the DOCTYPE so that the document parses, since we
     // don't have the DTD.
@@ -918,13 +853,7 @@ public class DocPusherTest extends TestCase {
         + ",\"author\":\"ziff\""
         + ",\"google:contenturl\":\"http://www.sometesturl.com/test\""
         + "}\r\n" + "";
-    Document document = JcrDocumentTest.makeDocumentFromJson(json1);
-
-    MockFeedConnection mockFeedConnection = new MockFeedConnection();
-    DocPusher dpusher = new DocPusher(mockFeedConnection, "junit", fsli, dfc);
-    dpusher.take(document, null);
-    dpusher.flush();
-    String resultXML = mockFeedConnection.getFeed();
+    String resultXML = feedJsonEvent(json1);
 
     assertStringContains("last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\"",
         resultXML);
@@ -941,55 +870,35 @@ public class DocPusherTest extends TestCase {
       + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
       + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
       + "}\r\n" + "";
-    Document document = JcrDocumentTest.makeDocumentFromJson(defaultActionJson);
-
-    MockFeedConnection mockFeedConnection = new MockFeedConnection();
-    DocPusher dpusher = new DocPusher(mockFeedConnection, "junit", fsli, dfc);
-    dpusher.take(document, null);
-    dpusher.flush();
-    String resultXML = mockFeedConnection.getFeed();
+    String resultXML = feedJsonEvent(defaultActionJson);
 
     assertStringNotContains("action=\"add\"", resultXML);
 
-    dpusher = new DocPusher(mockFeedConnection, "junit", fsli, dfc);
     String addActionJson = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
       + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
       + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
       + ",\"google:action\":\"add\""
       + "}\r\n" + "";
-
-    document = JcrDocumentTest.makeDocumentFromJson(addActionJson);
-    dpusher.take(document, null);
-    dpusher.flush();
-    resultXML = mockFeedConnection.getFeed();
+    resultXML = feedJsonEvent(addActionJson);
 
     assertStringContains("action=\"add\"", resultXML);
 
-    dpusher = new DocPusher(mockFeedConnection, "junit", fsli, dfc);
     String deleteActionJson = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
       + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
       + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
       + ",\"google:action\":\"delete\""
       + "}\r\n" + "";
-
-    document = JcrDocumentTest.makeDocumentFromJson(deleteActionJson);
-    dpusher.take(document, null);
-    dpusher.flush();
-    resultXML = mockFeedConnection.getFeed();
+    resultXML = feedJsonEvent(deleteActionJson);
 
     assertStringContains("action=\"delete\"", resultXML);
 
-    dpusher = new DocPusher(mockFeedConnection, "junit", fsli, dfc);
     String bogusActionJson = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
       + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
       + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
       + ",\"google:action\":\"bogus\""
       + "}\r\n" + "";
 
-    document = JcrDocumentTest.makeDocumentFromJson(bogusActionJson);
-    dpusher.take(document, null);
-    dpusher.flush();
-    resultXML = mockFeedConnection.getFeed();
+    resultXML = feedJsonEvent(bogusActionJson);
 
     assertStringNotContains("action=", resultXML);
   }
@@ -1235,8 +1144,18 @@ public class DocPusherTest extends TestCase {
    * DocPusher and return the resulting XML feed string.
    */
   private String feedDocument(Document document) throws Exception {
+    return feedDocument(document, dfc);
+  }
+
+  /**
+   * Utility method to take the given Document and DocumentFilterFactory
+   * and feed it through a DocPusher and return the resulting XML feed
+   * string.
+   */
+  private String feedDocument(Document document,
+      DocumentFilterFactory dff) throws Exception {
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
-    DocPusher dpusher = new DocPusher(mockFeedConnection, "junit", fsli, dfc);
+    DocPusher dpusher = new DocPusher(mockFeedConnection, "junit", fsli, dff);
     dpusher.take(document, null);
     dpusher.flush();
     return mockFeedConnection.getFeed();
@@ -1513,13 +1432,8 @@ public class DocPusherTest extends TestCase {
         + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
         + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
         + "}\r\n" + "";
-    Document document = JcrDocumentTest.makeDocumentFromJson(json1);
 
-    MockFeedConnection mockFeedConnection = new MockFeedConnection();
-    DocPusher dpusher = new DocPusher(mockFeedConnection, "junit", fsli, dfc);
-    dpusher.take(document, null);
-    dpusher.flush();
-    String resultXML = mockFeedConnection.getFeed();
+    String resultXML = feedJsonEvent(json1);
 
     assertStringNotContains("lock=\"true\"",
         resultXML);
@@ -1546,13 +1460,7 @@ public class DocPusherTest extends TestCase {
         + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
         + ",\"google:lock\":\"false\""
         + "}\r\n" + "";
-    Document document = JcrDocumentTest.makeDocumentFromJson(json1);
-
-    MockFeedConnection mockFeedConnection = new MockFeedConnection();
-    DocPusher dpusher = new DocPusher(mockFeedConnection, "junit", fsli, dfc);
-    dpusher.take(document, null);
-    dpusher.flush();
-    String resultXML = mockFeedConnection.getFeed();
+    String resultXML = feedJsonEvent(json1);
 
     assertStringNotContains("lock=\"true\"",
         resultXML);
@@ -1575,13 +1483,7 @@ public class DocPusherTest extends TestCase {
         + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
         + ",\"google:lock\":\"true\""
         + "}\r\n" + "";
-    Document document = JcrDocumentTest.makeDocumentFromJson(json1);
-
-    MockFeedConnection mockFeedConnection = new MockFeedConnection();
-    DocPusher dpusher = new DocPusher(mockFeedConnection, "junit", fsli, dfc);
-    dpusher.take(document, null);
-    dpusher.flush();
-    String resultXML = mockFeedConnection.getFeed();
+    String resultXML = feedJsonEvent(json1);
 
     assertStringContains("lock=\"true\"",
         resultXML);
@@ -1602,13 +1504,7 @@ public class DocPusherTest extends TestCase {
         + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
         + ",\"google:lock\":\"xyzzy\""
         + "}\r\n" + "";
-    Document document = JcrDocumentTest.makeDocumentFromJson(json1);
-
-    MockFeedConnection mockFeedConnection = new MockFeedConnection();
-    DocPusher dpusher = new DocPusher(mockFeedConnection, "junit", fsli, dfc);
-    dpusher.take(document, null);
-    dpusher.flush();
-    String resultXML = mockFeedConnection.getFeed();
+    String resultXML = feedJsonEvent(json1);
 
     // should be silently treated as true
     assertStringContains("lock=\"true\"",
@@ -1630,13 +1526,7 @@ public class DocPusherTest extends TestCase {
         + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
         + ",\"google:lock\":\"\""
         + "}\r\n" + "";
-    Document document = JcrDocumentTest.makeDocumentFromJson(json1);
-
-    MockFeedConnection mockFeedConnection = new MockFeedConnection();
-    DocPusher dpusher = new DocPusher(mockFeedConnection, "junit", fsli, dfc);
-    dpusher.take(document, null);
-    dpusher.flush();
-    String resultXML = mockFeedConnection.getFeed();
+    String resultXML = feedJsonEvent(json1);
 
     // should be silently treated as true
     assertStringContains("lock=\"true\"",
@@ -1647,6 +1537,57 @@ public class DocPusherTest extends TestCase {
         resultXML);
     assertStringNotContains(SpiConstants.PROPNAME_LOCK,
         resultXML);
+  }
+
+  /** Test doc with pagerank unspecified. */
+  public void testPagerankUnspecified() throws Exception {
+    String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
+        + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
+        + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
+        + "}\r\n" + "";
+    String resultXML = feedJsonEvent(json1);
+
+    assertStringNotContains("pagerank", resultXML);
+    assertStringNotContains(SpiConstants.PROPNAME_LOCK, resultXML);
+  }
+
+  /** Test doc with valid pagerank. */
+  public void testValidPagerank() throws Exception {
+    String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
+        + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
+        + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
+        + ",\"google:pagerank\":\"97\""
+        + "}\r\n" + "";
+    String resultXML = feedJsonEvent(json1);
+
+    assertStringContains("pagerank=\"97\"", resultXML);
+    assertStringNotContains(SpiConstants.PROPNAME_LOCK, resultXML);
+  }
+
+  /** Test doc with invalid pagerank. */
+  public void testInvalidPagerank() throws Exception {
+    String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
+        + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
+        + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
+        + ",\"google:pagerank\":\"abcdef\""
+        + "}\r\n" + "";
+    String resultXML = feedJsonEvent(json1);
+
+    assertStringContains("pagerank=\"abcdef\"", resultXML);
+    assertStringNotContains(SpiConstants.PROPNAME_LOCK, resultXML);
+  }
+
+  /** Test doc with empty pagerank. */
+  public void testEmptyPagerank() throws Exception {
+    String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
+        + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
+        + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
+        + ",\"google:pagerank\":\"\""
+        + "}\r\n" + "";
+    String resultXML = feedJsonEvent(json1);
+
+    assertStringNotContains("pagerank", resultXML);
+    assertStringNotContains(SpiConstants.PROPNAME_LOCK, resultXML);
   }
 
   /**
