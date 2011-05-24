@@ -16,6 +16,7 @@ package com.google.enterprise.connector.util.filter;
 
 import com.google.common.base.Preconditions;
 import com.google.enterprise.connector.spi.Document;
+import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.RepositoryException;
 
 import java.util.HashSet;
@@ -34,9 +35,13 @@ import java.util.Set;
  * orphaned (unless {@code PropertyB} was renamed, as well).
  */
 public class RenamePropertyFilter extends CopyPropertyFilter {
-
+  /**
+   * Gets the set of names of all {@link Property Properties} in the
+   * {@link Document}, substituting original names of renamed Properties
+   * with the new name.
+   */
   @Override
-  protected Set<String> getPropertyNames(Document source)
+  public Set<String> getPropertyNames(Document source)
       throws RepositoryException {
     Preconditions.checkState(nameMap != null, "must set propertyNameMap");
     Set<String> names = new HashSet<String>(source.getPropertyNames());

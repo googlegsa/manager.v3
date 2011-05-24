@@ -53,7 +53,8 @@ public abstract class AbstractDocumentFilter implements DocumentFilterFactory {
    * @throws RepositoryDocumentException if a document has fatal
    *         processing errors
    */
-  protected Property findProperty(Document source, String name)
+  /* @VisibleForJavaDoc */
+  public Property findProperty(Document source, String name)
       throws RepositoryException {
     return source.findProperty(name);
   }
@@ -70,7 +71,8 @@ public abstract class AbstractDocumentFilter implements DocumentFilterFactory {
    * @throws RepositoryDocumentException if a document has fatal
    *         processing errors
    */
-  protected Set<String> getPropertyNames(Document source)
+  /* @VisibleForJavaDoc */
+  public Set<String> getPropertyNames(Document source)
       throws RepositoryException {
     return source.getPropertyNames();
   }

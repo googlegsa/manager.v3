@@ -88,7 +88,8 @@ public class ModifyPropertyFilter extends AbstractDocumentFilter {
   /**
    * Sets the regular expression pattern to match in the values.
    * The supplied {@code pattern} must conform to the syntax defined in
-   * {@link java.util.regex.Pattern}.
+   * <a href="http://java.sun.com/j2se/1.5/docs/api/java/util/regex/Pattern.html">
+   * {@code java.util.regex.Pattern}</a>.
    *
    * @param pattern the regular expression pattern to match in the values
    * @throws PatternSyntaxException if {@code pattern}'s syntax is invalid
@@ -122,8 +123,21 @@ public class ModifyPropertyFilter extends AbstractDocumentFilter {
     this.overwrite = overwrite;
   }
 
+  /**
+   * Finds a {@link Property} by {@code name}. If the {@code source}
+   * {@link Document} has a property of that name, then that property
+   * is returned.
+   * <p/>
+   * {@link Value Values} returned by the supplied {@link Property Properties}.
+   * If any of the Property's values (as a string) match the regular
+   * expression {@code pattern}, then all matching regions of the value
+   * will be replace with the {@code replacement} string.
+   * <p/>
+   * The modified value may either augment or overwrite the original value,
+   * based upon the {@code overwrite} flag.
+   */
   @Override
-  protected Property findProperty(Document source, String name)
+  public Property findProperty(Document source, String name)
       throws RepositoryException {
     Preconditions.checkState(propertyNames != null, "must set propertyNames");
     Preconditions.checkState(pattern != null, "must set pattern");

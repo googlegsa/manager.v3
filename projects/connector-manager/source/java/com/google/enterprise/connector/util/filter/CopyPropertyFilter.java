@@ -43,7 +43,7 @@ public class CopyPropertyFilter extends AbstractDocumentFilter {
 
   /**
    * Sets the property name map.  This {@code Map<String, String>}
-   * maps a new name (the {@key}) to the actual property name
+   * maps a new name (the {@code key}) to the actual property name
    * (the {@code value}).
    *
    * @param propertyNameMap newName-to-propertyName {@link Map}
@@ -54,8 +54,13 @@ public class CopyPropertyFilter extends AbstractDocumentFilter {
     this.nameMap = propertyNameMap;
   }
 
+  /**
+   * Finds a {@link Property} by {@code name}. If the
+   * {@link Document} has a property of that name, then that property
+   * is returned.
+   */
   @Override
-  protected Property findProperty(Document source, String name)
+  public Property findProperty(Document source, String name)
       throws RepositoryException {
     Preconditions.checkState(nameMap != null, "must set propertyNameMap");
 
@@ -66,8 +71,13 @@ public class CopyPropertyFilter extends AbstractDocumentFilter {
     return source.findProperty((realName == null) ? name : realName);
   }
 
+  /**
+   * Gets the set of names of all {@link Property Properties} in the
+   * {@link Document}, including any new Properties that might be
+   * produced by copying other Properties.
+   */
   @Override
-  protected Set<String> getPropertyNames(Document source)
+  public Set<String> getPropertyNames(Document source)
       throws RepositoryException {
     Preconditions.checkState(nameMap != null, "must set propertyNameMap");
     Set<String> superSet = new HashSet<String>(source.getPropertyNames());

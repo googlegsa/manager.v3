@@ -75,6 +75,7 @@
       </classpath>
       <package name="com.google.enterprise.connector.spi"/>
       <package name="com.google.enterprise.connector.util"/>
+      <package name="com.google.enterprise.connector.util.filter"/>
       <package name="com.google.enterprise.connector.util.testing"/>
       <package name="com.google.enterprise.connector.util.diffing"/>
       <package name="com.google.enterprise.connector.util.diffing.testing"/>
