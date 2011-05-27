@@ -66,7 +66,7 @@ public class SnapshotReaderTest extends TestCase {
     read = reader.read();
     assertNull(read);
   }
-  
+
   public void testMissingField() throws IOException {
     try {
       DocumentSnapshot bad = new MissingIdSnapshot("badId", "bad.extra");
@@ -233,7 +233,7 @@ public class SnapshotReaderTest extends TestCase {
       fail();
     } catch (SnapshotReaderException sne) {
       assertTrue(sne.getMessage().contains(
-          "failed to read snapshot record missing record delmiter "));
+          "failed to read snapshot record missing record delimiter "));
     }
   }
 
@@ -269,7 +269,7 @@ public class SnapshotReaderTest extends TestCase {
       fail();
     } catch (SnapshotReaderException sne) {
       assertTrue(sne.getMessage().contains(
-          "failed to read snapshot record missing record delmiter "));
+          "failed to read snapshot record missing record delimiter "));
     }
   }
 
@@ -314,11 +314,11 @@ public class SnapshotReaderTest extends TestCase {
     }
     return new BufferedReader(new StringReader(writer.toString()));
   }
-  
+
   /**
    * Creates a snapshot representation of previous version snapshot files.
    * @return BufferedReader
-   * @throws IOException 
+   * @throws IOException
    */
   private BufferedReader mkReaderWithJsonTypeSnapshot(DocumentSnapshot...snapshots) throws IOException {
     Writer writer = new StringWriter();
