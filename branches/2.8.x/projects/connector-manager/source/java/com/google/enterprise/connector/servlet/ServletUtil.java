@@ -108,8 +108,10 @@ public class ServletUtil {
   public static final String XMLTAG_MANAGER_CONFIG_XML = "ManagerConfigXml";
   public static final String XMLTAG_MANAGER_CONFIG = "ManagerConfig";
   public static final String XMLTAG_FEEDERGATE = "FeederGate";
+  public static final String XMLTAG_FEEDERGATE_PROTOCOL = "protocol";
   public static final String XMLTAG_FEEDERGATE_HOST = "host";
   public static final String XMLTAG_FEEDERGATE_PORT = "port";
+  public static final String XMLTAG_FEEDERGATE_SECURE_PORT = "securePort";
 
   public static final String XMLTAG_CONNECTOR_CONFIG = "ConnectorConfig";
   public static final String XMLTAG_CONNECTOR_CONFIG_XML = "ConnectorConfigXml";

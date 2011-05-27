@@ -52,6 +52,21 @@ public class SnapshotReaderTest extends TestCase {
     assertNull(read);
   }
 
+  public void testReaderBackwardCompatibility() throws IOException, SnapshotReaderException {
+    BufferedReader br = mkReaderWithJsonTypeSnapshot(good1, good2);
+    SnapshotReader reader =
+        new SnapshotReader(br, "test", 7, new MockDocumentSnapshotFactory());
+    assertEquals(7, reader.getSnapshotNumber());
+    DocumentSnapshot read = reader.read();
+    assertNotNull(read);
+    assertEquals(read, good1);
+    read = reader.read();
+    assertNotNull(read);
+    assertEquals(read, good2);
+    read = reader.read();
+    assertNull(read);
+  }
+
   public void testMissingField() throws IOException {
     try {
       DocumentSnapshot bad = new MissingIdSnapshot("badId", "bad.extra");
@@ -86,7 +101,7 @@ public class SnapshotReaderTest extends TestCase {
       reader.read();
       fail();
     } catch (SnapshotReaderException expected) {
-      assertTrue(expected.getMessage().contains("failed to read snapshot record"));
+      assertTrue(expected.getMessage().contains("failed to decide which record reader to use"));
     }
   }
 
@@ -218,7 +233,7 @@ public class SnapshotReaderTest extends TestCase {
       fail();
     } catch (SnapshotReaderException sne) {
       assertTrue(sne.getMessage().contains(
-          "failed to read snapshot record missing record delmiter "));
+          "failed to read snapshot record missing record delimiter "));
     }
   }
 
@@ -254,7 +269,7 @@ public class SnapshotReaderTest extends TestCase {
       fail();
     } catch (SnapshotReaderException sne) {
       assertTrue(sne.getMessage().contains(
-          "failed to read snapshot record missing record delmiter "));
+          "failed to read snapshot record missing record delimiter "));
     }
   }
 
@@ -297,6 +312,26 @@ public class SnapshotReaderTest extends TestCase {
     for (DocumentSnapshot snapshot : snapshots) {
       SnapshotWriter.write(snapshot, writer);
     }
+    return new BufferedReader(new StringReader(writer.toString()));
+  }
+
+  /**
+   * Creates a snapshot representation of previous version snapshot files.
+   * @return BufferedReader
+   * @throws IOException
+   */
+  private BufferedReader mkReaderWithJsonTypeSnapshot(DocumentSnapshot...snapshots) throws IOException {
+    Writer writer = new StringWriter();
+    for (DocumentSnapshot snapshot : snapshots) {
+      String stringForm = snapshot.toString();
+      if (stringForm == null) {
+        throw new IllegalArgumentException(
+            "DocumentSnapshot.toString returned null.");
+      }
+      writer.write(stringForm);
+      writer.write(SnapshotWriter.RECORD_DELIMITER);
+    }
+    writer.flush();
     return new BufferedReader(new StringReader(writer.toString()));
   }
 

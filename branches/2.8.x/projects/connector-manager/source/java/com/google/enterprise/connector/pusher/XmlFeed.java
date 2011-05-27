@@ -63,6 +63,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
     propertySkipSet.add(SpiConstants.PROPNAME_CONTENT);
     propertySkipSet.add(SpiConstants.PROPNAME_DOCID);
     propertySkipSet.add(SpiConstants.PROPNAME_LOCK);
+    propertySkipSet.add(SpiConstants.PROPNAME_PAGERANK);
   }
 
   // Strings for XML tags.
@@ -86,6 +87,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
   private static final String XML_LAST_MODIFIED = "last-modified";
   private static final String XML_LOCK = "lock";
   private static final String XML_AUTHMETHOD = "authmethod";
+  private static final String XML_PAGERANK = "pagerank";
   private static final String XML_NAME = "name";
   private static final String XML_ENCODING = "encoding";
 
@@ -342,6 +344,11 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
     if (lock) {
       XmlUtils.xmlAppendAttr(XML_LOCK, Value.getBooleanValue(true).toString(), prefix);
     }
+
+    // Do not validate the values, just send them in the feed.
+    String pagerank =
+        DocUtils.getOptionalString(document, SpiConstants.PROPNAME_PAGERANK);
+    XmlUtils.xmlAppendAttr(XML_PAGERANK, pagerank, prefix);
 
     String mimetype =
         DocUtils.getOptionalString(document, SpiConstants.PROPNAME_MIMETYPE);

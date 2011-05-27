@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.manager;
 
+import com.google.common.base.Strings;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.persist.PersistentStoreException;
@@ -53,6 +54,9 @@ public class MockManager implements Manager {
   private String username;
   private String password;
   private Collection<String> groups;
+
+  /** Stand-in for the manager.locked property. */
+  private boolean isLocked = false;
 
   // Protected constructor used by JUnit test subclasses.
   protected MockManager() {
@@ -210,15 +214,32 @@ public class MockManager implements Manager {
     return null;
   }
 
+  final Properties managerConfig = new Properties();
+
   /* @Override */
   public Properties getConnectorManagerConfig() {
-    return new Properties();
+    return managerConfig;
   }
 
   /* @Override */
-  public void setConnectorManagerConfig(String feederGateHost,
-      int feederGatePort) {
-    // do nothing
+  public void setConnectorManagerConfig(String feederGateProtocol,
+      String feederGateHost, int feederGatePort, int feederGateSecurePort) {
+    if (!Strings.isNullOrEmpty(feederGateProtocol)) {
+      managerConfig.put(Context.GSA_FEED_PROTOCOL_PROPERTY_KEY,
+          feederGateProtocol);
+    }
+    if (!Strings.isNullOrEmpty(feederGateHost)) {
+      managerConfig.put(Context.GSA_FEED_HOST_PROPERTY_KEY,
+          feederGateHost);
+    }
+    managerConfig.put(Context.GSA_FEED_PORT_PROPERTY_KEY,
+        String.valueOf(feederGatePort));
+    if (feederGateSecurePort >= 0) {
+      managerConfig.put(Context.GSA_FEED_SECURE_PORT_PROPERTY_KEY,
+          String.valueOf(feederGateSecurePort));
+    }
+
+    isLocked = true;
   }
 
   /* @Override */
@@ -247,7 +268,12 @@ public class MockManager implements Manager {
 
   /* @Override */
   public boolean isLocked() {
-    return false;
+    return isLocked;
+  }
+
+  /** The tests need to reset isLocked. */
+  public void setLocked(boolean isLocked) {
+    this.isLocked = isLocked;
   }
 
   public void setShouldVerifyIdentity(boolean b) {
