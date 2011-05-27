@@ -11,8 +11,8 @@ issues and work-arounds.
 Web Site: http://code.google.com/p/google-enterprise-connector-manager/
 
 
-Release 2.8.0, 01 May 2011
-==========================
+Release 2.8.0, 01 June 2011
+===========================
 
 Introduction
 ------------
@@ -43,8 +43,19 @@ Summary of Changes
     Note that ConnectorPersistentStore.getLocalDocumentStore() is disabled
     in this release.
 
-  * The SPI AuthenticationManager and AuthenticationResponse classes have been
-    enhanced to allow the connector to return repository local groups for a user.
+  * Fixed Bug 4062256 - Failure to delete snapshot files would throw
+    IllegalStateException.  This affected the File System, LDAP, and
+    Database Connectors.
+
+  * The SPI AuthenticationManager and AuthenticationResponse classes have
+    been enhanced to allow the connector to return repository local groups
+    for a user.
+
+  * A new pagerank document property is now supported.
+    The SpiConstants.PROPNAME_PAGERANK property allows the connector to
+    recommend a pagerank (0-100) for the document if it matches queries.
+    For more information on pagerank see:
+    http://code.google.com/apis/searchappliance/documentation/610/feedsguide.html#defining_the_xml
 
   * Fixed a minor problem that prevented connectors from running in the
     JBoss Application Server.  See the JBoss deployment wiki page:
@@ -59,6 +70,26 @@ Summary of Changes
       - application/vnd.ms-powerpoint.presentation.12
       - application/vnd.ms-word.document.12
 
+  * Added support for Secure Socket Layer (SSL) feeds to the Google Search
+    Appliance.  At the present time, SSL feeds must be manually configured.
+    For additional details, see the Advanced Configuration wiki page:
+    http://code.google.com/p/google-enterprise-connector-manager/wiki/AdvancedConfiguration
+
+  * New Document Filters utility package additions to the SPI for use by
+    connector developers, connector administrators, and systems integrators.
+    Document filters act to transform their source Document's Properties.
+    Document filters can add, remove, or modify a document's properties,
+    including the document content.  Properties in which the filter has
+    no interest are passed through unmodified. A document filter might
+    even throw a SkippedDocumentException to prevent a document from being
+    fed to the Google Search Appliance.
+    Multiple document filters may be chained together, forming
+    a transformational document processing pipeline.  Similar to a
+    Unix command pipeline, the filters are linked together, each using
+    the previous one as its source Document.
+    For more information see the Document Filters wiki page:
+    http://code.google.com/p/google-enterprise-connector-manager/wiki/DocumentFilters
+
   * New additions to the SPI:
       - ConnectorPersistentStore - Provides access to the LocalDatabase
       - ConnectorPersistentStoreAware - Advertises that the Connector
@@ -66,6 +97,7 @@ Summary of Changes
       - DatabaseResourceBundle - Vendor-specific SQL language translations
       - LocalDatabase - Provides access to the configured JDBC DataSource and
         DatabaseResourceBundles
+      - SpiConstants.PROPNAME_PAGERANK
     For additional information, please refer to the JavaDoc at:
     http://google-enterprise-connector-manager.googlecode.com/svn/docs/javadoc/2.8.0/index.html
 
