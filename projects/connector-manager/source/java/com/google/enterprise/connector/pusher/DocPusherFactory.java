@@ -15,6 +15,10 @@
 package com.google.enterprise.connector.pusher;
 
 import com.google.enterprise.connector.traversal.FileSizeLimitInfo;
+import com.google.enterprise.connector.util.filter.DocumentFilterChain;
+import com.google.enterprise.connector.util.filter.DocumentFilterFactory;
+
+import java.util.logging.Logger;
 
 /**
  * Factory that creates {@link DocPusher} instances that feed
@@ -23,6 +27,10 @@ import com.google.enterprise.connector.traversal.FileSizeLimitInfo;
 // TODO: Support multiple sinks where different connector instances
 // might feed different sinks.
 public class DocPusherFactory implements PusherFactory {
+
+  private static final Logger LOGGER =
+      Logger.getLogger(DocPusherFactory.class.getName());
+
   /**
    * FeedConnection that is the sink for our generated XmlFeeds.
    */
@@ -34,13 +42,24 @@ public class DocPusherFactory implements PusherFactory {
   private final FileSizeLimitInfo fileSizeLimit;
 
   /**
+   * The {@link DocumentFilterFactory} is used to construct
+   * {@code Document} instances that act as filters on a source
+   * document.  Document filters may add, remove, or modify
+   * {@code Properties}.  The DocumentFilterFactory set here
+   * is typically a {@link DocumentFilterChain} - a chain of
+   * DocumentFilterFactories that is used to construct a
+   * Document manipulation pipeline.
+   */
+  private final DocumentFilterFactory documentFilterFactory;
+
+  /**
    * Creates a {@code DocPusherFactory} object from the specified
    * {@code feedConnection}.
    *
    * @param feedConnection a FeedConnection
    */
   public DocPusherFactory(FeedConnection feedConnection) {
-    this(feedConnection, new FileSizeLimitInfo());
+    this(feedConnection, new FileSizeLimitInfo(), new DocumentFilterChain());
   }
 
   /**
@@ -52,15 +71,24 @@ public class DocPusherFactory implements PusherFactory {
    * @param feedConnection a {@link FeedConnection} sink for documents.
    * @param fileSizeLimit {@link FileSizeLimitInfo} constraints on document
    *        content and feed size.
+   * @param documentFilterFactory a {@link DocumentFilterFactory} that creates
+   *        document processing filters.
    */
   public DocPusherFactory(FeedConnection feedConnection,
-                          FileSizeLimitInfo fileSizeLimit) {
+                          FileSizeLimitInfo fileSizeLimit,
+                          DocumentFilterFactory documentFilterFactory) {
     this.feedConnection = feedConnection;
     this.fileSizeLimit = fileSizeLimit;
+    this.documentFilterFactory = documentFilterFactory;
+
+    LOGGER.config(feedConnection.toString());
+    LOGGER.config(fileSizeLimit.toString());
+    LOGGER.config(documentFilterFactory.toString());
   }
 
   //@Override
   public Pusher newPusher(String dataSource) {
-    return new DocPusher(feedConnection, dataSource, fileSizeLimit);
+    return new DocPusher(feedConnection, dataSource, fileSizeLimit,
+                         documentFilterFactory);
   }
 }

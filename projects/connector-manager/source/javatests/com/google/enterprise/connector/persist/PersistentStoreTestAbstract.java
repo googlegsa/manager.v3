@@ -234,7 +234,7 @@ public abstract class PersistentStoreTestAbstract extends TestCase {
         new Configuration(TYPENAME, configMap, CONFIG_XML);
     store.storeConnectorConfiguration(storeContext, expectedConfig);
     Configuration resultConfig = store.getConnectorConfiguration(storeContext);
-    compareConfigurations(expectedConfig, resultConfig);
+    ConnectorTestUtils.compareConfigurations(expectedConfig, resultConfig);
   }
 
   // Tests changing a connector configuration.
@@ -249,7 +249,7 @@ public abstract class PersistentStoreTestAbstract extends TestCase {
         new Configuration(TYPENAME, configMap, CONFIG_XML);
     store.storeConnectorConfiguration(storeContext, expectedConfig);
     Configuration resultConfig = store.getConnectorConfiguration(storeContext);
-    compareConfigurations(expectedConfig, resultConfig);
+    ConnectorTestUtils.compareConfigurations(expectedConfig, resultConfig);
 
     // Now change the configuration and make sure it sticks.
     configMap.remove("property2");
@@ -257,7 +257,7 @@ public abstract class PersistentStoreTestAbstract extends TestCase {
     expectedConfig = new Configuration(TYPENAME, configMap, null);
     store.storeConnectorConfiguration(storeContext, expectedConfig);
     resultConfig = store.getConnectorConfiguration(storeContext);
-    compareConfigurations(expectedConfig, resultConfig);
+    ConnectorTestUtils.compareConfigurations(expectedConfig, resultConfig);
   }
 
   // Tests getting and setting a configuration that should encrypt
@@ -276,7 +276,7 @@ public abstract class PersistentStoreTestAbstract extends TestCase {
         new Configuration(TYPENAME, configMap, null);
     store.storeConnectorConfiguration(storeContext, expectedConfig);
     Configuration resultConfig = store.getConnectorConfiguration(storeContext);
-    compareConfigurations(expectedConfig, resultConfig);
+    ConnectorTestUtils.compareConfigurations(expectedConfig, resultConfig);
   }
 
   // Tests getting configuration for an unknown connector.
@@ -312,8 +312,8 @@ public abstract class PersistentStoreTestAbstract extends TestCase {
     checkIsEmpty(store);
     store.storeConnectorConfiguration(context, configuration);
     checkContains(store, context);
-    compareConfigurations(configuration,
-                          store.getConnectorConfiguration(context));
+    ConnectorTestUtils.compareConfigurations(configuration,
+        store.getConnectorConfiguration(context));
     assertNull(store.getConnectorState(context));
     assertNull(store.getConnectorSchedule(context));
     store.removeConnectorConfiguration(context);
@@ -330,8 +330,8 @@ public abstract class PersistentStoreTestAbstract extends TestCase {
     store.storeConnectorState(context, checkpoint);
     checkContains(store, context);
 
-    compareConfigurations(configuration,
-                          store.getConnectorConfiguration(context));
+    ConnectorTestUtils.compareConfigurations(configuration,
+        store.getConnectorConfiguration(context));
     compareSchedules(schedule, store.getConnectorSchedule(context));
     assertEquals(checkpoint, store.getConnectorState(context));
 
@@ -357,8 +357,10 @@ public abstract class PersistentStoreTestAbstract extends TestCase {
     checkContains(store, one);
     checkContains(store, two);
 
-    compareConfigurations(configuration2, store.getConnectorConfiguration(two));
-    compareConfigurations(configuration, store.getConnectorConfiguration(one));
+    ConnectorTestUtils.compareConfigurations(configuration2,
+        store.getConnectorConfiguration(two));
+    ConnectorTestUtils.compareConfigurations(configuration,
+        store.getConnectorConfiguration(one));
 
     assertNull(store.getConnectorState(one));
     assertNull(store.getConnectorSchedule(one));
@@ -385,8 +387,10 @@ public abstract class PersistentStoreTestAbstract extends TestCase {
     checkContains(store, one);
     checkContains(store, two);
 
-    compareConfigurations(configuration2, store.getConnectorConfiguration(two));
-    compareConfigurations(configuration, store.getConnectorConfiguration(one));
+    ConnectorTestUtils.compareConfigurations(configuration2,
+        store.getConnectorConfiguration(two));
+    ConnectorTestUtils.compareConfigurations(configuration,
+        store.getConnectorConfiguration(one));
 
     assertNull(store.getConnectorState(one));
     assertNull(store.getConnectorSchedule(one));
@@ -423,11 +427,13 @@ public abstract class PersistentStoreTestAbstract extends TestCase {
     checkContains(store, one);
     checkContains(store, two);
 
-    compareConfigurations(configuration, store.getConnectorConfiguration(one));
+    ConnectorTestUtils.compareConfigurations(configuration,
+        store.getConnectorConfiguration(one));
     compareSchedules(schedule, store.getConnectorSchedule(one));
     assertEquals(checkpoint, store.getConnectorState(one));
 
-    compareConfigurations(configurationTwo, store.getConnectorConfiguration(two));
+    ConnectorTestUtils.compareConfigurations(configurationTwo,
+        store.getConnectorConfiguration(two));
     compareSchedules(scheduleTwo, store.getConnectorSchedule(two));
     assertNull(store.getConnectorState(two));
 
@@ -457,15 +463,6 @@ public abstract class PersistentStoreTestAbstract extends TestCase {
     assertFalse(inventory.toString(), inventory.isEmpty());
     assertTrue(inventory.keySet().toString(),
         inventory.keySet().contains(context));
-  }
-
-  // TODO: We might consider implementing Configuration.equals().
-  private static void compareConfigurations(Configuration expected,
-                                            Configuration result) {
-    assertNotNull(result);
-    assertEquals(expected.getTypeName(), result.getTypeName());
-    assertEquals(expected.getXml(), result.getXml());
-    ConnectorTestUtils.compareMaps(expected.getMap(), result.getMap());
   }
 
   // TODO: We might consider implementing Schedule.equals().

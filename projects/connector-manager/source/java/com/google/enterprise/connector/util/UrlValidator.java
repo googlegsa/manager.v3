@@ -19,22 +19,14 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.security.GeneralSecurityException;
-import java.security.cert.X509Certificate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 
 /**
  * Validates URLs by making an HTTP request.
  *
- * @since 2.8
+ * @since 2.6.6
  */
 /*
  * TODO: We might want to merge XmlFeed#validateSearchUrl into this class.
@@ -46,32 +38,6 @@ public class UrlValidator {
   /** The logger for this class. */
   private static final Logger LOGGER =
       Logger.getLogger(UrlValidator.class.getName());
-
-  /** An all-trusting TrustManager for SSL URL validation. */
-  private static final TrustManager[] trustAllCerts =
-      new TrustManager[] {
-          new X509TrustManager() {
-              public X509Certificate[] getAcceptedIssuers() {
-                  return null;
-              }
-              public void checkServerTrusted(
-                  X509Certificate[] certs, String authType) {
-                    return;
-              }
-              public void checkClientTrusted(
-                  X509Certificate[] certs, String authType) {
-                    return;
-              }
-          }
-      };
-
-  /** An all-trusting HostnameVerifier for SSL URL validation. */
-  private static final HostnameVerifier trustAllHosts =
-      new HostnameVerifier() {
-        public boolean verify(String hostname, SSLSession session) {
-          return true;
-        }
-      };
 
   /** The connect timeout. */
   private volatile int connectTimeout = 60 * 1000;
@@ -230,7 +196,7 @@ public class UrlValidator {
 
     HttpURLConnection httpConn = (HttpURLConnection) conn;
     if (httpConn instanceof HttpsURLConnection) {
-      setTrustingHttpsOptions((HttpsURLConnection) httpConn);
+      SslUtil.setTrustingHttpsOptions((HttpsURLConnection) httpConn);
     }
     setTimeouts(conn);
     httpConn.setRequestMethod(requestMethod);
@@ -264,24 +230,6 @@ public class UrlValidator {
     } finally {
       httpConn.disconnect();
     }
-  }
-
-  /**
-   * Replaces the default {@code TrustManager} for this
-   * connection with one that trusts all certificates, and the default
-   * {@code HostnameVerifier} with one that accepts all
-   * hostnames.
-   *
-   * @param conn the HTTPS URL connection
-   * @throws GeneralSecurityException if an error occurs setting the properties
-   */
-  private void setTrustingHttpsOptions(HttpsURLConnection conn)
-      throws GeneralSecurityException {
-    SSLContext sc = SSLContext.getInstance("SSL");
-    sc.init(null, trustAllCerts, null);
-    SSLSocketFactory factory = sc.getSocketFactory();
-    conn.setSSLSocketFactory(factory);
-    conn.setHostnameVerifier(trustAllHosts);
   }
 
   /**

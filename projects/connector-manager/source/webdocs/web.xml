@@ -139,11 +139,6 @@
   </servlet>
 
   <servlet>
-    <servlet-name>UpdateConnector</servlet-name>
-    <servlet-class>com.google.enterprise.connector.servlet.UpdateConnector</servlet-class>
-  </servlet>
-
-  <servlet>
     <servlet-name>RestartConnectorTraversal</servlet-name>
     <servlet-class>com.google.enterprise.connector.servlet.RestartConnectorTraversal</servlet-class>
   </servlet>
@@ -176,11 +171,6 @@
   <servlet>
     <servlet-name>SetManagerConfigNoGSA</servlet-name>
     <servlet-class>com.google.enterprise.connector.servlet.SetManagerConfigNoGSA</servlet-class>
-  </servlet>
-
-  <servlet>
-    <servlet-name>UpdateConnectorNoGSA</servlet-name>
-    <servlet-class>com.google.enterprise.connector.servlet.UpdateConnectorNoGSA</servlet-class>
   </servlet>
 
   <servlet>
@@ -293,11 +283,6 @@
   </servlet-mapping>
 
   <servlet-mapping>
-    <servlet-name>UpdateConnector</servlet-name>
-    <url-pattern>/updateConnector</url-pattern>
-  </servlet-mapping>
-
-  <servlet-mapping>
     <servlet-name>RestartConnectorTraversal</servlet-name>
     <url-pattern>/restartConnectorTraversal</url-pattern>
   </servlet-mapping>
@@ -330,11 +315,6 @@
   <servlet-mapping>
     <servlet-name>SetManagerConfigNoGSA</servlet-name>
     <url-pattern>/setManagerConfigTest</url-pattern>
-  </servlet-mapping>
-
-  <servlet-mapping>
-    <servlet-name>UpdateConnectorNoGSA</servlet-name>
-    <url-pattern>/updateConnectorTest</url-pattern>
   </servlet-mapping>
 
   <servlet-mapping>
