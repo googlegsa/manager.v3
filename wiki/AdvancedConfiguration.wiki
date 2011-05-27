@@ -46,6 +46,17 @@ not XML-formatted properties files.
 
 == Feed Connection Properties ==
 
+===gsa.feed.protocol===
+The `gsa.feed.protocol` property specifies the URL protocol for
+the feed host on the GSA. The supported values are `http` and
+`https`.
+For example:
+{{{
+gsa.feed.protocol=http
+}}}
+
+_Since:_ 2.8.0
+
 ===gsa.feed.host===
 The `gsa.feed.host` property specifies the host IP address for the
 feed host on the Google Search Appliance.
@@ -54,13 +65,36 @@ For example:
 gsa.feed.host=172.24.2.0
 }}}
 
-===gsa.feed.host===
-The `gsa.feed.port` property specifies the host port for the feed
-host on the Google Search Appliance.
+===gsa.feed.port===
+The `gsa.feed.port` property specifies the HTTP host port for the
+feed host on the GSA.
 For example:
 {{{
 gsa.feed.port=19900
 }}}
+
+===gsa.feed.securePort===
+The `gsa.feed.securePort` property specifies the HTTPS host port
+for the feed host on the GSA. This port will be used if the
+`gsa.feed.host` property is set to `https`.
+For example:
+{{{
+gsa.feed.securePort=19902
+}}}
+
+_Since:_ 2.8.0
+
+===gsa.feed.validateCertificate===
+The `gsa.feed.validateCertificate` property specifies whether to
+validate the GSA certificate when sending SSL feeds. If the GSA
+certificate is installed in the Tomcat keystore, this should be
+set to `true`, otherwise it must be set to `false`.
+For example:
+{{{
+gsa.feed.validateCertificate=false
+}}}
+
+_Since:_ 2.8.0
 
 ===manager.locked===
 The `manager.locked` property is used to lock out the Admin Servlet
@@ -258,7 +292,7 @@ search results.  Traversals are enabled by default.
 traversal.enabled=false
 }}}
 
-_since v2.6.0_
+_Since:_ 2.6.0
 
 
 ==Miscellaneous Properties==
@@ -275,4 +309,4 @@ detection interval is 0 (never).
 config.change.detect.interval=60
 }}}
 
-_since v2.8.0_
+_Since:_ 2.8.0
