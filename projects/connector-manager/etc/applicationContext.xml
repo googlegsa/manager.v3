@@ -77,10 +77,20 @@
         <prop key="config.change.detect.interval">0</prop>
 
         <!-- JDBC DataSource configuration. -->
+        <prop key="jdbc.datasource.type">EmbeddedH2</prop>
         <prop key="jdbc.datasource.h2.url">jdbc:h2:${catalina.base}/webapps/connector-manager/WEB-INF/connector_manager.dbstore/connector-manager;AUTO_SERVER=TRUE;TRACE_LEVEL_FILE=1;MVCC=TRUE;CACHE_SIZE=131072;MAX_OPERATION_MEMORY=0</prop>
         <prop key="jdbc.datasource.h2.user">sa</prop>
         <prop key="jdbc.datasource.h2.password"></prop>
 
+        <prop key="jdbc.datasource.mysql.url"></prop>
+        <prop key="jdbc.datasource.mysql.user"></prop>
+        <prop key="jdbc.datasource.mysql.password"></prop>
+        <prop key="jdbc.datasource.oracle.url"></prop>
+        <prop key="jdbc.datasource.oracle.user"></prop>
+        <prop key="jdbc.datasource.oracle.password"></prop>
+        <prop key="jdbc.datasource.sqlserver.url"></prop>
+        <prop key="jdbc.datasource.sqlserver.user"></prop>
+        <prop key="jdbc.datasource.sqlserver.password"></prop>
       </props>
     </property>
   </bean>
@@ -106,7 +116,7 @@
     <constructor-arg index="2" type="int" value="${gsa.feed.port}"/>
     <constructor-arg index="3" type="int" value="${gsa.feed.securePort}"/>
     <property name="clock" ref="Clock"/>
-    <property name="validateCertificate" 
+    <property name="validateCertificate"
               value="${gsa.feed.validateCertificate}"/>
   </bean>
 
@@ -188,23 +198,145 @@
     </property>
   </bean>
 
+  <!-- JDBC DataSource, JdbcDatabase, and JdbcPersistentStore configurations.
+       The Connector Installer supports using Embedded H2, Oracle,
+       Microsoft SQL Server, or MySQL database implementations.
+
+       Each DataSource also has an associated PersistentStore bean that
+       may be used as a source or destination for configuration migration
+       using the MigrateStore command.
+
+       Spring does not really support conditional bean creation, so a JDBC
+       DataSource factory is used.  The Factory creates real DataSource beans
+       if the vender implementation driver is found and if the DataSource URL
+       property has been specified, otherwise a fake DataSource bean is created.
+       This allows the Installer to simply set properties in the .properties
+       file to configure use of one or more of these vendor implementations.
+
+       The strange bean names (with both mixed case and lowercase prefixes)
+       allow for the substitution of the configured jdbc.datasource.type
+       property when resolving bean names.  The lowercase prefix matches
+       the SpiConstants.DatabaseType constants.  The (less ugly) mixed case
+       ids will be shown in MigrateStore available store listings and menus.
+  -->
+
   <!-- H2 embedded database configuration. -->
-  <bean id="JdbcDataSource"
+  <bean id="EmbeddedH2DataSource"  lazy-init="true"
         class="org.h2.jdbcx.JdbcDataSource">
     <property name="URL" value="${jdbc.datasource.h2.url}"/>
     <property name="user" value="${jdbc.datasource.h2.user}"/>
     <property name="password" value="${jdbc.datasource.h2.password}"/>
   </bean>
+  <bean id="EmbeddedH2Database" name="H2Database,h2Database"
+        class="com.google.enterprise.connector.util.database.JdbcDatabase"
+        lazy-init="true">
+    <constructor-arg ref="EmbeddedH2DataSource" />
+  </bean>
+  <bean id="EmbeddedH2PersistentStore"
+        name="H2PersistentStore,h2PersistentStore"
+        class="com.google.enterprise.connector.persist.JdbcStore"
+        lazy-init="true">
+    <property name="database" ref="EmbeddedH2Database"/>
+  </bean>
 
-  <bean id="JdbcDatabase" class="com.google.enterprise.connector.util.database.JdbcDatabase">
-    <constructor-arg ref="JdbcDataSource" />
+  <!-- Microsoft SQL Server database configuration. -->
+  <bean id="SqlServerDataSource" lazy-init="true"
+        class="com.google.enterprise.connector.database.JdbcDataSourceFactory"
+        factory-method="newJdbcDataSource">
+    <constructor-arg index="0" type="java.lang.String" value="Microsoft SQL Server"/>
+    <constructor-arg index="1" type="java.lang.String" value="com.microsoft.sqlserver.jdbc.SQLServerDataSource"/>
+    <constructor-arg index="2" type="java.lang.String" value="${jdbc.datasource.sqlserver.url}"/>
+
+    <property name="URL" value="${jdbc.datasource.sqlserver.url}"/>
+    <property name="user" value="${jdbc.datasource.sqlserver.user}"/>
+    <property name="password" value="${jdbc.datasource.sqlserver.password}"/>
+  </bean>
+  <bean id="SqlServerDatabase" name="sqlserverDatabase"
+        class="com.google.enterprise.connector.util.database.JdbcDatabase"
+        lazy-init="true">
+    <constructor-arg ref="SqlServerDataSource" />
+  </bean>
+  <bean id="SqlServerPersistentStore" name="sqlserverPersistentStore"
+        class="com.google.enterprise.connector.persist.JdbcStore"
+        lazy-init="true">
+    <property name="database" ref="SqlServerDatabase"/>
+  </bean>
+
+  <!-- Oracle 9i, 10g, 11g database configuration. -->
+  <!-- Note that our implementation supports CLOB upto 32,765 bytes. -->
+  <bean id="OracleDataSource" lazy-init="true"
+        class="com.google.enterprise.connector.database.JdbcDataSourceFactory"
+        factory-method="newJdbcDataSource">
+    <constructor-arg index="0" type="java.lang.String" value="Oracle"/>
+    <constructor-arg index="1" type="java.lang.String" value="oracle.jdbc.pool.OracleDataSource"/>
+    <constructor-arg index="2" type="java.lang.String" value="${jdbc.datasource.oracle.url}"/>
+
+    <property name="URL" value="${jdbc.datasource.oracle.url}"/>
+    <property name="user" value="${jdbc.datasource.oracle.user}"/>
+    <property name="password" value="${jdbc.datasource.oracle.password}"/>
+  </bean>
+  <bean id="OracleDatabase" name="oracleDatabase"
+        class="com.google.enterprise.connector.util.database.JdbcDatabase"
+        lazy-init="true">
+    <constructor-arg ref="OracleDataSource" />
+  </bean>
+  <bean id="OraclePersistentStore" name="oraclePersistentStore"
+        class="com.google.enterprise.connector.persist.JdbcStore"
+        lazy-init="true">
+    <property name="database" ref="OracleDatabase"/>
+  </bean>
+
+  <!-- MySQL database configuration. -->
+  <!-- Requires MySQL 5.0.3 or greater for support of VARCHAR upto 65,535 bytes. -->
+  <bean id="MySqlDataSource" lazy-init="true"
+        class="com.google.enterprise.connector.database.JdbcDataSourceFactory"
+        factory-method="newJdbcDataSource">
+    <constructor-arg index="0" type="java.lang.String" value="MySQL"/>
+    <constructor-arg index="1" type="java.lang.String" value="com.mysql.jdbc.jdbc2.optional.MysqlDataSource"/>
+    <constructor-arg index="2" type="java.lang.String" value="${jdbc.datasource.mysql.url}"/>
+
+    <property name="URL" value="${jdbc.datasource.mysql.url}"/>
+    <property name="user" value="${jdbc.datasource.mysql.user}"/>
+    <property name="password" value="${jdbc.datasource.mysql.password}"/>
+  </bean>
+  <bean id="MySqlDatabase" name="mysqlDatabase"
+        class="com.google.enterprise.connector.util.database.JdbcDatabase"
+        lazy-init="true">
+    <constructor-arg ref="MySqlDataSource" />
+  </bean>
+  <bean id="MySqlPersistentStore" name="mysqlPersistentStore"
+        class="com.google.enterprise.connector.persist.JdbcStore"
+        lazy-init="true">
+    <property name="database" ref="MySqlDatabase"/>
+  </bean>
+
+  <!-- ConnectorPersistentStore for ConnectorPersistentStoreAware Connectors. -->
+  <bean id="ConnectorPersistentStoreFactory"
+        class="com.google.enterprise.connector.database.ConnectorPersistentStoreFactory">
+    <constructor-arg  ref="${jdbc.datasource.type}Database"/>
   </bean>
 
   <!-- Persistent Store mechanism used to store the Connector Configuration,
-       Connector Schedule, and Connector Traversal State.  This implementation
-       stores the information in files in the Connector instance directory.
+       Connector Schedule, and Connector Traversal State.
+
+       Any number of uniquely named beans my implement the PersistentStore
+       interface.  Properly configured PersistentStore beans will be available
+       as source or destination stores for the MigrateStore command.
+
+       However, one and only one bean named "PersistentStore" may be defined
+       at any time.  This will be used as the primary PersistentStore.
   -->
-  <bean id="FilePersistentStore" name="PersistentStore"
+  <!-- This PersistentStore implementation stores the information
+       in the configured JDBC accessible database.
+  <alias name="${jdbc.datasource.type}PersistentStore" alias="PersistentStore"/>
+  -->
+
+  <!-- This Persistent Store implementation stores the information
+       in files in the Connector instance directory.
+  -->
+  <alias name="FilePersistentStore" alias="PersistentStore"/>
+
+  <bean id="FilePersistentStore" lazy-init="true"
         class="com.google.enterprise.connector.persist.FileStore">
     <property name="typeMap" ref="TypeMap"/>
   </bean>
@@ -259,11 +391,6 @@
     <property name="fileSizeLimitInfo" ref="FileSizeLimitInfo"/>
     <property name="batchSize" value="${traversal.batch.size}"/>
     <property name="clock" ref="Clock"/>
-  </bean>
-
-  <bean id="ConnectorPersistentStoreFactory"
-        class="com.google.enterprise.connector.database.ConnectorPersistentStoreFactory">
-    <constructor-arg  ref="JdbcDatabase"/>
   </bean>
 
   <bean id="ConnectorCoordinatorFactory"

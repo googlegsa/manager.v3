@@ -30,6 +30,15 @@ import com.google.enterprise.connector.scheduler.Schedule;
 // TODO: Change StoreContext to String (instance name).
 public interface PersistentStore {
   /**
+   * Determines if a {@code PersistentStore} is currently disabled for any
+   * reason.
+   *
+   * @return {@code true} if this PersistentStore is disabled, {@code false}
+   * otherwise.
+   */
+  boolean isDisabled();
+
+  /**
    * Gets the version stamps of all persistent objects.
    *
    * @return an immutable map containing the version stamps; may be

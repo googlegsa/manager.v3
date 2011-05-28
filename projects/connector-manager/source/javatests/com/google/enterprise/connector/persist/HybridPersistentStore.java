@@ -33,6 +33,14 @@ public class HybridPersistentStore implements PersistentStore {
  }
 
   /* @Override */
+  public boolean isDisabled() {
+    return (configurationStore.isDisabled() &&
+            scheduleStore.isDisabled() &&
+            stateStore.isDisabled());
+  }
+
+
+  /* @Override */
   public ImmutableMap<StoreContext, ConnectorStamps> getInventory() {
     ImmutableMap<StoreContext, ConnectorStamps> scheduleInventory =
         scheduleStore.getInventory();
