@@ -1,0 +1,107 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html>
+<head>
+<!--
+
+  Copyright 2006 Google Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+
+-->
+</head>
+<body bgcolor="white">
+
+<p>Defines the SPI for connector developers who wish to write
+plug-ins to the Google Search Appliance.</p>
+
+<h2>Package Specification</h2>
+
+<p>The Connector Manager uses the <a
+	href="http://www.springframework.org/">Spring Framework</a> to
+instantiate two important interfaces of this package: {@link
+com.google.enterprise.connector.spi.ConnectorType} and
+{@link com.google.enterprise.connector.spi.Connector}. 
+The implementor of this SPI must
+provide two Spring xml configuration files to notify the Connector
+Manager of the existence of their implementation and to describe how to
+instantiate their implementation. These two files must have these names:</p>
+<ul>
+	<li>connectorType.xml</li>
+	<li>connectorInstance.xml</li>
+</ul>
+<p>The first file, connectorType.xml, should be a complete and
+independent file that provides a bean definition for a class that
+implements the ConnectorType interface. The Connector Manager will use
+the id attribute of that bean as the name of your implementation. It is
+the implementor's responsibility to make sure that this name is unique
+in a Search Appliance installation (that is, unique to all Connector
+Managers in an installation).</p>
+<p>When a connector manager starts up, it looks for all classpath
+resources with this path: config/connectorType.xml. It passes these to
+Spring which then instantiates them all. Connector developers should
+include such a file in the jar in which they package their connector.</p>
+<p>The second file, connectorInstance.xml, should provide a bean
+definition for a class that implements the Connector interface. The id
+attribute for this bean should be the same as the id for your
+ConnectorType interface. Unlike the connectorType.xml, the file is not
+normally self-contained. It may refer to external variables in the
+following syntax:</p>
+<pre>
+  &lt;property name="username" value="${username}"/&gt;
+</pre>
+<p>These variables will be supplied by Spring from a properties file
+created by the Connector Manager for each instance of a connector.
+Spring supplies these values using their
+<a href="http://static.springframework.org/spring/docs/2.5.x/api/index.html">
+PropertyPlaceholderConfigurer</a>
+functionality. The actual values are
+expected to come from the Search Appliance administrator, via screens
+rendered on the Administrator Console.</p>
+<p>The primary responsibility of the ConnectorType implementation is
+to provide the Administrator Console with forms and validation methods
+for these configuration screens.</p>
+<p>Example: suppose you want to write a connector for a 3rd-party
+CMS named "XyzCms". You would write a complete java implementation of
+this SPI, using the XyzCms's proprietary API. You would also provide the
+two xml files, ConnectorType.xml and ConnectorInstance.xml. You might
+give the defined beans in both XML files the ids "XyzCmsConnector" - or
+perhaps "XyzCmsConnectorFromMyCompany", to ensure uniqueness.</p>
+<p>At a particular customer installation, the Search Appliance
+administrator would find a machine on which to run an external Connector
+Manager, would download and install Tomcat, then Connector Manager from
+the <a
+	href="http://code.google.com/p/google-enterprise-connector-manager/">
+code site</a>, or by using simpler, supported installers, if such exist. He
+or she would then download and install your connector, according to
+directions you supply. When the Connector Manager starts up in the new
+Tomcat instance, it looks for all config files on the class path at
+"config/connectorType.xml", and it discovers your XyzCmsConnector,
+perhaps among others. It uses Spring to instantiate your class that
+implements "ConnectorType" according to that XML file.</p>
+<p>Suppose that customer has two different XyzCms repositories, with
+different names, say "XyzA" and "XyzB". The customer would then use the
+Search Appliance's Admin Console to create two instances of your
+connector, perhaps giving the connector instances the same names as the
+repositories: "XyzA" and "XyzB". In turn, the connector manager would
+automatically create two properties files, named after the connector
+instance names, XyzA.properties and XyzB.properties.
+The connector manager then uses Spring to instantiate two instances of
+your Connector implementation, using the two properties files.</p>
+<p>For details on dependent specifications, see these sites:</p>
+<ul>
+	<li><a
+		href="http://static.springframework.org/spring/docs/2.5.x/reference/index.html">Spring
+	Reference Manual, v2.5.6</a>
+</ul>
+</body>
+</html>
