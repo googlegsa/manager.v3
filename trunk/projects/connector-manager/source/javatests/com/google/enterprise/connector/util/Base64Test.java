@@ -193,7 +193,7 @@ public class Base64Test extends TestCase {
     // OriginalBase64Encoder used to run 20x longer than this one.
     // TODO: This threshold is already 10x longer than this test
     // takes on my machine, so I don't think this is a valid
-    // regression test.
-    assertTrue(duration < 300);
+    // regression test.  Fails on code coverage and Pulse.
+    // assertTrue(duration < 300);
   }
 }
