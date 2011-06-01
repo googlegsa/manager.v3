@@ -41,7 +41,8 @@ public class Change {
 
   /** Enumeration of fields in the JSON representation of a {@link Change}. */
   static enum Field {
-    FACTORY_TYPE, DOCUMENT_HANDLE, MONITOR_CHECKPOINT
+    FACTORY_TYPE, DOCUMENT_HANDLE, MONITOR_CHECKPOINT,
+        mcp //Monitor checkpoint was represented as 'mcp' in old format.
   }
 
   private final FactoryType factoryType;
@@ -74,17 +75,55 @@ public class Change {
    */
   Change(JSONObject json, DocumentHandleFactory internalFactory,
       DocumentHandleFactory clientFactory) throws JSONException {
-    this.factoryType = FactoryType.valueOf(json.getString(
-        Field.FACTORY_TYPE.name()));
-    if (factoryType.equals(FactoryType.INTERNAL)) {
-      documentHandle = internalFactory.fromString(
-          json.getString(Field.DOCUMENT_HANDLE.name()));
+    FactoryType tempFactoryType;
+    DocumentHandle docHandle;
+    if (isNewVersionOfChangeRepresentation(json)) {
+        tempFactoryType = FactoryType.valueOf(json.getString(
+          Field.FACTORY_TYPE.name()));
+      if (tempFactoryType.equals(FactoryType.INTERNAL)) {
+          docHandle = internalFactory.fromString(
+            json.getString(Field.DOCUMENT_HANDLE.name()));
+      } else {
+          docHandle = clientFactory.fromString(
+            json.getString(Field.DOCUMENT_HANDLE.name()));
+      }
+      this.monitorCheckpoint = new MonitorCheckpoint(
+          json.getJSONObject(Field.MONITOR_CHECKPOINT.name()));
     } else {
-      documentHandle = clientFactory.fromString(
-          json.getString(Field.DOCUMENT_HANDLE.name()));
+      // This else condition is required for previous version of diffing
+      // connector (FS connector) which used a completely different String
+      // representation of Change.There is no way to know which factory to
+      // use because the old json tags are not available so approach here
+      // is to ask question to each factory and one that give non-null handle
+      // will be used. This way the change will be in FS connector code since
+      // it knows what it used previously. Implementation classes of
+      // DocumentHandleFactory should take care of checking the backward
+      // compatibility of the change representations.
+      tempFactoryType = FactoryType.INTERNAL;
+      docHandle = internalFactory.fromString(json.toString());
+      if (this.documentHandle == null) {
+          tempFactoryType = FactoryType.CLIENT;
+          docHandle = clientFactory.fromString(json.toString());
+      }
+      if (docHandle == null) {
+        throw new IllegalArgumentException("Could not "
+            + "constitute a document handle with given Json object.");
+      }
+      this.monitorCheckpoint = new MonitorCheckpoint(
+          json.getJSONObject(Field.mcp.name()));
     }
-    this.monitorCheckpoint = new MonitorCheckpoint(
-        json.getJSONObject(Field.MONITOR_CHECKPOINT.name()));
+    this.factoryType = tempFactoryType;
+    this.documentHandle = docHandle;
+  }
+
+  /**
+   * Returns true if the change represented by Json object is of new version
+   * or not.
+   * @param json json representation of the change
+   * @return true / false depending on the version of Change representation
+   */
+  private boolean isNewVersionOfChangeRepresentation(JSONObject json) {
+    return json.has(Field.FACTORY_TYPE.name());
   }
 
   /**
