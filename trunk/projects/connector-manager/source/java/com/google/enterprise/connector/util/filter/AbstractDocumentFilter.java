@@ -18,7 +18,10 @@ import com.google.common.base.Preconditions;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.RepositoryException;
+import com.google.enterprise.connector.spi.Value;
 
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
 
@@ -81,6 +84,33 @@ public abstract class AbstractDocumentFilter implements DocumentFilterFactory {
   public String toString() {
     String name = this.getClass().getName();
     return name.substring(name.lastIndexOf('.') + 1);
+  }
+
+  /**
+   * Return a mutable list of all the existing {@link Value Values}
+   * of the named {@link Property}.  Subclasses might make use of this
+   * convenience method.
+   *
+   * @param source the source {@link Document} for this filter
+   * @param name the name of the {@link Property} whose values are to be
+   *             fetched.
+   * @return a List of {@link Value Values} of the named property, or an
+   *         empty list if the requested property does exist.
+   * @throws RepositoryException if a repository access error occurs
+   * @throws RepositoryDocumentException if a document has fatal
+   *         processing errors
+   */
+  public List<Value> getPropertyValues(Document source, String name)
+      throws RepositoryException {
+    LinkedList<Value> values = new LinkedList<Value>();
+    Property prop = source.findProperty(name);
+    if (prop != null) {
+      Value value;
+      while ((value = prop.nextValue()) != null) {
+        values.add(value);
+      }
+    }
+    return values;
   }
 
   /**
