@@ -120,4 +120,16 @@ public class MovePropertyFilterTest extends DocumentFilterTest {
 
     checkDocument(createFilter(moves, true), expectedProps);
   }
+
+  /** Test toString(). */
+  public void testToString() {
+    Map<String, String> aliases = new HashMap<String, String>();
+    aliases.put(PROP1, "foo");
+    aliases.put(PROP3, "bar");
+    MovePropertyFilter factory = new MovePropertyFilter();
+    factory.setPropertyNameMap(aliases);
+    factory.setOverwrite(true);
+    assertEquals("MovePropertyFilter: ({foo=property1, bar=property3} , true)",
+        factory.toString());
+  }
 }
