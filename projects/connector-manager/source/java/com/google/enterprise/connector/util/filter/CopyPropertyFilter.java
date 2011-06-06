@@ -15,11 +15,15 @@
 package com.google.enterprise.connector.util.filter;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableBiMap;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.RepositoryException;
+import com.google.enterprise.connector.spi.SimpleProperty;
+import com.google.enterprise.connector.spi.Value;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
@@ -29,46 +33,83 @@ import java.util.logging.Level;
  * values to another property. The new property name is added to the
  * Document's set of properties, if it is not already in that set.
  * <p/>
- * Care must be taken when copying a property to an already existing property.
- * Suppose a document has two properties, "{@code PropertyA}" and
- * "{@code PropertyB}".  After copying {@code PropertyA} to {@code PropertyB},
- * a request for {@code PropertyB}'s values will subseqently return the values
- * of {@code PropertyA}, leaving the original values of {@code PropertyB}
- * orphaned (unless {@code PropertyB} was copied, as well).
+ * If the {@code overwrite} flag is {@code true}, the copied
+ * property values replace any existing values of the target property.
+ * Otherwise, the copied property values supplement any existing values
+ * of the target property.
  */
 public class CopyPropertyFilter extends AbstractDocumentFilter {
 
   /** Map of new property names to actual property names */
-  protected Map<String, String>nameMap;
+  protected Map<String, String> nameMap;
+
+  /**
+   * If {@code true}, overwrite any existing destination property values
+   * with the copied property values; otherwise supply the copied values
+   * as additional Values (like multi-valued Properties).
+   */
+  protected boolean overwrite = false;
 
   /**
    * Sets the property name map.  This {@code Map<String, String>}
-   * maps a new name (the {@code key}) to the actual property name
-   * (the {@code value}).
+   * maps source property name (the {@code key}) to the destination
+   * property name (the {@code value}).
    *
-   * @param propertyNameMap newName-to-propertyName {@link Map}
+   * @param propertyNameMap sourceName-to-destinationName {@link Map}
    * @throws NullPointerException if {@code propertyNameMap} is {@code null}
    */
-  public void setPropertyNameMap(Map<String, String>propertyNameMap) {
+  public void setPropertyNameMap(Map<String, String> propertyNameMap) {
     Preconditions.checkNotNull(propertyNameMap);
-    this.nameMap = propertyNameMap;
+    this.nameMap = ImmutableBiMap.copyOf(propertyNameMap).inverse();
   }
 
   /**
-   * Finds a {@link Property} by {@code name}. If the
-   * {@link Document} has a property of that name, then that property
-   * is returned.
+   * Sets the {@code overwrite} values flag. If {@code true}, any existing
+   * values of the copied-to property are overwritten with the copied values.
+   * If {@code false}, the copied values augment those of the copied-to
+   * property.
+   * Default {@code overwrite} is {@code false}.
+   *
+   * @param overwrite the overwrite flag
+   */
+  public void setOverwrite(boolean overwrite) {
+    this.overwrite = overwrite;
+  }
+
+  /**
+   * Finds a {@link Property} by {@code name}.  If the requested property
+   * is configured as a copy from another property, then that other property's
+   * values are copied to the named property.  If the {@code overwrite} flag
+   * is {@code true}, then the copied property values replace any existing
+   * values of the requested property.  Otherwise, the copied property values
+   * supplement any existing values of the requested property.
    */
   @Override
   public Property findProperty(Document source, String name)
       throws RepositoryException {
     Preconditions.checkState(nameMap != null, "must set propertyNameMap");
 
-    String realName = nameMap.get(name);
-    if ((realName != null) && LOGGER.isLoggable(Level.FINEST)) {
-      LOGGER.finest("Accessing property " + realName + " as " + name);
+    String sourceName = nameMap.get(name);
+    // If not copying this property, pass on request.
+    if (sourceName == null) {
+      return source.findProperty(name);
     }
-    return source.findProperty((realName == null) ? name : realName);
+
+    if (LOGGER.isLoggable(Level.FINEST)) {
+      LOGGER.finest("Accessing property " + sourceName + " as " + name);
+    }
+
+    if (overwrite) {
+      // If overwrite, replace any existing values of named property
+      // with the values from sourceName property.
+      return source.findProperty(sourceName);
+    } else {
+      // If not overwrite, augment existing values of named property
+      // with the values from sourceName property.
+      List<Value> values = super.getPropertyValues(source, name);
+      values.addAll(super.getPropertyValues(source, sourceName));
+      return values.isEmpty() ? null : new SimpleProperty(values);
+    }
   }
 
   /**
@@ -87,6 +128,6 @@ public class CopyPropertyFilter extends AbstractDocumentFilter {
 
   @Override
   public String toString() {
-    return super.toString() + ": " + nameMap;
+    return super.toString() + ": (" + nameMap + " , " + overwrite + ")";
   }
 }

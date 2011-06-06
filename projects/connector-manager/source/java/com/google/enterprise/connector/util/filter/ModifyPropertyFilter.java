@@ -103,6 +103,13 @@ public class ModifyPropertyFilter extends AbstractDocumentFilter {
 
   /**
    * Sets the replacement string for matching regions in the values.
+   * The {@code replacement} string may refer to
+   * <a href="http://download.oracle.com/javase/1.5.0/docs/api/java/util/regex/Pattern.html#cg">
+   * capturing groups</a> from the {@code pattern} as {@code $1, $2}, etc.
+   * Therefore, literal instances of {@code '\'} and {@code '$'} in the
+   * replacement string need to be properly
+   * <a href="http://download.oracle.com/javase/1.5.0/docs/api/java/util/regex/Matcher.html#appendReplacement(java.lang.StringBuffer,%20java.lang.String)">
+   * escaped</a>.
    *
    * @param replacement the replacement String for matching regions in the
    *        values
@@ -149,10 +156,8 @@ public class ModifyPropertyFilter extends AbstractDocumentFilter {
 
     // For properties of interest, fetch the values and examine them.
     // If a value matches the pattern, either replace or augment that value.
-    Property prop = source.findProperty(name);
     LinkedList<Value> values = new LinkedList<Value>();
-    Value value;
-    while ((value = prop.nextValue()) != null) {
+    for (Value value : super.getPropertyValues(source, name)) {
       String original = value.toString();
       String modified = pattern.matcher(original).replaceAll(replacement);
       if (original.equals(modified)) {
@@ -177,7 +182,8 @@ public class ModifyPropertyFilter extends AbstractDocumentFilter {
 
   @Override
   public String toString() {
-    return super.toString() + ": (" + propertyNames + " , "
-        + pattern.pattern() + " , " + overwrite + ")";
+    return super.toString() + ": (" + propertyNames + " , \""
+           + pattern.pattern() + "\" , \"" + replacement + "\" , "
+           + overwrite + ")";
   }
 }

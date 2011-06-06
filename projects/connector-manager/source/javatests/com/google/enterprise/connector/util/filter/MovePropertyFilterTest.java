@@ -15,13 +15,10 @@
 package com.google.enterprise.connector.util.filter;
 
 import com.google.enterprise.connector.spi.Document;
-import com.google.enterprise.connector.spi.Property;
-import com.google.enterprise.connector.spi.SimpleDocument;
 import com.google.enterprise.connector.spi.Value;
 
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -29,29 +26,36 @@ import java.util.Set;
 import junit.framework.TestCase;
 
 /**
- * Tests RenamePropertyFilter.
+ * Tests MovePropertyFilter.
  */
-public class RenamePropertyFilterTest extends DocumentFilterTest {
+public class MovePropertyFilterTest extends DocumentFilterTest {
 
-  /** Creates a RenamePropertyFilter. */
+  /** Creates a MovePropertyFilter. */
   protected static Document createFilter() {
     Map<String, String>renames = new HashMap<String, String>();
-    renames.put("foo", PROP1);
-    renames.put("bar", PROP3);
-    return createFilter(renames);
+    renames.put(PROP1, "foo");
+    renames.put(PROP3, "bar");
+    return createFilter(renames, false);
   }
 
-  protected static Document createFilter(Map<String, String>renames) {
-    RenamePropertyFilter factory = new RenamePropertyFilter();
+  protected static Document createFilter(Map<String, String>renames,
+                                         boolean overwrite) {
+    MovePropertyFilter factory = new MovePropertyFilter();
     factory.setPropertyNameMap(renames);
+    factory.setOverwrite(overwrite);
     return factory.newDocumentFilter(createDocument());
+  }
+
+  /** Tests illegal state if configuration setters are not called. */
+  public void testFactoryIllegalState() throws Exception {
+    checkIllegalState(new MovePropertyFilter());
   }
 
   /** Tests for non-existent property should return null. */
   public void testNonExistentProperty() throws Exception {
     Map<String, String>renames = new HashMap<String, String>();
-    renames.put("foo", "bar");
-    Document filter = createFilter(renames);
+    renames.put("bar", "foo");
+    Document filter = createFilter(renames, false);
     assertNull(filter.findProperty("foo"));
     assertNull(filter.findProperty("nonExistentProperty"));
   }
@@ -87,5 +91,33 @@ public class RenamePropertyFilterTest extends DocumentFilterTest {
     expectedProps.remove(PROP1);
     expectedProps.remove(PROP3);
     checkDocument(createFilter(), expectedProps);
+  }
+
+  /** Test rename to existing property with no overwrite should augment the
+      destination property values with those of the source property. */
+  public void testDestinationExistsWithNoOverwrite() throws Exception {
+    // Move PROP7 to PROP2, no overwrite
+    Map<String, String>moves = new HashMap<String, String>();
+    moves.put(PROP7, PROP2);
+
+    // PROP2 + PROP7 = PROP4
+    Map<String, List<Value>> expectedProps = createProperties();
+    expectedProps.put(PROP2, expectedProps.get(PROP4));
+    expectedProps.remove(PROP7);
+    checkDocument(createFilter(moves, false), expectedProps);
+  }
+
+  /** Test rename to existing property with overwrite should replace the
+      destination property values with those of the source property. */
+  public void testDestinationExistsWithOverwrite() throws Exception {
+    // Move PROP2 to PROP1, with overwrite
+    Map<String, String>moves = new HashMap<String, String>();
+    moves.put(PROP2, PROP1);
+
+    Map<String, List<Value>> expectedProps = createProperties();
+    expectedProps.put(PROP1, expectedProps.get(PROP2));
+    expectedProps.remove(PROP2);
+
+    checkDocument(createFilter(moves, true), expectedProps);
   }
 }

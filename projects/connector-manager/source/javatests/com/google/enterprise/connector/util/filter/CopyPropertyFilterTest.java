@@ -15,12 +15,9 @@
 package com.google.enterprise.connector.util.filter;
 
 import com.google.enterprise.connector.spi.Document;
-import com.google.enterprise.connector.spi.Property;
-import com.google.enterprise.connector.spi.SimpleDocument;
 import com.google.enterprise.connector.spi.Value;
 
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -34,33 +31,40 @@ public class CopyPropertyFilterTest extends DocumentFilterTest {
 
   /** Creates a CopyPropertyFilter. */
   protected static Document createFilter() {
-    Map<String, String>aliases = new HashMap<String, String>();
-    aliases.put("foo", PROP1);
-    aliases.put("bar", PROP3);
-    return createFilter(aliases);
+    Map<String, String> aliases = new HashMap<String, String>();
+    aliases.put(PROP1, "foo");
+    aliases.put(PROP3, "bar");
+    return createFilter(aliases, false);
   }
 
-  protected static Document createFilter(Map<String, String>aliases) {
+  protected static Document createFilter(Map<String, String>aliases,
+                                         boolean overwrite) {
     CopyPropertyFilter factory = new CopyPropertyFilter();
     factory.setPropertyNameMap(aliases);
+    factory.setOverwrite(overwrite);
     return factory.newDocumentFilter(createDocument());
   }
 
   /** Tests the Factory constructor with illegal arguments. */
   public void testFactoryIllegalArgs() throws Exception {
     try {
-      createFilter(null);
+      createFilter(null, false);
       fail("NullPointerException expected");
     } catch (NullPointerException expected) {
       // Expected.
     }
   }
 
+  /** Tests illegal state if configuration setters are not called. */
+  public void testFactoryIllegalState() throws Exception {
+    checkIllegalState(new CopyPropertyFilter());
+  }
+
   /** Tests for non-existent property should return null. */
   public void testNonExistentProperty() throws Exception {
     Map<String, String>aliases = new HashMap<String, String>();
     aliases.put("foo", "bar");
-    Document filter = createFilter(aliases);
+    Document filter = createFilter(aliases, false);
     assertNull(filter.findProperty("foo"));
     assertNull(filter.findProperty("nonExistentProperty"));
   }
@@ -89,5 +93,42 @@ public class CopyPropertyFilterTest extends DocumentFilterTest {
     expectedProps.put("foo", expectedProps.get(PROP1));
     expectedProps.put("bar", expectedProps.get(PROP3));
     checkDocument(createFilter(), expectedProps);
+  }
+
+  /** Test toString(). */
+  public void testToString() {
+    Map<String, String> aliases = new HashMap<String, String>();
+    aliases.put(PROP1, "foo");
+    aliases.put(PROP3, "bar");
+    CopyPropertyFilter factory = new CopyPropertyFilter();
+    factory.setPropertyNameMap(aliases);
+    factory.setOverwrite(true);
+    assertEquals("CopyPropertyFilter: ({foo=property1, bar=property3} , true)",
+        factory.toString());
+  }
+
+  /** Test copy to existing property with no overwrite should augment the
+      destination property values with those of the source property. */
+  public void testDestinationExistsWithNoOverwrite() throws Exception {
+    // Move PROP7 to PROP2, no overwrite.
+    Map<String, String>copies = new HashMap<String, String>();
+    copies.put(PROP7, PROP2);
+
+    // PROP2 + PROP7 = PROP4
+    Map<String, List<Value>> expectedProps = createProperties();
+    expectedProps.put(PROP2, expectedProps.get(PROP4));
+    checkDocument(createFilter(copies, false), expectedProps);
+  }
+
+  /** Test copy to existing property with overwrite should replace the
+      destination property values with those of the source property. */
+  public void testDestinationExistsWithOverwrite() throws Exception {
+    // Copy PROP2 to PROP1, with overwrite.
+    Map<String, String>copies = new HashMap<String, String>();
+    copies.put(PROP2, PROP1);
+
+    Map<String, List<Value>> expectedProps = createProperties();
+    expectedProps.put(PROP1, expectedProps.get(PROP2));
+    checkDocument(createFilter(copies, true), expectedProps);
   }
 }

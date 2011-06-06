@@ -41,10 +41,8 @@
  * DocumentFilterFactory}, which wraps a new Filter around the supplied
  * source Document.
  * <p/>
- * Several filters are included in this package, providing the
- * ability to modify property values, rename, remove properties,
- * or skip documents based upon the presence or absence of specific
- * properties.
+ * Several filters are included in this package, providing the ability to
+ * modify property values, add, copy, rename, or remove properties.
  * <p/>
  * You can also implement custom document filters. By extending
  * {@link com.google.enterprise.connector.util.filter.AbstractDocumentFilter

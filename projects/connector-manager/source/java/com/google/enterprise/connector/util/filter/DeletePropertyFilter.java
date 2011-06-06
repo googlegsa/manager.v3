@@ -68,7 +68,7 @@ public class DeletePropertyFilter extends AbstractDocumentFilter {
   @Override
   public Property findProperty(Document source, String name)
       throws RepositoryException {
-    Preconditions.checkState(propertyNames != null, "must set propertyNames");
+    Preconditions.checkState(propertyNames != null, "must set propertyName(s)");
 
     return (propertyNames.contains(name)) ? null : source.findProperty(name);
   }
@@ -81,7 +81,7 @@ public class DeletePropertyFilter extends AbstractDocumentFilter {
   @Override
   public Set<String> getPropertyNames(Document source)
       throws RepositoryException {
-    Preconditions.checkState(propertyNames != null, "must set propertyNames");
+    Preconditions.checkState(propertyNames != null, "must set propertyName(s)");
 
     // Remove the named properties from the set of property names.
     Set<String> names = new HashSet<String>(source.getPropertyNames());

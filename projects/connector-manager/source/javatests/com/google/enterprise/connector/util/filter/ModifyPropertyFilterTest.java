@@ -100,6 +100,38 @@ public class ModifyPropertyFilterTest extends DocumentFilterTest {
     factory.setReplacement("");
   }
 
+  /** Tests illegal state if configuration setters are not called. */
+  public void testFactoryIllegalState() throws Exception {
+    try {
+      ModifyPropertyFilter factory = new ModifyPropertyFilter();
+      Document filter = factory.newDocumentFilter(createDocument());
+      filter.findProperty(PROP1);
+      fail("IllegalStateException expected");
+    } catch (IllegalStateException expected) {
+      // Expected.
+    }
+
+    try {
+      ModifyPropertyFilter factory = new ModifyPropertyFilter();
+      factory.setPropertyName(PROP1);
+      Document filter = factory.newDocumentFilter(createDocument());
+      filter.findProperty(PROP1);
+      fail("IllegalStateException expected");
+    } catch (IllegalStateException expected) {
+      // Expected.
+    }
+
+    try {
+      ModifyPropertyFilter factory = new ModifyPropertyFilter();
+      factory.setPattern(PATTERN);
+      Document filter = factory.newDocumentFilter(createDocument());
+      filter.findProperty(PROP1);
+      fail("IllegalStateException expected");
+    } catch (IllegalStateException expected) {
+      // Expected.
+    }
+  }
+
   /** Tests for non-existent property should return null. */
   public void testNonExistentProperty() throws Exception {
     Document filter = createFilter(PROP1, PATTERN);
@@ -206,5 +238,32 @@ public class ModifyPropertyFilterTest extends DocumentFilterTest {
     expectedProps.put(PROP1, valueList(CLEAN_STRING));
     expectedProps.put(PROP6, valueList(CLEAN_STRING, EXTRA_STRING));
     checkDocument(filter, expectedProps);
+  }
+
+  /** Test capturing groups. */
+  public void testCaputuringGroups() throws Exception {
+    ModifyPropertyFilter factory = new ModifyPropertyFilter();
+    factory.setPropertyName(PROP4);
+    factory.setPattern("(quick|lazy)");
+    factory.setReplacement("very $1");
+    factory.setOverwrite(true);
+    Document filter = factory.newDocumentFilter(createDocument());
+
+    Map<String, List<Value>> expectedProps = createProperties();
+    expectedProps.put(PROP4,
+        valueList(CLEAN_STRING.replaceAll("quick", "very quick"),
+                  EXTRA_STRING.replaceAll("lazy", "very lazy")));
+    checkDocument(filter, expectedProps);
+  }
+
+  /** Test toString(). */
+  public void testToString() {
+    ModifyPropertyFilter factory = new ModifyPropertyFilter();
+    factory.setPropertyName("foo");
+    factory.setPattern(PATTERN);
+    factory.setReplacement("bar");
+    factory.setOverwrite(true);
+    assertEquals("ModifyPropertyFilter: ([foo] , \"[_\\.]+\" , \"bar\" , true)",
+        factory.toString());
   }
 }
