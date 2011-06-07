@@ -188,7 +188,9 @@
   </target>
 
   <target name="test-all" depends="test-connectorA,test-connectorB,connector-manager">
-    <ant dir="${connector-manager.dir}" target="run_tests" />
+    <!-- <ant dir="${connector-manager.dir}" target="run_tests" /> -->
+    <!-- Cobertura code coverage runs the junit tests, albeit slowly. -->
+    <ant dir="${connector-manager.dir}" target="code_coverage" />
     <!-- at present, the test-connectors do not have a run_tests target -->
   </target>
 
