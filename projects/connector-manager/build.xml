@@ -340,7 +340,7 @@
   </target>
 
   <target name="compile_coverage"
-          depends="init_coverage, compile, compile_tests" />
+          depends="init_coverage,compile,compile_tests" />
 
   <target name="instrument" depends="compile_coverage">
     <cobertura-instrument todir="${instrumented.dir}">
