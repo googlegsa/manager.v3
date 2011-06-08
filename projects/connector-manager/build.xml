@@ -343,8 +343,6 @@
           depends="init_coverage, compile, compile_tests" />
 
   <target name="instrument" depends="compile_coverage">
-    <!-- Remove the coverage data file and any old instrumentation. -->
-    <delete file="cobertura.ser"/>
     <cobertura-instrument todir="${instrumented.dir}">
       <!-- The following line causes instrument to ignore any line
            refering to log4j, for the purposes of coverage reporting.
