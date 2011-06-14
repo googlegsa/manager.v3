@@ -206,10 +206,17 @@ public class ChangeQueue implements ChangeSource {
    * @param sleepInterval how often to look for new changes, in milliseconds
    * @param activityLogger a CrawlActivityLogger
    */
+  /* @VisibleForTesting */ 
   public ChangeQueue(int size, long sleepInterval, CrawlActivityLogger activityLogger) {
     pendingChanges = new ArrayBlockingQueue<Change>(size);
     this.sleepInterval = sleepInterval;
     this.activityLogger = activityLogger;
+  }
+  
+  public ChangeQueue(QueuePropertyFetcher propertyFetcher,
+      CrawlActivityLogger activityLogger) {
+    this(propertyFetcher.getQueueSize(),
+        propertyFetcher.getDelayBetweenTwoScans(), activityLogger);
   }
 
   /**
@@ -232,5 +239,20 @@ public class ChangeQueue implements ChangeSource {
   /** Empties the queue of all pending changes. */
   void clear() {
     pendingChanges.clear();
+  }
+  
+  /**
+   * Interface to retrieve the properties required for ChangeQueue. 
+   */
+  public static interface QueuePropertyFetcher { 
+    /**
+     * Gets the queue size. 
+     */
+    int getQueueSize();
+    
+    /**
+     * Gets the delay to add between two scans.
+     */
+    long getDelayBetweenTwoScans();
   }
 }
