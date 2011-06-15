@@ -35,7 +35,14 @@ public class ChangeQueue implements ChangeSource {
   /** Milliseconds to sleep after a scan that finds no changes. */
   private final long sleepInterval;
 
+  /** Logger that records crawl activities for each repository scan.*/
   private final CrawlActivityLogger activityLogger;
+  
+  /** 
+   * Flag that decides whether to add delay after each scan or only after
+   * scans with no changes found. 
+   */
+  private final boolean introduceDelayAfterEveryScan;
 
   /**
    * Interface to log the crawl activity for each crawl.
@@ -189,7 +196,7 @@ public class ChangeQueue implements ChangeSource {
     /* @Override */
     public void passComplete(MonitorCheckpoint mcp) throws InterruptedException {
       activityLogger.scanEndAt(new Timestamp(System.currentTimeMillis()));
-      if (changeCount == 0) {
+      if (introduceDelayAfterEveryScan || changeCount == 0) {
         Thread.sleep(sleepInterval);
       }
     }
@@ -208,15 +215,23 @@ public class ChangeQueue implements ChangeSource {
    */
   /* @VisibleForTesting */ 
   public ChangeQueue(int size, long sleepInterval, CrawlActivityLogger activityLogger) {
+    this(size, sleepInterval, false, activityLogger);
+  }
+  
+  private ChangeQueue(int size, long sleepInterval, 
+      boolean introduceDelayAfterEachScan, CrawlActivityLogger activityLogger) {
     pendingChanges = new ArrayBlockingQueue<Change>(size);
     this.sleepInterval = sleepInterval;
     this.activityLogger = activityLogger;
+    this.introduceDelayAfterEveryScan = introduceDelayAfterEachScan;
   }
+  
   
   public ChangeQueue(QueuePropertyFetcher propertyFetcher,
       CrawlActivityLogger activityLogger) {
     this(propertyFetcher.getQueueSize(),
-        propertyFetcher.getDelayBetweenTwoScans(), activityLogger);
+        propertyFetcher.getDelayBetweenTwoScansInMillis(), 
+        propertyFetcher.isIntroduceDelayAfterEveryScan(), activityLogger);
   }
 
   /**
@@ -253,6 +268,12 @@ public class ChangeQueue implements ChangeSource {
     /**
      * Gets the delay to add between two scans.
      */
-    long getDelayBetweenTwoScans();
+    long getDelayBetweenTwoScansInMillis();
+    
+    /**
+     * Gets the flag to decide whether to sleep after each scan
+     * or only after scans with no changes found. 
+     */
+    boolean isIntroduceDelayAfterEveryScan();
   }
 }
