@@ -11,7 +11,7 @@ issues and work-arounds.
 Web Site: http://code.google.com/p/google-enterprise-connector-manager/
 
 
-Release 2.8.0, 01 June 2011
+Release 2.8.0, 15 June 2011
 ===========================
 
 Introduction
@@ -43,9 +43,18 @@ Summary of Changes
     Note that ConnectorPersistentStore.getLocalDocumentStore() is disabled
     in this release.
 
-  * Fixed Bug 4062256 - Failure to delete snapshot files would throw
+  * Fixed Issue 4062256 - Failure to delete snapshot files would throw
     IllegalStateException.  This affected the File System, LDAP, and
     Database Connectors.
+
+  * Fix Issue 4524076 - Backward compatibility issue in diffing connectors
+    for recovery files.  This affected the File System, LDAP, and
+    Database Connectors.
+
+  * Fix Issues 4581062, 4613042 - Add configurable diffing connector delay
+    interval after each scan: 'introduceDelayAfterEachScan'.  This should
+    relieve some of the continuous file system scanning behaviour in the
+    File System Connector.
 
   * The SPI AuthenticationManager and AuthenticationResponse classes have
     been enhanced to allow the connector to return repository local groups
