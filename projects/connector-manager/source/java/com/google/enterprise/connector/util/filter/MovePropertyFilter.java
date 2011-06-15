@@ -23,18 +23,16 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * A filter that renames {@link Document} {@link Property Properties}.
- * The renamed property's values remain unchanged.  The original names of the
- * renamed properties do not appear in the Document's set of property names.
+ * A filter that moves {@link Document} {@link Property} values to another
+ * property.  The source property names do not appear in the Document's set
+ * of property names.
  * <p/>
- * Care must be taken when renaming a property to an already existing property.
- * Suppose a document has two properties, "{@code PropertyA}" and
- * "{@code PropertyB}".  After renaming {@code PropertyA} to {@code PropertyB},
- * a request for {@code PropertyB}'s values will subseqently return the values
- * of {@code PropertyA}, leaving the original values of {@code PropertyB}
- * orphaned (unless {@code PropertyB} was renamed, as well).
+ * If the {@code overwrite} flag is {@code true}, the moved
+ * property values replace any existing values of the target property.
+ * Otherwise, the moved property values supplement any existing values
+ * of the target property.
  */
-public class RenamePropertyFilter extends CopyPropertyFilter {
+public class MovePropertyFilter extends CopyPropertyFilter {
   /**
    * Gets the set of names of all {@link Property Properties} in the
    * {@link Document}, substituting original names of renamed Properties

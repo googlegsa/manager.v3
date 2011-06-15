@@ -27,7 +27,6 @@
   <property name="tests.src" value="source/javatests" />
   <property name="tests.build" value="${build}/tests" />
   <property name="tests.classes" value="${tests.build}/classes" />
-  <property name="tests.todir" value="tests_outdir" />
   <property name="tests.data" value="testdata" />
   <property name="tests.config" value="${tests.data}/config" />
   <property name="jar.dir" value="${dist}/jarfile" />
@@ -47,6 +46,21 @@
   <!-- The directory where all war-files are collected -->
   <property name="war.dir" value="${dist}/${ant.project.name}" />
 
+  <!-- All reports go into this directory. -->
+  <property name="reports.dir" value="reports" />
+
+  <!-- Unit test reports from JUnit are deposited into this directory. -->
+  <property name="junit.xml.dir" value="${reports.dir}/junit-xml" />
+  <property name="junit.html.dir" value="${reports.dir}/junit-html" />
+
+  <!-- ======== Cobertura Code Coverage Properties ======= -->
+  <!-- Instrumented classes are deposited into this directory. -->
+  <property name="instrumented.dir" value="${build}/instrumented" />
+
+  <!-- Coverage reports are deposited into these directories. -->
+  <property name="coverage.xml.dir" value="${reports.dir}/cobertura-xml" />
+  <property name="coverage.html.dir" value="${reports.dir}/cobertura-html" />
+
   <!-- =========================== TASKS =============================== -->
   <target name="test_connector_jars">
     <ant inheritAll="false" dir="${projects.dir}/test-connectorA" />
@@ -60,33 +74,6 @@
 
   <target name="everything" depends="all,run_tests" />
 
-  <target name="connector_spi" depends="init,compile,jar" />
-
-  <target name="spi-javadoc">
-    <javadoc access="public" author="false" destdir="doc/javadoc/${version}"
-             doctitle="Google Search Appliance Connector SPI"
-             nodeprecated="false" nodeprecatedlist="true" noindex="false"
-             nonavbar="false" notree="false" source="${jvm.version}"
-             sourcepath="${src}" overview="${src}/overview.html"
-             splitindex="true" use="true" version="true">
-      <classpath>
-        <fileset dir="${thirdparty.prod.jars}" includes="**/*.jar" />
-        <pathelement location="${junit.jarfile}"/>
-      </classpath>
-      <package name="com.google.enterprise.connector.spi"/>
-      <package name="com.google.enterprise.connector.util"/>
-      <package name="com.google.enterprise.connector.util.filter"/>
-      <package name="com.google.enterprise.connector.util.testing"/>
-      <package name="com.google.enterprise.connector.util.diffing"/>
-      <package name="com.google.enterprise.connector.util.diffing.testing"/>
-      <package name="com.google.enterprise.connector.util.database.testing"/>
-      <fileset dir="${src}/com/google/enterprise/connector/util/database"
-               defaultexcludes="yes">
-        <exclude name="LocalDatabaseImpl.java"/>
-      </fileset>
-    </javadoc>
-  </target>
-
   <target name="init">
     <mkdir dir="${build}" />
     <mkdir dir="${prod}" />
@@ -95,8 +82,9 @@
     <mkdir dir="${spi-classes}" />
     <mkdir dir="${tests.build}" />
     <mkdir dir="${tests.classes}" />
-    <mkdir dir="${tests.todir}" />
     <mkdir dir="${tests.data}/tmp" />
+    <mkdir dir="${junit.xml.dir}" />
+    <mkdir dir="${junit.html.dir}" />
     <mkdir dir="${jar.dir}" />
   </target>
 
@@ -109,14 +97,26 @@
     </exec>
   </target>
 
+  <target name="clean" depends="clean_coverage"
+          description="Deletes all build files.">
+    <delete dir="${build}" />
+    <delete dir="${dist}" />
+    <delete dir="${reports.dir}" />
+    <delete dir="${tests.data}/tmp" />
+  </target>
+
+  <!-- ====================== SPI Tasks ====================== -->
+
+  <target name="connector_spi" depends="init,compile,jar" />
+
   <target name="compile-spi" depends="init">
     <!-- compile the spi java source files -->
     <javac sourcepath="" srcdir="${src}" destdir="${spi-classes}"
-    	     includes="**/spi/**, **/spiimpl/**, **/util/**"
+           includes="**/spi/**, **/spiimpl/**, **/util/**"
            includeantruntime="false"
            debug="${COMPILE_DEBUG_FLAG}" debuglevel="${COMPILE_DEBUG_LEVEL}"
            target="${jvm.version}" source="${jvm.version}">
-    	<classpath>
+      <classpath>
         <fileset dir="${thirdparty.prod.jars}" includes="**/*.jar" />
         <pathelement location="${junit.jarfile}"/>
      </classpath>
@@ -143,6 +143,33 @@
     </jar>
   </target>
 
+  <target name="spi-javadoc">
+    <javadoc access="public" author="false" destdir="doc/javadoc/${version}"
+             doctitle="Google Search Appliance Connector SPI"
+             nodeprecated="false" nodeprecatedlist="true" noindex="false"
+             nonavbar="false" notree="false" source="${jvm.version}"
+             sourcepath="${src}" overview="${src}/overview.html"
+             splitindex="true" use="true" version="true">
+      <classpath>
+        <fileset dir="${thirdparty.prod.jars}" includes="**/*.jar" />
+        <pathelement location="${junit.jarfile}"/>
+      </classpath>
+      <package name="com.google.enterprise.connector.spi"/>
+      <package name="com.google.enterprise.connector.util"/>
+      <package name="com.google.enterprise.connector.util.filter"/>
+      <package name="com.google.enterprise.connector.util.testing"/>
+      <package name="com.google.enterprise.connector.util.diffing"/>
+      <package name="com.google.enterprise.connector.util.diffing.testing"/>
+      <package name="com.google.enterprise.connector.util.database.testing"/>
+      <fileset dir="${src}/com/google/enterprise/connector/util/database"
+               defaultexcludes="yes">
+        <exclude name="LocalDatabaseImpl.java"/>
+      </fileset>
+    </javadoc>
+  </target>
+
+  <!-- ====================== Production CM Tasks ====================== -->
+
   <target name="compile" depends="init,jar-spi">
     <!-- compile java source files -->
     <javac sourcepath="" srcdir="${src}" destdir="${classes}"
@@ -158,6 +185,9 @@
       <compilerarg value="-Xlint:-serial"/>
     </javac>
   </target>
+
+  <target name="jar" depends="jar-prod,jar-tests"
+          description="Create jars for the Connector SPI project"/>
 
   <target name="jar-prod" depends="prebuild,compile,jar-spi"
           description="Create production jars for the Connector SPI project">
@@ -194,7 +224,8 @@
       </path>
     </pathconvert>
     <jar jarfile="${connector.jarfile}">
-      <fileset dir="${classes}" includes="**/*.class" excludes="**/spi/**, **/util/**, **/logging/**"/>
+      <fileset dir="${classes}" includes="**/*.class"
+               excludes="**/spi/**, **/util/**, **/logging/**"/>
       <fileset dir="${resources}" includes="**"/>
       <manifest>
         <attribute name="Implementation-Title" value="Connector Manager Impl"/>
@@ -208,6 +239,8 @@
       </manifest>
     </jar>
   </target>
+
+  <!-- ====================== Test Tasks ====================== -->
 
   <target name="compile_tests" depends="init,jar-prod">
     <!-- compile java source files for tests -->
@@ -242,33 +275,39 @@
     </jar>
   </target>
 
-  <target name="run_tests" depends="jar-tests">
+  <path id="tests.classpath">
+    <pathelement location="${spi.jarfile}"/>
+    <pathelement location="${connector.jarfile}"/>
+    <pathelement location="${tests.jarfile}"/>
+    <pathelement location="${projects.dir}/test-connectorA/dist/jar/testconnectorA.jar" />
+    <pathelement location="${projects.dir}/test-connectorB/dist/jar/testconnectorB.jar" />
+    <!-- Needed for those tests that must find resources on the classpath. -->
+    <pathelement location="${dtds}" />
+    <pathelement location="${tests.src}" />
+    <fileset dir="${thirdparty.prod.jars}" includes="**/*.jar" />
+    <fileset dir="${thirdparty.tests.jars}" includes="**/*.jar" />
+    <pathelement path="${java.class.path}" />
+  </path>
+
+  <target name="run_tests" depends="jar-tests,test_connector_jars">
+    <antcall target="_run_tests">
+      <param name="test.classpath" value="tests.classpath" />
+    </antcall>
+  </target>
+
+  <target name="_run_tests">
     <property name="test.suite" value="*"/>
     <junit failureproperty="${ant.project.name}.failure" dir=".">
-      <classpath>
-        <fileset dir="${thirdparty.prod.jars}" includes="**/*.jar" />
-        <fileset dir="${thirdparty.tests.jars}" includes="**/*.jar" />
-        <pathelement location="${spi.jarfile}"/>
-        <pathelement location="${connector.jarfile}"/>
-        <pathelement location="${tests.jarfile}"/>
-        <pathelement location="${projects.dir}/test-connectorA/dist/jar/testconnectorA.jar" />
-        <pathelement location="${projects.dir}/test-connectorB/dist/jar/testconnectorB.jar" />
-        <pathelement location="${dtds}" />
-        <pathelement path="${java.class.path}" />
-        <!-- Needed for those tests that must find resources on the classpath. -->
-        <pathelement location="${tests.src}" />
-      </classpath>
+      <classpath refid="${test.classpath}" />
       <jvmarg value="-Djava.util.logging.config.file=${junit.logging.properties}"/>
       <formatter type="xml" />
-      <batchtest fork="yes" todir="${tests.todir}">
+      <batchtest fork="yes" todir="${junit.xml.dir}">
         <fileset dir="${tests.src}" includes="**/${test.suite}Test.java" />
       </batchtest>
     </junit>
-    <junitreport todir="${tests.todir}">
-      <fileset dir="${tests.todir}">
-        <include name ="*.xml"/>
-      </fileset>
-      <report format="frames" todir="${tests.todir}"/>
+    <junitreport todir="${junit.xml.dir}">
+      <fileset dir="${junit.xml.dir}" includes="*.xml"/>
+      <report format="frames" todir="${junit.html.dir}"/>
     </junitreport>
     <fail if="${ant.project.name}.failure" message="Test failure"/>
   </target>
@@ -282,32 +321,79 @@
       <arg line="${args}" />
       <jvmarg value="-Xshare:off"/>
       <jvmarg value="-Djava.util.logging.config.file=${junit.logging.properties}"/>
-      <classpath>
-        <fileset dir="${thirdparty.prod.jars}" includes="**/*.jar" />
-        <fileset dir="${thirdparty.tests.jars}" includes="**/*.jar" />
-        <pathelement location="${spi.jarfile}"/>
-        <pathelement location="${connector.jarfile}"/>
-        <pathelement location="${tests.jarfile}"/>
-        <pathelement location="${dtds}" />
-        <pathelement path="${java.class.path}" />
-        <!-- Needed for those tests that must find resources on the classpath. -->
-        <pathelement location="${tests.src}" />
-      </classpath>
+      <classpath refid="tests.classpath"/>
     </java>
   </target>
 
-  <target name="jar" depends="jar-prod,jar-tests"
-          description="Create jars for the Connector SPI project"/>
+  <!-- ====================== Cobertura Tasks ====================== -->
 
-  <target name="clean" description="Deletes all build files.">
-    <delete dir="${build}" />
-    <delete dir="${dist}" />
-    <delete dir="${tests.todir}" />
-    <delete dir="${tests.todir}" />
-    <delete dir="${tests.data}/tmp" />
+  <!-- Where Cobertura can find itself and its dependencies. -->
+  <path id="cobertura.classpath">
+    <fileset dir="third-party/cobertura" includes="**/*.jar" />
+  </path>
+  <taskdef classpathref="cobertura.classpath" resource="tasks.properties" />
+
+  <target name="init_coverage">
+    <mkdir dir="${instrumented.dir}" />
+    <mkdir dir="${coverage.xml.dir}" />
+    <mkdir dir="${coverage.html.dir}" />
   </target>
 
-  <!-- ======================Installation targets====================== -->
+  <target name="compile_coverage"
+          depends="init_coverage,compile,compile_tests" />
+
+  <target name="instrument" depends="compile_coverage">
+    <cobertura-instrument todir="${instrumented.dir}">
+      <!-- The following line causes instrument to ignore any line
+           refering to log4j, for the purposes of coverage reporting.
+      -->
+      <ignore regex="org.apache.log4j.*" />
+
+      <!-- Instrument the application classes, but not the test classes. -->
+      <fileset dir="${classes}" includes="**/*.class" />
+      <fileset dir="${spi-classes}" includes="**/*.class" />
+    </cobertura-instrument>
+  </target>
+
+  <path id="coverage.classpath">
+    <pathelement location="${instrumented.dir}" />
+    <path refid="tests.classpath" />
+    <path refid="cobertura.classpath" />
+  </path>
+
+  <target name="run_coverage_tests"
+          depends="jar-tests,test_connector_jars,instrument">
+    <antcall target="_run_tests">
+      <param name="test.classpath" value="coverage.classpath" />
+    </antcall>
+  </target>
+
+  <target name="coverage_report">
+    <!-- Generate an XML file containing the coverage data. -->
+    <cobertura-report srcdir="${src}" destdir="${coverage.xml.dir}"
+                      format="xml" />
+    <!-- Generate a series of HTML files containing the coverage
+         data in a user-readable form using nested source filesets.
+    -->
+    <cobertura-report destdir="${coverage.html.dir}">
+      <fileset dir="${src}">
+        <include name="**/*.java"/>
+      </fileset>
+    </cobertura-report>
+  </target>
+
+  <target name="clean_coverage"
+          description="Remove all files created by the build/test process.">
+    <delete file="cobertura.log" />
+    <delete file="cobertura.ser" />
+    <delete dir="${instrumented.dir}" />
+  </target>
+
+  <target name="code_coverage"
+          depends="run_coverage_tests,coverage_report"
+          description="Compile, instrument ourself, run the tests and generate coverage reports."/>
+
+  <!-- ====================== Installation targets ====================== -->
 
   <target name="install_init">
     <mkdir dir="${war.dir}" />
@@ -316,7 +402,6 @@
   <!--  Builds a Web Archive - basically a JAR file which
         also contains all and can be deployed as-is.
   -->
-
   <target name="war" depends="war-prod,war-tests"
           description="Builds the Test and Production WAR files."/>
 
@@ -349,8 +434,9 @@
       <lib dir="${jar.dir}" includes="*.jar" />
       <lib dir="${thirdparty.prod.jars}" includes="*.jar" excludes="servlet-api.jar" />
       <webinf dir="etc" includes="**" />
-      <!-- above this line is all the stuff that goes in the normal prod jar,
-           below is the stuff that is only needed for testing -->
+      <!-- Above this line is all the stuff that goes in the normal prod jar,
+           below is the stuff that is only needed for testing.
+      -->
       <lib dir="${thirdparty.tests.jars}" includes="*.jar" />
       <lib dir="${projects.dir}/test-connectorA/dist/jar" includes="*.jar" />
       <lib dir="${projects.dir}/test-connectorB/dist/jar" includes="*.jar" />
@@ -363,7 +449,6 @@
         <attribute name="Implementation-Vendor" value="Google Inc."/>
       </manifest>
     </war>
-
   </target>
 
 </project>

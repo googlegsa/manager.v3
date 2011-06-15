@@ -15,13 +15,9 @@
 package com.google.enterprise.connector.util.filter;
 
 import com.google.enterprise.connector.spi.Document;
-import com.google.enterprise.connector.spi.Property;
-import com.google.enterprise.connector.spi.SimpleDocument;
 import com.google.enterprise.connector.spi.Value;
 
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -35,7 +31,7 @@ public class DeletePropertyFilterTest extends DocumentFilterTest {
 
   /** Creates a DeletePropertyFilter. */
   protected static Document createFilter() {
-    HashSet<String>deletes = new HashSet<String>();
+    HashSet<String> deletes = new HashSet<String>();
     deletes.add(PROP1);
     deletes.add(PROP3);
     return createFilter(deletes);
@@ -45,6 +41,37 @@ public class DeletePropertyFilterTest extends DocumentFilterTest {
     DeletePropertyFilter factory = new DeletePropertyFilter();
     factory.setPropertyNames(deletes);
     return factory.newDocumentFilter(createDocument());
+  }
+
+  /** Tests the Factory constructor with illegal arguments. */
+  public void testFactoryIllegalArgs() throws Exception {
+    DeletePropertyFilter factory = new DeletePropertyFilter();
+
+    try {
+      factory.setPropertyName(null);
+      fail("IllegalArgumentException expected");
+    } catch (IllegalArgumentException expected) {
+      // Expected.
+    }
+
+    try {
+      factory.setPropertyName("");
+      fail("IllegalArgumentException expected");
+    } catch (IllegalArgumentException expected) {
+      // Expected.
+    }
+
+    try {
+      factory.setPropertyNames((Set<String>) null);
+      fail("NullPointerException expected");
+    } catch (NullPointerException expected) {
+      // Expected.
+    }
+  }
+
+  /** Tests illegal state if configuration setters are not called. */
+  public void testFactoryIllegalState() throws Exception {
+    checkIllegalState(new DeletePropertyFilter());
   }
 
   /** Tests for non-existent property should return null. */
@@ -76,5 +103,12 @@ public class DeletePropertyFilterTest extends DocumentFilterTest {
     expectedProps.remove(PROP1);
     expectedProps.remove(PROP3);
     checkDocument(createFilter(), expectedProps);
+  }
+
+  /** Test toString(). */
+  public void testToString() {
+    DeletePropertyFilter factory = new DeletePropertyFilter();
+    factory.setPropertyName("foo");
+    assertEquals("DeletePropertyFilter: [foo]", factory.toString());
   }
 }

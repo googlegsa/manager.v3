@@ -37,6 +37,7 @@ public class DocumentFilterTest extends TestCase {
   protected static final String PROP4 = "property4";
   protected static final String PROP5 = "property5";
   protected static final String PROP6 = "property6";
+  protected static final String PROP7 = "property7";
   protected static final String TEST_STRING = "The_.quick_brown_fox.jumped.over";
   protected static final String CLEAN_STRING = "The quick brown fox jumped over";
   protected static final String TEST_EXTRA_STRING = "lazy.dog's_back";
@@ -57,6 +58,7 @@ public class DocumentFilterTest extends TestCase {
     props.put(PROP4, valueList(CLEAN_STRING, EXTRA_STRING));
     props.put(PROP5, valueList(CLEAN_STRING, TEST_EXTRA_STRING));
     props.put(PROP6, valueList(TEST_STRING, TEST_EXTRA_STRING));
+    props.put(PROP7, valueList(EXTRA_STRING));
     return props;
   }
 
@@ -84,8 +86,58 @@ public class DocumentFilterTest extends TestCase {
     }
   }
 
+  /** Check IllegalStateException if the Filter was not properly initialized. */
+  protected static void checkIllegalState(DocumentFilterFactory factory)
+      throws Exception {
+    Document filter = factory.newDocumentFilter(createDocument());
+
+    try {
+      filter.getPropertyNames();
+      fail("IllegalStateException expected");
+    } catch (IllegalStateException expected) {
+      // Expected.
+    }
+
+    try {
+      filter.findProperty(PROP1);
+      fail("IllegalStateException expected");
+    } catch (IllegalStateException expected) {
+      // Expected.
+    }
+  }
+
   /** Test createDocument. */
   public void testCreateDocument() throws Exception {
     checkDocument(createDocument(), createProperties());
+  }
+
+  /** If no methods are overridden, the AbstractDocumentFilter is just
+   * a NO-OP filter, passing all calls through to the source Document.
+   */
+  public void testNoopFilter() throws Exception {
+    NoopDocumentFilter filter = new NoopDocumentFilter();
+    checkDocument(filter.newDocumentFilter(createDocument()),
+                  createProperties());
+  }
+
+  /** Test null source document. */
+  public void testNullSourceDocument() throws Exception {
+    NoopDocumentFilter filter = new NoopDocumentFilter();
+    try {
+      filter.newDocumentFilter(null);
+      fail("NullPointerException expected");
+    } catch (NullPointerException expected) {
+      // Expected.
+    }
+  }
+
+  /** Test toString().  Test Subclasses should override this */
+  public void testToString() {
+    NoopDocumentFilter filter = new NoopDocumentFilter();
+    assertEquals("DocumentFilterTest$NoopDocumentFilter", filter.toString());
+  }
+
+  /** AbstractDocumentFilter is defined as abstract, so I must subclass it. */
+  class NoopDocumentFilter extends AbstractDocumentFilter {
   }
 }
