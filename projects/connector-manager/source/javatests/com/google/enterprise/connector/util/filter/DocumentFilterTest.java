@@ -74,6 +74,15 @@ public class DocumentFilterTest extends TestCase {
   protected static void checkDocument(Document document,
       Map<String, List<Value>> expectedProps) throws Exception {
     assertEquals(expectedProps.keySet(), document.getPropertyNames());
+    checkDocumentProperties(document, expectedProps);
+  }
+
+  /**
+   * Checks that the Document Properties match the expected Properties,
+   * which may be a subset of the full document properties.
+   */
+  protected static void checkDocumentProperties(Document document,
+      Map<String, List<Value>> expectedProps) throws Exception {
     for (Map.Entry<String, List<Value>> entry : expectedProps.entrySet()) {
       Property prop = document.findProperty(entry.getKey());
       assertNotNull(prop);
@@ -98,6 +107,18 @@ public class DocumentFilterTest extends TestCase {
       // Expected.
     }
 
+    try {
+      filter.findProperty(PROP1);
+      fail("IllegalStateException expected");
+    } catch (IllegalStateException expected) {
+      // Expected.
+    }
+  }
+
+  /** Check IllegalStateException if the Filter was not properly initialized. */
+  protected static void checkIllegalStateFindProperty(
+      DocumentFilterFactory factory) throws Exception {
+    Document filter = factory.newDocumentFilter(createDocument());
     try {
       filter.findProperty(PROP1);
       fail("IllegalStateException expected");
