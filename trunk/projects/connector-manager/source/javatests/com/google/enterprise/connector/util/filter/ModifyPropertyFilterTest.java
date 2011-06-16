@@ -102,34 +102,19 @@ public class ModifyPropertyFilterTest extends DocumentFilterTest {
 
   /** Tests illegal state if configuration setters are not called. */
   public void testFactoryIllegalState() throws Exception {
-    try {
-      ModifyPropertyFilter factory = new ModifyPropertyFilter();
-      Document filter = factory.newDocumentFilter(createDocument());
-      filter.findProperty(PROP1);
-      fail("IllegalStateException expected");
-    } catch (IllegalStateException expected) {
-      // Expected.
-    }
+    ModifyPropertyFilter factory = new ModifyPropertyFilter();
 
-    try {
-      ModifyPropertyFilter factory = new ModifyPropertyFilter();
-      factory.setPropertyName(PROP1);
-      Document filter = factory.newDocumentFilter(createDocument());
-      filter.findProperty(PROP1);
-      fail("IllegalStateException expected");
-    } catch (IllegalStateException expected) {
-      // Expected.
-    }
+    // Test with neither propertyName, nor pattern set.
+    checkIllegalStateFindProperty(factory);
 
-    try {
-      ModifyPropertyFilter factory = new ModifyPropertyFilter();
-      factory.setPattern(PATTERN);
-      Document filter = factory.newDocumentFilter(createDocument());
-      filter.findProperty(PROP1);
-      fail("IllegalStateException expected");
-    } catch (IllegalStateException expected) {
-      // Expected.
-    }
+    // Test with propertyName, but no pattern set.
+    factory.setPropertyName(PROP1);
+    checkIllegalStateFindProperty(factory);
+
+    // Test with pattern, but no propertyName set.
+    factory = new ModifyPropertyFilter();
+    factory.setPattern(PATTERN);
+    checkIllegalStateFindProperty(factory);
   }
 
   /** Tests for non-existent property should return null. */
