@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<!-- Load Balancer buildfile. This build requires ant 1.8.0 or newer. -->
 <project name="load-balancer" default="all" basedir=".">
 
   <!-- ========================= PROPERTIES ============================= -->
+
   <property name="projects.dir" value=".." />
   <property file="${projects.dir}/version.properties"/>
   <property name="jvm.version" value="1.5" />
@@ -52,7 +54,7 @@
 
   <target name="init">
    <fail unless="catalina.base"
-          message="You must specify 'catalina.base' property pointing to deployment target Tomcat installation." />
+         message="You must specify 'catalina.base' property pointing to deployment target Tomcat installation." />
     <mkdir dir="${build}" />
     <mkdir dir="${prod}" />
     <mkdir dir="${dist}" />

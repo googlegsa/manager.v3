@@ -40,7 +40,10 @@ http://tomcat.apache.org/download-60.cgi
 Installer (CGI) Tomcat installation.
 
 Deployment is done via an ant task from this directory.
-You must specify two properties specific to your
+It requires ant v1.8.0 or newer, available from:
+http://ant.apache.org/bindownload.cgi
+
+You must supply two properties specific to your
 installation:
 
 catalina.base - the base of the Tomcat installation
