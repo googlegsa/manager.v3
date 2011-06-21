@@ -300,8 +300,8 @@ public class ConnectorCoordinatorTest extends TestCase {
     final ConnectorCoordinatorImpl instance2 =
         createConnector("TestConnectorA", "connector2", jsonConfigString);
 
-    checkThreadDeadlock(new ConfigUpdater(instance1, 50),
-                        new ConfigUpdater(instance2, 50));
+    checkThreadDeadlock(new ConfigUpdater(instance1, 25),
+                        new ConfigUpdater(instance2, 25));
     checkThreadDeadlock(new ScheduleUpdater(instance1, 100),
                         new ScheduleUpdater(instance2, 100));
     checkThreadDeadlock(new CheckpointUpdater(instance1, 100),
@@ -326,7 +326,7 @@ public class ConnectorCoordinatorTest extends TestCase {
     // TODO: Can we clean up the deadlocked threads?
     ThreadMXBean tmx = ManagementFactory.getThreadMXBean();
     while (thread1.isAlive() && thread2.isAlive()) {
-      try { Thread.sleep(500); } catch (InterruptedException e) {}
+      try { Thread.sleep(20); } catch (InterruptedException e) {}
       long[] ids = tmx.findMonitorDeadlockedThreads();
       if (ids != null) {
         ThreadInfo[] infos = tmx.getThreadInfo(ids);

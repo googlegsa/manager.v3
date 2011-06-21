@@ -19,8 +19,7 @@ import com.google.enterprise.connector.traversal.BatchResult;
 import com.google.enterprise.connector.traversal.BatchSize;
 import com.google.enterprise.connector.traversal.FileSizeLimitInfo;
 import com.google.enterprise.connector.traversal.TraversalDelayPolicy;
-import com.google.enterprise.connector.util.Clock;
-import com.google.enterprise.connector.util.SystemClock;
+import com.google.enterprise.connector.util.testing.AdjustableClock;
 
 import junit.framework.TestCase;
 
@@ -29,29 +28,20 @@ import junit.framework.TestCase;
  */
 public class HostLoadManagerTest extends TestCase {
 
-  static Clock clock = new SystemClock(); // TODO: use a mock clock;
+  static AdjustableClock clock = new AdjustableClock();
 
-  // Wait until the current time is between the minimum and maximum
-  // milliseconds of a second.  This can help us avoid running accross
-  // 1-second boundaries and splitting results between two periods.
-  private void alignTime(int min, int max) {
-    while (true) {
-      int now = (int)(clock.getTimeMillis() % 1000);
-      if (now > min && now < max) {
-        return;
-      }
-      try {
-        Thread.sleep(20);
-      } catch (InterruptedException e) {
-        // Ignore.
-      }
-    }
+  // Adjust the current time to the minimum milliseconds of a second.
+  // This can help us avoid running accross 1-second boundaries and
+  // splitting results between two periods.
+  private void alignTime(int min) {
+    long now = clock.getTimeMillis();
+    clock.setTimeMillis(now - (now % 1000L) + min);
   }
 
   private HostLoadManager newHostLoadManager(int load) {
+    alignTime(50);
     HostLoadManager hlm = new HostLoadManager(null, null, clock);
     hlm.setLoad(load);
-    alignTime(50, 750);
     return hlm;
   }
 
@@ -83,18 +73,13 @@ public class HostLoadManagerTest extends TestCase {
 
   public void testPeriod() {
     HostLoadManager hostLoadManager = newHostLoadManager(60);
-    hostLoadManager.setPeriod(1);
+    hostLoadManager.setPeriod(1); // 1 second.
 
     hostLoadManager.recordResult(newBatchResult(55));
     assertEquals(5, hostLoadManager.determineBatchSize().getHint());
 
-    // sleep a period (and then some) so that batchHint is reset
-    try {
-      // extra time in ms in case sleeping the period is not long enough
-      Thread.sleep(1200);
-    } catch (InterruptedException e) {
-      // Ignore.
-    }
+    // Advance time more than one second so that batchHint is reset.
+    clock.adjustTime(1250); // 1.25 second
 
     assertEquals(60, hostLoadManager.determineBatchSize().getHint());
     hostLoadManager.recordResult(newBatchResult(15));
@@ -107,19 +92,16 @@ public class HostLoadManagerTest extends TestCase {
    */
   public void testShouldDelay() {
     HostLoadManager hostLoadManager = newHostLoadManager(60);
-    hostLoadManager.setPeriod(1);
+    hostLoadManager.setPeriod(1); // 1 second.
 
     assertFalse(hostLoadManager.shouldDelay());
     hostLoadManager.recordResult(newBatchResult(60));
     assertTrue(hostLoadManager.shouldDelay());
 
-    // Sleep more than 1 second, the LoadManager period, so that this
-    // connector should be allowed to run again without delay.
-    try {
-      Thread.sleep(1250);
-    } catch (InterruptedException e) {
-      // Ignore.
-    }
+    // Advance time more than 1 second, the LoadManager period, so that
+    // this connector should be allowed to run again without delay.
+    clock.adjustTime(1250); // 1.25 second
+
     assertFalse(hostLoadManager.shouldDelay());
   }
 
@@ -129,7 +111,7 @@ public class HostLoadManagerTest extends TestCase {
    */
   public void testShouldDelayTinyBatch() {
     HostLoadManager hostLoadManager = newHostLoadManager(60);
-    hostLoadManager.setPeriod(1);
+    hostLoadManager.setPeriod(1); // 1 second.
 
     assertFalse(hostLoadManager.shouldDelay());
     hostLoadManager.recordResult(newBatchResult(59));
@@ -139,13 +121,10 @@ public class HostLoadManagerTest extends TestCase {
     assertEquals(1, batchSize.getHint());
     assertTrue(hostLoadManager.shouldDelay());
 
-    // Sleep more than 1 second, the LoadManager period, so that this
-    // connector should be allowed to run again without delay.
-    try {
-      Thread.sleep(1250);
-    } catch (InterruptedException e) {
-      // Ignore.
-    }
+    // Advance time more than 1 second, the LoadManager period, so that
+    // this connector should be allowed to run again without delay.
+    clock.adjustTime(1250); // 1.25 second
+
     assertFalse(hostLoadManager.shouldDelay());
   }
 
@@ -156,7 +135,7 @@ public class HostLoadManagerTest extends TestCase {
    */
   public void testShouldDelayAfterHugeBatch() {
     HostLoadManager hostLoadManager = newHostLoadManager(50);
-    hostLoadManager.setPeriod(1);
+    hostLoadManager.setPeriod(1); // 1 second.
 
     assertFalse(hostLoadManager.shouldDelay());
     hostLoadManager.recordResult(newBatchResult(150));
@@ -164,26 +143,18 @@ public class HostLoadManagerTest extends TestCase {
     // We should delay, after grossly exceeding the load.
     assertTrue(hostLoadManager.shouldDelay());
 
-    // Sleep more than 1 second, the LoadManager period, so that this
-    // connector might be allowed to run again without delay.
-    try {
-      Thread.sleep(1250);
-    } catch (InterruptedException e) {
-      // Ignore.
-    }
+    // Advance time more than 1 second, the LoadManager period, so that
+    // this connector should be allowed to run again without delay.
+    clock.adjustTime(1250); // 1.25 second
 
     // We should still delay, paying the penalty for grossly exceeding
     // the load previously.
     assertTrue(hostLoadManager.shouldDelay());
 
-    // Sleep another couple of seconds, allowing the penalty to expire.
+    // Advance another couple of seconds, allowing the penalty to expire.
     // This will bring the average load over the elapsed traversal time
     // plus the penalty periods in line with the configured load.
-    try {
-      Thread.sleep(2500);
-    } catch (InterruptedException e) {
-      // Ignore.
-    }
+    clock.adjustTime(2500); // 2.5 seconds
 
     // We should then be allowed to traverse again.
     assertFalse(hostLoadManager.shouldDelay());
@@ -225,11 +196,11 @@ public class HostLoadManagerTest extends TestCase {
    */
   public void testAmortizeLongRunningBatch() {
     HostLoadManager hostLoadManager = newHostLoadManager(200);
-    hostLoadManager.setPeriod(1);
+    hostLoadManager.setPeriod(1); // 1 second
 
     // We don't want to register the result for this test too close
     // to the beginning or end of a second.
-    alignTime(450, 750);
+    alignTime(450);
 
     assertFalse(hostLoadManager.shouldDelay());
     hostLoadManager.recordResult(newBatchResult(200, 4000));

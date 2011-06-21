@@ -2326,7 +2326,7 @@ public class DocPusherTest extends TestCase {
     limit.setMaxFeedSize(32);
     limit.setMaxDocumentSize(64 * 1024);
 
-    // SlowFeedConnection waits 10 secs before transmission, allowing feeds
+    // SlowFeedConnection waits 5 secs before transmission, allowing feeds
     // to back up on this end of the connection.
     SlowFeedConnection slowFeedConnection = new SlowFeedConnection();
     DocPusher dpusher = new DocPusher(slowFeedConnection, "junit", limit, dfc);
@@ -2387,16 +2387,18 @@ public class DocPusherTest extends TestCase {
 
     Runtime rt = Runtime.getRuntime();
     rt.gc();
-    long freeMemory = rt.maxMemory() - (rt.totalMemory() - rt.freeMemory());
+    long memAvailable = rt.maxMemory() - (rt.totalMemory() - rt.freeMemory());
 
     FileSizeLimitInfo limit = new FileSizeLimitInfo();
-    limit.setMaxDocumentSize(freeMemory/4);
-    limit.setMaxFeedSize(freeMemory/4);
+    // With these limits, the largest possible feed will be about 7/12 of
+    // available memory - there should not be room for a second one.
+    limit.setMaxDocumentSize(memAvailable/4);
+    limit.setMaxFeedSize(memAvailable/3);
 
     DocPusher dpusher = new DocPusher(feedConnection, "junit", limit, dfc);
     Map<String, Object> config = getTestDocumentConfig();
     config.put(SpiConstants.PROPNAME_CONTENT,
-               new HugeInputStream(freeMemory/4 - 10));
+               new HugeInputStream(limit.maxDocumentSize() - 10));
     Document bigDocument = ConnectorTestUtils.createSimpleDocument(config);
     boolean result = dpusher.take(bigDocument, null);
     assertFalse(result);
@@ -2452,7 +2454,7 @@ public class DocPusherTest extends TestCase {
    */
   private static class SlowFeedConnection extends MockFeedConnection {
     static Clock clock = new SystemClock(); // TODO: rewrite this to use a mock clock.
-    static long doneTime = clock.getTimeMillis() + 10000;
+    static long doneTime = clock.getTimeMillis() + 5000;
     @Override
     public String sendData(FeedData feedData)
         throws RepositoryException {

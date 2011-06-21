@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.instantiator;
 
+import com.google.enterprise.connector.database.DocumentStore;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.pusher.Pusher;
@@ -31,7 +32,6 @@ import com.google.enterprise.connector.traversal.BatchResult;
 import com.google.enterprise.connector.traversal.BatchSize;
 import com.google.enterprise.connector.traversal.TraversalDelayPolicy;
 import com.google.enterprise.connector.util.SystemClock;
-import com.google.enterprise.connector.database.DocumentStore;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
@@ -51,20 +51,21 @@ import java.util.concurrent.TimeUnit;
 public class ConnectorCoordinatorBatchTest extends TestCase {
   private static final Locale locale = Locale.ENGLISH;
 
-  private static final int SHORT_TRAVERSAL_TIME_LIMIT_SECS = 1;
-
   ConnectorCoordinatorImpl coordinator;
   RecordingPusher recordingPusher;
   RecordingLoadManager recordingLoadManager;
   TypeInfo typeInfo;
+
+  // Transaction timeouts in milliseconds.
+  private static final int SHORT_TIME_OUT = 150;
+  private static final int LONG_TIME_OUT = 5000;
 
   private static final String APPLICATION_CONTEXT =
       "testdata/contextTests/ConnectorCoordinatorBatchTest.xml";
 
   private static final String TEST_DIR_NAME =
       "testdata/tmp/ConnectorCoordinatorBatchTests";
-  private final File baseDirectory  = new File(TEST_DIR_NAME);
-
+  private final File baseDirectory = new File(TEST_DIR_NAME);
 
   @Override
   protected void setUp() throws Exception {
@@ -84,6 +85,7 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
     Assert.assertNotNull(typeInfo);
 
     SyncingConnector.reset();
+    SyncingConnector.setPollTimeout(LONG_TIME_OUT);
   }
 
   @Override
@@ -142,7 +144,7 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
   }
 
   public void testCreateRunRemoveLoop() throws Exception {
-    for (int ix = 0; ix < 100; ix++) {
+    for (int ix = 0; ix < 50; ix++) {
       createPusherAndCoordinator();
       runBatch(1 + ix, 1 + ix, 0);
       coordinator.removeConnector();
@@ -169,8 +171,9 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
             SpiConstants.PROPNAME_DOCID);
     SyncingConnector.Tracker tracker =
         SyncingConnector.getTracker();
+    long timeout = SyncingConnector.getPollTimeout();
     startBatch();
-    PushedDocument got = recordingPusher.poll();
+    PushedDocument got = recordingPusher.poll(timeout);
     assertNotNull(tracker.toString(), got);
     String gotId =
         Value.getSingleValueString(got.getDocument(),
@@ -181,7 +184,7 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
         .getStartTraversalCount());
     assertEquals(tracker.toString(), expectResumeTraversalCount, tracker
         .getResumeTraversalCount());
-    BatchResult batchResult = recordingLoadManager.getBatchResult();
+    BatchResult batchResult = recordingLoadManager.getBatchResult(timeout);
     assertNotNull(batchResult);
     assertEquals(tracker.toString(), 1, batchResult.getCountProcessed());
     assertEquals(tracker.toString(), TraversalDelayPolicy.IMMEDIATE,
@@ -221,31 +224,35 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
   }
 
   public void testDisabledTraversal() throws Exception {
+    SyncingConnector.setPollTimeout(SHORT_TIME_OUT);
     createPusherAndCoordinator();
     // Disable traversal schedule.  No batch should run.
     coordinator.setConnectorSchedule(new Schedule("#c1:1000:0:0-0"));
     assertFalse(coordinator.startBatch());
-    assertNull(recordingLoadManager.getBatchResult());
+    assertNull(recordingLoadManager.getBatchResult(SHORT_TIME_OUT));
   }
 
   public void testLegacyDisabledTraversal() throws Exception {
+    SyncingConnector.setPollTimeout(SHORT_TIME_OUT);
     createPusherAndCoordinator();
     // Legacy disabled traversal schedule was interval of 1-1.
     // No batch should run.
     coordinator.setConnectorSchedule(new Schedule("c1:1000:0:1-1"));
     assertFalse(coordinator.startBatch());
-    assertNull(recordingLoadManager.getBatchResult());
+    assertNull(recordingLoadManager.getBatchResult(SHORT_TIME_OUT));
   }
 
   public void testNoTraversalIntervals() throws Exception {
+    SyncingConnector.setPollTimeout(SHORT_TIME_OUT);
     createPusherAndCoordinator();
     // With no traversal intervals, no batch should run.
     coordinator.setConnectorSchedule(new Schedule("c1:1000:0:"));
     assertFalse(coordinator.startBatch());
-    assertNull(recordingLoadManager.getBatchResult());
+    assertNull(recordingLoadManager.getBatchResult(SHORT_TIME_OUT));
   }
 
   public void testOutsideTraversalIntervals() throws Exception {
+    SyncingConnector.setPollTimeout(SHORT_TIME_OUT);
     createPusherAndCoordinator();
     // If current time is outside traversal intervals, no batch should run.
     Calendar now = Calendar.getInstance();
@@ -261,7 +268,7 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
     Schedule schedule = new Schedule("c1:1000:0:" + intervals);
     coordinator.setConnectorSchedule(schedule);
     assertFalse(coordinator.startBatch());
-    assertNull(recordingLoadManager.getBatchResult());
+    assertNull(recordingLoadManager.getBatchResult(SHORT_TIME_OUT));
   }
 
   public void testOutsideWrappedTraversalIntervals() throws Exception {
@@ -272,13 +279,14 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
     int hour = now.get(Calendar.HOUR_OF_DAY);
 
     // Can't test this if we are too close to midnight.
-    // TODO: Fix this when we have a Mockable Clock.
+    // TODO: Fix this when we have a Mockable Clock - but ConnectorCoordinator
+    // needs to get time from the Clock, rather than using Calendar.getInstance().
     if (hour > 0 && hour < 22) {
       String interval = (hour + 2) + "-" + hour;
       Schedule schedule = new Schedule("c1:1000:0:" + interval);
       coordinator.setConnectorSchedule(schedule);
       assertFalse(coordinator.startBatch());
-      assertNull(recordingLoadManager.getBatchResult());
+      assertNull(recordingLoadManager.getBatchResult(SHORT_TIME_OUT));
     }
   }
 
@@ -318,38 +326,40 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
   }
 
   public void testTraversalDelayPolicy1() throws Exception {
+    SyncingConnector.setPollTimeout(SHORT_TIME_OUT);
     createPusherAndCoordinator();
+    // SHORT_TIME_OUT should be greater than the poll interval.
+    assertTrue(SHORT_TIME_OUT > 100);
     // Force a POLLING wait.
-    coordinator.setConnectorSchedule(new Schedule("c1:1000:250:0-0"));
+    coordinator.setConnectorSchedule(new Schedule("c1:1000:100:0-0"));
     coordinator.delayTraversal(TraversalDelayPolicy.POLL);
     assertFalse(coordinator.startBatch());
-    assertNull(recordingLoadManager.getBatchResult());
-
-    // Wait until delay interval is up.  Should be able to run.
-    try {
-      Thread.sleep(300);
-    } catch (InterruptedException ie) {}
+    assertNull(recordingLoadManager.getBatchResult(SHORT_TIME_OUT));
+    // After the above SHORT_TIME_OUT wait, the delay interval is up.
+    // Should be able to run.
     assertTrue(coordinator.startBatch());
   }
 
   public void testTraversalDelayPolicy2() throws Exception {
+    SyncingConnector.setPollTimeout(SHORT_TIME_OUT);
     createPusherAndCoordinator();
     // Force a POLLING wait.
-    coordinator.setConnectorSchedule(new Schedule("c1:1000:500:0-0"));
+    coordinator.setConnectorSchedule(new Schedule("c1:1000:10000:0-0"));
     coordinator.delayTraversal(TraversalDelayPolicy.POLL);
     assertFalse(coordinator.startBatch());
-    assertNull(recordingLoadManager.getBatchResult());
+    assertNull(recordingLoadManager.getBatchResult(SHORT_TIME_OUT));
     // IMMEDIATE should cancel out any current delay policy.
     coordinator.delayTraversal(TraversalDelayPolicy.IMMEDIATE);
     assertTrue(coordinator.startBatch());
   }
 
   public void testTraversalDelayPolicy3() throws Exception {
+    SyncingConnector.setPollTimeout(SHORT_TIME_OUT);
     createPusherAndCoordinator();
     // Force a ERROR wait.
     coordinator.delayTraversal(TraversalDelayPolicy.ERROR);
     assertFalse(coordinator.startBatch());
-    assertNull(recordingLoadManager.getBatchResult());
+    assertNull(recordingLoadManager.getBatchResult(SHORT_TIME_OUT));
     // IMMEDIATE should cancel out any current delay policy.
     coordinator.delayTraversal(TraversalDelayPolicy.IMMEDIATE);
     assertTrue(coordinator.startBatch());
@@ -395,10 +405,9 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
   }
 
   public void testTimeoutBatch() throws Exception {
-    // Override the default ThreadPool timeout with a much shorter timeout.
-    getCoordinatorFactory().setThreadPool(
-        new ThreadPool(SHORT_TRAVERSAL_TIME_LIMIT_SECS,
-        new SystemClock() /* TODO: Use a mock clock */));
+    // Override default ThreadPool timeout with much shorter timeout of 1 sec.
+    // TODO: Use a mock clock.
+    getCoordinatorFactory().setThreadPool(new ThreadPool(1, new SystemClock()));
     createPusherAndCoordinator();
     coordinator.startBatch();
     SyncingConnector.Tracker tracker =
@@ -473,9 +482,8 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
     public void cancel() {
     }
 
-    PushedDocument poll() throws InterruptedException {
-      return pushedDocuments.poll(
-          SyncingConnector.POLL_TIME_LIMIT_MILLIS, TimeUnit.MILLISECONDS);
+    PushedDocument poll(long pollTimeLimitMillis) throws InterruptedException {
+      return pushedDocuments.poll(pollTimeLimitMillis, TimeUnit.MILLISECONDS);
     }
 
     void reset() {
@@ -512,9 +520,8 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
       resultQueue.add(batchResult);
     }
 
-    BatchResult getBatchResult() throws InterruptedException {
-      return resultQueue.poll(SyncingConnector.POLL_TIME_LIMIT_MILLIS,
-          TimeUnit.MILLISECONDS);
+    BatchResult getBatchResult(long timeOutMillis) throws InterruptedException {
+      return resultQueue.poll(timeOutMillis, TimeUnit.MILLISECONDS);
     }
 
     void reset() {
