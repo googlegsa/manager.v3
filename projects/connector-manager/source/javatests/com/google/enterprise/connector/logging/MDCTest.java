@@ -99,7 +99,7 @@ public class MDCTest extends TestCase {
     Thread t = new OtherThread("MDCChildThread");
     t.start();
     try {
-      Thread.sleep(500);
+      Thread.sleep(50);
     } catch (InterruptedException e) {}
     assertEquals(value1, MDC.get(key1));
     MDC.put(key1, value3);
@@ -134,7 +134,7 @@ public class MDCTest extends TestCase {
       assertEquals(value2, MDC.get(key2));
 
       try {
-        Thread.sleep(750);
+        Thread.sleep(75);
       } catch (InterruptedException e) {}
       assertEquals(value2, MDC.get(key1));
       assertEquals(value2, MDC.get(key2));

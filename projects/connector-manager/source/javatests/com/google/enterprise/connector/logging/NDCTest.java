@@ -140,7 +140,7 @@ public class NDCTest extends TestCase {
     Thread t = new OtherThread("NDCChildThread");
     t.start();
     try {
-      Thread.sleep(500);
+      Thread.sleep(50);
     } catch (InterruptedException e) {}
     assertEquals(message1, NDC.peek());
     assertTrue(NDC.getDepth() == 1);
@@ -172,7 +172,7 @@ public class NDCTest extends TestCase {
       assertTrue(NDC.getDepth() == 1);
 
       try {
-        Thread.sleep(750);
+        Thread.sleep(75);
       } catch (InterruptedException e) {}
       assertEquals(message2, NDC.peek());
       assertTrue(NDC.getDepth() == 1);
