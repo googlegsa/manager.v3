@@ -42,9 +42,8 @@ public class Authenticate extends ConnectorManagerServlet {
   @Override
   protected void processDoPost(
       String xmlBody, Manager manager, PrintWriter out) {
-    NDC.push("AuthN");
+    NDC.append("AuthN");
     handleDoPost(xmlBody, manager, out);
-    NDC.pop();
   }
 
   /**
@@ -92,7 +91,7 @@ public class Authenticate extends ConnectorManagerServlet {
 
     String username = XmlParseUtil.getFirstElementByTagName(
       (Element) credList.item(0), ServletUtil.XMLTAG_AUTHN_USERNAME);
-    NDC.pushAppend(username);
+    NDC.append(username);
 
     String password = XmlParseUtil.getFirstElementByTagName(
         (Element) credList.item(0), ServletUtil.XMLTAG_AUTHN_PASSWORD);
@@ -136,7 +135,6 @@ public class Authenticate extends ConnectorManagerServlet {
     }
     ServletUtil.writeXMLTag(out, 1, ServletUtil.XMLTAG_AUTHN_RESPONSE, true);
     ServletUtil.writeRootTag(out, true);
-    NDC.pop();
     return;
   }
 }

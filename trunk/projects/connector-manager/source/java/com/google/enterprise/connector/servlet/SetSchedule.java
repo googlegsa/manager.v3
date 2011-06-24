@@ -41,10 +41,9 @@ public class SetSchedule extends ConnectorManagerServlet {
   @Override
   protected void processDoPost(
       String xmlBody, Manager manager, PrintWriter out) {
-    NDC.push("Config");
+    NDC.append("Config");
     ConnectorMessageCode status = handleDoPost(xmlBody, manager);
     ServletUtil.writeResponse(out, status);
-    NDC.pop();
   }
 
   /**
@@ -66,7 +65,7 @@ public class SetSchedule extends ConnectorManagerServlet {
     String connectorName = XmlParseUtil.getFirstElementByTagName(
         root, ServletUtil.XMLTAG_CONNECTOR_NAME);
 
-    NDC.pushAppend(connectorName);
+    NDC.append(connectorName);
 
     // TODO: Remove this when the GSA enforces lowercase connector names.
     // Until then, this hack tries to determine if we are setting the
@@ -106,7 +105,6 @@ public class SetSchedule extends ConnectorManagerServlet {
       LOGGER.log(Level.WARNING, ServletUtil.LOG_EXCEPTION_PERSISTENT_STORE, e);
     }
 
-    NDC.pop();
     return status;
   }
 }

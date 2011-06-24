@@ -49,8 +49,53 @@ public class StartUp extends HttpServlet {
     try {
       LOGGER.info("init");
       ServletContext servletContext = this.getServletContext();
+      doStartup(servletContext);
+    } finally {
+      LOGGER.info("init done.");
+      NDC.remove();
+    }
+  }
+
+  @Override
+  public void destroy() {
+    NDC.push("Shutdown");
+    try {
+      LOGGER.info("destroy");
+      Context.getInstance().shutdown(true);
+    } finally {
+      LOGGER.info("destroy done.");
+      NDC.remove();
+    }
+  }
+
+  @Override
+  protected void doGet(HttpServletRequest req, HttpServletResponse res)
+      throws ServletException, IOException {
+    doPost(req, res);
+  }
+
+  @Override
+  protected void doPost(HttpServletRequest req, HttpServletResponse res)
+      throws ServletException, IOException {
+    NDC.pushAppend("Init");
+    try {
+      ServletContext servletContext = this.getServletContext();
+      doStartup(servletContext);
+      res.setContentType(ServletUtil.MIMETYPE_HTML);
+      PrintWriter out = res.getWriter();
+      out.println("<HTML><HEAD><TITLE>Connector Manager Started</TITLE></HEAD>"
+          + "<BODY>Connector manager has been successfully started.</BODY>"
+          + "</HTML>");
+      out.close();
+    } finally {
+      NDC.pop();
+    }
+  }
+
+  private void doStartup(ServletContext servletContext)
+      throws ServletException {
+    try {
       doConnectorManagerStartup(servletContext);
-      LOGGER.info("init done");
     } catch (IOException ioe) {
       LOGGER.log(Level.SEVERE, "Connector Manager Startup failed: ", ioe);
       Context.getInstance().setInitFailureCause(ioe);
@@ -63,40 +108,7 @@ public class StartUp extends HttpServlet {
       LOGGER.log(Level.SEVERE, "Connector Manager Startup failed: ", e);
       Context.getInstance().setInitFailureCause(e);
       throw e;
-    } finally {
-      NDC.remove();
     }
-  }
-
-  @Override
-  public void destroy() {
-    NDC.push("Shutdown");
-    try {
-      LOGGER.info("destroy");
-      Context.getInstance().shutdown(true);
-    } finally {
-      NDC.remove();
-    }
-  }
-
-  @Override
-  protected void doGet(HttpServletRequest req, HttpServletResponse res)
-      throws IOException {
-    doPost(req, res);
-  }
-
-  @Override
-  protected void doPost(HttpServletRequest req, HttpServletResponse res)
-      throws IOException {
-    ServletContext servletContext = this.getServletContext();
-    doConnectorManagerStartup(servletContext);
-    res.setContentType(ServletUtil.MIMETYPE_HTML);
-    PrintWriter out = res.getWriter();
-    out.println("<HTML><HEAD><TITLE>Connector Manager Started</TITLE></HEAD>"
-        + "<BODY>Connector manager has been successfully started.</BODY>"
-        + "</HTML>");
-    out.close();
-    LOGGER.info("Connector Manager started.");
   }
 
   private void doConnectorManagerStartup(ServletContext servletContext)
@@ -135,6 +147,7 @@ public class StartUp extends HttpServlet {
     Context context = Context.getInstance();
     context.setServletContext(ac, servletContext.getRealPath("/WEB-INF"));
     context.start();
+    LOGGER.info("Connector Manager started.");
   }
 
   /**

@@ -73,6 +73,15 @@
     </description>
   </context-param>
 
+  <!-- Set up the Servlet Logging Filter -->
+  <filter>
+    <filter-name>ServletLoggingFilter</filter-name>
+    <filter-class>com.google.enterprise.connector.servlet.ServletLoggingFilter</filter-class>
+  </filter>
+  <filter-mapping>
+    <filter-name>ServletLoggingFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>
 
   <!-- Define servlets that are included in the Connector Manager application -->
 

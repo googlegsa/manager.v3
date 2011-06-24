@@ -71,7 +71,7 @@ public abstract class ConnectorManagerGetServlet extends HttpServlet {
     res.setCharacterEncoding("UTF-8");
     PrintWriter out = res.getWriter();
     String connectorName = req.getParameter(ServletUtil.XMLTAG_CONNECTOR_NAME);
-    NDC.push("Config " + connectorName);
+    NDC.pushAppend("Config " + connectorName);
     try {
       if (connectorName == null || connectorName.length() < 1) {
         ServletUtil.writeResponse(out, new ConnectorMessageCode(
@@ -90,7 +90,7 @@ public abstract class ConnectorManagerGetServlet extends HttpServlet {
       processDoGet(connectorName, lang, manager, out);
     } finally {
       out.close();
-      NDC.clear();
+      NDC.pop();
     }
   }
 

@@ -50,13 +50,13 @@ public class TestConnectivity extends HttpServlet {
 
     res.setContentType(ServletUtil.MIMETYPE_XML);
     PrintWriter out = res.getWriter();
-    NDC.push("Support Manager");
+    NDC.pushAppend("Support");
     try {
       LOGGER.info("Hello from the TestConnectivity servlet!");
       handleDoGet(out);
     } finally {
       out.close();
-      NDC.clear();
+      NDC.pop();
     }
   }
 
