@@ -200,7 +200,7 @@ public class DocumentSnapshotRepositoryMonitor implements Runnable {
       LOG.info("Repository Monitor " + name + " received stop signal.");
     } finally {
       // Call NDC.remove() via reflection, if possible.
-      invoke(ndcPush);
+      invoke(ndcRemove);
     }
   }
 
