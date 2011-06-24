@@ -73,12 +73,12 @@ public class GetConfig extends HttpServlet {
 
     res.setContentType(ServletUtil.MIMETYPE_XML);
     PrintWriter out = res.getWriter();
-    NDC.push("Support");
+    NDC.pushAppend("Support");
     try {
       handleDoGet(out);
     } finally {
       out.close();
-      NDC.clear();
+      NDC.pop();
     }
   }
 

@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.servlet;
 
+import com.google.common.base.Strings;
 import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.manager.ConnectorManagerException;
 import com.google.enterprise.connector.manager.Context;
@@ -184,117 +185,131 @@ public class GetConnectorLogs extends HttpServlet {
       return;
     }
 
-    NDC.push("Support");
+    NDC.pushAppend("Support");
     try {
-      // Are we retrieving Connector logs, Feed logs, or TeedFeed file?
-      LogHandler handler;
-      String logsTag;
-      try {
-        Context context = Context.getInstance();
-        if (req.getServletPath().indexOf("Teed") > 0) {
-          handler = new TeedFeedHandler(context);
-          logsTag = ServletUtil.XMLTAG_TEED_FEED;
-        } else if (req.getServletPath().indexOf("Feed") > 0) {
-          handler = new FeedLogHandler(context);
-          logsTag = ServletUtil.XMLTAG_FEED_LOGS;
-        } else {
-          handler = newConnectorLogHandler();
-          logsTag = ServletUtil.XMLTAG_CONNECTOR_LOGS;
-        }
-      } catch (ConnectorManagerException cme) {
-        res.setContentType(ServletUtil.MIMETYPE_XML);
-        PrintWriter out = res.getWriter();
-        try {
-          ServletUtil.writeResponse(out, new ConnectorMessageCode(
-              ConnectorMessageCode.EXCEPTION_HTTP_SERVLET, cme.getMessage(),
-              null));
-        } finally {
-          out.close();
-        }
-        return;
-      }
-
-      // Fetch the name of the log file to return.  If none is specified,
-      // return a list of the available log files.  getPathInfo() returns
-      // items with a leading '/', so we want to pull off only the basename.
-      // WARNING: For security reasons, the PathInfo parameter must never
-      // be passed directly to a File() or shell command. We are pulling
-      // of the base filename part of the PathInfo and restricting file
-      // retrievals to the log file directory as configured for the
-      // Connector Manager.
-      String logName = baseName(req.getPathInfo());
-
-      // If no log file is specified, return a list available logs.
-      if ((logName == null) || (logName.length() == 0)) {
-        res.setContentType(ServletUtil.MIMETYPE_XML);
-        PrintWriter out = res.getWriter();
-        try {
-          showLogNames(handler, logsTag, out);
-        } finally {
-          out.close();
-        }
-      }
-
-      // If the user asks for all logs, return a ZIP archive.
-      else if ("ALL".equalsIgnoreCase(logName) || "*".equals(logName)) {
-        res.sendRedirect(res.encodeRedirectURL(handler.getArchiveName()));
-        return;
-      } else if (logName.equalsIgnoreCase(handler.getArchiveName())) {
-        res.setContentType(ServletUtil.MIMETYPE_ZIP);
-        ServletOutputStream out = res.getOutputStream();
-        try {
-          fetchAllLogs(handler, out);
-        } finally {
-          out.close();
-        }
-      }
-
-      // If the user asks for a specific log, return only that one.
-      else {
-        // The user can ask for a log file by its generation (%g) number.
-        // If they do that, fileHandlerLogFile() will expand it to the
-        // full name of the file.  We then force a redirect to the
-        // actual logfile name.  This is so wget or curl can assign
-        // the correct name to the file.
-        File logFile = handler.getLogFile(logName);
-        if (!logName.equals(logFile.getName())) {
-          String url = res.encodeRedirectURL(logFile.getName());
-          String query = req.getQueryString();
-          if ((query != null) && (query.length() > 0)) {
-            url += '?' + query;
-          }
-          res.sendRedirect(url);
-          return;
-        }
-
-        // Did the user ask for a byte range?
-        ByteRange range;
-        try {
-          if ((range = ByteRange.parseByteRange(req)) != null) {
-            res.addHeader("Content-Range",
-                          range.contentRange(logFile.length()));
-          }
-        } catch (IllegalArgumentException iae) {
-          res.sendError(HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE,
-                        iae.toString());
-          return;
-        }
-
-        // Specify either text/plain or xml content type, based on log format.
-        if (handler.isXmlFormat()) {
-          res.setContentType(ServletUtil.MIMETYPE_XML);
-        } else {
-          res.setContentType(ServletUtil.MIMETYPE_TEXT_PLAIN);
-        }
-        OutputStream out = getCompressedOutputStream(req, res);
-        try {
-          fetchLog(logFile, range, out);
-        } finally {
-          out.close();
-        }
-      }
+      handleDoGet(req, res);
     } finally {
-      NDC.clear();
+      NDC.pop();
+    }
+  }
+
+  /**
+   * Retrieves the log files for a connector instance.
+   *
+   * @param req
+   * @param res
+   * @throws IOException
+   */
+  // TODO: This extracted method is now testable, so write some tests.
+  private void handleDoGet(HttpServletRequest req, HttpServletResponse res)
+      throws IOException, FileNotFoundException {
+    // Are we retrieving Connector logs, Feed logs, or TeedFeed file?
+    LogHandler handler;
+    String logsTag;
+    try {
+      Context context = Context.getInstance();
+      if (req.getServletPath().indexOf("Teed") > 0) {
+        handler = new TeedFeedHandler(context);
+        logsTag = ServletUtil.XMLTAG_TEED_FEED;
+      } else if (req.getServletPath().indexOf("Feed") > 0) {
+        handler = new FeedLogHandler(context);
+        logsTag = ServletUtil.XMLTAG_FEED_LOGS;
+      } else {
+        handler = newConnectorLogHandler();
+        logsTag = ServletUtil.XMLTAG_CONNECTOR_LOGS;
+      }
+    } catch (ConnectorManagerException cme) {
+      res.setContentType(ServletUtil.MIMETYPE_XML);
+      PrintWriter out = res.getWriter();
+      try {
+        ServletUtil.writeResponse(out, new ConnectorMessageCode(
+            ConnectorMessageCode.EXCEPTION_HTTP_SERVLET, cme.getMessage(),
+            null));
+      } finally {
+        out.close();
+      }
+      return;
+    }
+
+    // Fetch the name of the log file to return.  If none is specified,
+    // return a list of the available log files.  getPathInfo() returns
+    // items with a leading '/', so we want to pull off only the basename.
+    // WARNING: For security reasons, the PathInfo parameter must never
+    // be passed directly to a File() or shell command. We are pulling
+    // of the base filename part of the PathInfo and restricting file
+    // retrievals to the log file directory as configured for the
+    // Connector Manager.
+    String logName = baseName(req.getPathInfo());
+
+    // If no log file is specified, return a list available logs.
+    if (Strings.isNullOrEmpty(logName)) {
+      res.setContentType(ServletUtil.MIMETYPE_XML);
+      PrintWriter out = res.getWriter();
+      try {
+        showLogNames(handler, logsTag, out);
+      } finally {
+        out.close();
+      }
+    }
+
+    // If the user asks for all logs, return a ZIP archive.
+    else if ("ALL".equalsIgnoreCase(logName) || "*".equals(logName)) {
+      res.sendRedirect(res.encodeRedirectURL(handler.getArchiveName()));
+      return;
+    } else if (logName.equalsIgnoreCase(handler.getArchiveName())) {
+      res.setContentType(ServletUtil.MIMETYPE_ZIP);
+      ServletOutputStream out = res.getOutputStream();
+      try {
+        fetchAllLogs(handler, out);
+      } finally {
+        out.close();
+      }
+    }
+
+    // If the user asks for a specific log, return only that one.
+    else {
+      // The user can ask for a log file by its generation (%g) number.
+      // If they do that, fileHandlerLogFile() will expand it to the
+      // full name of the file.  We then force a redirect to the
+      // actual logfile name.  This is so wget or curl can assign
+      // the correct name to the file.
+      File logFile = handler.getLogFile(logName);
+      if (!logName.equals(logFile.getName())) {
+        String url = res.encodeRedirectURL(logFile.getName());
+        String query = req.getQueryString();
+
+        if (!Strings.isNullOrEmpty(query)) {
+          url += '?' + query;
+        }
+        res.sendRedirect(url);
+        return;
+      }
+
+      // Did the user ask for a byte range?
+      ByteRange range;
+      try {
+        if ((range = ByteRange.parseByteRange(req)) != null) {
+          res.addHeader("Content-Range",
+                        range.contentRange(logFile.length()));
+        }
+      } catch (IllegalArgumentException iae) {
+        res.sendError(HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE,
+                      iae.toString());
+        return;
+      }
+
+      // Specify either text/plain or xml content type, based on log format.
+      if (handler.isXmlFormat()) {
+        res.setContentType(ServletUtil.MIMETYPE_XML);
+      } else {
+        res.setContentType(ServletUtil.MIMETYPE_TEXT_PLAIN);
+      }
+      OutputStream out = getCompressedOutputStream(req, res);
+      try {
+        fetchLog(logFile, range, out);
+      } finally {
+        out.close();
+      }
     }
   }
 

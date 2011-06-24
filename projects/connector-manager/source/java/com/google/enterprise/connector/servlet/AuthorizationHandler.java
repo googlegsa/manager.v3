@@ -63,7 +63,7 @@ public class AuthorizationHandler {
    * Writes an answer for each resource from the request.
    */
   public void handleDoPost() {
-    NDC.push("AuthZ");
+    NDC.pushAppend("AuthZ");
     try {
       AuthorizationParser authorizationParser =
           new AuthorizationParser(xmlBody);

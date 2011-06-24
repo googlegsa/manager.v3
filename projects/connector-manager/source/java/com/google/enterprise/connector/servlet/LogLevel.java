@@ -145,7 +145,10 @@ public class LogLevel extends HttpServlet {
       return;
     }
 
-    NDC.push("Support");
+    res.setContentType(ServletUtil.MIMETYPE_XML);
+    PrintWriter out = res.getWriter();
+
+    NDC.pushAppend("Support");
     try {
       // Are we setting the Level for Connector logs or Feed logs?
       LogLevelHandler handler;
@@ -155,41 +158,48 @@ public class LogLevel extends HttpServlet {
         handler = new ConnectorLogLevelHandler();
       }
 
-      res.setContentType(ServletUtil.MIMETYPE_XML);
-      PrintWriter out = res.getWriter();
+      handleDoPost(handler, req.getParameter("level"), out);
 
-      try {
-        // Fetch the desired log level from the request.
-        String logLevel = req.getParameter("level");
-
-        // Set the logging level, if one was specified.
-        if (!Strings.isNullOrEmpty(logLevel)) {
-          Level level = getLevelByName(logLevel.toUpperCase());
-          LOGGER.config("Setting " + handler.getName()
-              + " Logging level to " + level.getName());
-          handler.getLogger().setLevel(level);
-          handler.persistLevel(level);
-        }
-
-        // Return Status of the current logging level for the handler.
-        ServletUtil.writeRootTag(out, false);
-        ServletUtil.writeMessageCode(out, new ConnectorMessageCode());
-        String currentLevel = handler.getLogger().getLevel().getName();
-        ServletUtil.writeXMLElement(out, 1, ServletUtil.XMLTAG_LEVEL,
-                                    currentLevel);
-        ServletUtil.writeXMLElement(out, 1, ServletUtil.XMLTAG_INFO,
-            handler.getName() + " Logging level is " + currentLevel);
-        ServletUtil.writeRootTag(out, true);
-      } catch (ConnectorManagerException cme) {
-        LOGGER.log(Level.WARNING, cme.getMessage(), cme);
-        ServletUtil.writeResponse(out, new ConnectorMessageCode(
-            ConnectorMessageCode.EXCEPTION_HTTP_SERVLET, cme.getMessage(),
-            null));
-      } finally {
-        out.close();
-      }
     } finally {
-      NDC.clear();
+      out.close();
+      NDC.pop();
+    }
+  }
+
+  /**
+   * Sets Logging levels for connectors and feeds.
+   *
+   * @param handler a LogLevelHandler
+   * @param logLevel new logging Level
+   * @param out a PrintWriter
+   * @throws IOException
+   */
+  // TODO: This extracted method is now testable, so write some tests.
+  private void handleDoPost(LogLevelHandler handler, String logLevel,
+      PrintWriter out) throws IOException {
+    try {
+      // Set the logging level, if one was specified.
+      if (!Strings.isNullOrEmpty(logLevel)) {
+        Level level = getLevelByName(logLevel.toUpperCase());
+        LOGGER.config("Setting " + handler.getName()
+                      + " Logging level to " + level.getName());
+        handler.getLogger().setLevel(level);
+        handler.persistLevel(level);
+      }
+
+      // Return Status of the current logging level for the handler.
+      ServletUtil.writeRootTag(out, false);
+      ServletUtil.writeMessageCode(out, new ConnectorMessageCode());
+      String currentLevel = handler.getLogger().getLevel().getName();
+      ServletUtil.writeXMLElement(out, 1, ServletUtil.XMLTAG_LEVEL,
+                                  currentLevel);
+      ServletUtil.writeXMLElement(out, 1, ServletUtil.XMLTAG_INFO,
+          handler.getName() + " Logging level is " + currentLevel);
+      ServletUtil.writeRootTag(out, true);
+    } catch (ConnectorManagerException e) {
+      LOGGER.log(Level.WARNING, e.getMessage(), e);
+      ServletUtil.writeResponse(out, new ConnectorMessageCode(
+          ConnectorMessageCode.EXCEPTION_HTTP_SERVLET, e.getMessage(), null));
     }
   }
 
