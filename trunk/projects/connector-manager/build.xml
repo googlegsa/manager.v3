@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<!-- Connector buildfile. This build requires ant 1.8.0 or newer. -->
 <project name="connector-manager" default="connector_manager" basedir=".">
 
   <!-- ========================= PROPERTIES ============================= -->
@@ -7,6 +8,7 @@
 
   <!-- Define Directories. -->
   <property name="projects.dir" value=".." />
+  <property name="svn.root.dir" value="../.." />
 
   <property file="${projects.dir}/version.properties"/>
 
@@ -62,6 +64,9 @@
   <property name="coverage.html.dir" value="${reports.dir}/cobertura-html" />
 
   <!-- =========================== TASKS =============================== -->
+
+  <include file="${projects.dir}/svnbuild.xml" as="svn"/>
+
   <target name="test_connector_jars">
     <ant inheritAll="false" dir="${projects.dir}/test-connectorA" />
     <ant inheritAll="false" dir="${projects.dir}/test-connectorB" />
@@ -88,14 +93,7 @@
     <mkdir dir="${jar.dir}" />
   </target>
 
-  <target name="prebuild" unless="svnversion">
-    <exec executable="svnversion" spawn="false"
-      failifexecutionfails="false"
-      dir="${projects.dir}"
-      outputproperty="svnversion">
-      <arg line="."/>
-    </exec>
-  </target>
+  <target name="prebuild" depends="svn.svn-branch-version"/>
 
   <target name="clean" depends="clean_coverage"
           description="Deletes all build files.">
@@ -137,7 +135,7 @@
       <manifest>
         <attribute name="Implementation-Title" value="Connector Manager SPI"/>
         <attribute name="Implementation-Version"
-                   value="${version} (build ${svnversion}  ${TODAY})"/>
+                   value="${version} (build ${svn.branch.version} ${TODAY})"/>
         <attribute name="Implementation-Vendor" value="Google Inc."/>
       </manifest>
     </jar>
@@ -197,7 +195,7 @@
       <manifest>
         <attribute name="Implementation-Title" value="Connector Manager Logging"/>
         <attribute name="Implementation-Version"
-                   value="${version} (build ${svnversion}  ${TODAY})"/>
+                   value="${version} (build ${svn.branch.version} ${TODAY})"/>
         <attribute name="Implementation-Vendor" value="Google Inc."/>
       </manifest>
     </jar>
@@ -210,7 +208,7 @@
       <manifest>
         <attribute name="Implementation-Title" value="Connector Manager Utility"/>
         <attribute name="Implementation-Version"
-                   value="${version} (build ${svnversion}  ${TODAY})"/>
+                   value="${version} (build ${svn.branch.version} ${TODAY})"/>
         <attribute name="Implementation-Vendor" value="Google Inc."/>
       </manifest>
     </jar>
@@ -230,7 +228,7 @@
       <manifest>
         <attribute name="Implementation-Title" value="Connector Manager Impl"/>
         <attribute name="Implementation-Version"
-                   value="${version} (build ${svnversion}  ${TODAY})"/>
+                   value="${version} (build ${svn.branch.version} ${TODAY})"/>
         <attribute name="Implementation-Vendor" value="Google Inc."/>
         <attribute name="Main-Class"
                    value="com.google.enterprise.connector.manager.ManagerMain" />
@@ -269,7 +267,7 @@
       <manifest>
         <attribute name="Implementation-Title" value="Connector Manager Tests"/>
         <attribute name="Implementation-Version"
-                   value="${version} (build ${svnversion}  ${TODAY})"/>
+                   value="${version} (build ${svn.branch.version} ${TODAY})"/>
         <attribute name="Implementation-Vendor" value="Google Inc."/>
       </manifest>
     </jar>
@@ -418,7 +416,7 @@
       <manifest>
         <attribute name="Implementation-Title" value="Connector Manager"/>
         <attribute name="Implementation-Version"
-                   value="${version} (build ${svnversion}  ${TODAY})"/>
+                   value="${version} (build ${svn.branch.version} ${TODAY})"/>
         <attribute name="Implementation-Vendor" value="Google Inc."/>
       </manifest>
     </war>
@@ -445,7 +443,7 @@
       <manifest>
         <attribute name="Implementation-Title" value="Connector Manager"/>
         <attribute name="Implementation-Version"
-                   value="${version} (build ${svnversion}  ${TODAY})"/>
+                   value="${version} (build ${svn.branch.version} ${TODAY})"/>
         <attribute name="Implementation-Vendor" value="Google Inc."/>
       </manifest>
     </war>
