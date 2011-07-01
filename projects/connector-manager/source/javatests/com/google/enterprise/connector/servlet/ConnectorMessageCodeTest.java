@@ -137,7 +137,7 @@ public class ConnectorMessageCodeTest extends TestCase {
     assertEquals("messageIdStringParamCode.getParams()", PARAMS1,
         messageIdStringParamCode.getParams());
 
-    assertFalse("successIdCode.isSuccess()", successIdCode.isSuccess());
+    assertTrue("successIdCode.isSuccess()", successIdCode.isSuccess());
     assertFalse("successIdCode.hasMessage()", successIdCode.hasMessage());
     assertEquals("successIdCode.getMessageId()",
         ConnectorMessageCode.SUCCESS_RESTART_TRAVERSAL,
@@ -145,7 +145,7 @@ public class ConnectorMessageCodeTest extends TestCase {
     assertTrue("successIdCode.isSuccessMessage()",
         successIdCode.isSuccessMessage());
 
-    assertFalse("successIdParamCode.isSuccess()",
+    assertTrue("successIdParamCode.isSuccess()",
         successIdParamCode.isSuccess());
     assertFalse("successIdParamCode.hasMessage()",
         successIdParamCode.hasMessage());

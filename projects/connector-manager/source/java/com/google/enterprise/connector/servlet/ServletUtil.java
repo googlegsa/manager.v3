@@ -75,7 +75,10 @@ public class ServletUtil {
   public static final String DEFAULT_LANGUAGE = "en";
 
   public static final String XMLTAG_RESPONSE_ROOT = "CmResponse";
+  /* StatusId is deprecated, replaced by StatusCode. */
+  @Deprecated
   public static final String XMLTAG_STATUSID = "StatusId";
+  public static final String XMLTAG_STATUS_CODE = "StatusCode";
   public static final String XMLTAG_STATUS_MESSAGE = "StatusMsg";
   public static final String XMLTAG_STATUS_PARAMS = "CMParams";
   public static final String XMLTAG_STATUS_PARAM_ORDER = "Order";
@@ -176,9 +179,6 @@ public class ServletUtil {
   public static final String LOG_EXCEPTION_CONNECTOR_MANAGER =
       "Exception: general";
 
-  public static final String XML_SIMPLE_RESPONSE =
-      "<CmResponse>\n" + "  <StatusId>0</StatusId>\n" + "</CmResponse>\n";
-
   public static final String DEFAULT_FORM =
     "<tr><td>Username</td><td>\n" +
     "<input type=\"text\" name=\"Username\" /></td></tr>\n" +
@@ -277,10 +277,29 @@ public class ServletUtil {
    * @param out where PrintWriter to be written to
    * @param statusId int
    */
-  public static void writeStatusId(PrintWriter out,
-                                   int statusId) {
+  @SuppressWarnings("deprecation")
+  public static void writeStatusId(PrintWriter out, int statusId) {
     writeXMLElement(out, 1, ServletUtil.XMLTAG_STATUSID,
         Integer.toString(statusId));
+  }
+
+  /**
+   * Write a StatusCode response to a PrintWriter.
+   *
+   * @param out where PrintWriter to be written to
+   * @param statusId int
+   */
+  // TODO: Merge this method with writeStatusId (requires test fixes
+  // and much better GSA response handling tests).
+  @SuppressWarnings("deprecation")
+  public static void writeStatusCode(PrintWriter out, int statusCode) {
+    writeXMLElement(out, 1, ServletUtil.XMLTAG_STATUS_CODE,
+        Integer.toString(statusCode));
+
+    // TODO: Remove this when XMLTAG_STATUSID is fully deprecated.
+    writeXMLElement(out, 1, ServletUtil.XMLTAG_STATUSID, Integer.toString(
+        (ConnectorMessageCode.isSuccessMessage(statusCode)) ?
+        ConnectorMessageCode.SUCCESS : statusCode));
   }
 
   /**
