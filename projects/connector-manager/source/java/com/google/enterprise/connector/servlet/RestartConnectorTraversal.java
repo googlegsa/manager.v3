@@ -79,6 +79,7 @@ public class RestartConnectorTraversal extends ConnectorManagerGetServlet {
     }
 
     // Write out the successful status.
-    ServletUtil.writeResponse(out, 0);
-   }
+    ServletUtil.writeResponse(out, new ConnectorMessageCode(
+        ConnectorMessageCode.SUCCESS_RESTART_TRAVERSAL, connectorName));
+  }
 }

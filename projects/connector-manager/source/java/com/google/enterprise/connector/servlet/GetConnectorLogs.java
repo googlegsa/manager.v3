@@ -29,6 +29,7 @@ import java.io.PrintWriter;
 import java.io.RandomAccessFile;
 import java.util.Date;
 import java.util.logging.Formatter;
+import java.util.logging.Logger;
 import java.util.logging.LogManager;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPOutputStream;
@@ -155,6 +156,10 @@ import org.springframework.beans.BeansException;
  * Content-Encoding by specifying 'curl --compressed ...'.</p>
  */
 public class GetConnectorLogs extends HttpServlet {
+
+  private static Logger LOGGER =
+    Logger.getLogger(GetConnectorLogs.class.getName());
+
   /**
    * Retrieves the log files for a connector instance.
    *
@@ -219,12 +224,14 @@ public class GetConnectorLogs extends HttpServlet {
         logsTag = ServletUtil.XMLTAG_CONNECTOR_LOGS;
       }
     } catch (ConnectorManagerException cme) {
+      LOGGER.warning(cme.getMessage());
       res.setContentType(ServletUtil.MIMETYPE_XML);
       PrintWriter out = res.getWriter();
       try {
+        // TODO: These should really be new ConnectorMessageCodes
         ServletUtil.writeResponse(out, new ConnectorMessageCode(
-            ConnectorMessageCode.EXCEPTION_HTTP_SERVLET, cme.getMessage(),
-            null));
+            ConnectorMessageCode.EXCEPTION_HTTP_SERVLET,
+            req.getServletPath() + " - " + cme.getMessage()));
       } finally {
         out.close();
       }
