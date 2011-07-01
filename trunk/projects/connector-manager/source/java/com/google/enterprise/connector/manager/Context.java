@@ -348,6 +348,13 @@ public class Context {
     this.isFeeding = feeding;
   }
 
+  /**
+   * @return feeding to feed or not to feed
+   */
+  public boolean isFeeding() {
+    return this.isFeeding;
+  }
+
   public static Context getInstance() {
     return INSTANCE;
   }
