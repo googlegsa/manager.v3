@@ -158,7 +158,8 @@ public class LogLevel extends HttpServlet {
         handler = new ConnectorLogLevelHandler();
       }
 
-      handleDoPost(handler, req.getParameter("level"), out);
+      handleDoPost(req.getServletPath(), handler, req.getParameter("level"),
+                   out);
 
     } finally {
       out.close();
@@ -169,14 +170,15 @@ public class LogLevel extends HttpServlet {
   /**
    * Sets Logging levels for connectors and feeds.
    *
+   * @param servletName the name of the servlet
    * @param handler a LogLevelHandler
    * @param logLevel new logging Level
    * @param out a PrintWriter
    * @throws IOException
    */
   // TODO: This extracted method is now testable, so write some tests.
-  private void handleDoPost(LogLevelHandler handler, String logLevel,
-      PrintWriter out) throws IOException {
+  private void handleDoPost(String servletName, LogLevelHandler handler,
+      String logLevel, PrintWriter out) throws IOException {
     try {
       // Set the logging level, if one was specified.
       if (!Strings.isNullOrEmpty(logLevel)) {
@@ -198,8 +200,10 @@ public class LogLevel extends HttpServlet {
       ServletUtil.writeRootTag(out, true);
     } catch (ConnectorManagerException e) {
       LOGGER.log(Level.WARNING, e.getMessage(), e);
+      // TODO: These should really be new ConnectorMessageCodes
       ServletUtil.writeResponse(out, new ConnectorMessageCode(
-          ConnectorMessageCode.EXCEPTION_HTTP_SERVLET, e.getMessage(), null));
+          ConnectorMessageCode.EXCEPTION_HTTP_SERVLET,
+          servletName + " - " + e.getMessage()));
     }
   }
 
