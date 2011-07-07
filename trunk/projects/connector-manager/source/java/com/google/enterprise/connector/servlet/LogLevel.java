@@ -97,7 +97,7 @@ import org.springframework.beans.BeansException;
  * <p>To set the feed logging level:
  * <br><pre>  http://[cm_host_addr]/connector-manager/setFeedLogLevel?level=[level]</pre>
  * <br>where [level] is one of the previously defined logging levels.  For
- * feed logs, the recommended levels are {@code OFF} and {@code ON} (or {@code ALL}).
+ * feed logs, the recommended levels are {@code OFF} and {@code ALL}.
  * <p>For instance:
  * <br><pre>  http://[cm_host_addr]/connector-manager/setFeedLogLevel?level=ALL</pre>
  */
