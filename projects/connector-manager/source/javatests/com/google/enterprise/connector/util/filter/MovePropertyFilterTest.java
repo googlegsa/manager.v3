@@ -18,6 +18,7 @@ import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.Value;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -123,7 +124,8 @@ public class MovePropertyFilterTest extends DocumentFilterTest {
 
   /** Test toString(). */
   public void testToString() {
-    Map<String, String> aliases = new HashMap<String, String>();
+    // We need to preserve the insertion order for the string comparison.
+    Map<String, String> aliases = new LinkedHashMap<String, String>();
     aliases.put(PROP1, "foo");
     aliases.put(PROP3, "bar");
     MovePropertyFilter factory = new MovePropertyFilter();
