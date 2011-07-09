@@ -11,7 +11,7 @@ issues and work-arounds.
 Web Site: http://code.google.com/p/google-enterprise-connector-manager/
 
 
-Release 2.8.0, 15 June 2011
+Release 2.8.0, 08 July 2011
 ===========================
 
 Introduction
@@ -69,9 +69,6 @@ Summary of Changes
   * Fixed a minor problem that prevented connectors from running in the
     JBoss Application Server.  See the JBoss deployment wiki page:
     http://code.google.com/p/google-enterprise-connector-manager/wiki/JBossCM
-
-  * The getConfig servlet now returns the Connector Manager and Connector
-    configuration data as an XML document rather than zip file archive.
 
   * Added support for these Microsoft Office 2007 and later media types:
       - application/vnd.ms-outlook
