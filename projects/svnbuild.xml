@@ -9,7 +9,7 @@
   -->
   <property name="svn.base.dir" value=".." />
 
-  <!-- Run Subverstion Status command on the svn.root.dir.
+  <!-- Run Subverstion Status command on the svn.base.dir.
        The output of the command is stored in the property svn.status.
        The execution result code (typically 0 for success) is stored in
        svn.status.result.
