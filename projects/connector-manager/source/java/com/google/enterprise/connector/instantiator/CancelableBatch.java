@@ -82,6 +82,7 @@ class CancelableBatch implements TimedCancelable {
 
   @Override
   public String toString() {
-    return "CancelableBatch traverser: " + traverser + "  " + batchSize;
+    return "CancelableBatch: traverser = " + traverser
+           + ", batchSize = " + batchSize;
   }
 }

@@ -241,17 +241,18 @@ public class DocPusher implements Pusher {
     int resetPoint = xmlFeed.size();
     InputStream contentStream = null;
     try {
+      if (LOGGER.isLoggable(Level.FINER)) {
+        LOGGER.finer("DOCUMENT: Adding document "
+            + DocUtils.getRequiredString(document, SpiConstants.PROPNAME_DOCID)
+            + " from connector " + connectorName + " to feed.");
+      }
+
       // Add this document to the feed.
       contentStream = getContentStream(document, feedType);
       Document feedDocument = new FeedDocument(document, xmlFeed.getFeedId());
       xmlFeed.addRecord(feedDocument, contentStream, contentEncoding);
       if (documentStore != null) {
         documentStore.storeDocument(feedDocument);
-      }
-      if (LOGGER.isLoggable(Level.FINER)) {
-        LOGGER.finer("Document "
-            + DocUtils.getRequiredString(document, SpiConstants.PROPNAME_DOCID)
-            + " from connector " + connectorName + " added to feed.");
       }
 
       // If the feed is full, send it off to the GSA.

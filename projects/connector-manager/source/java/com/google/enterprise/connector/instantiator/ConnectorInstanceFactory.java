@@ -80,8 +80,14 @@ class ConnectorInstanceFactory implements ConnectorFactory {
   public Connector makeConnector(Map<String, String> config)
       throws RepositoryException {
     try {
+      Configuration configuration = new Configuration(config, origConfig);
+      if (LOGGER.isLoggable(Level.CONFIG)) {
+        LOGGER.config("ConnectorFactory makes connector with configuration: "
+                      + configuration);
+      }
       Connector connector = InstanceInfo.makeConnectorWithSpring(
-          connectorName, typeInfo, new Configuration(config, origConfig));
+          connectorName, typeInfo, configuration);
+      LOGGER.config("Constructed connector " + connector);
       synchronized (this) {
         connectors.add(connector);
       }
@@ -99,6 +105,7 @@ class ConnectorInstanceFactory implements ConnectorFactory {
     for (Connector connector : connectors) {
       if (connector instanceof ConnectorShutdownAware) {
         try {
+          LOGGER.config("Shutdown connector " + connector);
           ((ConnectorShutdownAware) connector).shutdown();
         } catch (Exception e) {
           LOGGER.log(Level.WARNING, "Failed to shutdown connector "

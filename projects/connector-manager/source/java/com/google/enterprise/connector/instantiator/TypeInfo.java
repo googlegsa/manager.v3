@@ -1,4 +1,4 @@
-// Copyright (C) 2006-2009 Google Inc.
+// Copyright 2006 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -145,6 +145,8 @@ public class TypeInfo {
 
     // Remember the name of the first one found, and instantiate it.
     connectorTypeName = beanList[0];
+    LOGGER.fine("Constructing connector of type " + connectorTypeName
+                + " from resource " + r.getDescription());
     try {
       connectorType = (ConnectorType) factory.getBean(connectorTypeName);
     } catch (Exception e) {

@@ -106,6 +106,11 @@ public class AuthorizationResponse {
     return status;
   }
 
+  @Override
+  public String toString() {
+    return "{ status = " + status + ", docid = " + docid + " }";
+  }
+
   /**
    * Returns a hash code value for the object.
    *

@@ -73,19 +73,28 @@ public class ProductionManager implements Manager {
       // Some connectors don't implement the AuthenticationManager interface so
       // we need to check.
       if (authnManager != null) {
-        return authnManager.authenticate(identity);
+        if (LOGGER.isLoggable(Level.FINE)) {
+          LOGGER.fine("AUTHENTICATE: connector = " + connectorName + ", "
+                      + identity);
+        }
+        AuthenticationResponse response = authnManager.authenticate(identity);
+        if (LOGGER.isLoggable(Level.FINE)) {
+          LOGGER.fine("AUTHENTICATED: connector = " + connectorName + ", "
+                      + identity + ": " + response);
+        }
+        return response;
       }
     } catch (ConnectorNotFoundException e) {
-      LOGGER.log(Level.WARNING, "Connector " + connectorName + " Not Found: ",
-          e);
-    } catch (InstantiatorException e) {
-      LOGGER.log(Level.WARNING, "Instantiator: ", e);
+      LOGGER.log(Level.WARNING, "Connector " + connectorName + " not found", e);
     } catch (RepositoryLoginException e) {
-      LOGGER.log(Level.WARNING, "Login: ", e);
+      LOGGER.log(Level.WARNING, "Authentication failed for connector "
+                 + connectorName + ": " + identity , e);
     } catch (RepositoryException e) {
-      LOGGER.log(Level.WARNING, "Repository: ", e);
+      LOGGER.log(Level.WARNING, "Authentication failed for connector "
+                 + connectorName + ": " + identity, e);
     } catch (Exception e) {
-      LOGGER.log(Level.WARNING, "Exception: ", e);
+      LOGGER.log(Level.WARNING, "Authentication failed for connector "
+                 + connectorName + ": " + identity, e);
     }
     return new AuthenticationResponse(false, null);
   }
@@ -102,29 +111,40 @@ public class ProductionManager implements Manager {
         // content in such a way that it is being asked to authorize access to
         // that content and yet it doesn't implement the AuthorizationManager
         // interface.  Log the situation and return the empty result.
-        LOGGER.warning("Connector:" + connectorName
+        LOGGER.warning("Connector " + connectorName
             + " is being asked to authorize documents but has not implemented"
             + " the AuthorizationManager interface.");
         return result;
       }
+      if (LOGGER.isLoggable(Level.FINE)) {
+        LOGGER.fine("AUTHORIZE: connector = " + connectorName + ", "
+                    + identity + ":  docids = " + docidList);
+      }
       Collection<AuthorizationResponse> results =
           authzManager.authorizeDocids(docidList, identity);
+      if (LOGGER.isLoggable(Level.FINE)) {
+        LOGGER.fine("AUTHORIZED: connector = " + connectorName + ", "
+                    + identity + ": authorized " + results.size()
+                    + " documents.");
+      }
       for (AuthorizationResponse response : results) {
+        if (LOGGER.isLoggable(Level.FINEST)) {
+          LOGGER.finest("AUTHORIZED " + response.getDocid() + ": "
+                        + response.getStatus());
+        }
         if (response.isValid()) {
           result.add(response.getDocid());
         }
       }
     } catch (ConnectorNotFoundException e) {
-      LOGGER.log(Level.WARNING, "Connector " + connectorName + " Not Found: ",
-          e);
-    } catch (InstantiatorException e) {
-      LOGGER.log(Level.WARNING, "Instantiator: ", e);
+      LOGGER.log(Level.WARNING, "Connector " + connectorName + " not found", e);
     } catch (RepositoryException e) {
-      LOGGER.log(Level.WARNING, "Repository: ", e);
+      LOGGER.log(Level.WARNING, "Authorization failed for connector "
+                 + connectorName + ": " + identity, e);
     } catch (Exception e) {
-      LOGGER.log(Level.WARNING, "Exception: ", e);
+      LOGGER.log(Level.WARNING, "Authorization failed for connector "
+                 + connectorName + ": " + identity, e);
     }
-
     return result;
   }
 
@@ -135,6 +155,10 @@ public class ProductionManager implements Manager {
     ConnectorType connectorType =
         instantiator.getConnectorType(connectorTypeName);
     Locale locale = I18NUtil.getLocaleFromStandardLocaleString(language);
+    if (LOGGER.isLoggable(Level.CONFIG)) {
+      LOGGER.config("GET CONFIG FORM: Fetching configuration form for connector"
+                  + " type " + connectorTypeName + ", locale = " + locale);
+    }
     ConfigureResponse response;
     try {
       response = connectorType.getConfigForm(locale);
@@ -144,7 +168,7 @@ public class ProductionManager implements Manager {
 
     // Include the connectorInstance.xml in the response.
     if (response != null) {
-      return new ExtendedConfigureResponse(response,
+      response = new ExtendedConfigureResponse(response,
           instantiator.getConnectorInstancePrototype(connectorTypeName));
     }
     return response;
@@ -156,9 +180,12 @@ public class ProductionManager implements Manager {
       throws ConnectorNotFoundException, InstantiatorException {
     String connectorTypeName = instantiator.getConnectorTypeName(connectorName);
     Locale locale = I18NUtil.getLocaleFromStandardLocaleString(language);
-    ConfigureResponse response =
-        instantiator.getConfigFormForConnector(connectorName,
-            connectorTypeName, locale);
+    if (LOGGER.isLoggable(Level.CONFIG)) {
+      LOGGER.config("GET CONFIG FORM: Fetching configuration form for "
+                    + "connector " + connectorName + ", locale = " + locale);
+    }
+    ConfigureResponse response = instantiator.getConfigFormForConnector(
+         connectorName, connectorTypeName, locale);
     return response;
   }
 
@@ -175,7 +202,7 @@ public class ProductionManager implements Manager {
       // TODO: this should become part of the signature - so we should just
       // let this exception bubble up
       LOGGER.log(Level.WARNING, "Connector type " + connectorTypeName
-          + " Not Found: ", e);
+          + " not found", e);
       throw new IllegalArgumentException();
     }
   }
