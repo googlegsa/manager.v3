@@ -20,6 +20,7 @@ import com.google.enterprise.connector.spi.DatabaseResourceBundle;
 import com.google.enterprise.connector.spi.LocalDatabase;
 import com.google.enterprise.connector.spi.SpiConstants.DatabaseType;
 
+import java.util.logging.Logger;
 import javax.sql.DataSource;
 
 /**
@@ -29,6 +30,9 @@ import javax.sql.DataSource;
  * @since 2.8
  */
 public class LocalDatabaseImpl implements LocalDatabase {
+  private static final Logger LOGGER =
+      Logger.getLogger(LocalDatabaseImpl.class.getName());
+
   private final JdbcDatabase database;
   private final ClassLoader classLoader;
   private final DatabaseResourceBundleManager resourceBundleManager;
@@ -100,7 +104,9 @@ public class LocalDatabaseImpl implements LocalDatabase {
    */
   /* @Override */
   public DataSource getDataSource() {
-    return database.getDataSource();
+    DataSource dataSource = database.getDataSource();
+    LOGGER.finest("Got DataSource: " + dataSource);
+    return dataSource;
   }
 
   /**
@@ -115,6 +121,9 @@ public class LocalDatabaseImpl implements LocalDatabase {
    */
   /* @Override */
   public DatabaseResourceBundle getDatabaseResourceBundle() {
+    LOGGER.finest("Fetching DatabaseResourceBundle: baseName = "
+                  + resourceBundleBaseName + ", extension = "
+                  + database.getResourceBundleExtension());
     return resourceBundleManager.getResourceBundle(resourceBundleBaseName,
         database.getResourceBundleExtension(), classLoader);
   }
@@ -128,6 +137,7 @@ public class LocalDatabaseImpl implements LocalDatabase {
    */
   /* @Override */
   public DatabaseType getDatabaseType() {
+    LOGGER.finest("Fetching DatabaseType: " + database.getDatabaseType());
     return database.getDatabaseType();
   }
 
@@ -151,6 +161,8 @@ public class LocalDatabaseImpl implements LocalDatabase {
    */
   /* @Override */
   public String getDescription() {
+    LOGGER.finest("Fetching Database description: " + database.getProductName()
+                  + " (" + database.getDescription() + ")");
     // Return a not-really-descriptive description.
     return database.getProductName();
     //  + " (" + database.getDescription() + ")";

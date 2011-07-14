@@ -449,6 +449,9 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
         if (propertySkipSet.contains(name) ||
             name.startsWith(SpiConstants.USER_ROLES_PROPNAME_PREFIX) ||
             name.startsWith(SpiConstants.GROUP_ROLES_PROPNAME_PREFIX)) {
+          if (LOGGER.isLoggable(Level.FINEST)) {
+            logOneProperty(document, name);
+          }
           continue;
         }
         if (SpiConstants.PROPNAME_ACLGROUPS.equals(name) ||
@@ -480,12 +483,36 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
       Property property) throws RepositoryException, IOException {
     ValueImpl value = null;
     while ((value = (ValueImpl) property.nextValue()) != null) {
+      if (LOGGER.isLoggable(Level.FINEST)) {
+        LOGGER.finest("PROPERTY: " + name + " = \"" + value.toString() + "\"");
+      }
       String valString = value.toFeedXml();
       if (valString != null && valString.length() > 0) {
         buf.append("<").append(XML_META);
         XmlUtils.xmlAppendAttr(XML_NAME, name, buf);
         XmlUtils.xmlAppendAttr(XML_CONTENT, valString, buf);
         buf.append("/>\n");
+      }
+    }
+  }
+
+  /**
+   * Log the given Property's values.  This is called for
+   * the small set of document properties that are not simply
+   * added to the feed via wrapOneProperty().
+   */
+  private void logOneProperty(Document document, String name)
+      throws RepositoryException, IOException {
+    if (SpiConstants.PROPNAME_CONTENT.equals(name)) {
+      LOGGER.finest("PROPERTY: " + name + " = \"...content...\"");
+    } else {
+      Property property = document.findProperty(name);
+      if (property != null) {
+        ValueImpl value = null;
+        while ((value = (ValueImpl) property.nextValue()) != null) {
+          LOGGER.finest("PROPERTY: " + name + " = \"" + value.toString()
+                        + "\"");
+        }
       }
     }
   }

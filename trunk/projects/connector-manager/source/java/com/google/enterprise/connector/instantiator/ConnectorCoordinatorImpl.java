@@ -17,6 +17,7 @@ package com.google.enterprise.connector.instantiator;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.enterprise.connector.common.PropertiesUtils;
+import com.google.enterprise.connector.common.SecurityUtils;
 import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.database.ConnectorPersistentStoreFactory;
 import com.google.enterprise.connector.manager.Context;
@@ -277,6 +278,11 @@ class ConnectorCoordinatorImpl implements
               getConnectorInstancePrototype(name, typeInfo));
         }
       } else {
+        if (LOGGER.isLoggable(Level.CONFIG)) {
+          LOGGER.config("GET POPULATED CONFIG FORM: locale = " + locale
+                        + ", configuration = "
+                        + SecurityUtils.getMaskedMap(config.getMap()));
+        }
         response =
             connectorType.getPopulatedConfigForm(config.getMap(), locale);
         if (response != null) {
@@ -359,6 +365,8 @@ class ConnectorCoordinatorImpl implements
    */
   /* @Override */
   public synchronized void connectorScheduleChanged(Schedule schedule) {
+    LOGGER.config("Schedule changed for connector " + name + ": " + schedule);
+
     // Refresh the cached Schedule.
     traversalSchedule = schedule;
 
@@ -555,6 +563,11 @@ class ConnectorCoordinatorImpl implements
             }
           } else if (retryDelayMillis > 0) {
             traversalDelayEnd = clock.getTimeMillis() + retryDelayMillis;
+            LOGGER.fine("Delaying traversal for connector " + name + " "
+                        + ((retryDelayMillis < (120 * 1000))
+                            ? ((retryDelayMillis / 1000) + " seconds")
+                            : ((retryDelayMillis / (60 * 1000)) + " minutes"))
+                        + " after repository reveals no new content.");
           }
         } catch (ConnectorNotFoundException cnfe) {
           // Connector was deleted while processing the batch.  Don't take any
@@ -565,6 +578,9 @@ class ConnectorCoordinatorImpl implements
       case ERROR:
         traversalDelayEnd =
             clock.getTimeMillis() + Traverser.ERROR_WAIT_MILLIS;
+        LOGGER.info("Delaying traversal for connector " + name + " "
+                    + (Traverser.ERROR_WAIT_MILLIS / (60 * 1000))
+                    + " minutes after encountering an error.");
         break;
     }
   }
@@ -849,10 +865,15 @@ class ConnectorCoordinatorImpl implements
     Configuration newConfiguration = new Configuration(newConfig, config);
 
     // Validate the configuration.
-    ConfigureResponse response =
-        validateConfig(name, connectorDir, newTypeInfo, newConfiguration, locale);
+    if (LOGGER.isLoggable(Level.CONFIG)) {
+      LOGGER.config("VALIDATE CONFIG: Validating connector " + name
+          + ": locale = " + locale + ", " + newConfiguration);
+    }
+
+    ConfigureResponse response = validateConfig(name, connectorDir, newTypeInfo,
+                                                newConfiguration, locale);
     if (response != null) {
-      // If validateConfig() returns a non-null response with an error message.
+      // If validateConfig() returns a non-null response with an error message,
       // or populated config form, then consider it an invalid config that
       // needs to be corrected. Return the response so that the config form
       // may be redisplayed.
@@ -867,8 +888,11 @@ class ConnectorCoordinatorImpl implements
       // but does include a configuration Map; then consider it a valid,
       // but possibly altered configuration and use it.
       if (response.getConfigData() != null) {
-        LOGGER.config("A modified configuration for connector " + name
-            + " was returned.");
+        if (LOGGER.isLoggable(Level.CONFIG)) {
+          LOGGER.config("A modified configuration for connector " + name
+                        + " was returned: "
+                        + SecurityUtils.getMaskedMap(response.getConfigData()));
+        }
         newConfiguration = new Configuration(response.getConfigData(), config);
       }
     }
@@ -900,6 +924,10 @@ class ConnectorCoordinatorImpl implements
   /* @Override */
   public void connectorConfigurationChanged(TypeInfo newTypeInfo,
       Configuration config) throws InstantiatorException {
+    if (LOGGER.isLoggable(Level.CONFIG)) {
+      LOGGER.config("New configuration for connector " + name + ": " + config);
+    }
+
     // We have an apparently valid configuration. Create a connector instance
     // with that configuration.
     String connectorWorkDir =
@@ -933,6 +961,7 @@ class ConnectorCoordinatorImpl implements
                instanceInfo.getTypeInfo().getConnectorTypeName(),
                instanceInfo.getTypeInfo().getConnectorType());
         documentStore = (DocumentStore) pstore.getLocalDocumentStore();
+        LOGGER.config("Setting DatabasePersistentStore for connector " + name);
         ((ConnectorPersistentStoreAware) connector).setDatabaseAccess(pstore);
       }
     }
@@ -980,6 +1009,8 @@ class ConnectorCoordinatorImpl implements
             + " for connector " + name);
       }
     } else {
+      LOGGER.finest("Making connector directory "
+                    + connectorDir.getAbsolutePath());
       if (!connectorDir.mkdirs()) {
         throw new InstantiatorException("Can not create "
             + "connector directory at " + connectorDir.getAbsolutePath()
@@ -998,6 +1029,8 @@ class ConnectorCoordinatorImpl implements
   // Connector an opportunity to delete these files in a cleaner fashion.
   private static void removeConnectorDirectory(File connectorDir) {
     if (connectorDir.exists()) {
+      LOGGER.finest("Removing connector directory "
+                    + connectorDir.getAbsolutePath());
       if (!connectorDir.delete()) {
         LOGGER.warning("Failed to delete connector directory "
             + connectorDir.getPath()

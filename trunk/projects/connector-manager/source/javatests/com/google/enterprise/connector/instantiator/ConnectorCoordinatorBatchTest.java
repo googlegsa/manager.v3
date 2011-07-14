@@ -438,8 +438,8 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
 
     @Override
     public String toString() {
-      return "PushedDocument connectorName = " + connectorName + " document = "
-          + document;
+      return "PushedDocument: connectorName = " + connectorName
+             + ", document = " + document;
     }
   }
 

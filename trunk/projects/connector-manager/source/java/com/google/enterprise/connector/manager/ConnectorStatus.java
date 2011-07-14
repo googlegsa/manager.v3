@@ -71,4 +71,9 @@ public class ConnectorStatus {
     return schedule;
   }
 
+  @Override
+  public String toString() {
+    return "{ connector = " + name + ", type = " + type + ", status = " + status
+            + ", schedule = " + schedule + " }";
+  }
 }

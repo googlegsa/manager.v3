@@ -1,4 +1,4 @@
-// Copyright (C) 2006-2008 Google Inc.
+// Copyright 2006 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,11 +22,15 @@ import com.google.enterprise.connector.spi.RepositoryLoginException;
 import com.google.enterprise.connector.spi.Session;
 import com.google.enterprise.connector.spi.TraversalManager;
 
+import java.util.logging.Logger;
+
 /**
  * Access to the AuthenticationManager, AuthorizationManager, and
  * TraversalManagager for a Connector instance.
  */
 public class ConnectorInterfaces {
+  private static final Logger LOGGER =
+      Logger.getLogger(ConnectorInterfaces.class.getName());
 
   private final String connectorName;
   private final Connector connector;
@@ -64,6 +68,7 @@ public class ConnectorInterfaces {
       Session s = getSession();
       try {
         authenticationManager = s.getAuthenticationManager();
+        LOGGER.fine("Got AuthenticationManager " + authenticationManager);
       } catch (RepositoryException e) {
         // TODO(ziff): think about how this could be re-tried
         throw new InstantiatorException(e);
@@ -83,6 +88,7 @@ public class ConnectorInterfaces {
       Session s = getSession();
       try {
         authorizationManager = s.getAuthorizationManager();
+        LOGGER.fine("Got AuthorizationManager " + authorizationManager);
       } catch (RepositoryException e) {
         // TODO(ziff): think about how this could be re-tried
         throw new InstantiatorException(e);
@@ -118,6 +124,7 @@ public class ConnectorInterfaces {
       Session s = getSession();
       try {
         traversalManager = s.getTraversalManager();
+        LOGGER.fine("Got TraversalManager " + traversalManager);
       } catch (RepositoryException ie) {
         throw new InstantiatorException(ie);
       } catch (Exception e) {
@@ -130,7 +137,9 @@ public class ConnectorInterfaces {
   private Session getSession() throws InstantiatorException {
     Session s = null;
     try {
+      LOGGER.fine("LOGIN: Getting Session from connector " + connectorName);
       s = connector.login();
+      LOGGER.fine("Got Session " + s);
     } catch (RepositoryLoginException e) {
       // this is un-recoverable
       throw new InstantiatorException(e);
@@ -143,5 +152,4 @@ public class ConnectorInterfaces {
     }
     return s;
   }
-
 }
