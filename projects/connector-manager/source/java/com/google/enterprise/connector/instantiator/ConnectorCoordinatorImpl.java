@@ -48,6 +48,7 @@ import com.google.enterprise.connector.database.DocumentStore;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Locale;
@@ -870,7 +871,7 @@ class ConnectorCoordinatorImpl implements
           + ": locale = " + locale + ", " + newConfiguration);
     }
 
-    ConfigureResponse response = validateConfig(name, connectorDir, newTypeInfo,
+    ConfigureResponse response = validateConfig(connectorDir, newTypeInfo,
                                                 newConfiguration, locale);
     if (response != null) {
       // If validateConfig() returns a non-null response with an error message,
@@ -951,27 +952,34 @@ class ConnectorCoordinatorImpl implements
   }
 
   @SuppressWarnings("unchecked")
-  private void setDatabaseAccess(InstanceInfo instanceInfo) {
-    if (connectorPersistentStoreFactory != null) {
-      Connector connector = instanceInfo.getConnector();
-      if (connector instanceof ConnectorPersistentStoreAware) {
-        ConnectorPersistentStore pstore =
+  private void setDatabaseAccess(InstanceInfo instanceInfo)
+      throws InstantiatorException {
+    try {
+      if (connectorPersistentStoreFactory != null) {
+        Connector connector = instanceInfo.getConnector();
+        if (connector instanceof ConnectorPersistentStoreAware) {
+          ConnectorPersistentStore pstore =
             connectorPersistentStoreFactory.newConnectorPersistentStore(
-               instanceInfo.getName(),
-               instanceInfo.getTypeInfo().getConnectorTypeName(),
-               instanceInfo.getTypeInfo().getConnectorType());
-        documentStore = (DocumentStore) pstore.getLocalDocumentStore();
-        LOGGER.config("Setting DatabasePersistentStore for connector " + name);
-        ((ConnectorPersistentStoreAware) connector).setDatabaseAccess(pstore);
+                 instanceInfo.getName(),
+                 instanceInfo.getTypeInfo().getConnectorTypeName(),
+                 instanceInfo.getTypeInfo().getConnectorType());
+          documentStore = (DocumentStore) pstore.getLocalDocumentStore();
+          LOGGER.config("Setting DatabasePersistentStore for connector " + name);
+          ((ConnectorPersistentStoreAware) connector).setDatabaseAccess(pstore);
+        }
       }
+    } catch (SQLException e) {
+      throw new InstantiatorException("Failed to set database access for "
+          + "connector " + instanceInfo.getName(), e);
     }
   }
 
-  private static ConfigureResponse validateConfig(String name,
+  private ConfigureResponse validateConfig(
       File connectorDir, TypeInfo typeInfo, Configuration config,
       Locale locale) throws InstantiatorException {
     ConnectorInstanceFactory factory =
-        new ConnectorInstanceFactory(name, typeInfo, config);
+        new ConnectorInstanceFactory(name, typeInfo, config,
+                                     connectorPersistentStoreFactory);
     try {
       return typeInfo.getConnectorType()
              .validateConfig(config.getMap(), locale, factory);

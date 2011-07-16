@@ -20,179 +20,59 @@ import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.instantiator.InstanceInfo.FactoryCreationFailureException;
 import com.google.enterprise.connector.instantiator.InstanceInfo.InstanceInfoException;
 import com.google.enterprise.connector.instantiator.InstanceInfo.NoBeansFoundException;
+import com.google.enterprise.connector.instantiator.InstanceInfo.NullConfigurationException;
 import com.google.enterprise.connector.instantiator.InstanceInfo.NullConnectorNameException;
 import com.google.enterprise.connector.instantiator.InstanceInfo.NullDirectoryException;
 import com.google.enterprise.connector.instantiator.InstanceInfo.NullTypeInfoException;
 import com.google.enterprise.connector.instantiator.InstanceInfo.PropertyProcessingFailureException;
-import com.google.enterprise.connector.instantiator.TypeInfo.TypeInfoException;
 import com.google.enterprise.connector.persist.FileStore;
+import com.google.enterprise.connector.spi.Connector;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
 
 import junit.framework.TestCase;
 
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.core.io.Resource;
-
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class InstanceInfoTest extends TestCase {
-  private static final Logger LOGGER =
-      Logger.getLogger(InstanceInfoTest.class.getName());
+public class InstanceInfoTest extends AbstractTestInstanceInfo {
 
-  /**
-   * Constructs a new Connector Instance based
-   * upon its on-disk persistently stored configuration.
-   *
-   * @param connectorName the name of the Connector instance.
-   * @param connectorDir the Connector's on-disk directory.
-   * @param typeInfo the Connector's prototype.
-   * @return new InstanceInfo representing the Connector instance.
-   * @throws InstanceInfoException
-   */
-  private InstanceInfo fromDirectory(String connectorName,
-      File connectorDir, TypeInfo typeInfo) throws InstanceInfoException {
-    try {
-      // Read the configuration from svn-controlled connectorDir.
-      // Note that this is not the test directory generally used for
-      // persistence, and it shouldn't be.  We want to avoid writing
-      // to svn-controlled directories when running the tests.
-      File propFile = new File(connectorDir, connectorName +".properties");
-      Properties props = PropertiesUtils.loadFromFile(propFile);
-      File xmlFile = new File(connectorDir, TypeInfo.CONNECTOR_INSTANCE_XML);
-      String xml = null;
-      if (xmlFile.exists()) {
-        xml = StringUtils.streamToStringAndThrow(new FileInputStream(xmlFile));
-      }
-      Configuration config = new Configuration(
-          typeInfo.getConnectorTypeName(), PropertiesUtils.toMap(props), xml);
-      return new InstanceInfo(connectorName, connectorDir, typeInfo, config);
-    } catch (IOException ioe) {
-      throw new InstanceInfoException("I/O error:", ioe);
-    } catch (PropertiesException pe) {
-      throw new InstanceInfoException("Properties error:", pe);
-    }
+  @Override
+  protected Connector newInstance(String connectorName, String connectorDir,
+      TypeInfo typeInfo, Configuration configuration) throws Exception {
+    InstanceInfo instanceInfo = new InstanceInfo(connectorName,
+        (connectorDir != null) ? new File(connectorDir) : null,
+        typeInfo, configuration);
+    assertNotNull(instanceInfo);
+    return instanceInfo.getConnector();
   }
 
-  public final void testFromDirectoryPositive() {
-    String resourceName =
-        "testdata/connectorTypeTests/positive/connectorType.xml";
-    File connectorDir = new File("testdata/connectorInstanceTests/positive");
-    TypeInfo typeInfo = makeValidTypeInfo(resourceName);
-    boolean exceptionThrown = false;
-    try {
-      fromDirectory("fred", connectorDir, typeInfo);
-    } catch (InstanceInfoException e) {
-      exceptionThrown = true;
-      LOGGER.log(Level.WARNING,
-          "unexpected exception during instance info creation", e);
-    }
-    assertFalse(exceptionThrown);
-  }
+  /** Test invalid constructor arguments. */
+  public final void testConstructorArgs() throws Exception {
+    String connectorName = "fred";
+    String connectorDir = "testdata/connectorInstanceTests/positive";
+    String resourceName = "testdata/connectorTypeTests/positive/connectorType.xml";
+    TypeInfo typeInfo = makeTypeInfo(resourceName);
+    Configuration configuration =
+        readConfiguration(connectorName, connectorDir, typeInfo);
 
-  public final void testConstructorNegative0() {
-    // test null directory argument
-    String resourceName =
-        "testdata/connectorTypeTests/positive/connectorType.xml";
-    TypeInfo typeInfo = makeValidTypeInfo(resourceName);
-    InstanceInfo instanceInfo = null;
-    boolean correctExceptionThrown = false;
-    try {
-      instanceInfo = new InstanceInfo("fred", null, typeInfo, null);
-    } catch (NullDirectoryException e) {
-      correctExceptionThrown = true;
-      LOGGER.log(Level.WARNING, "Null directory exception", e);
-    } catch (InstanceInfoException e) {
-      LOGGER.log(Level.WARNING,
-          "unexpected exception during instance info creation", e);
-    }
-    assertTrue(correctExceptionThrown);
-    assertNull(instanceInfo);
-  }
+    // Test null connector name in constructor.
+    fromConfigurationTest(null, connectorDir, typeInfo, configuration,
+                          NullConnectorNameException.class, null);
 
-  public final void testConstructorNegative1() {
-    // test null TypeInfo argument
-    InstanceInfo instanceInfo = null;
-    File connectorDir = new File("testdata/connectorInstanceTests/positive");
-    boolean correctExceptionThrown = false;
-    try {
-      instanceInfo = new InstanceInfo("fred", connectorDir, null, null);
-    } catch (NullTypeInfoException e) {
-      correctExceptionThrown = true;
-      LOGGER.log(Level.WARNING, "Null directory exception", e);
-    } catch (InstanceInfoException e) {
-      LOGGER.log(Level.WARNING,
-          "unexpected exception during instance info creation", e);
-    }
-    assertTrue(correctExceptionThrown);
-    assertNull(instanceInfo);
-  }
+    // Test null connector directory in constructor.
+    fromConfigurationTest(connectorName, null, typeInfo, configuration,
+                          NullDirectoryException.class, null);
 
-  public final void testConstructorNegative2() {
-    // test null connector name argument
-    String resourceName =
-        "testdata/connectorTypeTests/positive/connectorType.xml";
-    TypeInfo typeInfo = makeValidTypeInfo(resourceName);
-    InstanceInfo instanceInfo = null;
-    File connectorDir = new File("testdata/connectorInstanceTests/positive");
-    boolean correctExceptionThrown = false;
-    try {
-      instanceInfo = new InstanceInfo(null, connectorDir, typeInfo, null);
-    } catch (NullConnectorNameException e) {
-      correctExceptionThrown = true;
-      LOGGER.log(Level.WARNING, "Null directory exception", e);
-    } catch (InstanceInfoException e) {
-      LOGGER.log(Level.WARNING,
-          "unexpected exception during instance info creation", e);
-    }
-    assertTrue(correctExceptionThrown);
-    assertNull(instanceInfo);
-  }
+    // Test null TypeInfo in constructor.
+    fromConfigurationTest(connectorName, connectorDir, null, configuration,
+                          NullTypeInfoException.class, null);
 
-  public final void testFromDirectoryNegative3() {
-    // test properties file doesn't fill in all properties
-    String resourceName =
-        "testdata/connectorTypeTests/positive/connectorType.xml";
-    TypeInfo typeInfo = makeValidTypeInfo(resourceName);
-    InstanceInfo instanceInfo = null;
-    File connectorDir = new File("testdata/connectorInstanceTests/negative3");
-    boolean correctExceptionThrown = false;
-    try {
-      instanceInfo = fromDirectory("fred", connectorDir, typeInfo);
-    } catch (PropertyProcessingFailureException e) {
-      correctExceptionThrown = true;
-      LOGGER.log(Level.WARNING, "Property processing exception", e);
-    } catch (InstanceInfoException e) {
-      LOGGER.log(Level.WARNING,
-          "unexpected exception during instance info creation", e);
-    }
-    assertTrue(correctExceptionThrown);
-    assertNull(instanceInfo);
-  }
-
-  public final void testFromDirectoryNegative4() {
-    // test connectorInstance.xml that doesn't implement Connector
-    String resourceName =
-        "testdata/connectorInstanceTests/badConnectorType1/connectorType.xml";
-    TypeInfo typeInfo = makeValidTypeInfo(resourceName);
-    InstanceInfo instanceInfo = null;
-    File connectorDir = new File("testdata/connectorInstanceTests/positive");
-    boolean correctExceptionThrown = false;
-    try {
-      instanceInfo = fromDirectory("fred", connectorDir, typeInfo);
-    } catch (NoBeansFoundException e) {
-      correctExceptionThrown = true;
-      LOGGER.log(Level.WARNING, "Null directory exception", e);
-    } catch (InstanceInfoException e) {
-      LOGGER.log(Level.WARNING,
-          "unexpected exception during instance info creation", e);
-    }
-    assertTrue(correctExceptionThrown);
-    assertNull(instanceInfo);
+    // Test null Configuration.
+    fromConfigurationTest(connectorName, connectorDir, typeInfo, null,
+                          NullConfigurationException.class, null);
   }
 
   /** Test encrypted property */
@@ -237,14 +117,19 @@ public class InstanceInfoTest extends TestCase {
       assertFalse(temp.contains(plainTextPassword));
 
       // Now instantiate the connector with those properties.
-      instanceInfo = fromDirectory(connectorName, connectorDir, typeInfo);
+      Configuration configuration =
+          readConfiguration(connectorName, connectorDir.getPath(), typeInfo);
+      instanceInfo = new InstanceInfo(
+          connectorName, connectorDir, typeInfo, configuration);
+      assertNotNull(instanceInfo);
+
     } catch (InstanceInfoException e) {
       exceptionThrown = true;
-      LOGGER.log(Level.WARNING,
+      logger.log(Level.WARNING,
           "unexpected exception during instance info creation", e);
     } catch (PropertiesException e) {
       exceptionThrown = true;
-      LOGGER.log(Level.WARNING,
+      logger.log(Level.WARNING,
           "unexpected exception during instance info creation", e);
     }
     assertFalse(exceptionThrown);
@@ -257,112 +142,5 @@ public class InstanceInfoTest extends TestCase {
 
     // Clean up temp directory and files
     assertTrue(ConnectorTestUtils.deleteAllFiles(new File(testDirName)));
-  }
-
-  private TypeInfo makeValidTypeInfo(String resourceName) {
-    Resource r = new FileSystemResource(resourceName);
-    TypeInfo typeInfo = null;
-    boolean exceptionThrown = false;
-    try {
-      typeInfo = TypeInfo.fromSpringResourceAndThrow(r);
-    } catch (TypeInfoException e) {
-      exceptionThrown = true;
-      LOGGER.log(Level.WARNING, "Type Info Creation Problem", e);
-    }
-    assertFalse(exceptionThrown);
-    assertNotNull(typeInfo);
-    return typeInfo;
-  }
-
-  public final void testCustomInstancePrototype() {
-    String resourceName =
-        "testdata/connectorTypeTests/positive/connectorType.xml";
-    File connectorDir = new File("testdata/connectorInstanceTests/custom1");
-    TypeInfo typeInfo = makeValidTypeInfo(resourceName);
-    InstanceInfo instanceInfo = null;
-    boolean exceptionThrown = false;
-    try {
-      instanceInfo = fromDirectory("fred", connectorDir, typeInfo);
-    } catch (InstanceInfoException e) {
-      exceptionThrown = true;
-      LOGGER.log(Level.WARNING,
-          "unexpected exception during instance info creation", e);
-    }
-    assertFalse(exceptionThrown);
-    assertTrue("Connector should be of type CustomProtoTestConnector",
-        instanceInfo.getConnector() instanceof CustomProtoTestConnector);
-    CustomProtoTestConnector c =
-        (CustomProtoTestConnector) instanceInfo.getConnector();
-    assertEquals("oogabooga", c.getCustomProperty());
-  }
-
-  public final void testBadCustomInstancePrototype() {
-    String resourceName =
-        "testdata/connectorTypeTests/positive/connectorType.xml";
-    File connectorDir = new File("testdata/connectorInstanceTests/custom2");
-    TypeInfo typeInfo = makeValidTypeInfo(resourceName);
-    boolean exceptionThrown = false;
-    try {
-      fromDirectory("fred", connectorDir, typeInfo);
-    } catch (InstanceInfoException e) {
-      exceptionThrown = true;
-      assertTrue("Expected InstanceInfoException",
-          e instanceof FactoryCreationFailureException);
-    }
-    assertTrue(exceptionThrown);
-  }
-
-  public final void testOverspecifiedProperties() {
-    String resourceName =
-        "testdata/connectorTypeTests/positive/connectorType.xml";
-    File connectorDir =
-        new File("testdata/connectorInstanceTests/overspecifiedProperties");
-    TypeInfo typeInfo = makeValidTypeInfo(resourceName);
-    InstanceInfo instanceInfo = null;
-    boolean exceptionThrown = false;
-    try {
-      instanceInfo = fromDirectory("fred", connectorDir, typeInfo);
-    } catch (InstanceInfoException e) {
-      exceptionThrown = true;
-      LOGGER.log(Level.WARNING,
-          "unexpected exception during instance info creation", e);
-    }
-    assertFalse(exceptionThrown);
-    assertTrue("Connector should be of type CustomProtoTestConnector",
-        instanceInfo.getConnector() instanceof CustomProtoTestConnector);
-    CustomProtoTestConnector c =
-        (CustomProtoTestConnector) instanceInfo.getConnector();
-    assertEquals("hungadunga", c.getCustomProperty());
-    assertEquals(47, c.getCustomIntProperty());
-  }
-
-  /**
-   * Testing case where Connector wants to specify some default properties that
-   * can be overridden.
-   */
-  public final void testDefaultProperties() {
-    String resourceName =
-        "testdata/connectorTypeTests/default/connectorType.xml";
-    File connectorDir =
-        new File("testdata/connectorInstanceTests/default");
-    TypeInfo typeInfo = makeValidTypeInfo(resourceName);
-    InstanceInfo instanceInfo = null;
-    try {
-      instanceInfo = fromDirectory("fred", connectorDir, typeInfo);
-    } catch (InstanceInfoException e) {
-      LOGGER.log(Level.WARNING,
-          "unexpected exception during instance info creation", e);
-      fail(e.getMessage());
-    }
-    assertTrue("Connector should be of type SimpleTestConnector",
-        instanceInfo.getConnector() instanceof SimpleTestConnector);
-    SimpleTestConnector c = (SimpleTestConnector)instanceInfo.getConnector();
-    assertEquals("Checking default - color", "red", c.getColor());
-    assertEquals("Checking default empty override - repo file",
-        "", c.getRepositoryFileName());
-    assertEquals("Checking default override - user",
-        "not_default_user", c.getUsername());
-    assertEquals("Checking setting - work dir name",
-        "/tomcat/webapps/connector-manager/WEB-INF", c.getWorkDirName());
   }
 }
