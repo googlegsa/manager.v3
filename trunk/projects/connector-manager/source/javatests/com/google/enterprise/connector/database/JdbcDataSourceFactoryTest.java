@@ -36,7 +36,7 @@ public class JdbcDataSourceFactoryTest extends TestCase {
     DataSource ds = JdbcDataSourceFactory.newJdbcDataSource("In-memory H2",
         "org.h2.jdbcx.JdbcDataSource", "jdbc:h2:mem:testdb");
     assertNotNull(ds);
-    assertTrue((ds instanceof org.h2.jdbcx.JdbcDataSource));
+    assertTrue(ds instanceof org.h2.jdbcx.JdbcDataSource);
 
     JdbcDataSource h2ds = (JdbcDataSource) ds;
     h2ds.setURL("jdbc:h2:mem:testdb");
@@ -52,7 +52,7 @@ public class JdbcDataSourceFactoryTest extends TestCase {
     DataSource ds = JdbcDataSourceFactory.newJdbcDataSource("Test",
         "org.h2.jdbcx.JdbcDataSource", null);
     assertNotNull(ds);
-    assertTrue((ds instanceof JdbcDataSourceFactory.FakeDataSource));
+    assertTrue(ds instanceof FakeDataSource);
   }
 
   /**
@@ -62,7 +62,7 @@ public class JdbcDataSourceFactoryTest extends TestCase {
     DataSource ds = JdbcDataSourceFactory.newJdbcDataSource("Test",
         "org.h2.jdbcx.JdbcDataSource", "");
     assertNotNull(ds);
-    assertTrue((ds instanceof JdbcDataSourceFactory.FakeDataSource));
+    assertTrue(ds instanceof FakeDataSource);
   }
 
   /**
@@ -72,7 +72,7 @@ public class JdbcDataSourceFactoryTest extends TestCase {
     DataSource ds = JdbcDataSourceFactory.newJdbcDataSource("ROT",
         "gov.cia.GeorgeKaplan", "NorthByNorthwest");
     assertNotNull(ds);
-    assertTrue((ds instanceof JdbcDataSourceFactory.FakeDataSource));
+    assertTrue(ds instanceof FakeDataSource);
   }
 
   /**
@@ -84,10 +84,9 @@ public class JdbcDataSourceFactoryTest extends TestCase {
     DataSource ds = JdbcDataSourceFactory.newJdbcDataSource("H2",
         "org.h2.jdbcx.JdbcDataSource", "");
     assertNotNull(ds);
-    assertTrue((ds instanceof JdbcDataSourceFactory.FakeDataSource));
+    assertTrue(ds instanceof FakeDataSource);
 
-    JdbcDataSourceFactory.FakeDataSource fakeds =
-        (JdbcDataSourceFactory.FakeDataSource) ds;
+    FakeDataSource fakeds = (FakeDataSource) ds;
     fakeds.setURL("jdbc:h2:mem:testdb");
     fakeds.setUser("sa");
     fakeds.setPassword("");

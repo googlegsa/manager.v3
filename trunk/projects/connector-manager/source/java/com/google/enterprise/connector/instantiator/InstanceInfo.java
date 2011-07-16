@@ -66,6 +66,9 @@ final class InstanceInfo {
     if (typeInfo == null) {
       throw new NullTypeInfoException();
     }
+    if (config == null) {
+      throw new NullConfigurationException();
+    }
 
     this.connectorName = connectorName;
     this.connectorDir = connectorDir;
@@ -336,6 +339,12 @@ final class InstanceInfo {
   static class NullTypeInfoException extends InstanceInfoException {
     NullTypeInfoException() {
       super("Attempt to instantiate a connector with a null TypeInfo");
+    }
+  }
+
+  static class NullConfigurationException extends InstanceInfoException {
+    NullConfigurationException() {
+      super("Attempt to instantiate a connector with a null Configuration");
     }
   }
 
