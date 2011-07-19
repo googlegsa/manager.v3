@@ -51,8 +51,9 @@ public class ConnectorPersistentStoreFactoryTest extends TestCase {
     assertEquals(database.getDatabaseType(), localDb.getDatabaseType());
 
     LocalDocumentStore localDs = cpStore.getLocalDocumentStore();
-    assertNotNull(localDs);
-    assertEquals("google_documents_test", localDs.getDocTableName());
+    if (localDs != null) {
+      assertEquals("google_documents_test", localDs.getDocTableName());
+    }
   }
 
   /**
