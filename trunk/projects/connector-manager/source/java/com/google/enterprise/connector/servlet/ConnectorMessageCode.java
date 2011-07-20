@@ -83,42 +83,66 @@ public class ConnectorMessageCode {
   public static final int REQUESTOR_IS_NOT_FEED_HOST = 5501;
   public static final int LAST_SUCCESS_MESSAGE_CODE = 5599;
 
+  /** A code with no message in the translation bundle, for testing. */
+  public static final int UNDEFINED_CODE = 5996;
   public static final int UNSUPPORTED_CALL = 5997;
   public static final int UNSUPPORTED_MESSAGE_CODE = 5998;
   public static final int WRONG_MESSAGE_CODE = 5999;
   public static final int LAST_CONNECTOR_MESSAGE_CODE = 6000;
+
+  public static final Object[] EMPTY_PARAMS = new Object[0];
+
+  /**
+   * Performs a copy of the given array. To mimic a deep copy and
+   * isolate the copy from changes to the original, we call
+   * {@code toString} on each entry.
+   *
+   * @param params an array of message parameters; may be {@code null}
+   * @return an independent non-null copy of the array; an empty array
+   *     if the argument was {@code null}
+   */
+  private static Object[] copyOf(Object[] params) {
+    if (params == null || params.length == 0) {
+      return EMPTY_PARAMS;
+    } else {
+      Object[] copy = new Object[params.length];
+      for (int i = 0; i < params.length; i++) {
+        copy[i] = params[i].toString();
+      }
+      return copy;
+    }
+  }
 
   private int messageId;
   private String message;
   private Object[] params;
 
   public ConnectorMessageCode() {
-    this.messageId = SUCCESS;
-    this.message = null;
-    this.params = new Object[]{};
+    this(SUCCESS);
   }
 
   public ConnectorMessageCode(int messageId) {
-    this.messageId = messageId;
-    this.message = null;
-    this.params = new Object[]{};
+    set(messageId, null, EMPTY_PARAMS);
   }
 
   public ConnectorMessageCode(int messageId, Object[] params) {
-    this.messageId = messageId;
-    this.message = null;
-    this.params = params;
+    set(messageId, null, copyOf(params));
   }
 
   public ConnectorMessageCode(int messageId, String param) {
-    this.messageId = messageId;
-    this.message = null;
-    String params[] = {param};
-    this.params = params;
+    set(messageId, null, new Object[] { param });
   }
 
   public ConnectorMessageCode(
       int messageId, String message, Object[] params) {
+    set(messageId, message, copyOf(params));
+  }
+
+  /**
+   * Helper method to assign all of the fields. This method assumes
+   * that parameter checking has been done.
+   */
+  private void set(int messageId, String message, Object[] params) {
     this.messageId = messageId;
     this.message = message;
     this.params = params;
@@ -153,7 +177,7 @@ public class ConnectorMessageCode {
     this.messageId = messageId;
     if (messageId == SUCCESS) {
       this.message = null;
-      this.params = null;
+      this.params = EMPTY_PARAMS;
     }
   }
 
@@ -162,7 +186,7 @@ public class ConnectorMessageCode {
   }
 
   public void setParams(Object[] params) {
-    this.params = params;
+    this.params = copyOf(params);
   }
 
   public String getMessage() {
