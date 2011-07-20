@@ -134,6 +134,44 @@ Checked out revision 657.
 
 Once this is done, you can build the install files that need to be copied over to the Downloads tab.  See the DeveloperEnvironmentSetup page for details.
 
+== Release process for branching and tagging==
+  *  All the new feature development MUST take place on trunk^1^
+  *  Whenever we are about to make any release e.g. 2.8.0 ; create a     branch off the trunk called 2.8.x
+  *  The SVN will look like 
+      * trunk
+      * branches
+        * 2.8.x
+  *  This 2.8.x branch will always have the latest code for any 2.8 release
+  *  When we want to make an RC for 2.8.0 we tag the 2.8.x branch  e.g. 2.8.0-RC1.
+  *  This tag location will be tags/builds/2.8.0-RC1.   
+  *  "builds" will be a folder under tags which will maintain all the internal tags (RC, milestones, custom etc) for the project. 
+  * So the new SVN structure will become
+    * trunk
+    * branches
+    * 2.8.x
+    * tags
+      * builds
+        * 2.8.0-RC1
+        * 2.8.0-RC2 (if there is an RC2)
+  *  Dev will share the URL of the 2.8.0-RC1 tag with QA for the RC 
+  *  Once we feel that 2.8.0-RC2 is the final build, we tag the 2.8.x branch with new tag called 2.8.0
+  *  This 2.8.0 tag will go directly in tags. Final release tags will feature directly under 'tags' and will NOT go under 'tags/builds'
+  *  So the SVN structure will become
+    *  trunk
+    *  branches
+    *  2.8.x
+    *  tags
+      *  builds
+         *  2.8.0-RC1
+         *  2.8.0-RC2
+      *  2.8.0
+  *  Once we release 2.8 and want to move on with 2.10 release a new branch will be created off the trunk called 2.10.x
+  *  After we release 2.8, if there are any patches, then the bug will be fixed on Trunk first and then down integrated into 2.8.x branch 
+  *  The major releases will move from 2.8 to 2.10 to 2.12 and so on...  any 2.8.x release after 2.8.0 will only be a patch on top of the 2.8.0 build and will not be a major release. 
+  
+  1  The only time we will directly check in code in the release branches is when the code on trunk has become very different from the branch code and we want to patch a particular release. This should be an exceptional scenario and not a general practice.
+
+
 == For More Information ==
 
 See:
