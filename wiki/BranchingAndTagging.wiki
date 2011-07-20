@@ -134,7 +134,7 @@ Checked out revision 657.
 
 Once this is done, you can build the install files that need to be copied over to the Downloads tab.  See the DeveloperEnvironmentSetup page for details.
 
-== Release process for branching and tagging==
+== Guidelines related to Branching and Tagging for Connector Releases==
   *  All the new feature development MUST take place on trunk^1^
   *  Whenever we are about to make any release e.g. 2.8.0 ; create a     branch off the trunk called 2.8.x
   *  The SVN will look like 
