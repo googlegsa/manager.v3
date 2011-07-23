@@ -27,6 +27,8 @@ import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.ConnectorType;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -139,6 +141,18 @@ public class MockManager implements Manager {
     } else {
       return new HashSet<String>(docidList);
     }
+  }
+
+  /* @Override */
+  public InputStream getDocumentContent(String connectorName, String docid)
+      throws ConnectorNotFoundException {
+    if (CONNECTOR1.equals(connectorName)) {
+      return new ByteArrayInputStream(docid.getBytes());
+    }
+    if (CONNECTOR2.equals(connectorName)) {
+      return null;  // no content
+    }
+    throw new ConnectorNotFoundException("Connector not found: " + connectorName);
   }
 
   /* @Override */

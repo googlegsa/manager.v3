@@ -34,6 +34,7 @@ import com.google.enterprise.connector.spi.AuthorizationResponse;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.Connector;
 import com.google.enterprise.connector.spi.ConnectorType;
+import com.google.enterprise.connector.spi.Retriever;
 import com.google.enterprise.connector.spi.Session;
 import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.traversal.CancellableQueryTraverser;
@@ -236,6 +237,12 @@ public class MockInstantiator implements Instantiator {
   public AuthorizationManager getAuthorizationManager(String connectorName)
       throws ConnectorNotFoundException, InstantiatorException {
     return getConnectorCoordinator(connectorName).getAuthorizationManager();
+  }
+
+  /* @Override */
+  public Retriever getRetriever(String connectorName)
+      throws ConnectorNotFoundException, InstantiatorException {
+    return getConnectorCoordinator(connectorName).getRetriever();
   }
 
   public void startBatch(String connectorName)

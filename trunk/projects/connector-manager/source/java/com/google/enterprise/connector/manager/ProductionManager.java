@@ -33,7 +33,10 @@ import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.ConnectorType;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.RepositoryLoginException;
+import com.google.enterprise.connector.spi.Retriever;
+import com.google.enterprise.connector.util.EofFilterInputStream;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -146,6 +149,28 @@ public class ProductionManager implements Manager {
                  + connectorName + ": " + identity, e);
     }
     return result;
+  }
+
+  /* @Override */
+  public InputStream getDocumentContent(String connectorName, String docid)
+      throws ConnectorNotFoundException, InstantiatorException,
+             RepositoryException {
+    if (LOGGER.isLoggable(Level.FINER)) {
+      LOGGER.finer("RETRIEVER: Retrieving content from connector "
+                   + connectorName + " for document " + docid);
+    }
+    Retriever retriever = instantiator.getRetriever(connectorName);
+    if (retriever == null) {
+      // We are borked here.  This should not happen.
+      LOGGER.warning("GetDocumentContent request for connector " + connectorName
+                     + " that does not support the Retriever interface.");
+      return null;
+    }
+    InputStream in = retriever.getContent(docid);
+    if (in == null) {
+      LOGGER.finer("RETRIEVER: Document has no content.");
+    }
+    return (in == null) ? null : new EofFilterInputStream(in);
   }
 
   /* @Override */

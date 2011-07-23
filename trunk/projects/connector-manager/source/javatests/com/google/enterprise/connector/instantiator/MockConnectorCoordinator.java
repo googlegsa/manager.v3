@@ -24,6 +24,7 @@ import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.Connector;
 import com.google.enterprise.connector.spi.ConnectorShutdownAware;
 import com.google.enterprise.connector.spi.RepositoryException;
+import com.google.enterprise.connector.spi.Retriever;
 import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.traversal.BatchResult;
 import com.google.enterprise.connector.traversal.BatchResultRecorder;
@@ -97,11 +98,16 @@ class MockConnectorCoordinator implements ConnectorCoordinator {
     return interfaces.getAuthorizationManager();
   }
 
-   public synchronized ConfigureResponse getConfigForm(Locale locale) {
+  /* @Override */
+  public Retriever getRetriever() throws InstantiatorException {
+    return interfaces.getRetriever();
+  }
+
+  public synchronized ConfigureResponse getConfigForm(Locale locale) {
     throw new UnsupportedOperationException();
   }
 
-   public synchronized Configuration getConnectorConfiguration() {
+  public synchronized Configuration getConnectorConfiguration() {
     return persistentStore.getConnectorConfiguration(storeContext);
   }
 
