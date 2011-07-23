@@ -25,6 +25,7 @@ import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.ConnectorType;
+import com.google.enterprise.connector.spi.Retriever;
 
 import org.springframework.core.io.Resource;
 
@@ -185,6 +186,12 @@ public class SpringInstantiator implements Instantiator {
   public AuthorizationManager getAuthorizationManager(String connectorName)
       throws ConnectorNotFoundException, InstantiatorException {
     return getConnectorCoordinator(connectorName).getAuthorizationManager();
+  }
+
+  /* @Override */
+  public Retriever getRetriever(String connectorName)
+      throws ConnectorNotFoundException, InstantiatorException {
+    return getConnectorCoordinator(connectorName).getRetriever();
   }
 
   /* @Override */

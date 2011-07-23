@@ -355,7 +355,25 @@ public class SpiConstants {
    * @since 2.4.2
    */
   public enum FeedType {
-    CONTENT, WEB
+    CONTENT, WEB, CONTENTURL;
+
+    /**
+     * @param other a FeedType
+     * @return {@code true} if the other FeedType may exist in the same
+     *         feed file as this FeedType
+     * @since 3.0
+     */
+    public boolean isCompatible(FeedType other) {
+      return (this == other || (this != CONTENT && other != CONTENT));
+    }
+
+    /**
+     * @return a legacy feed type string
+     * @since 3.0
+     */
+    public String toLegacyString() {
+      return (this == CONTENT) ? "incremental" : "metadata-and-url";
+    }
   }
 
   /**

@@ -203,6 +203,11 @@
     <servlet-class>com.google.enterprise.connector.servlet.RemoveConnector</servlet-class>
   </servlet>
 
+  <servlet>
+    <servlet-name>GetDocumentContent</servlet-name>
+    <servlet-class>com.google.enterprise.connector.servlet.GetDocumentContent</servlet-class>
+  </servlet>
+
   <!-- Define servlet mappings -->
 
   <servlet-mapping>
@@ -344,6 +349,11 @@
   <servlet-mapping>
     <servlet-name>RemoveConnector</servlet-name>
     <url-pattern>/removeConnector</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>GetDocumentContent</servlet-name>
+    <url-pattern>/getDocumentContent</url-pattern>
   </servlet-mapping>
 
 </web-app>

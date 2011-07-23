@@ -47,6 +47,9 @@
         <!-- The default time zone for Date values of fed Documents. -->
         <prop key="feed.timezone"></prop>
 
+        <!-- The default content URL prefix. -->
+        <prop key="feed.contenturl.prefix"></prop>
+
         <!-- Feed logging configuration.
              TODO: [Issue 163] These should be moved to logging.properties.
         -->
@@ -116,7 +119,7 @@
     <constructor-arg index="2" type="int" value="${gsa.feed.port}"/>
     <constructor-arg index="3" type="int" value="${gsa.feed.securePort}"/>
     <property name="clock" ref="Clock"/>
-    <property name="validateCertificate" 
+    <property name="validateCertificate"
               value="${gsa.feed.validateCertificate}"/>
   </bean>
 
@@ -382,6 +385,7 @@
     <constructor-arg index="0" ref="FeedConnection" />
     <constructor-arg index="1" ref="FileSizeLimitInfo"/>
     <constructor-arg index="2" ref="DocumentFilters"/>
+    <constructor-arg index="3" ref="${feed.contenturl.prefix}"/>
   </bean>
 
   <bean id="LoadManagerFactory"

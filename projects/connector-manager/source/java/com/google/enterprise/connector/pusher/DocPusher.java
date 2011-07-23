@@ -25,6 +25,7 @@ import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.RepositoryDocumentException;
 import com.google.enterprise.connector.spi.SimpleProperty;
 import com.google.enterprise.connector.spi.SpiConstants;
+import com.google.enterprise.connector.spi.SpiConstants.FeedType;
 import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.traversal.FileSizeLimitInfo;
 import com.google.enterprise.connector.util.Base64FilterInputStream;
@@ -91,6 +92,15 @@ public class DocPusher implements Pusher {
   private final DocumentFilterFactory documentFilterFactory;
 
   /**
+   * The prefix that will be used for contentUrl generation.
+   * The prefix should include protocol, host and port, web app,
+   * and servlet to point back at this Connector Manager instance.
+   * For example:
+   * {@code http://localhost:8080/connector-manager/getDocumentContent}
+   */
+  private final String contentUrlPrefix;
+
+  /**
    * Encoding method to use for Document content.
    */
   private String contentEncoding;
@@ -145,14 +155,18 @@ public class DocPusher implements Pusher {
    *        and feed size.
    * @param documentFilterFactory a {@link DocumentFilterFactory} that creates
    *        document processing filters.
+   * @param contentUrlPrefix the prefix that will be used for Feed contentUrl
+   *        generation.
    */
   public DocPusher(FeedConnection feedConnection, String connectorName,
                    FileSizeLimitInfo fileSizeLimitInfo,
-                   DocumentFilterFactory documentFilterFactory) {
+                   DocumentFilterFactory documentFilterFactory,
+                   String contentUrlPrefix) {
     this.feedConnection = feedConnection;
     this.connectorName = connectorName;
     this.fileSizeLimit = fileSizeLimitInfo;
     this.documentFilterFactory = documentFilterFactory;
+    this.contentUrlPrefix = contentUrlPrefix;
 
     // Check to see if the GSA supports compressed content feeds.
     String supportedEncodings =
@@ -204,7 +218,7 @@ public class DocPusher implements Pusher {
     // Apply any configured Document filters to the document.
     document = documentFilterFactory.newDocumentFilter(document);
 
-    String feedType;
+    FeedType feedType;
     try {
       feedType = DocUtils.getFeedType(document);
     } catch (RuntimeException e) {
@@ -216,7 +230,7 @@ public class DocPusher implements Pusher {
     // All feeds in a feed file must be of the same type.
     // If the feed would change type, send the feed off to the GSA
     // and start a new one.
-    if ((xmlFeed != null) && (feedType != xmlFeed.getFeedType())) {
+    if (xmlFeed != null && !feedType.isCompatible(xmlFeed.getFeedType())) {
       if (LOGGER.isLoggable(Level.FINE)) {
         LOGGER.fine("A new feedType, " + feedType + ", requires a new feed for "
             + connectorName + ". Closing feed and sending to GSA.");
@@ -423,7 +437,7 @@ public class DocPusher implements Pusher {
    *
    * @param feedType
    */
-  private void startNewFeed(String feedType) throws PushException {
+  private void startNewFeed(FeedType feedType) throws PushException {
     // Allocate a buffer to construct the feed log.
     try {
       if (FEED_LOGGER.isLoggable(FEED_LOG_LEVEL) && feedLog == null) {
@@ -440,7 +454,8 @@ public class DocPusher implements Pusher {
     int feedSize = (int) fileSizeLimit.maxFeedSize();
     try {
       try {
-        xmlFeed = new XmlFeed(connectorName, feedType, feedSize, feedLog);
+        xmlFeed = new XmlFeed(connectorName, feedType, feedSize, feedLog,
+                              contentUrlPrefix);
       } catch (OutOfMemoryError me) {
         // We shouldn't even have gotten this far under a low memory condition.
         // However, try to allocate a tiny feed buffer.  It should fill up on
@@ -450,7 +465,8 @@ public class DocPusher implements Pusher {
             + " sized feed - retrying with a much smaller feed allocation.");
         feedSize = 1024;
         try {
-          xmlFeed = new XmlFeed(connectorName, feedType, feedSize, feedLog);
+          xmlFeed = new XmlFeed(connectorName, feedType, feedSize, feedLog,
+                                contentUrlPrefix);
         } catch (OutOfMemoryError oome) {
           throw new OutOfMemoryError(
                "Unable to allocate feed buffer for connector " + connectorName);
@@ -585,10 +601,10 @@ public class DocPusher implements Pusher {
   /**
    * Return an InputStream for the Document's content.
    */
-  private InputStream getContentStream(Document document, String feedType)
+  private InputStream getContentStream(Document document, FeedType feedType)
       throws RepositoryException {
     InputStream contentStream = null;
-    if (!feedType.equals(XmlFeed.XML_FEED_METADATA_AND_URL)) {
+    if (feedType == FeedType.CONTENT) {
       InputStream encodedContentStream = getEncodedStream(
           new BigEmptyDocumentFilterInputStream(
               DocUtils.getOptionalStream(document,

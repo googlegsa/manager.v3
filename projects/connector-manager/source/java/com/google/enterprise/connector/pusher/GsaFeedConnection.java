@@ -206,7 +206,7 @@ public class GsaFeedConnection implements FeedConnection {
 
   private String sendFeedData(XmlFeed feed)
       throws FeedException {
-    String feedType = feed.getFeedType();
+    String feedType = feed.getFeedType().toLegacyString();
     String dataSource = feed.getDataSource();
     OutputStream outputStream;
     HttpURLConnection uc;

@@ -36,6 +36,7 @@ import com.google.enterprise.connector.spi.ConnectorPersistentStore;
 import com.google.enterprise.connector.spi.ConnectorPersistentStoreAware;
 import com.google.enterprise.connector.spi.ConnectorShutdownAware;
 import com.google.enterprise.connector.spi.ConnectorType;
+import com.google.enterprise.connector.spi.Retriever;
 import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.traversal.BatchResult;
 import com.google.enterprise.connector.traversal.BatchResultRecorder;
@@ -251,6 +252,23 @@ class ConnectorCoordinatorImpl implements
   public synchronized TraversalManager getTraversalManager()
       throws ConnectorNotFoundException, InstantiatorException {
     return getConnectorInterfaces().getTraversalManager();
+  }
+
+  /**
+   * Return a {@link Retriever} that may be used to access content for the
+   * document identified by {@code docid}.  If the connector does not support
+   * the {@link Retriever} interface, {@code null} is returned.
+   *
+   * @return a {@link Retriever}, or {@code null} if none is available
+   * @throws ConnectorNotFoundException if this {@link ConnectorCoordinator}
+   *         does not exist.
+   * @throws InstantiatorException if unable to instantiate the requested
+   *         {@link Retriever}
+   */
+  /* @Override */
+  public Retriever getRetriever()
+      throws ConnectorNotFoundException, InstantiatorException {
+    return getConnectorInterfaces().getRetriever();
   }
 
   /**

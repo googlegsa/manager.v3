@@ -19,6 +19,8 @@ import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.Connector;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.RepositoryLoginException;
+import com.google.enterprise.connector.spi.Retriever;
+import com.google.enterprise.connector.spi.RetrieverAware;
 import com.google.enterprise.connector.spi.Session;
 import com.google.enterprise.connector.spi.TraversalManager;
 
@@ -39,6 +41,8 @@ public class ConnectorInterfaces {
   private TraversalManager traversalManager;
   private AuthenticationManager authenticationManager;
   private AuthorizationManager authorizationManager;
+  private Retriever retriever;
+  private boolean gotRetriever = false;
 
   ConnectorInterfaces(String connectorName, Connector connector) {
     this.connectorName = connectorName;
@@ -97,6 +101,36 @@ public class ConnectorInterfaces {
       }
     }
     return authorizationManager;
+  }
+
+  /**
+   * Return a {@link Retriever} that may be used to access content for the
+   * document identified by a document ID.  If the connector does not support
+   * the {@link Retriever} interface, {@code null} is returned.
+   *
+   * @return a {@link Retriever}, or {@code null} if none is available
+   * @throws InstantiatorException if unable to instantiate the requested
+   *         {@link Retriever}
+   */
+  Retriever getRetriever() throws InstantiatorException {
+    if (!gotRetriever) {
+      Session s = getSession();
+      gotRetriever = true;
+      retriever = null;
+      if (s instanceof RetrieverAware) {
+        RetrieverAware ras = (RetrieverAware) s;
+        try {
+          retriever = ras.getRetriever();
+          LOGGER.fine("Got Retriever " + retriever);
+        } catch (RepositoryException e) {
+          // TODO(ziff): think about how this could be re-tried
+          throw new InstantiatorException(e);
+        } catch (Exception e) {
+          throw new InstantiatorException(e);
+        }
+      }
+    }
+    return retriever;
   }
 
   /**
