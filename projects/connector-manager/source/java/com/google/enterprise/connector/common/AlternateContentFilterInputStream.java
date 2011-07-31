@@ -54,6 +54,18 @@ public class AlternateContentFilterInputStream extends FilterInputStream {
    * @param alternate InputStream containing alternate content to provide
    *        If {@code null}, a default alternate content of a single space
    *        character is used.
+   */
+  public AlternateContentFilterInputStream(InputStream in,
+      InputStream alternate) {
+    this(in, alternate, null);
+  }
+
+  /**
+   * @param in InputStream containing raw document content.
+   *        May be {@code null}.
+   * @param alternate InputStream containing alternate content to provide
+   *        If {@code null}, a default alternate content of a single space
+   *        character is used.
    * @param feed XmlFeed under constructions (used for reseting size).
    *        May be {@code null}.
    */

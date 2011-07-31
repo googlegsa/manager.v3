@@ -15,6 +15,8 @@
 package com.google.enterprise.connector.manager;
 
 import com.google.common.collect.Maps;
+import com.google.enterprise.connector.common.AlternateContentFilterInputStream;
+import com.google.enterprise.connector.common.BigEmptyDocumentFilterInputStream;
 import com.google.enterprise.connector.common.I18NUtil;
 import com.google.enterprise.connector.instantiator.Configuration;
 import com.google.enterprise.connector.instantiator.ExtendedConfigureResponse;
@@ -170,7 +172,15 @@ public class ProductionManager implements Manager {
     if (in == null) {
       LOGGER.finer("RETRIEVER: Document has no content.");
     }
-    return (in == null) ? null : new EofFilterInputStream(in);
+    // The GSA can't handle meta-and-url feeds with no content, so we
+    // provide some minimal content of a single space, if none is available.
+    // We are only detecting empty content here, not large documents.
+    return
+        new AlternateContentFilterInputStream(
+            new BigEmptyDocumentFilterInputStream(
+                (in == null) ? in : new EofFilterInputStream(in),
+                Long.MAX_VALUE),
+            null);
   }
 
   /* @Override */
