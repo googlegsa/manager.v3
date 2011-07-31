@@ -29,6 +29,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.zip.GZIPOutputStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -37,6 +40,12 @@ public class GetDocumentContent extends HttpServlet {
 
   private static Logger LOGGER =
     Logger.getLogger(GetDocumentContent.class.getName());
+
+  private static boolean useCompression = false;
+
+  public static void setUseCompression(boolean doCompression) {
+    useCompression = doCompression;
+  }
 
   // TODO: HEAD requests?
   // TODO: Range requests?
@@ -73,12 +82,25 @@ public class GetDocumentContent extends HttpServlet {
 
     String connectorName = req.getParameter(ServletUtil.XMLTAG_CONNECTOR_NAME);
     NDC.pushAppend("Retrieve " + connectorName);
+
     OutputStream out = res.getOutputStream();
+    if (useCompression) {
+      // Select Content-Encoding based on the client's Accept-Encoding header.
+      // Choose GZIP if the header includes "gzip", otherwise no compression.
+      String encodings = req.getHeader("Accept-Encoding");
+      if (encodings != null && encodings.matches(".*\\bgzip\\b.*")) {
+        res.setHeader("Content-Encoding", "gzip");
+        out = new GZIPOutputStream(out, 64 * 1024);
+      }
+      res.setHeader("Vary", "Accept-Encoding");
+    }
+
+    // TODO: setContentType?
+    // TODO: Configure chunked output?
+
     try {
       Manager manager = Context.getInstance().getManager();
       String docid = req.getParameter(ServletUtil.QUERY_PARAM_DOCID);
-      // TODO: setContentType
-      // TODO: Configure compressed and/or chunked output?
       int code = handleDoGet(manager, connectorName, docid, out);
       if (code != HttpServletResponse.SC_OK) {
         res.sendError(code);
