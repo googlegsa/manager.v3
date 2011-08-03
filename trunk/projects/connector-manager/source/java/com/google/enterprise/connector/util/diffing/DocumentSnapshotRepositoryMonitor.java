@@ -67,6 +67,12 @@ public class DocumentSnapshotRepositoryMonitor implements Runnable {
   private static Method ndcRemove = null;
 
   static {
+    initNdcLogging();
+  }
+
+  /* Extracted from the above static block to suppress the unchecked warning. */
+  @SuppressWarnings("unchecked")
+  private static void initNdcLogging() {
     try {
       Class ndc = Class.forName("com.google.enterprise.connector.logging.NDC");
       ndcPush = ndc.getMethod("push", String.class);
