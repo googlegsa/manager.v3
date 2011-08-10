@@ -39,14 +39,19 @@ public class HostLoadManagerTest extends TestCase {
   }
 
   private HostLoadManager newHostLoadManager(int load) {
+    return newHostLoadManager(load, 200);
+  }
+
+  private HostLoadManager newHostLoadManager(int load, int batchsize) {
     alignTime(50);
     HostLoadManager hlm = new HostLoadManager(null, null, clock);
     hlm.setLoad(load);
+    hlm.setBatchSize(batchsize);
     return hlm;
   }
 
   private BatchResult newBatchResult(int numDocs) {
-    return newBatchResult(numDocs, 50);
+    return newBatchResult(numDocs, 250);
   }
 
   private BatchResult newBatchResult(int numDocs, int duration) {
@@ -62,28 +67,17 @@ public class HostLoadManagerTest extends TestCase {
     assertEquals(0, hostLoadManager.determineBatchSize().getHint());
   }
 
-  public void testMultipleUpdates() {
-    HostLoadManager hostLoadManager = newHostLoadManager(60);
-    BatchResult result = newBatchResult(10);
-    hostLoadManager.recordResult(result);
-    hostLoadManager.recordResult(result);
-    hostLoadManager.recordResult(result);
-    assertEquals(30, hostLoadManager.determineBatchSize().getHint());
-  }
-
   public void testPeriod() {
     HostLoadManager hostLoadManager = newHostLoadManager(60);
     hostLoadManager.setPeriod(1); // 1 second.
 
-    hostLoadManager.recordResult(newBatchResult(55));
-    assertEquals(5, hostLoadManager.determineBatchSize().getHint());
+    hostLoadManager.recordResult(newBatchResult(60));
+    assertEquals(0, hostLoadManager.determineBatchSize().getHint());
 
-    // Advance time more than one second so that batchHint is reset.
+    // Advance time more than one second so that delay expires.
     clock.adjustTime(1250); // 1.25 second
 
-    assertEquals(60, hostLoadManager.determineBatchSize().getHint());
-    hostLoadManager.recordResult(newBatchResult(15));
-    assertEquals(45, hostLoadManager.determineBatchSize().getHint());
+    assertTrue(hostLoadManager.determineBatchSize().getHint() > 0);
   }
 
   /**
@@ -106,25 +100,40 @@ public class HostLoadManagerTest extends TestCase {
   }
 
   /**
-   * Test that if we have nearly reached the load level, we
-   * won't OK a traversal requesting a tiny number of documents.
+   * Test minimum batchSize.
    */
-  public void testShouldDelayTinyBatch() {
+  public void testMinimumBatchSize() {
     HostLoadManager hostLoadManager = newHostLoadManager(60);
+    hostLoadManager.setBatchSize(10);
+    BatchSize batchSize = hostLoadManager.determineBatchSize();
+    assertEquals(20, batchSize.getHint());
+    hostLoadManager.setBatchSize(20);
+    batchSize = hostLoadManager.determineBatchSize();
+    assertEquals(20, batchSize.getHint());
+    hostLoadManager.setBatchSize(30);
+    batchSize = hostLoadManager.determineBatchSize();
+    assertEquals(30, batchSize.getHint());
+  }
+
+  /**
+   * Test that tiny batch sizes are not returned.  If nearly full batches
+   * are returned fast enought, the algorithm could trend toward 0, so
+   * the load manager sets a floor.
+   */
+  public void testNoTinyBatch() {
+    HostLoadManager hostLoadManager = newHostLoadManager(200);
     hostLoadManager.setPeriod(1); // 1 second.
 
     assertFalse(hostLoadManager.shouldDelay());
-    hostLoadManager.recordResult(newBatchResult(59));
-
-    // We should delay rather than ask for a batch of 1.
-    BatchSize batchSize = hostLoadManager.determineBatchSize();
-    assertEquals(1, batchSize.getHint());
-    assertTrue(hostLoadManager.shouldDelay());
+    hostLoadManager.recordResult(newBatchResult(199, 10));
 
     // Advance time more than 1 second, the LoadManager period, so that
     // this connector should be allowed to run again without delay.
     clock.adjustTime(1250); // 1.25 second
 
+    // At that throughput, a batch size of 1 or 2 would be calculated.
+    BatchSize batchSize = hostLoadManager.determineBatchSize();
+    assertEquals(20, hostLoadManager.determineBatchSize().getHint());
     assertFalse(hostLoadManager.shouldDelay());
   }
 
@@ -143,12 +152,10 @@ public class HostLoadManagerTest extends TestCase {
     // We should delay, after grossly exceeding the load.
     assertTrue(hostLoadManager.shouldDelay());
 
-    // Advance time more than 1 second, the LoadManager period, so that
-    // this connector should be allowed to run again without delay.
-    clock.adjustTime(1250); // 1.25 second
-
+    // Advance time more than 1 second, the LoadManager period.
     // We should still delay, paying the penalty for grossly exceeding
     // the load previously.
+    clock.adjustTime(1250); // 1.25 second
     assertTrue(hostLoadManager.shouldDelay());
 
     // Advance another couple of seconds, allowing the penalty to expire.
@@ -180,39 +187,45 @@ public class HostLoadManagerTest extends TestCase {
     batchSize = hostLoadManager.determineBatchSize();
     assertEquals(40, batchSize.getHint());
     assertEquals(80, batchSize.getMaximum());
-    hostLoadManager.setBatchSize(10);
-    batchSize = hostLoadManager.determineBatchSize();
-    assertEquals(10, batchSize.getHint());
-    assertEquals(60, batchSize.getMaximum());
   }
 
   /**
    * Test that the throughput is spread out for long running batches.
    * For instance, if the period is 1 minute, and the load is 200;
    * then a traversal that took 4 minutes, but returned 200 documents
-   * only averaged 50 docs per period.  That implies that only 50 docs
-   * were returned in the current period, so the batch hint should be
-   * 200 - 50 = 150.  Regression for Issue 189.
+   * only averaged 50 docs per period. Regression for Issue 189.
    */
   public void testAmortizeLongRunningBatch() {
-    HostLoadManager hostLoadManager = newHostLoadManager(200);
+    HostLoadManager hostLoadManager = newHostLoadManager(200, 1000);
     hostLoadManager.setPeriod(1); // 1 second
 
     // We don't want to register the result for this test too close
     // to the beginning or end of a second.
     alignTime(450);
 
+    // If we are staying well below the load limit per period,
+    // we should not delay.
     assertFalse(hostLoadManager.shouldDelay());
     hostLoadManager.recordResult(newBatchResult(200, 4000));
-
-    // We should not delay, since we could still submit at least
-    // another 150 docs in this period.
     assertFalse(hostLoadManager.shouldDelay());
 
-    // The returned batch hint should be between 150 and 200,
-    // depending upon the relation between aligned period and now.
+    // The host load manager will try to suggest larger batches,
+    // trying to pull the low throughput up towards the load.
     BatchSize batchSize = hostLoadManager.determineBatchSize();
-    assertTrue((150 <= batchSize.getHint()) && (200 >= batchSize.getHint()));
+    assertEquals(800, batchSize.getHint());
+
+    // Another slow-running batch should produce a similar result, but
+    // the returned batch hint should be capped at the maximum batch size.
+    hostLoadManager.recordResult(newBatchResult(800, 8000));
+    assertFalse(hostLoadManager.shouldDelay());
+    batchSize = hostLoadManager.determineBatchSize();
+    assertEquals(1000, batchSize.getHint());
+
+    // A gross overage should put the brakes on.
+    hostLoadManager.recordResult(newBatchResult(4000, 200));
+    assertTrue(hostLoadManager.shouldDelay());
+    batchSize = hostLoadManager.determineBatchSize();
+    assertEquals(0, batchSize.getHint());
   }
 
   /**
@@ -232,6 +245,15 @@ public class HostLoadManagerTest extends TestCase {
     rt.gc();
     fsli.setMaxFeedSize(rt.maxMemory() - (rt.totalMemory() - rt.freeMemory()));
     assertTrue(hostLoadManager.shouldDelay());
+
+    // If nothing changes, it should still delay.
+    clock.adjustTime(250); // .25 second
+    assertTrue(hostLoadManager.shouldDelay());
+
+    // Clearing the low memory condition should make it better.
+    rt.gc();
+    fsli.setMaxFeedSize(rt.freeMemory()/100);
+    assertFalse(hostLoadManager.shouldDelay());
   }
 
   /**
