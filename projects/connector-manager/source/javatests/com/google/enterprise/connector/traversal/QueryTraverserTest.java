@@ -67,11 +67,7 @@ public class QueryTraverserTest extends TestCase {
     runTestBatches(5);
   }
 
-  private void runTestBatches(int batchSize) {
-    runTestBatches(batchSize, batchSize);
-  }
-
-  private void runTestBatches(int batchHint, int batchMax) {
+  private void runTestBatches(int batchHint) {
     ThreadPool threadPool = new ThreadPool(5, clock);
     MockInstantiator instantiator = new MockInstantiator(threadPool);
     try {
@@ -81,8 +77,8 @@ public class QueryTraverserTest extends TestCase {
       Traverser traverser = createTraverser(mrel, connectorName, instantiator);
 
       System.out.println();
-      BatchSize batchSize = new BatchSize(batchHint, batchMax);
-      System.out.println("Running batch test batchsize " + batchSize);
+      BatchSize batchSize = new BatchSize(batchHint);
+      System.out.println("Running batch test batchsize " + batchHint);
 
       int totalDocsProcessed = 0;
       int batchNumber = 0;
@@ -170,7 +166,7 @@ public class QueryTraverserTest extends TestCase {
       String connectorName = "foo";
       Traverser traverser = createTraverser(mrel, connectorName, instantiator);
       int docsProcessed = 0;
-      BatchSize batchSize = new BatchSize(1, 1);
+      BatchSize batchSize = new BatchSize(1);
       do {
         docsProcessed = traverser.runBatch(batchSize).getCountProcessed();
       } while (docsProcessed > 0);
@@ -190,7 +186,7 @@ public class QueryTraverserTest extends TestCase {
     QueryTraverser queryTraverser = new QueryTraverser(pusher, traversalManager,
         stateStore, CONNECTOR_NAME, context, clock, null);
 
-    BatchResult result = queryTraverser.runBatch(new BatchSize(100, 100));
+    BatchResult result = queryTraverser.runBatch(new BatchSize(100));
     assertTrue(result.getCountProcessed() > 0);
     assertEquals(traversalManager.getDocumentCount(),
         result.getCountProcessed());
@@ -202,15 +198,15 @@ public class QueryTraverserTest extends TestCase {
   public void testBatchSize() {
     final String CONNECTOR_NAME = "barney_rubble";
     ValidatingPusher pusher = new ValidatingPusher(CONNECTOR_NAME);
-    NeverEndingDocumentlistTraversalManager traversalManager =
-        new NeverEndingDocumentlistTraversalManager(10);
+    LargeDocumentlistTraversalManager traversalManager =
+        new LargeDocumentlistTraversalManager(10);
     TraversalStateStore stateStore = new RecordingTraversalStateStore();
     ProductionTraversalContext context = new ProductionTraversalContext();
     context.setTraversalTimeLimitSeconds(1);
     QueryTraverser queryTraverser = new QueryTraverser(pusher, traversalManager,
         stateStore, CONNECTOR_NAME, context, clock, null);
 
-    BatchResult result = queryTraverser.runBatch(new BatchSize(10, 20));
+    BatchResult result = queryTraverser.runBatch(new BatchSize(10));
     assertTrue(result.getCountProcessed() > 10);
     assertTrue(result.getCountProcessed() <= 20);
 
@@ -226,11 +222,12 @@ public class QueryTraverserTest extends TestCase {
    */
   private class NeverEndingDocumentlistTraversalManager implements
       TraversalManager {
+    private int docMillis;
     private long documentCount;
-    private final DocumentList documentList;
+    protected DocumentList documentList;
 
     public NeverEndingDocumentlistTraversalManager(int docMillis) {
-      this.documentList = new NeverEndingDocumentList(docMillis, this);
+      this.docMillis = docMillis;
     }
 
     public DocumentList resumeTraversal(String checkPoint) {
@@ -242,10 +239,12 @@ public class QueryTraverserTest extends TestCase {
     }
 
     public DocumentList startTraversal() {
-      return documentList;
+      return new NeverEndingDocumentList(this);
     }
 
+    // Return a new document every {@code docMillis} milliseconds.
     synchronized Document newDocument() {
+      clock.adjustTime(docMillis);
       String id = Long.toString(documentCount++);
       return ConnectorTestUtils.createSimpleDocument(id);
     }
@@ -256,16 +255,14 @@ public class QueryTraverserTest extends TestCase {
   }
 
   /**
-   * {@link DocumentList} that returns a new document every {@code docMillis}
-   * milliseconds until interrupted.
+   * {@link DocumentList} that never runs out of documents -
+   * returning new documents until interrupted.
    */
   private class NeverEndingDocumentList implements DocumentList {
     private final NeverEndingDocumentlistTraversalManager traversalManager;
-    private final int docMillis;
 
-    public NeverEndingDocumentList(int docMillis,
+    public NeverEndingDocumentList(
         NeverEndingDocumentlistTraversalManager traversalManager) {
-      this.docMillis = docMillis;
       this.traversalManager = traversalManager;
     }
 
@@ -279,8 +276,57 @@ public class QueryTraverserTest extends TestCase {
      * previously returned.
      */
     public Document nextDocument() throws RepositoryException {
-      clock.adjustTime(docMillis);
       return traversalManager.newDocument();
+    }
+  }
+
+  /**
+   * A {@link TraversalManager} for a {@link LargeDocumentList}.
+   */
+  private class LargeDocumentlistTraversalManager extends
+      NeverEndingDocumentlistTraversalManager {
+    private int batchHint;
+
+    public LargeDocumentlistTraversalManager(int docMillis) {
+      super(docMillis);
+    }
+
+    @Override
+    public void setBatchHint(int batchHint) {
+      this.batchHint = batchHint;
+    }
+
+    synchronized int getBatchHint() {
+      return batchHint;
+    }
+
+    @Override
+    public DocumentList startTraversal() {
+      return new LargeDocumentList(this);
+    }
+  }
+
+  /**
+   * {@link DocumentList} that returns twice the batchHint
+   * number of documents.
+   */
+  private class LargeDocumentList extends NeverEndingDocumentList {
+    private final LargeDocumentlistTraversalManager traversalManager;
+
+    public LargeDocumentList(
+          LargeDocumentlistTraversalManager traversalManager) {
+      super(traversalManager);
+      this.traversalManager = traversalManager;
+    }
+
+    @Override
+    public Document nextDocument() throws RepositoryException {
+      if (traversalManager.getDocumentCount() <
+          2 * traversalManager.getBatchHint()) {
+        return super.nextDocument();
+      } else {
+        return null;
+      }
     }
   }
 

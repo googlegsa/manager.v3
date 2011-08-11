@@ -161,7 +161,7 @@ public class QueryTraverser implements Traverser {
       // Get a Pusher for feeding the returned Documents.
       pusher = pusherFactory.newPusher(connectorName);
 
-      while (counter < batchSize.getMaximum()) {
+      while (true) {
         if (Thread.currentThread().isInterrupted() || isCancelled()) {
           LOGGER.fine("Traversal for connector " + connectorName
                       + " has been interrupted; breaking out of batch run.");

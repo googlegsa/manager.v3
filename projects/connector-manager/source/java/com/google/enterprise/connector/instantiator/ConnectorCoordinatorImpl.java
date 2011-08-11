@@ -675,7 +675,7 @@ class ConnectorCoordinatorImpl implements
     }
 
     BatchSize batchSize = loadManager.determineBatchSize();
-    if (batchSize.getMaximum() == 0) {
+    if (batchSize.getHint() == 0) {
       return false;
     }
 

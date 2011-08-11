@@ -194,13 +194,13 @@ public class HostLoadManager implements LoadManager {
     if (LOGGER.isLoggable(Level.FINEST)) {
       LOGGER.finest(batchReq.toString());
     }
+    // If the delay time hasn't expired, batch size is 0.
+    // However, if there is less that 100ms left, just let it go.
     if ((batchReq.delay == 0) ||
         (lastBatchResult.getEndTime() + batchReq.delay <
          clock.getTimeMillis() + 100)) {
       lastBatchSize = batchReq.batchSize;
-      // TODO: get rid of the maximum.
-      return new BatchSize(batchReq.batchSize,
-                           2 * batchReq.batchSize);
+      return new BatchSize(batchReq.batchSize);
     }
     return new BatchSize();
   }
