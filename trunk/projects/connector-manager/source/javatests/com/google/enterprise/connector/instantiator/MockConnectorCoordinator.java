@@ -168,7 +168,7 @@ class MockConnectorCoordinator implements ConnectorCoordinator {
     taskHandle = null;
 
     BatchSize batchSize = hostLoadManager.determineBatchSize();
-    if (batchSize.getMaximum() == 0) {
+    if (batchSize.getHint() == 0) {
       return false;
     }
 

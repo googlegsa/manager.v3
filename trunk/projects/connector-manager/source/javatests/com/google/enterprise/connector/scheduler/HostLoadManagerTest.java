@@ -173,20 +173,15 @@ public class HostLoadManagerTest extends TestCase {
    * return more than the batchHint, and the number of docs processed in
    * a period might exceed the load.  This flexibility allows the connectors
    * to work more efficiently without expending a great deal of effort
-   * trying to hit the batch size exactly.  However, poorly behaved
-   * connectors could attempt to vastly exceed the recommended batch size,
-   * so the BatchSize.maximum constraint puts a ceiling on the number of
-   * documents that will be processed from the DocumentList.
+   * trying to hit the batch size exactly.
    */
   public void testDetermineBatchSize() {
     HostLoadManager hostLoadManager = newHostLoadManager(60);
     BatchSize batchSize = hostLoadManager.determineBatchSize();
     assertEquals(60, batchSize.getHint());
-    assertEquals(120, batchSize.getMaximum());
     hostLoadManager.setBatchSize(40);
     batchSize = hostLoadManager.determineBatchSize();
     assertEquals(40, batchSize.getHint());
-    assertEquals(80, batchSize.getMaximum());
   }
 
   /**

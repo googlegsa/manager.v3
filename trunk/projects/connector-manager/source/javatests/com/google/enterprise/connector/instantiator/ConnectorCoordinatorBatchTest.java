@@ -544,8 +544,7 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
 
     /* @Override */
     public BatchSize determineBatchSize() {
-      int size = Math.min(load, batchSize);
-      return new BatchSize(size, size);
+      return new BatchSize(Math.min(load, batchSize));
     }
 
     /* @Override */
