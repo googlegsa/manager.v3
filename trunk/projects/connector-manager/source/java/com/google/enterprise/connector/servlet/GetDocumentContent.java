@@ -21,8 +21,13 @@ import com.google.enterprise.connector.manager.ConnectorManagerException;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
+import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.RepositoryDocumentException;
 import com.google.enterprise.connector.spi.RepositoryException;
+import com.google.enterprise.connector.spi.SpiConstants;
+import com.google.enterprise.connector.spi.Value;
+import com.google.enterprise.connector.spiimpl.DateValue;
+import com.google.enterprise.connector.spiimpl.ValueImpl;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,6 +45,7 @@ public class GetDocumentContent extends HttpServlet {
 
   private static Logger LOGGER =
     Logger.getLogger(GetDocumentContent.class.getName());
+  private static final String HDR_IF_MODIFIED = "If-Modified-Since";
 
   private static boolean useCompression = false;
 
@@ -49,6 +55,44 @@ public class GetDocumentContent extends HttpServlet {
 
   // TODO: HEAD requests?
   // TODO: Range requests?
+
+  /**
+   * Fetch the document LastModified date.
+   *
+   * @param req an HttpServletRequest that specifies the connector name and
+   *        docid for a document as query parameters
+   * @return a long integer specifying the time the document was last modified,
+   *         in milliseconds since midnight, January 1, 1970 GMT, or -1L if the
+   *         time is not known
+   */
+  @Override
+  protected long getLastModified(HttpServletRequest req) {
+    /* NOTE: For reasons that defy comprehension, javax.servlet.http.HttpServlet
+     * calls this even if the request does not include the "If-Modified-Since"
+     * Header.  Fetching the lastModifiedDate from the ECM repository can be
+     * quite expensive (certainly more expensive than req.containsHeader()).
+     * So I disable this and perform "If-Modified-Since" checking in doGet().
+     */
+    return -1L;
+    // TODO: Restore this if we choose to fully support getLastModified().
+    /*
+    // Make sure this requester is OK
+    if (!RemoteAddressFilter.getInstance()
+        .allowed(RemoteAddressFilter.Access.BLACK, req.getRemoteAddr())) {
+      return -1L;
+    }
+
+    String connectorName = req.getParameter(ServletUtil.XMLTAG_CONNECTOR_NAME);
+    NDC.pushAppend("LastModified " + connectorName);
+    try {
+      Manager manager = Context.getInstance().getManager();
+      String docid = req.getParameter(ServletUtil.QUERY_PARAM_DOCID);
+      return handleGetLastModified(manager, connectorName, docid);
+    } finally {
+      NDC.pop();
+    }
+    */
+  }
 
   /**
    * Retrieves the content of a document from a connector instance.
@@ -82,6 +126,31 @@ public class GetDocumentContent extends HttpServlet {
 
     String connectorName = req.getParameter(ServletUtil.XMLTAG_CONNECTOR_NAME);
     NDC.pushAppend("Retrieve " + connectorName);
+    Manager manager = Context.getInstance().getManager();
+    String docid = req.getParameter(ServletUtil.QUERY_PARAM_DOCID);
+
+    // Only fetch the lastModifiedDate from the repository if requested.
+    // See the comment in getLastModified() above.
+    long ifModifiedSince = req.getDateHeader(HDR_IF_MODIFIED);
+    if (ifModifiedSince != -1L) {
+      if (LOGGER.isLoggable(Level.FINEST)) {
+        LOGGER.finest("RETRIEVER: Get Document " + docid + " "
+            + HDR_IF_MODIFIED + " " + req.getHeader(HDR_IF_MODIFIED));
+      }
+      long lastModified = handleGetLastModified(manager, connectorName, docid);
+      // If the document modification time is later, fall through to fetch
+      // the content, otherwise return SC_NOT_MODIFIED.  Since the GSA sends
+      // a modified-since time of the crawl time, rather than the document's
+      // actual supplied lastModified meta-data, fudge the time by a minute
+      // to avoid client/server clock disparities.
+      if (lastModified < ifModifiedSince - (60 * 1000)) {
+        if (LOGGER.isLoggable(Level.FINEST)) {
+          LOGGER.finest("RETRIEVER: Document " + docid + " unchanged");
+        }
+        res.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
+        return;
+      }
+    }
 
     OutputStream out = res.getOutputStream();
     if (useCompression) {
@@ -99,8 +168,6 @@ public class GetDocumentContent extends HttpServlet {
     // TODO: Configure chunked output?
 
     try {
-      Manager manager = Context.getInstance().getManager();
-      String docid = req.getParameter(ServletUtil.QUERY_PARAM_DOCID);
       int code = handleDoGet(manager, connectorName, docid, out);
       if (code != HttpServletResponse.SC_OK) {
         res.sendError(code);
@@ -117,10 +184,10 @@ public class GetDocumentContent extends HttpServlet {
    * Retrieves the content of a document from a connector instance.
    *
    * @param manager a Manager
-   * @param connectorName the name of the connector instances that
+   * @param connectorName the name of the connector instance that
    *        can access the document
    * @param docId the document identifer
-   * @param out PrintWriter to which to write the content
+   * @param out OutputStream to which to write the content
    * @return an HTTP Status Code
    * @throws IOException
    */
@@ -162,6 +229,58 @@ public class GetDocumentContent extends HttpServlet {
       if (in != null) {
         in.close();
       }
+    }
+  }
+
+  /**
+   * Retrieves the last modified date of a document from a connector instance.
+   *
+   * @param manager a Manager
+   * @param connectorName the name of the connector instance that
+   *        can access the document
+   * @param docId the document identifer
+   * @return a long integer specifying the time the document was last modified,
+   *         in milliseconds since midnight, January 1, 1970 GMT, or -1L if the
+   *         time is not known
+   */
+  @VisibleForTesting
+  static long handleGetLastModified(Manager manager, String connectorName,
+                                    String docid) {
+    if (Strings.isNullOrEmpty(connectorName) || Strings.isNullOrEmpty(docid)) {
+      return -1L;
+    }
+    try {
+      Document document = manager.getDocumentMetaData(connectorName, docid);
+      if (document == null) {
+        return -1L;
+      }
+      ValueImpl value = (ValueImpl)
+          Value.getSingleValue(document, SpiConstants.PROPNAME_LASTMODIFIED);
+      if (value == null) {
+        if (LOGGER.isLoggable(Level.FINEST)) {
+          LOGGER.finest("Document " + docid + " does not contain "
+                        + SpiConstants.PROPNAME_LASTMODIFIED);
+        }
+        return -1L;
+      }
+      if (value instanceof DateValue) {
+        // DateValues don't give direct access to their Calendar object, but
+        // I can get the Calendar back out by parsing the stringized version.
+        // This method also applies the FeedTimeZone, if needed.
+        // TODO: Add a DateValue.getTimeMillis() or getCalendar() method to
+        // directly access the wrapped value.
+        String lastModified = ((DateValue) value).toIso8601();
+        if (LOGGER.isLoggable(Level.FINEST)) {
+          LOGGER.finest("Document " + docid + " last modified " + lastModified);
+        }
+        return Value.iso8601ToCalendar(lastModified).getTimeInMillis();
+      }
+      // TODO: Value and DateValue Calendar methods are too weak to try to get
+      // last modified from non-DateValues.
+      return -1L;
+    } catch (Exception e) {
+      LOGGER.log(Level.WARNING, "Failed to retrieve document last modified", e);
+      return -1L;
     }
   }
 }

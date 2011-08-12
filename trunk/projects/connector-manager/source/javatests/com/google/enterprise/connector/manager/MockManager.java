@@ -26,6 +26,9 @@ import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.ConnectorType;
+import com.google.enterprise.connector.spi.Document;
+import com.google.enterprise.connector.spi.SpiConstants;
+import com.google.enterprise.connector.test.ConnectorTestUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -152,7 +155,29 @@ public class MockManager implements Manager {
     if (CONNECTOR2.equals(connectorName)) {
       return null;  // no content
     }
-    throw new ConnectorNotFoundException("Connector not found: " + connectorName);
+    throw new ConnectorNotFoundException("Connector not found: "
+                                         + connectorName);
+  }
+
+  /* @Override */
+  public Document getDocumentMetaData(String connectorName, String docid)
+      throws ConnectorNotFoundException {
+    if (CONNECTOR1.equals(connectorName)) {
+      Map<String, Object> props =
+          ConnectorTestUtils.createSimpleDocumentBasicProperties(docid);
+      props.remove(SpiConstants.PROPNAME_CONTENT);
+      return ConnectorTestUtils.createSimpleDocument(props);
+    }
+    if (CONNECTOR2.equals(connectorName)) {
+      Map<String, Object> props =
+          ConnectorTestUtils.createSimpleDocumentBasicProperties(docid);
+      props.remove(SpiConstants.PROPNAME_CONTENT);
+      props.remove(SpiConstants.PROPNAME_LASTMODIFIED);
+      props.remove(SpiConstants.PROPNAME_MIMETYPE);
+      return ConnectorTestUtils.createSimpleDocument(props);
+    }
+    throw new ConnectorNotFoundException("Connector not found: "
+                                         + connectorName);
   }
 
   /* @Override */

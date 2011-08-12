@@ -62,6 +62,27 @@ public class GetDocumentContentTest extends TestCase {
     assertEquals(0, buffer.size());
   }
 
+  /** Test basic servlet function against a MockManager. */
+  public void testGetLastModifiedMockManager() throws Exception {
+    Manager manager = MockManager.getInstance();
+    long lastModified;
+
+    // Connector1 has a lastModifiedDate
+    lastModified = GetDocumentContent.handleGetLastModified(
+                   manager, "connector1", "xyzzy");
+    assertEquals(10 * 1000, lastModified);
+
+    // Connector2 has no lastModifiedDate
+    lastModified = GetDocumentContent.handleGetLastModified(
+                   manager, "connector2", "xyzzy");
+    assertEquals(-1L, lastModified);
+
+    // UnknownConnector does not exist.
+    lastModified = GetDocumentContent.handleGetLastModified(
+                   manager, "unknownConnector", "xyzzy");
+    assertEquals(-1L, lastModified);
+  }
+
   /** Test real Manager. */
   public void testGetDocumentContentRealManager() throws Exception {
     // Create a stand alone context with real ProductionManager.
