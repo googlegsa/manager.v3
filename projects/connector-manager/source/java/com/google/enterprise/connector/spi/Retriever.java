@@ -34,4 +34,21 @@ public interface Retriever {
    *         repository
    */
   public InputStream getContent(String docid) throws RepositoryException;
+
+  /**
+   * Return a {@link Document} instance populated with meta-data for the
+   * document identified by {@code docid}.  The returned Document should
+   * <em>not</em> include the document content. The meta-data <em>should</em>
+   * minimally include the {@code google:lastmodified} Property.
+   * It should also include the document {@code google:mimetype} Properties,
+   * if readily  available, to satisfy HEAD requests.
+   *
+   * @return a Document instance with Properties containing document meta-data
+   * @throws RepositoryDocumentException if there was a document-specific
+   *         error accessing the metadata, for instance the document does not
+   *         exist or should be skipped
+   * @throws RepositoryException if there was a problem accessing the document
+   *         repository
+   */
+  public Document getMetaData(String docid) throws RepositoryException;
 }

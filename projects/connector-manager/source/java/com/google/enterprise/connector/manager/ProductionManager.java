@@ -33,6 +33,7 @@ import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.AuthorizationResponse;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.ConnectorType;
+import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.RepositoryLoginException;
 import com.google.enterprise.connector.spi.Retriever;
@@ -181,6 +182,30 @@ public class ProductionManager implements Manager {
                 (in == null) ? in : new EofFilterInputStream(in),
                 Long.MAX_VALUE),
             null);
+  }
+
+  /* @Override */
+  public Document getDocumentMetaData(String connectorName, String docid)
+      throws ConnectorNotFoundException, InstantiatorException,
+             RepositoryException {
+    if (LOGGER.isLoggable(Level.FINER)) {
+      LOGGER.finer("RETRIEVER: Retrieving metadata from connector "
+                   + connectorName + " for document " + docid);
+    }
+    Retriever retriever = instantiator.getRetriever(connectorName);
+    if (retriever == null) {
+      // We are borked here.  This should not happen.
+      LOGGER.warning("GetDocumentMetaData request for connector "
+                     + connectorName
+                     + " that does not support the Retriever interface.");
+      return null;
+    }
+    Document metaDoc = retriever.getMetaData(docid);
+    if (metaDoc == null) {
+      LOGGER.finer("RETRIEVER: Document has no metadata.");
+      // TODO: Create empty Document?
+    }
+    return metaDoc;
   }
 
   /* @Override */
