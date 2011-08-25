@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.manager;
 
+import com.google.enterprise.connector.instantiator.Configuration;
 import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
@@ -138,9 +139,8 @@ public interface Manager {
    * Connector instance
    *
    * @param connectorName The connector to update
-   * @param connectorTypeName The connector's type
-   * @param configData A map of name, value pairs (String, String) of
-   *        configuration data to submit
+   * @param configuration A {@link Configuration} containing the connector's
+   *        connectorType-specific configuration data
    * @param language A locale string, such as "en" or "fr_CA" which the
    *        implementation may use to produce appropriate descriptions and
    *        messages
@@ -157,9 +157,8 @@ public interface Manager {
    * @throws InstantiatorException If the instantiator cannot store the
    *         configuration
    */
-  public ConfigureResponse setConnectorConfig(String connectorName,
-      String connectorTypeName, Map<String, String> configData,
-      String language, boolean update)
+  public ConfigureResponse setConnectorConfiguration(String connectorName,
+      Configuration configuration, String language, boolean update)
       throws ConnectorNotFoundException, ConnectorExistsException,
       PersistentStoreException, InstantiatorException;
 
@@ -228,11 +227,11 @@ public interface Manager {
    * Get a connector's ConnectorType-specific configuration data
    *
    * @param connectorName the connector to look up
-   * @return a Map&lt;String, String&gt; of its ConnectorType-specific
+   * @return a {@link Configuration} of its ConnectorType-specific
    * configuration data
    * @throws ConnectorNotFoundException if the named connector is not found
    */
-  public Map<String, String> getConnectorConfig(String connectorName)
+  public Configuration getConnectorConfiguration(String connectorName)
       throws ConnectorNotFoundException;
 
   /**

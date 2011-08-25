@@ -15,6 +15,10 @@
 package com.google.enterprise.connector.manager;
 
 import com.google.common.base.Strings;
+import com.google.enterprise.connector.instantiator.Configuration;
+import com.google.enterprise.connector.instantiator.ExtendedConfigureResponse;
+import com.google.enterprise.connector.instantiator.InstantiatorException;
+import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.persist.PersistentStoreException;
@@ -149,9 +153,13 @@ public class MockManager implements Manager {
     throw new ConnectorTypeNotFoundException("Unsupported Operation");
   }
 
+  public String getConnectorInstancePrototype(String typeName) {
+    return "<?xml?><beans><bean id=\"" + typeName + "Instance\"/></beans>";
+  }
+
   /* @Override */
   public ConfigureResponse getConfigForm(String connectorTypeName,
-      String language) {
+      String language) throws InstantiatorException {
     String message =
         "Sample form for " + connectorTypeName + "lang " + language;
     String formSnippet =
@@ -163,12 +171,13 @@ public class MockManager implements Manager {
             + "      <td><input type=\"password\" name=\"passwd\" value=\"\">"
             + "    </td></tr>" + "    <tr><td>Seed URIs</td>"
             + "      <td><textarea name=\"seedUris\"></textarea></td></tr>";
-    return new ConfigureResponse(message, formSnippet);
+    return new ExtendedConfigureResponse(new ConfigureResponse(message,
+        formSnippet), getConnectorInstancePrototype(connectorTypeName));
   }
 
   /* @Override */
   public ConfigureResponse getConfigFormForConnector(String connectorName,
-      String language) {
+      String language) throws InstantiatorException {
     String message = "Sample form for " + connectorName + "lang " + language;
     String formSnippet =
         "<tr>\n" + "<td>Username</td>\n" + "<td>\n"
@@ -201,20 +210,32 @@ public class MockManager implements Manager {
   }
 
   /* @Override */
-  public ConfigureResponse setConnectorConfig(String connectorName,
-      String connectorTypeName, Map<String, String> configData,
-      String language, boolean update) {
+  public ConfigureResponse setConnectorConfiguration(String connectorName,
+        Configuration configuration, String language, boolean update)
+        throws InstantiatorException {
     LOGGER.info("setConnectorConfig() connectorName: " + connectorName);
     LOGGER.info("setConnectorConfig() update: " + update);
     LOGGER.info("configData: ");
-    for (Map.Entry<String, String> entry : configData.entrySet()) {
+    for (Map.Entry<String, String> entry : configuration.getMap().entrySet()) {
       LOGGER.info(entry.getKey() + "/" + entry.getValue());
+    }
+    if (configuration.getXml() == null) {
+      LOGGER.info("configXml: null");
+    } else {
+      LOGGER.info("configXml:");
+      LOGGER.info(configuration.getXml());
     }
     // null is a success response
     return null;
   }
 
   final Properties managerConfig = new Properties();
+
+  /* @Override */
+  public Configuration getConnectorConfiguration(String connectorName)
+      throws ConnectorNotFoundException {
+    return new Configuration("Mock", new HashMap<String, String>(), null);
+  }
 
   /* @Override */
   public Properties getConnectorManagerConfig() {
@@ -259,11 +280,6 @@ public class MockManager implements Manager {
   /* @Override */
   public void restartConnectorTraversal(String connectorName) {
     // do nothing;
-  }
-
-  /* @Override */
-  public Map<String, String> getConnectorConfig(String connectorName) {
-    return new HashMap<String, String>();
   }
 
   /* @Override */

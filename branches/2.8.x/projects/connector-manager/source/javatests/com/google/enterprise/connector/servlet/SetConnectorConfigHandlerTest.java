@@ -1,4 +1,4 @@
-// Copyright 2006-2009 Google Inc.  All Rights Reserved.
+// Copyright 2006 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,20 +14,23 @@
 
 package com.google.enterprise.connector.servlet;
 
+import com.google.enterprise.connector.instantiator.Configuration;
+import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.manager.MockManager;
+import com.google.enterprise.connector.persist.ConnectorNotFoundException;
+import com.google.enterprise.connector.spi.ConfigureResponse;
 
-import junit.framework.Assert;
 import junit.framework.TestCase;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.logging.Logger;
 
 /**
- * Tests SetConnectorConfigHandlerTest class for SetConnectorConfig
- * servlet class.
- *
+ * Tests {@link SetConnectorConfigHandler} for {@link SetConnectorConfig}
+ * servlet.
  */
 public class SetConnectorConfigHandlerTest extends TestCase {
   private static final Logger LOGGER =
@@ -36,9 +39,46 @@ public class SetConnectorConfigHandlerTest extends TestCase {
   private String connectorName;
   private String connectorType;
   private Map<String, String> configData;
+  private String configXml;
   private boolean update;
+  private MockManager manager;
 
-  public void testSetConnectorConfigHandler1() {
+  @Override
+  protected void setUp() {
+    manager = new ConfigSavingManager();
+  }
+
+  /** Test null connector name. */
+  public void testNullConnectorName() throws Exception {
+    language = "en";
+    connectorName = ""; // Produces empty name element.
+    connectorType = "documentum";
+    configData = new TreeMap<String, String>();
+    configData.put("name1", "valueB1");
+    configData.put("name2", "valueB2");
+    configData.put("name3", "valueB3");
+    configXml = null;
+    update = false;
+    SetConnectorConfigHandler hdl = doTest(setXMLBody());
+    assertEquals(ConnectorMessageCode.RESPONSE_NULL_CONNECTOR,
+                 hdl.getStatus().getMessageId());
+  }
+
+  /** Test empty config map. */
+  public void testEmptyConfig() throws Exception {
+    language = "en";
+    connectorName = "ConnectorA";
+    connectorType = "documentum";
+    configData = new TreeMap<String, String>();
+    configXml = null;
+    update = false;
+    SetConnectorConfigHandler hdl = doTest(setXMLBody());
+    assertEquals(ConnectorMessageCode.RESPONSE_NULL_CONFIG_DATA,
+                 hdl.getStatus().getMessageId());
+  }
+
+  /** Test set config - not update implies create new. */
+  public void testCreateConnector() throws Exception {
     language = "en";
     connectorName = "connectorA";
     connectorType = "documentum";
@@ -46,100 +86,289 @@ public class SetConnectorConfigHandlerTest extends TestCase {
     configData.put("name1", "valueA1");
     configData.put("name2", "valueA2");
     configData.put("name3", "valueA3");
-    doTest(setXMLBody());
-  }
-
-  public void testSetConnectorConfigHandler2() {
-    language = "en";
-    connectorName = "";
-    connectorType = "documentum";
-    configData = new TreeMap<String, String>();
-    configData.put("name1", "valueB1");
-    configData.put("name2", "valueB2");
-    configData.put("name3", "valueB3");
-    doTest(setXMLBody());
-  }
-
-  public void testSetConnectorConfigHandler3() {
-    language = "en";
-    connectorName = "connectorC";
-    connectorType = "documentum";
-    update = true;
-    configData = new TreeMap<String, String>();
-    doTest(setXMLBody());
-  }
-
-  public void testSetConnectorConfigHandler4() {
-    language = "en";
-    connectorName = "connectorC";
-    connectorType = "documentum";
-    update = true;
-    configData = new TreeMap<String, String>();
-    configData.put("name1", "valueB1");
-    configData.put("name2", "valueB2");
-    configData.put("name3", "valueB3");
-    doTest(setXMLBody());
-  }
-
-  public void testSetConnectorConfigHandler5() {
-    language = "en";
-    connectorName = "connectorC";
-    connectorType = "documentum";
+    configXml = null;
     update = false;
-    configData = new TreeMap<String, String>();
-    configData.put("name1", "valueB1");
-    configData.put("name2", "valueB2");
-    configData.put("name3", "valueB3");
-    doTest(setXMLBody());
+    doTest();
   }
 
-  private void doTest(String xmlBody) {
+  /** Test set config with connectorInstance.xml */
+  public void testCreateConnectorWithConfigXml() throws Exception {
+    language = "en";
+    connectorName = "connectorA";
+    connectorType = "documentum";
+    configData = new TreeMap<String, String>();
+    configData.put("name1", "valueA1");
+    configData.put("name2", "valueA2");
+    configData.put("name3", "valueA3");
+    configXml = "<?xml?><beans><bean id=\"NewConfigXML\"/></beans>";
+    update = false;
+    doTest();
+  }
+
+  /** Test update configuration. */
+  public void testUpdate() throws Exception {
+    language = "en";
+    connectorName = "connector_a";
+    connectorType = "documentum";
+    configData = new TreeMap<String, String>();
+    configData.put("name1", "valueA1");
+    configData.put("name2", "valueA2");
+    configData.put("name3", "valueA3");
+    update = false;
+    configXml = null;
+    doTest();
+
+    configData.put("name1", "valueB1");
+    configData.put("name2", "valueB2");
+    update = true;
+    doTest();
+  }
+
+  /** Test update mixed case connector configuration. */
+  // GSA 5.2 and greater wants only lowercase connector names,
+  // so force all new connector names to be lower case.
+  // Unfortunately, we cannot do this for existing connectors.
+  public void testUpdateMixedCase() throws Exception {
+    language = "en";
+    connectorName = "connectorA";
+    connectorType = "documentum";
+    configData = new TreeMap<String, String>();
+    configData.put("name1", "valueA1");
+    configData.put("name2", "valueA2");
+    configData.put("name3", "valueA3");
+    update = false;
+    configXml = null;
+    manager.setConnectorConfiguration(connectorName,
+        new Configuration(connectorType, configData, configXml),
+        language, update);
+
+    configData.put("name1", "valueB1");
+    configData.put("name2", "valueB2");
+    update = true;
+    doTest();
+  }
+
+  /** Test update configuration properties with connectorInstance.xml */
+  public void testUpdateWithConfigXml() throws Exception {
+    language = "en";
+    connectorName = "connector_a";
+    connectorType = "documentum";
+    configData = new TreeMap<String, String>();
+    configData.put("name1", "valueA1");
+    configData.put("name2", "valueA2");
+    configData.put("name3", "valueA3");
+    configXml = "<?xml?><beans><bean id=\"NewConfigXML\"/></beans>";
+    update = false;
+    doTest();
+
+    configData.put("name1", "valueB1");
+    configData.put("name2", "valueB2");
+    update = true;
+    doTest();
+  }
+
+  /** Test update configuration with only connectorInstance.xml */
+  public void testUpdateOnlyConfigXml() throws Exception {
+    language = "en";
+    connectorName = "connector_a";
+    connectorType = "documentum";
+    configData = new TreeMap<String, String>();
+    configData.put("name1", "valueA1");
+    configData.put("name2", "valueA2");
+    configData.put("name3", "valueA3");
+    configXml = null;
+    update = false;
+    doTest();
+
+    update = true;
+    configXml = "<?xml?><beans><bean id=\"NewConfigXML\"/></beans>";
+    doTest();
+  }
+
+  /** Test setConnectorConfiguration throwing Exception. */
+  public void testSetConfigThrowsException() throws Exception {
+    manager = new ExceptionThrowingManager();
+    language = "en";
+    connectorName = "connectorA";
+    connectorType = "documentum";
+    configData = new TreeMap<String, String>();
+    configData.put("name1", "valueA1");
+    configData.put("name2", "valueA2");
+    configData.put("name3", "valueA3");
+    configXml = "<?xml?><beans><bean id=\"NewConfigXML\"/></beans>";
+    update = false;
+    SetConnectorConfigHandler hdl = doTest(setXMLBody());
+    assertEquals(ConnectorMessageCode.EXCEPTION_INSTANTIATOR,
+                 hdl.getStatus().getMessageId());
+
+    // Avoid a bug in GSA that displays "No connector configuration
+    // returned by the connector manager.", rather than the error status.
+    assertNotNull(hdl.getConfigRes());
+  }
+
+  /** Test setConnectorConfiguration returning a ConfigureResponse. */
+  public void testSetInvalidConfig() throws Exception {
+    manager = new FailConfigurationManager();
+    language = "en";
+    connectorName = "connectorA";
+    connectorType = "documentum";
+    configData = new TreeMap<String, String>();
+    configData.put("name1", "valueA1");
+    configData.put("name2", "valueA2");
+    configData.put("name3", "InvalidValue");
+    configXml = "<?xml?><beans><bean id=\"NewConfigXML\"/></beans>";
+    update = false;
+
+    SetConnectorConfigHandler hdl = doTest(setXMLBody());
+    assertEquals(ConnectorMessageCode.INVALID_CONNECTOR_CONFIG,
+                 hdl.getStatus().getMessageId());
+    assertNotNull(hdl.getConfigRes());
+    assertNotNull(hdl.getConfigRes().getMessage());
+  }
+
+  /** Do test, expecting a successful return status. */
+  private void doTest() throws Exception {
+    SetConnectorConfigHandler hdl = doTest(setXMLBody());
+    ConnectorMessageCode status = hdl.getStatus();
+    ConfigureResponse response = hdl.getConfigRes();
+    assertTrue("Status: Code=" + status.getMessageId() + "  Message="
+        + status.getMessage() + ((response == null) ? "" :
+        "  Response: Message=" + response.getMessage()),
+        status.isSuccess());
+  }
+
+  /** Test the handler, returning the handler. */
+  private SetConnectorConfigHandler doTest(String xmlBody) throws Exception {
     LOGGER.info("xmlBody: " + xmlBody);
-    String name = this.connectorName;
-    if (!this.update) {
-      // GSA 5.2 wants connectorNames to be lower case.
+    String name = connectorName;
+
+    Configuration origConfig = null;
+    if (update) {
+      origConfig = manager.getConnectorConfiguration(connectorName);
+    } else {
+      // GSA 5.2 wants connectorNames to be lower case.  The handler
+      // will lowercase for us, but only on new connectors; not on update.
       name = name.toLowerCase();
     }
 
-    Manager manager = MockManager.getInstance();
     SetConnectorConfigHandler hdl = new SetConnectorConfigHandler(
         xmlBody, manager);
-    LOGGER.info("ConnectorName: " + hdl.getConnectorName() + " this: " + this.connectorName);
-    LOGGER.info("ConnectorType: " + hdl.getConnectorType() + " this: " + this.connectorType);
+    LOGGER.info("ConnectorName: " + hdl.getConnectorName() +
+                " this: " + connectorName);
+    LOGGER.info("ConnectorType: " + hdl.getConnectorType() +
+                " this: " + connectorType);
     if (hdl.getStatus().isSuccess()) {
-      Assert.assertEquals(hdl.getLanguage(), this.language);
-      Assert.assertEquals(hdl.getConnectorName(), name);
-      Assert.assertEquals(hdl.getConnectorType(), this.connectorType);
-      Assert.assertEquals(hdl.isUpdate(), this.update);
-      Assert.assertEquals(hdl.getConfigData(), this.configData);
-    } else if (hdl.getStatus().getMessageId() ==
-        ConnectorMessageCode.RESPONSE_NULL_CONNECTOR) {
-      Assert.assertEquals(0, name.length());
-    } else if (hdl.getStatus().getMessageId() ==
-        ConnectorMessageCode.RESPONSE_NULL_CONFIG_DATA) {
-      Assert.assertEquals(hdl.getConnectorName(), name);
-      Assert.assertEquals(hdl.getConfigData(), this.configData);
+      assertEquals(language, hdl.getLanguage());
+      assertEquals(name, hdl.getConnectorName());
+      assertEquals(connectorType, hdl.getConnectorType());
+      assertEquals(update, hdl.isUpdate());
+      assertEquals(configData, hdl.getConfigData());
+
+      Configuration config = manager.getConnectorConfiguration(name);
+      assertNotNull(config);
+      assertEquals(connectorType, config.getTypeName());
+      assertEquals(configData, config.getMap());
+      if (configXml != null) {
+        assertEquals(configXml, config.getXml());
+      } else if (origConfig != null) {
+        assertEquals(origConfig.getXml(), config.getXml());
+      } else {
+        assertEquals(manager.getConnectorInstancePrototype(connectorType),
+                     config.getXml());
+      }
     }
+    return hdl;
   }
 
-  public String setXMLBody() {
-    String name = this.connectorName;
-    if (!this.update ) {
+  private String setXMLBody() throws Exception {
+    String name = connectorName;
+    if (!update ) {
       // GSA 5.2 wants connectorNames to be lower case.
       // But we can only enforce it for new connectors, not existing ones.
       name = name.toLowerCase();
     }
     String body =
       "<" + ServletUtil.XMLTAG_CONNECTOR_CONFIG + ">\n" +
-      "  <" + ServletUtil.QUERY_PARAM_LANG + ">" + this.language + "</" + ServletUtil.QUERY_PARAM_LANG + ">\n" +
-      "  <" + ServletUtil.XMLTAG_CONNECTOR_NAME + ">" + name + "</" + ServletUtil.XMLTAG_CONNECTOR_NAME + ">\n" +
-      "  <" + ServletUtil.XMLTAG_CONNECTOR_TYPE + ">" + this.connectorType + "</" + ServletUtil.XMLTAG_CONNECTOR_TYPE + ">\n" +
-      "  <" + ServletUtil.XMLTAG_UPDATE_CONNECTOR + ">" + this.update + "</" + ServletUtil.XMLTAG_UPDATE_CONNECTOR + ">\n";
+      "  <" + ServletUtil.QUERY_PARAM_LANG + ">" + language +
+      "</" + ServletUtil.QUERY_PARAM_LANG + ">\n" +
+      "  <" + ServletUtil.XMLTAG_CONNECTOR_NAME + ">" + name +
+      "</" + ServletUtil.XMLTAG_CONNECTOR_NAME + ">\n" +
+      "  <" + ServletUtil.XMLTAG_CONNECTOR_TYPE + ">" + connectorType +
+      "</" + ServletUtil.XMLTAG_CONNECTOR_TYPE + ">\n" +
+      "  <" + ServletUtil.XMLTAG_UPDATE_CONNECTOR + ">" + update +
+      "</" + ServletUtil.XMLTAG_UPDATE_CONNECTOR + ">\n";
 
     for (Map.Entry<String, String> entry : configData.entrySet()) {
-      body += "  <" + ServletUtil.XMLTAG_PARAMETERS + " name=\"" + entry.getKey()
-           + "\" value=\"" + entry.getValue() + "\"/>\n";
+      body += "  <" + ServletUtil.XMLTAG_PARAMETERS + " name=\""
+          + entry.getKey() + "\" value=\"" + entry.getValue() + "\"/>\n";
     }
+
+    if (configXml != null) {
+      body += "  <" + ServletUtil.XMLTAG_CONNECTOR_CONFIG_XML + "><![CDATA["
+        + configXml + "]]></" + ServletUtil.XMLTAG_CONNECTOR_CONFIG_XML + ">\n";
+    }
+
     return body + "</" + ServletUtil.XMLTAG_CONNECTOR_CONFIG + ">";
   }
+
+  /** A MockManager that saves Configurations and returns them. */
+  private class ConfigSavingManager extends MockManager implements Manager {
+    private HashMap<String, Configuration> configurations;
+
+    public ConfigSavingManager() {
+      super();
+      configurations = new HashMap<String, Configuration>();
+    }
+
+    /* @Override */
+    public ConfigureResponse setConnectorConfiguration(String connectorName,
+        Configuration configuration, String language, boolean update)
+        throws InstantiatorException {
+      ConfigureResponse response = super.setConnectorConfiguration(
+        connectorName, configuration, language, update);
+      if (response == null) {
+        if (configuration.getXml() == null) {
+          configuration = new Configuration(configuration,
+              getConnectorInstancePrototype(configuration.getTypeName()));
+        }
+        configurations.put(connectorName, configuration);
+      }
+      return response;
+    }
+
+    /* @Override */
+    public Configuration getConnectorConfiguration(String connectorName)
+        throws ConnectorNotFoundException {
+      Configuration config = configurations.get(connectorName);
+      if (config == null) {
+        throw new ConnectorNotFoundException(connectorName);
+      }
+      return config;
+    }
+  }
+
+  /** A MockManager that throws exception when setting configuration. */
+  private class ExceptionThrowingManager extends MockManager {
+    @Override
+    public ConfigureResponse setConnectorConfiguration(String connectorName,
+        Configuration configuration, String language, boolean update)
+        throws InstantiatorException {
+      throw new InstantiatorException("setConnectorConfiguration: "
+          + ((update) ? "update" : "add") + " " + connectorName + " "
+          + configuration.toString());
+    }
+  }
+
+  /** A MockManager that returns a failed configuration. */
+  private class FailConfigurationManager extends MockManager {
+    @Override
+    public ConfigureResponse setConnectorConfiguration(String connectorName,
+        Configuration configuration, String language, boolean update)
+        throws InstantiatorException {
+      return new ConfigureResponse("setConnectorConfiguration: "
+          + ((update) ? "update" : "add") + " " + connectorName + " "
+          + configuration.toString(), null, null);
+    }
+  }
 }
+

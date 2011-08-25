@@ -28,14 +28,70 @@ public class Configuration {
   private final Map<String, String> configMap;
   private final String configXml;
 
+  /**
+   * Constructs a new {@link Configuration} from its individual components.
+   *
+   * @param typeName the {@link ConnectorType} name
+   * @param configMap a {@code Map<String, String>} of configuration properties
+   * @param configXml the contents of {@code connectorInstance.xml}
+   */
   public Configuration(String typeName, Map<String, String> configMap,
       String configXml) {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(typeName));
     Preconditions.checkNotNull(configMap);
-
     this.typeName = typeName;
     this.configMap = configMap;
     this.configXml = configXml;
+  }
+
+  /**
+   * Constructs a new {@link Configuration} from a configuation map and an
+   * existing the prototype configuration.
+   *
+   * @param configMap a {@code Map<String, String>} of configuration properties
+   * @param prototype a prototype {@link Configuration}
+   */
+  public Configuration(Map<String, String> configMap, Configuration prototype) {
+    Preconditions.checkNotNull(prototype);
+    this.typeName = prototype.typeName;
+    this.configMap = (configMap != null) ? configMap : prototype.configMap;
+    this.configXml = prototype.configXml;
+  }
+
+  /**
+   * Constructs a new {@link Configuration} by filling in any missing
+   * fields of the existing configuration with those of the prototype.
+   *
+   * @param configuration a {@link Configuration}
+   * @param prototype a prototype {@link Configuration}
+   */
+  public Configuration(Configuration configuration, Configuration prototype) {
+    Preconditions.checkNotNull(configuration);
+    Preconditions.checkNotNull(prototype);
+    Preconditions.checkArgument(prototype.typeName.equals(configuration.typeName),
+                                "Configurations must be of the same type");
+    this.typeName = (Strings.isNullOrEmpty(configuration.typeName))
+                    ? prototype.typeName : configuration.typeName;
+    this.configMap = (configuration.configMap != null)
+                    ? configuration.configMap : prototype.configMap;
+    this.configXml = (configuration.configXml != null)
+                    ? configuration.configXml : prototype.configXml;
+  }
+
+  /**
+   * Constructs a new {@link Configuration} by filling in any missing
+   * fields of the existing configuration with those of the prototype XML.
+   *
+   * @param configuration a {@link Configuration}
+   * @param prototypeXml a prototype connectorInstance.xml
+   */
+  public Configuration(Configuration configuration, String prototypeXml) {
+    Preconditions.checkNotNull(configuration);
+
+    this.typeName = configuration.typeName;
+    this.configMap = configuration.configMap;
+    this.configXml = (configuration.configXml != null)
+                     ? configuration.configXml : prototypeXml;
   }
 
   /**
@@ -63,5 +119,11 @@ public class Configuration {
    */
   public String getXml() {
     return configXml;
+  }
+
+  @Override
+  public String toString() {
+    return "Configuration: (Type = " + typeName + "  ConfigMap = " + configMap
+      + "  ConfigXml = \"" + configXml + "\")";
   }
 }
