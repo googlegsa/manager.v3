@@ -24,6 +24,8 @@ import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.persist.PersistentStoreException;
 import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
+import com.google.enterprise.connector.spi.AuthorizationResponse;
+import com.google.enterprise.connector.spi.AuthorizationResponse.Status;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.ConnectorType;
 import com.google.enterprise.connector.spi.Document;
@@ -57,6 +59,8 @@ public class MockManager implements Manager {
 
   private static final String CONNECTOR1 = "connector1";
   private static final String CONNECTOR2 = "connector2";
+  private static final String CONNECTOR3 = "connector3";
+  private static final String CONNECTOR4 = "connector4";
 
   private boolean shouldVerifyIdentity;
   private String domain;
@@ -135,15 +139,50 @@ public class MockManager implements Manager {
   }
 
   /* @Override */
-  public Set<String> authorizeDocids(String connectorName,
+  public Collection<AuthorizationResponse> authorizeDocids(String connectorName,
       List<String> docidList, AuthenticationIdentity identity) {
-    StringBuilder sb = new StringBuilder();
-    if (shouldVerifyIdentity && !verifyIdentity(identity, sb)) {
-      LOGGER.info(sb.toString());
-      return new HashSet<String>();
-    } else {
-      return new HashSet<String>(docidList);
+    // Connector4 always returns a null response.
+    if (CONNECTOR4.equals(connectorName)) {
+      return null;
     }
+
+    Set<AuthorizationResponse> results = new TreeSet<AuthorizationResponse>();
+    StringBuilder sb = new StringBuilder();
+    boolean permit = (shouldVerifyIdentity)? verifyIdentity(identity, sb) : true;
+    if (sb.length() > 0) {
+      LOGGER.info(sb.toString());
+    }
+
+    // Connector1 returns same response for every doc.
+    if (CONNECTOR1.equals(connectorName)) {
+      for (String docid : docidList) {
+        results.add(new AuthorizationResponse(permit, docid));
+      }
+    }
+
+    // Connector2 returns indeterminate every other doc.
+    if (CONNECTOR2.equals(connectorName)) {
+      boolean odd = false;
+      Status status = (permit) ? Status.PERMIT : Status.DENY;
+      for (String docid : docidList) {
+        results.add(new AuthorizationResponse(
+            ((odd) ? Status.INDETERMINATE : status), docid));
+        odd = !odd;
+      }
+    }
+
+    // Connector3 strictly returns permits, but only every other doc.
+    if (CONNECTOR3.equals(connectorName)) {
+      if (permit) {
+        for (String docid : docidList) {
+          if (permit) {
+            results.add(new AuthorizationResponse(permit, docid));
+          }
+          permit = !permit;
+        }
+      }
+    }
+    return results;
   }
 
   /* @Override */

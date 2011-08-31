@@ -81,6 +81,14 @@ public class AuthorizationTest extends TestCase {
           + "  <Identity source=\"gsa\">username</Identity>\n"
           + "</ConnectorQuery>\n" + "</AuthorizationQuery>";
 
+  /** Test invalid (empty) XML request. */
+  public void testInvalidRequest() throws Exception {
+    String expectedResult = "<CmResponse>\n" + "  <StatusId>"
+         + ConnectorMessageCode.ERROR_PARSING_XML_REQUEST + "</StatusId>\n"
+         + "</CmResponse>\n";
+    doTest("", expectedResult, false, null, null, null);
+  }
+
   /**
    */
   public void testHandleDoPost1() {
@@ -88,13 +96,13 @@ public class AuthorizationTest extends TestCase {
         "<CmResponse>\n" + "  <AuthorizationResponse>\n" + "    <Answer>\n"
             + "      <Resource>" + ServletUtil.PROTOCOL
             + "connector1.localhost" + ServletUtil.DOCID + "foo1</Resource>\n"
-            + "      <Decision>Permit</Decision>\n" + "    </Answer>\n"
+            + "      <Decision>PERMIT</Decision>\n" + "    </Answer>\n"
             + "    <Answer>\n" + "      <Resource>" + ServletUtil.PROTOCOL
             + "connector2.localhost" + ServletUtil.DOCID + "foo2</Resource>\n"
-            + "      <Decision>Permit</Decision>\n" + "    </Answer>\n"
+            + "      <Decision>PERMIT</Decision>\n" + "    </Answer>\n"
             + "    <Answer>\n" + "      <Resource>" + ServletUtil.PROTOCOL
             + "connector3.localhost" + ServletUtil.DOCID + "foo3</Resource>\n"
-            + "      <Decision>Permit</Decision>\n" + "    </Answer>\n"
+            + "      <Decision>PERMIT</Decision>\n" + "    </Answer>\n"
             + "  </AuthorizationResponse>\n" + "  <StatusId>0</StatusId>\n"
             + "</CmResponse>\n";
     doTest(TEST_XML1, expectedResult, false, null, null, null);
@@ -131,7 +139,7 @@ public class AuthorizationTest extends TestCase {
       + ServletUtil.PROTOCOL + "connector1.localhost"
       + ServletUtil.DOCID + "foo1"
       + "</Resource>\n"
-      + "      <Decision>Permit</Decision>\n"
+      + "      <Decision>PERMIT</Decision>\n"
       + "    </Answer>\n"
       + "  </AuthorizationResponse>\n"
       + "  <StatusId>" + ConnectorMessageCode.RESPONSE_NULL_CONNECTOR
@@ -161,7 +169,7 @@ public class AuthorizationTest extends TestCase {
         "<CmResponse>\n" + "  <AuthorizationResponse>\n" + "    <Answer>\n"
             + "      <Resource>" + ServletUtil.PROTOCOL
             + "connector1.localhost" + ServletUtil.DOCID + "foo1</Resource>\n"
-            + "      <Decision>Permit</Decision>\n" + "    </Answer>\n"
+            + "      <Decision>PERMIT</Decision>\n" + "    </Answer>\n"
             + "  </AuthorizationResponse>\n" + "  <StatusId>0</StatusId>\n"
             + "</CmResponse>\n";
     doTest(TEST_XML4, expectedResult, false, null, null, null);
@@ -176,6 +184,107 @@ public class AuthorizationTest extends TestCase {
             + ConnectorMessageCode.RESPONSE_NULL_RESOURCE + "</StatusId>\n"
             + "</CmResponse>\n";
     doTest(TEST_XML5, expectedResult, false, null, null, null);
+  }
+
+  /** Test partial response (just permits). */
+  public void testPartialResponse() {
+    String queryXml =
+      "<AuthorizationQuery>\n" +
+      "<ConnectorQuery>\n" +
+      "  <Identity source=\"gsa\">CN=foo</Identity>\n" +
+      "  <Resource>" + ServletUtil.PROTOCOL + "connector3.localhost" +
+         ServletUtil.DOCID + "foo1</Resource>\n" +
+      "  <Resource>" + ServletUtil.PROTOCOL + "connector3.localhost" +
+         ServletUtil.DOCID + "foo2</Resource>\n" +
+      "  <Resource>" + ServletUtil.PROTOCOL + "connector3.localhost" +
+         ServletUtil.DOCID + "foo3</Resource>\n" +
+      "</ConnectorQuery>\n" +
+      "</AuthorizationQuery>";
+
+    String expectedResult =
+        "<CmResponse>\n" + "  <AuthorizationResponse>\n"
+            + "    <Answer>\n"
+            + "      <Resource>" + ServletUtil.PROTOCOL
+            + "connector3.localhost" + ServletUtil.DOCID + "foo1</Resource>\n"
+            + "      <Decision>PERMIT</Decision>\n"
+            + "    </Answer>\n"
+            + "    <Answer>\n"
+            + "      <Resource>" + ServletUtil.PROTOCOL
+            + "connector3.localhost" + ServletUtil.DOCID + "foo2</Resource>\n"
+            + "      <Decision>DENY</Decision>\n"
+            + "    </Answer>\n"
+            + "    <Answer>\n"
+            + "      <Resource>" + ServletUtil.PROTOCOL
+            + "connector3.localhost" + ServletUtil.DOCID + "foo3</Resource>\n"
+            + "      <Decision>PERMIT</Decision>\n"
+            + "    </Answer>\n"
+            + "  </AuthorizationResponse>\n" + "  <StatusId>0</StatusId>\n"
+            + "</CmResponse>\n";
+    doTest(queryXml, expectedResult, false, null, null, null);
+  }
+
+  /** Test Indeterminate response. */
+  public void testIndeterminateResponse() {
+    String queryXml =
+      "<AuthorizationQuery>\n" +
+      "<ConnectorQuery>\n" +
+      "  <Identity source=\"gsa\">CN=foo</Identity>\n" +
+      "  <Resource>" + ServletUtil.PROTOCOL + "connector2.localhost" +
+         ServletUtil.DOCID + "foo1</Resource>\n" +
+      "  <Resource>" + ServletUtil.PROTOCOL + "connector2.localhost" +
+         ServletUtil.DOCID + "foo2</Resource>\n" +
+      "  <Resource>" + ServletUtil.PROTOCOL + "connector2.localhost" +
+         ServletUtil.DOCID + "foo3</Resource>\n" +
+      "</ConnectorQuery>\n" +
+      "</AuthorizationQuery>";
+
+    String expectedResult =
+        "<CmResponse>\n" + "  <AuthorizationResponse>\n"
+            + "    <Answer>\n"
+            + "      <Resource>" + ServletUtil.PROTOCOL
+            + "connector2.localhost" + ServletUtil.DOCID + "foo1</Resource>\n"
+            + "      <Decision>PERMIT</Decision>\n"
+            + "    </Answer>\n"
+            + "    <Answer>\n"
+            + "      <Resource>" + ServletUtil.PROTOCOL
+            + "connector2.localhost" + ServletUtil.DOCID + "foo2</Resource>\n"
+            + "      <Decision>INDETERMINATE</Decision>\n"
+            + "    </Answer>\n"
+            + "    <Answer>\n"
+            + "      <Resource>" + ServletUtil.PROTOCOL
+            + "connector2.localhost" + ServletUtil.DOCID + "foo3</Resource>\n"
+            + "      <Decision>PERMIT</Decision>\n"
+            + "    </Answer>\n"
+            + "  </AuthorizationResponse>\n" + "  <StatusId>0</StatusId>\n"
+            + "</CmResponse>\n";
+    doTest(queryXml, expectedResult, false, null, null, null);
+  }
+
+  /** Test empty query list. */
+  public void testEmptyQueryList() {
+    String queryXml =
+      "<AuthorizationQuery>\n" +
+      "</AuthorizationQuery>";
+
+    String expectedResult =
+        "<CmResponse>\n" + "  <StatusId>0</StatusId>\n" + "</CmResponse>\n";
+    doTest(queryXml, expectedResult, false, null, null, null);
+  }
+
+  /** Test null response. */
+  public void testNullResponse() {
+    String queryXml =
+      "<AuthorizationQuery>\n" +
+      "<ConnectorQuery>\n" +
+      "  <Identity source=\"gsa\">CN=foo</Identity>\n" +
+      "  <Resource>" + ServletUtil.PROTOCOL + "connector4.localhost" +
+         ServletUtil.DOCID + "foo1</Resource>\n" +
+      "</ConnectorQuery>\n" +
+      "</AuthorizationQuery>";
+
+    String expectedResult =
+        "<CmResponse>\n" + "  <StatusId>0</StatusId>\n" + "</CmResponse>\n";
+    doTest(queryXml, expectedResult, false, null, null, null);
   }
 
   private static final String TEST_DOMAINSPECIFIC_IDENTITY =
@@ -198,17 +307,17 @@ public class AuthorizationTest extends TestCase {
       + "    <Answer>\n"
       + "      <Resource>" + ServletUtil.PROTOCOL + "connector1.localhost"
       + ServletUtil.DOCID + "foo1</Resource>\n"
-      + "      <Decision>Permit</Decision>\n"
+      + "      <Decision>PERMIT</Decision>\n"
       + "    </Answer>\n"
       + "    <Answer>\n"
       + "      <Resource>" + ServletUtil.PROTOCOL + "connector2.localhost"
       + ServletUtil.DOCID + "foo2</Resource>\n"
-      + "      <Decision>Permit</Decision>\n"
+      + "      <Decision>PERMIT</Decision>\n"
       + "    </Answer>\n"
       + "    <Answer>\n"
       + "      <Resource>" + ServletUtil.PROTOCOL + "connector3.localhost"
       + ServletUtil.DOCID + "foo3</Resource>\n"
-      + "      <Decision>Permit</Decision>\n"
+      + "      <Decision>PERMIT</Decision>\n"
       + "    </Answer>\n"
       + "  </AuthorizationResponse>\n"
       + "  <StatusId>0</StatusId>\n"
@@ -218,17 +327,17 @@ public class AuthorizationTest extends TestCase {
       + "    <Answer>\n"
       + "      <Resource>" + ServletUtil.PROTOCOL + "connector1.localhost"
       + ServletUtil.DOCID + "foo1</Resource>\n"
-      + "      <Decision>Permit</Decision>\n"
+      + "      <Decision>PERMIT</Decision>\n"
       + "    </Answer>\n"
       + "    <Answer>\n"
       + "      <Resource>" + ServletUtil.PROTOCOL + "connector2.localhost"
       + ServletUtil.DOCID + "foo2</Resource>\n"
-      + "      <Decision>Permit</Decision>\n"
+      + "      <Decision>PERMIT</Decision>\n"
       + "    </Answer>\n"
       + "    <Answer>\n"
       + "      <Resource>" + ServletUtil.PROTOCOL + "connector3.localhost"
       + ServletUtil.DOCID + "foo3</Resource>\n"
-      + "      <Decision>Deny</Decision>\n"
+      + "      <Decision>DENY</Decision>\n"
       + "    </Answer>\n"
       + "  </AuthorizationResponse>\n"
       + "  <StatusId>0</StatusId>\n"
@@ -238,17 +347,17 @@ public class AuthorizationTest extends TestCase {
       + "    <Answer>\n"
       + "      <Resource>" + ServletUtil.PROTOCOL + "connector1.localhost"
       + ServletUtil.DOCID + "foo1</Resource>\n"
-      + "      <Decision>Deny</Decision>\n"
+      + "      <Decision>DENY</Decision>\n"
       + "    </Answer>\n"
       + "    <Answer>\n"
       + "      <Resource>" + ServletUtil.PROTOCOL + "connector2.localhost"
       + ServletUtil.DOCID + "foo2</Resource>\n"
-      + "      <Decision>Deny</Decision>\n"
+      + "      <Decision>DENY</Decision>\n"
       + "    </Answer>\n"
       + "    <Answer>\n"
       + "      <Resource>" + ServletUtil.PROTOCOL + "connector3.localhost"
       + ServletUtil.DOCID + "foo3</Resource>\n"
-      + "      <Decision>Permit</Decision>\n"
+      + "      <Decision>PERMIT</Decision>\n"
       + "    </Answer>\n"
       + "  </AuthorizationResponse>\n"
       + "  <StatusId>0</StatusId>\n"
@@ -296,14 +405,14 @@ public class AuthorizationTest extends TestCase {
   private static final String TEST_DOCUMENT_URL = "<AuthorizationQuery>\n"
       + "  <ConnectorQuery>\n"
       + "    <Identity source=\"connector\">johndoe</Identity>\n"
-      + "    <Resource connectorname=\"connector-one\">"
+      + "    <Resource connectorname=\"connector1\">"
       + "https://www.sphost/sites/mylist/test1.doc</Resource>\n"
-      + "    <Resource connectorname=\"connector-two\">"
+      + "    <Resource connectorname=\"connector2\">"
       + "https://www.sphost/sites/mylist/test2.doc</Resource>\n"
       + "  </ConnectorQuery>\n"
       + "  <ConnectorQuery>\n"
       + "    <Identity source=\"connector\">janedoe</Identity>\n"
-      + "    <Resource connectorname=\"connector-three\">"
+      + "    <Resource connectorname=\"connector3\">"
       + "https://www.sphost/sites/mylist/test3.doc</Resource>\n"
       + "  </ConnectorQuery>\n"
       + "</AuthorizationQuery>";
@@ -311,14 +420,14 @@ public class AuthorizationTest extends TestCase {
   private static final String TEST_BAD_DOCUMENT_URL = "<AuthorizationQuery>\n"
       + "  <ConnectorQuery>\n"
       + "    <Identity source=\"connector\">johndoe</Identity>\n"
-      + "    <Resource connectorname=\"connector-one\">"
+      + "    <Resource connectorname=\"connector1\">"
       + "https://www.sphost/sites/mylist/test1.doc</Resource>\n"
       + "    <Resource>"
       + "https://www.sphost.missing/sites/mylist/test2.doc</Resource>\n"
       + "  </ConnectorQuery>\n"
       + "  <ConnectorQuery>\n"
       + "    <Identity source=\"connector\">janedoe</Identity>\n"
-      + "    <Resource connectorname=\"connector-three\">"
+      + "    <Resource connectorname=\"connector3\">"
       + "https://www.sphost/sites/mylist/test3.doc</Resource>\n"
       + "  </ConnectorQuery>\n"
       + "</AuthorizationQuery>";
@@ -326,22 +435,22 @@ public class AuthorizationTest extends TestCase {
   private static final String JOHNDOE_EXPECTED_RESULT = "<CmResponse>\n"
       + "  <AuthorizationResponse>\n"
       + "    <Answer>\n"
-      + "      <Resource connectorname=\"connector-one\">\n"
+      + "      <Resource connectorname=\"connector1\">\n"
       + "        https://www.sphost/sites/mylist/test1.doc\n"
       + "      </Resource>\n"
-      + "      <Decision>Permit</Decision>\n"
+      + "      <Decision>PERMIT</Decision>\n"
       + "    </Answer>\n"
       + "    <Answer>\n"
-      + "      <Resource connectorname=\"connector-two\">\n"
+      + "      <Resource connectorname=\"connector2\">\n"
       + "        https://www.sphost/sites/mylist/test2.doc\n"
       + "      </Resource>\n"
-      + "      <Decision>Permit</Decision>\n"
+      + "      <Decision>PERMIT</Decision>\n"
       + "    </Answer>\n"
       + "    <Answer>\n"
-      + "      <Resource connectorname=\"connector-three\">\n"
+      + "      <Resource connectorname=\"connector3\">\n"
       + "        https://www.sphost/sites/mylist/test3.doc\n"
       + "      </Resource>\n"
-      + "      <Decision>Deny</Decision>\n"
+      + "      <Decision>DENY</Decision>\n"
       + "    </Answer>\n"
       + "  </AuthorizationResponse>\n"
       + "  <StatusId>0</StatusId>\n"
@@ -350,22 +459,22 @@ public class AuthorizationTest extends TestCase {
   private static final String JANEDOE_EXPECTED_RESULT = "<CmResponse>\n"
       + "  <AuthorizationResponse>\n"
       + "    <Answer>\n"
-      + "      <Resource connectorname=\"connector-one\">\n"
+      + "      <Resource connectorname=\"connector1\">\n"
       + "        https://www.sphost/sites/mylist/test1.doc\n"
       + "      </Resource>\n"
-      + "      <Decision>Deny</Decision>\n"
+      + "      <Decision>DENY</Decision>\n"
       + "    </Answer>\n"
       + "    <Answer>\n"
-      + "      <Resource connectorname=\"connector-two\">\n"
+      + "      <Resource connectorname=\"connector2\">\n"
       + "        https://www.sphost/sites/mylist/test2.doc\n"
       + "      </Resource>\n"
-      + "      <Decision>Deny</Decision>\n"
+      + "      <Decision>DENY</Decision>\n"
       + "    </Answer>\n"
       + "    <Answer>\n"
-      + "      <Resource connectorname=\"connector-three\">\n"
+      + "      <Resource connectorname=\"connector3\">\n"
       + "        https://www.sphost/sites/mylist/test3.doc\n"
       + "      </Resource>\n"
-      + "      <Decision>Permit</Decision>\n"
+      + "      <Decision>PERMIT</Decision>\n"
       + "    </Answer>\n"
       + "  </AuthorizationResponse>\n"
       + "  <StatusId>0</StatusId>\n"
@@ -382,10 +491,10 @@ public class AuthorizationTest extends TestCase {
     String expectedBadDocumentResponse = "<CmResponse>\n"
         + "  <AuthorizationResponse>\n"
         + "    <Answer>\n"
-        + "      <Resource connectorname=\"connector-one\">\n"
+        + "      <Resource connectorname=\"connector1\">\n"
         + "        https://www.sphost/sites/mylist/test1.doc\n"
         + "      </Resource>\n"
-        + "      <Decision>Permit</Decision>\n"
+        + "      <Decision>PERMIT</Decision>\n"
         + "    </Answer>\n"
         + "  </AuthorizationResponse>\n"
         + "  <StatusId>" + ConnectorMessageCode.RESPONSE_NULL_CONNECTOR
