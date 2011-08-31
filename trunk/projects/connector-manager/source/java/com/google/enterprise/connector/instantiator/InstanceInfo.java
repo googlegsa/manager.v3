@@ -46,6 +46,19 @@ final class InstanceInfo {
   private final Connector connector;
 
   /**
+   * Constructs a InstanceInfo with no backing Connector instance.
+   *
+   * @param connectorName the name of the Connector instance
+   * @param connectorDir the Connector's working directory
+   * @param typeInfo the Connector's prototype
+   * @throws InstanceInfoException
+   */
+  public InstanceInfo(String connectorName, File connectorDir,
+      TypeInfo typeInfo) throws InstanceInfoException {
+    this(connectorName, connectorDir, typeInfo, null, false);
+  }
+
+  /**
    * Constructs a new Connector instance based upon the supplied
    * configuration map.
    *
@@ -57,6 +70,23 @@ final class InstanceInfo {
    */
   public InstanceInfo(String connectorName, File connectorDir,
       TypeInfo typeInfo, Configuration config) throws InstanceInfoException {
+    this(connectorName, connectorDir, typeInfo, config, true);
+  }
+
+  /**
+   * Constructs a new Connector instance based upon the supplied
+   * configuration map.
+   *
+   * @param connectorName the name of the Connector instance
+   * @param connectorDir the Connector's working directory
+   * @param typeInfo the Connector's prototype
+   * @param config connector Configuration
+   * @param createConnector if true, create the connector instance
+   * @throws InstanceInfoException
+   */
+  private InstanceInfo(String connectorName, File connectorDir,
+      TypeInfo typeInfo, Configuration config, boolean createConnector)
+      throws InstanceInfoException {
     if (connectorName == null || connectorName.length() < 1) {
       throw new NullConnectorNameException();
     }
@@ -66,16 +96,21 @@ final class InstanceInfo {
     if (typeInfo == null) {
       throw new NullTypeInfoException();
     }
-    if (config == null) {
-      throw new NullConfigurationException();
-    }
 
     this.connectorName = connectorName;
     this.connectorDir = connectorDir;
     this.typeInfo = typeInfo;
     this.storeContext =
         new StoreContext(connectorName, typeInfo.getConnectorTypeName());
-    this.connector = makeConnectorWithSpring(connectorName, typeInfo, config);
+
+    if (createConnector) {
+      if (config == null) {
+        throw new NullConfigurationException();
+      }
+      this.connector = makeConnectorWithSpring(connectorName, typeInfo, config);
+    } else {
+      this.connector = null;
+    }
   }
 
 
