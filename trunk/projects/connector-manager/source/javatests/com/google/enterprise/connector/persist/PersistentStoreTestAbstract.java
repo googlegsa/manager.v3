@@ -332,7 +332,7 @@ public abstract class PersistentStoreTestAbstract extends TestCase {
 
     ConnectorTestUtils.compareConfigurations(configuration,
         store.getConnectorConfiguration(context));
-    compareSchedules(schedule, store.getConnectorSchedule(context));
+    assertEquals(schedule, store.getConnectorSchedule(context));
     assertEquals(checkpoint, store.getConnectorState(context));
 
     store.removeConnectorState(context);
@@ -429,12 +429,12 @@ public abstract class PersistentStoreTestAbstract extends TestCase {
 
     ConnectorTestUtils.compareConfigurations(configuration,
         store.getConnectorConfiguration(one));
-    compareSchedules(schedule, store.getConnectorSchedule(one));
+    assertEquals(schedule, store.getConnectorSchedule(one));
     assertEquals(checkpoint, store.getConnectorState(one));
 
     ConnectorTestUtils.compareConfigurations(configurationTwo,
         store.getConnectorConfiguration(two));
-    compareSchedules(scheduleTwo, store.getConnectorSchedule(two));
+    assertEquals(scheduleTwo, store.getConnectorSchedule(two));
     assertNull(store.getConnectorState(two));
 
     store.removeConnectorState(one);
@@ -465,12 +465,7 @@ public abstract class PersistentStoreTestAbstract extends TestCase {
         inventory.keySet().contains(context));
   }
 
-  // TODO: We might consider implementing Schedule.equals().
-  private static void compareSchedules(Schedule expected, Schedule result) {
-    assertEquals(expected.toString(), result.toString());
-  }
-
   private static void compareSchedules(String expected, Schedule result) {
-    compareSchedules(new Schedule(expected), result);
+    assertEquals(new Schedule(expected), result);
   }
 }

@@ -20,10 +20,6 @@ import java.util.List;
 /**
  * A traversal schedule.
  */
-/*
- * TODO: Implement equals and hashCode, rather than forcing string
- * comparisons in the tests?
- */
 public class Schedule {
 
   private static int defaultRetryDelayMillis = (5 * 60 * 1000);
@@ -286,5 +282,36 @@ public class Schedule {
       buf.append(endTime.getHour());
     }
     return buf.toString();
+  }
+
+  /**
+   * Returns a hash code value for the object.
+   *
+   * @return a hash code value for this object
+   */
+  @Override
+  public int hashCode() {
+    return toString().hashCode();
+  }
+
+  /**
+   * Indicates whether some other object is "equal to" this one.
+   *
+   * @return {@code true} if this object is the same as the {@code obj}
+   *         argument; {@code false} otherwise
+   */
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    }
+    if (obj == null) {
+      return false;
+    }
+    if (getClass() != obj.getClass()) {
+      return false;
+    }
+    Schedule other = (Schedule) obj;
+    return toString().equals(other.toString());
   }
 }
