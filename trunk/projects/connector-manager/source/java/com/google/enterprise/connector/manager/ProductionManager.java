@@ -42,6 +42,7 @@ import com.google.enterprise.connector.util.EofFilterInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -106,9 +107,8 @@ public class ProductionManager implements Manager {
   }
 
   /* @Override */
-  public Set<String> authorizeDocids(String connectorName,
+  public Collection<AuthorizationResponse> authorizeDocids(String connectorName,
       List<String> docidList, AuthenticationIdentity identity) {
-    Set<String> result = new HashSet<String>();
     try {
       AuthorizationManager authzManager =
           instantiator.getAuthorizationManager(connectorName);
@@ -120,7 +120,7 @@ public class ProductionManager implements Manager {
         LOGGER.warning("Connector " + connectorName
             + " is being asked to authorize documents but has not implemented"
             + " the AuthorizationManager interface.");
-        return result;
+        return null;
       }
       if (LOGGER.isLoggable(Level.FINE)) {
         LOGGER.fine("AUTHORIZE: connector = " + connectorName + ", "
@@ -131,17 +131,15 @@ public class ProductionManager implements Manager {
       if (LOGGER.isLoggable(Level.FINE)) {
         LOGGER.fine("AUTHORIZED: connector = " + connectorName + ", "
                     + identity + ": authorized " + results.size()
-                    + " documents.");
+                    + " of " + docidList.size() + " documents.");
       }
-      for (AuthorizationResponse response : results) {
-        if (LOGGER.isLoggable(Level.FINEST)) {
+      if (LOGGER.isLoggable(Level.FINEST)) {
+        for (AuthorizationResponse response : results) {
           LOGGER.finest("AUTHORIZED " + response.getDocid() + ": "
                         + response.getStatus());
         }
-        if (response.isValid()) {
-          result.add(response.getDocid());
-        }
       }
+      return results;
     } catch (ConnectorNotFoundException e) {
       LOGGER.log(Level.WARNING, "Connector " + connectorName + " not found", e);
     } catch (RepositoryException e) {
@@ -151,7 +149,7 @@ public class ProductionManager implements Manager {
       LOGGER.log(Level.WARNING, "Authorization failed for connector "
                  + connectorName + ": " + identity, e);
     }
-    return result;
+    return null;
   }
 
   /* @Override */

@@ -19,7 +19,7 @@ package com.google.enterprise.connector.spi;
  * {@link AuthorizationManager#authorizeDocids
  * AuthorizationManager.authorizeDocids} method.
  */
-public class AuthorizationResponse {
+public class AuthorizationResponse implements Comparable {
 
   /**
    * Authorization Status codes.
@@ -159,5 +159,28 @@ public class AuthorizationResponse {
       return false;
     }
     return true;
+  }
+
+  /**
+   * Comparable for testing.
+   * Note: this class has a natural ordering that is inconsistent with equals.
+   */
+  /* @Override */
+  public int compareTo(Object obj) {
+    if (this == obj) {
+      return 0;
+    }
+    if (obj == null) {
+      return 1;
+    }
+    if (getClass() != obj.getClass()) {
+      return 1;
+    }
+    AuthorizationResponse other = (AuthorizationResponse) obj;
+    if (docid == null) {
+      return (other.docid == null) ? 0 : -1;
+    } else {
+      return docid.compareTo(other.docid);
+    }
   }
 }

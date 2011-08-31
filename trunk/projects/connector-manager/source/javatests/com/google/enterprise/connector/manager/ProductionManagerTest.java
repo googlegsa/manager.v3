@@ -167,14 +167,11 @@ public class ProductionManagerTest extends TestCase {
   }
 
   /** Test authorizeDocids with no AuthorizationManager. */
-  public void testAuthorizeDocidsNoAuthenticationManager() throws Exception {
+  public void testAuthorizeDocidsNoAuthorizationManager() throws Exception {
     instantiator.addConnector(connectorName,
                               new MockConnector(null, null, null, null));
     List<String> docids = Arrays.asList(new String[] { "foo", "bar", "baz" });
-    Set<String> authorized =
-        manager.authorizeDocids(connectorName, docids, identity);
-    assertNotNull(authorized);
-    assertTrue(authorized.isEmpty());
+    assertNull(manager.authorizeDocids(connectorName, docids, identity));
   }
 
   /** Test authorizeDocids with Exception throwing AuthorizationManager. */
@@ -183,19 +180,13 @@ public class ProductionManagerTest extends TestCase {
     instantiator.addConnector(connectorName, new MockConnector(null, null,
         new ExceptionalAuthorizationManager(), null));
     List<String> docids = Arrays.asList(new String[] { "foo", "bar", "baz" });
-    Set<String> authorized =
-        manager.authorizeDocids(connectorName, docids, identity);
-    assertNotNull(authorized);
-    assertTrue(authorized.isEmpty());
+    assertNull(manager.authorizeDocids(connectorName, docids, identity));
   }
 
   /** Test authorizeDocids with ConnectorNotFound. */
   public void testAuthorizeDocidsConnectorNotFound() throws Exception {
     List<String> docids = Arrays.asList(new String[] { "foo", "bar", "baz" });
-    Set<String> authorized =
-        manager.authorizeDocids("nonexistent", docids, identity);
-    assertNotNull(authorized);
-    assertTrue(authorized.isEmpty());
+    assertNull(manager.authorizeDocids("nonexistent", docids, identity));
   }
 
   /** Test authorizeDocids. */
@@ -203,14 +194,27 @@ public class ProductionManagerTest extends TestCase {
     instantiator.addConnector(connectorName, new MockConnector(null, null,
         new AuthorizeAllAuthorizationManager(), null));
     List<String> docids = Arrays.asList(new String[] { "foo", "bar", "baz" });
-    Set<String> authorized =
+    Collection<AuthorizationResponse> authorized =
         manager.authorizeDocids(connectorName, docids, identity);
 
     assertNotNull(authorized);
     assertFalse(authorized.isEmpty());
     for (String docid : docids) {
-      assertTrue(authorized.contains(docid));
+      checkContainsDocid(authorized, docid);
     }
+  }
+
+  /** Check if the Collection of AuthorizationResponses contains a response
+   *  for docid.
+   */
+  private boolean checkContainsDocid(
+      Collection<AuthorizationResponse> authorized, String docid) {
+    for (AuthorizationResponse response : authorized) {
+      if (response.getDocid().equals(docid)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /** AuthorizationManager that authorizes all docs. */
