@@ -56,7 +56,7 @@ class MockConnectorCoordinator implements ConnectorCoordinator {
 
   private final StoreContext storeContext;
   private final ThreadPool threadPool;
-  private String typeName;
+  private final String typeName;
 
   // Batch context
   TaskHandle taskHandle;
@@ -66,6 +66,7 @@ class MockConnectorCoordinator implements ConnectorCoordinator {
       PersistentStore persistentStore, StoreContext storeContext,
       ThreadPool threadPool) {
     this.name = name;
+    this.typeName = name;
     this.interfaces = connectorInterfaces;
     this.traverser = traverser;
     this.hostLoadManager = new HostLoadManager(null, null, new SystemClock());
@@ -76,8 +77,10 @@ class MockConnectorCoordinator implements ConnectorCoordinator {
     this.threadPool = threadPool;
   }
 
-   private void cancelBatch() {
-     throw new UnsupportedOperationException();
+  private void cancelBatch() {
+    if (taskHandle != null && !taskHandle.isDone()) {
+      taskHandle.cancel();
+    }
   }
 
   public boolean exists() {

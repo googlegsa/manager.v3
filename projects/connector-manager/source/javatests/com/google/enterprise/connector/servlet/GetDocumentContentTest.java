@@ -17,11 +17,17 @@ package com.google.enterprise.connector.servlet;
 import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.instantiator.Instantiator;
 import com.google.enterprise.connector.instantiator.InstantiatorException;
+import com.google.enterprise.connector.instantiator.MockInstantiator;
+import com.google.enterprise.connector.instantiator.ThreadPool;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.manager.MockManager;
+import com.google.enterprise.connector.manager.ProductionManager;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.spi.ConfigureResponse;
+import com.google.enterprise.connector.spi.MockConnector;
+import com.google.enterprise.connector.spi.MockRetriever;
+import com.google.enterprise.connector.util.SystemClock;
 
 import junit.framework.TestCase;
 
@@ -83,28 +89,109 @@ public class GetDocumentContentTest extends TestCase {
     assertEquals(-1L, lastModified);
   }
 
-  /** Test real Manager. */
-  public void testGetDocumentContentRealManager() throws Exception {
-    // Create a stand alone context with real ProductionManager.
-    Context.refresh();
-    Context context = Context.getInstance();
-    context.setStandaloneContext(Context.DEFAULT_JUNIT_CONTEXT_LOCATION,
-                                 Context.DEFAULT_JUNIT_COMMON_DIR_PATH);
-    context.setFeeding(false);
-    context.start();
-    Manager manager = context.getManager();
+  private String connectorName = MockInstantiator.TRAVERSER_NAME1;
+  private String docid = "docid";
 
-    System.out.println("Connectors: " + manager.getConnectorStatuses());
+  private Manager getProductionManager() throws Exception {
+    MockInstantiator instantiator =
+        new MockInstantiator(new ThreadPool(5, new SystemClock()));
+    instantiator.setupTestTraversers();
+    instantiator.addConnector(connectorName,
+        new MockConnector(null, null, null, new MockRetriever()));
+    ProductionManager manager = new ProductionManager();
+    manager.setInstantiator(instantiator);
+    return manager;
+  }
 
+  /** Test ProductionManager getDocumentContent. */
+  private void checkGetDocumentContent(String connectorName, String docid,
+      int expectedStatus, String expectedOutput) throws Exception {
+    Manager manager = getProductionManager();
     ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-    int status;
+    int status =
+        GetDocumentContent.handleDoGet(manager, connectorName, docid, buffer);
+
+    assertEquals(expectedStatus, status);
+    assertEquals(expectedOutput, buffer.toString());
+  }
+
+  /** Test ProductionManager getDocumentContent with ConnectorNotFound. */
+  public void testGetDocumentContentConnectorNotFound() throws Exception {
+    checkGetDocumentContent("unknownConnector", docid, 404, "");
+  }
+
+  /** Test ProductionManager getDocumentContent with Document NotFound. */
+  public void testGetDocumentContentDocumentNotFound() throws Exception {
+    checkGetDocumentContent(connectorName, MockRetriever.DOCID_NOT_FOUND,
+                            404, "");
+  }
+
+  /** Test ProductionManager getDocumentContent with RepositoryException. */
+  public void testGetDocumentContentRepositoryException() throws Exception {
+    checkGetDocumentContent(connectorName,
+        MockRetriever.DOCID_REPOSITORY_EXCEPTION, 503, "");
+  }
+
+  /** Test ProductionManager getDocumentContent where document has no content. */
+  public void testGetDocumentContentNoContent() throws Exception {
+    // GSA still doesn't handle docs with no content, so the
+    // Production Manager substitutes a single space.
+    checkGetDocumentContent(connectorName,
+        MockRetriever.DOCID_NO_CONTENT, 200, " ");
+  }
+
+  /** Test ProductionManager getDocumentContent where document has empty content. */
+  public void testGetDocumentContentEmptyContent() throws Exception {
+    // GSA still doesn't handle docs with no content, so the
+    // Production Manager substitutes a single space.
+    checkGetDocumentContent(connectorName,
+        MockRetriever.DOCID_EMPTY_CONTENT, 200, " ");
+  }
+
+  /** Test ProductionManager getDocumentContent. */
+  public void testGetDocumentContent() throws Exception {
+    checkGetDocumentContent(connectorName, docid, 200, docid);
+  }
+
+  /** Test getLastModified function against a ProductionManager. */
+  public void testGetLastModifiedProductionManager() throws Exception {
+    Manager manager = getProductionManager();
+    long lastModified;
+
+    // Null or empty ConnectorName.
+    lastModified = GetDocumentContent.handleGetLastModified(
+        manager, null, docid);
+    assertEquals(-1L, lastModified);
+    lastModified = GetDocumentContent.handleGetLastModified(
+        manager, "", docid);
+    assertEquals(-1L, lastModified);
+
+    // Null or empty docid.
+    lastModified = GetDocumentContent.handleGetLastModified(
+        manager, connectorName, null);
+    assertEquals(-1L, lastModified);
+    lastModified = GetDocumentContent.handleGetLastModified(
+        manager, connectorName, "");
+    assertEquals(-1L, lastModified);
+
+    // Connector regular docids have lastModified.
+    lastModified = GetDocumentContent.handleGetLastModified(
+        manager, connectorName, docid);
+    assertEquals(10 * 1000, lastModified);
+
+    // This Document has no lastModifiedDate
+    lastModified = GetDocumentContent.handleGetLastModified(
+        manager, connectorName, MockRetriever.DOCID_NO_LASTMODIFIED);
+    assertEquals(-1L, lastModified);
 
     // UnknownConnector does not exist.
-    status = GetDocumentContent.handleDoGet(manager, "unknownConnector",
-                                            "xyzzy", buffer);
-    assertEquals(404, status);
-    assertEquals(0, buffer.size());
+    lastModified = GetDocumentContent.handleGetLastModified(
+        manager, "unknownConnector", docid);
+    assertEquals(-1L, lastModified);
 
-    // TODO: test a RetrieverAware Test connector.
+    // Unknown document does not exist.
+    lastModified = GetDocumentContent.handleGetLastModified(
+        manager, connectorName, MockRetriever.DOCID_NOT_FOUND);
+    assertEquals(-1L, lastModified);
   }
 }
