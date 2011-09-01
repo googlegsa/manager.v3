@@ -163,7 +163,6 @@ public class AuthorizationResponse implements Comparable {
 
   /**
    * Comparable for testing.
-   * Note: this class has a natural ordering that is inconsistent with equals.
    */
   /* @Override */
   public int compareTo(Object obj) {
@@ -177,10 +176,20 @@ public class AuthorizationResponse implements Comparable {
       return 1;
     }
     AuthorizationResponse other = (AuthorizationResponse) obj;
-    if (docid == null) {
-      return (other.docid == null) ? 0 : -1;
-    } else {
-      return docid.compareTo(other.docid);
+    if (docid == null && other.docid != null) {
+      return -1;
     }
+    int result = docid.compareTo(other.docid);
+    if (result != 0) {
+      return result;
+    }
+    if (!status.equals(other.status)) {
+      switch (status) {
+      case DENY: return 1;
+      case PERMIT: return (other.status == Status.DENY) ? -1 : 1;
+      case INDETERMINATE: return -1;
+      }
+    }
+    return result;
   }
 }
