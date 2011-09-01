@@ -145,7 +145,7 @@ public class AuthorizationHandler {
     for (String connectorName : urlsByConnector.getConnectors()) {
       NDC.pushAppend(connectorName);
       try {
-        // TODO [bmj]: It is concievable that multiple URLs (resources) could
+        // TODO [bmj]: It is conceivable that multiple URLs (resources) could
         // map to the same repository document (docid).  We should handle the
         // duplicates, somehow?
         QueryResources urlsByDocid = urlsByConnector.getQueryResources(connectorName);
@@ -175,6 +175,7 @@ public class AuthorizationHandler {
         docids.remove(docid);
       }
     }
+    // Return DENY for documents not returned by connector.
     for (String docid : docids) {
       AuthorizationResource resource = urlsByDocid.getResource(docid);
       results.put(resource, AuthorizationResponse.Status.DENY);
