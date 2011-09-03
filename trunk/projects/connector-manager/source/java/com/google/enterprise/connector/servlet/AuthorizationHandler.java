@@ -1,4 +1,4 @@
-// Copyright 2007-2009 Google Inc.
+// Copyright 2007 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,7 +20,9 @@ import com.google.enterprise.connector.servlet.AuthorizationParser.ConnectorQuer
 import com.google.enterprise.connector.servlet.AuthorizationParser.QueryResources;
 import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.AuthorizationResponse;
+import com.google.enterprise.connector.spi.XmlUtils;
 
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -109,18 +111,19 @@ public class AuthorizationHandler {
   private void writeResultElement(AuthorizationResource resource,
       AuthorizationResponse.Status decision) {
     ServletUtil.writeXMLTag(out, 2, ServletUtil.XMLTAG_ANSWER, false);
-    if (resource.isFabricated()) {
-      // Just write out the element.
-      ServletUtil.writeXMLElement(out, 3, ServletUtil.XMLTAG_RESOURCE,
-          resource.getUrl());
-    } else {
-      // Have to add the connector name attribute to the element.
-      String attribute = ServletUtil.XMLTAG_CONNECTOR_NAME_ATTRIBUTE + "=\""
-          + resource.getConnectorName() + "\"";
-      ServletUtil.writeXMLTagWithAttrs(out, 3, ServletUtil.XMLTAG_RESOURCE,
-          attribute, false);
-      out.println(ServletUtil.indentStr(4) + resource.getUrl());
-      ServletUtil.writeXMLTag(out, 3, ServletUtil.XMLTAG_RESOURCE, true);
+    // Add the connector name attribute to the resource element.
+    try {
+      // TODO: Either fix ServletUtil XML code to XML escape attr values and
+      // element text bodies, or add the ability to append attributes to
+      // XmlUtils.appendStartTag().
+      out.write(ServletUtil.indentStr(3) + "<" + ServletUtil.XMLTAG_RESOURCE);
+      XmlUtils.xmlAppendAttr(ServletUtil.XMLTAG_CONNECTOR_NAME_ATTRIBUTE,
+                             resource.getConnectorName(), out);
+      out.append('>');
+      XmlUtils.xmlAppendAttrValue(resource.getUrl(), out);
+      XmlUtils.xmlAppendEndTag(ServletUtil.XMLTAG_RESOURCE, out);
+    } catch (IOException e) {
+      // Can't happen with PrintWriter.
     }
     ServletUtil.writeXMLElement(out, 3, ServletUtil.XMLTAG_DECISION,
                                 decision.toString());
