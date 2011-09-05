@@ -551,8 +551,8 @@ public class AuthorizationTest extends TestCase {
     authorizationHandler.handleDoPost();
     out.flush();
     StringBuffer result = writer.getBuffer();
-    LOGGER.info(result.toString());
-    LOGGER.info(expectedResult);
+    LOGGER.info("Expected Response:\n" + expectedResult);
+    LOGGER.info("Actual Response:\n" + result.toString());
     Assert.assertEquals(StringUtils.normalizeNewlines(expectedResult),
         StringUtils.normalizeNewlines(result.toString()));
     out.close();
