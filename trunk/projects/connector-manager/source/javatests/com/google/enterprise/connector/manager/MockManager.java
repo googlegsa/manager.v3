@@ -37,6 +37,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -145,6 +146,10 @@ public class MockManager implements Manager {
     if (CONNECTOR4.equals(connectorName)) {
       return null;
     }
+
+    // Sort the docids, so we process them in a predictable order for testing.
+    docidList = new ArrayList<String>(docidList);
+    Collections.sort(docidList);
 
     Set<AuthorizationResponse> results = new TreeSet<AuthorizationResponse>();
     StringBuilder sb = new StringBuilder();
