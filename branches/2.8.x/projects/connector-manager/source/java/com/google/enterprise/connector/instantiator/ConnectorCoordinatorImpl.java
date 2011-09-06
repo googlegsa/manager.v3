@@ -785,7 +785,7 @@ class ConnectorCoordinatorImpl implements
   }
 
   private ConfigureResponse createNewConnector(TypeInfo newTypeInfo,
-      Configuration config, Locale locale) throws InstantiatorException {
+      Configuration configuration, Locale locale) throws InstantiatorException {
     if (newTypeInfo == null) {
       throw new IllegalStateException(
           "Create new connector with no type specified.");
@@ -795,8 +795,22 @@ class ConnectorCoordinatorImpl implements
           "Create new connector when one already exists.");
     }
     File connectorDir = makeConnectorDirectory(name, newTypeInfo);
-    Configuration configuration = new Configuration(config,
-        getConnectorInstancePrototype(name, newTypeInfo));
+
+    // If there is no connectorInstance.xml in the config, look to see if
+    // there is one stored.  If not, fetch the connectorInstancePrototype
+    // from the connectorType.
+    if (configuration.getXml() == null) {
+      // Check to see if there is a pre-existing connectorInstance.xml.
+      Configuration old = new InstanceInfo(name, connectorDir, newTypeInfo)
+          .getConnectorConfiguration();
+      if (old != null && old.getXml() != null) {
+        configuration = new Configuration(configuration, old);
+      } else {
+        configuration = new Configuration(configuration,
+            getConnectorInstancePrototype(name, newTypeInfo));
+      }
+    }
+
     try {
       ConfigureResponse result =
           resetConfig(connectorDir, newTypeInfo, configuration, locale);

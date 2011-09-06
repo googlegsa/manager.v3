@@ -22,9 +22,11 @@ import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.persist.PersistentStoreException;
 import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
+import com.google.enterprise.connector.spi.AuthorizationResponse;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.ConnectorType;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -181,9 +183,16 @@ public interface Manager {
    *        docid for each document
    * @param identity An AuthenticationIdentity object that encapsulates the
    *        user's identity
-   * @return A Set of String IDs indicating which documents the user can see.
+   * @return A {@code Collection} of {@link AuthorizationResponse} objects.
+   *         The collection of responses need not be in the same order as the
+   *         collection of docids. The returned collection of responses may
+   *         contain only those docids for which the user has positive access,
+   *         although inclusion of items with deny access is recommended.
+   *         A return value of {@code null} indicates that the documents could
+   *         not be authorized for some reason, and no access rights (positive
+   *         or negative) should be inferred.
    */
-  public Set<String> authorizeDocids(String connectorName,
+  public Collection<AuthorizationResponse> authorizeDocids(String connectorName,
       List<String> docidList, AuthenticationIdentity identity);
 
   /**
