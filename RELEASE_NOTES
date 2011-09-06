@@ -11,8 +11,8 @@ issues and work-arounds.
 Web Site: http://code.google.com/p/google-enterprise-connector-manager/
 
 
-Release 2.8.2, 25 August 2011
-=============================
+Release 2.8.2, 05 September 2011
+================================
 
 Introduction
 ------------
@@ -24,6 +24,7 @@ Summary of Changes
   * Enable editing of Connector Advanced configuration XML from the
     GSA Admin console.
 
+  * Adds support for Flexible Authorization for Connectors.
 
 
 Release 2.8.0, 08 July 2011
