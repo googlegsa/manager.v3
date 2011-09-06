@@ -36,6 +36,7 @@ import com.google.enterprise.connector.spi.RepositoryLoginException;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -91,9 +92,8 @@ public class ProductionManager implements Manager {
   }
 
   /* @Override */
-  public Set<String> authorizeDocids(String connectorName,
+  public Collection<AuthorizationResponse> authorizeDocids(String connectorName,
       List<String> docidList, AuthenticationIdentity identity) {
-    Set<String> result = new HashSet<String>();
     try {
       AuthorizationManager authzManager =
           instantiator.getAuthorizationManager(connectorName);
@@ -105,15 +105,22 @@ public class ProductionManager implements Manager {
         LOGGER.warning("Connector:" + connectorName
             + " is being asked to authorize documents but has not implemented"
             + " the AuthorizationManager interface.");
-        return result;
+        return null;
       }
       Collection<AuthorizationResponse> results =
           authzManager.authorizeDocids(docidList, identity);
-      for (AuthorizationResponse response : results) {
-        if (response.isValid()) {
-          result.add(response.getDocid());
+      if (LOGGER.isLoggable(Level.FINE)) {
+        LOGGER.fine("AUTHORIZED: connector = " + connectorName + ", "
+                    + identity + ": authorized " + results.size()
+                    + " of " + docidList.size() + " documents.");
+      }
+      if (LOGGER.isLoggable(Level.FINEST)) {
+        for (AuthorizationResponse response : results) {
+          LOGGER.finest("AUTHORIZED " + response.getDocid() + ": "
+                        + response.getStatus());
         }
       }
+      return results;
     } catch (ConnectorNotFoundException e) {
       LOGGER.log(Level.WARNING, "Connector " + connectorName + " Not Found: ",
           e);
@@ -124,8 +131,7 @@ public class ProductionManager implements Manager {
     } catch (Exception e) {
       LOGGER.log(Level.WARNING, "Exception: ", e);
     }
-
-    return result;
+    return null;
   }
 
   /* @Override */

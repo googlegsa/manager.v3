@@ -1,4 +1,4 @@
-// Copyright 2007-2009 Google Inc.
+// Copyright 2007 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,31 +19,42 @@ import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.servlet.AuthorizationParser.ConnectorQueries;
 import com.google.enterprise.connector.servlet.AuthorizationParser.QueryResources;
 import com.google.enterprise.connector.spi.AuthenticationIdentity;
+import com.google.enterprise.connector.spi.AuthorizationResponse;
+import com.google.enterprise.connector.spi.XmlUtils;
 
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.Map.Entry;
 
 /**
  * This class does the real work for the authorization servlet
  */
 public class AuthorizationHandler {
+  private static final Logger LOGGER =
+      Logger.getLogger(AuthorizationHandler.class.getName());
+
   String xmlBody;
   Manager manager;
   PrintWriter out;
   int status;
-  Map<AuthorizationResource, Boolean> results;
+
+  Map<AuthorizationResource, AuthorizationResponse.Status> results;
 
   AuthorizationHandler(String xmlBody, Manager manager, PrintWriter out) {
     this.xmlBody = xmlBody;
     this.manager = manager;
     this.out = out;
-    results = new HashMap<AuthorizationResource, Boolean>();
+    results = new HashMap<AuthorizationResource, AuthorizationResponse.Status>();
   }
 
   /**
@@ -55,7 +66,7 @@ public class AuthorizationHandler {
     AuthorizationHandler authorizationHandler = new AuthorizationHandler(
         xmlBody, manager, out);
     authorizationHandler.results =
-        new TreeMap<AuthorizationResource, Boolean>();
+        new TreeMap<AuthorizationResource, AuthorizationResponse.Status>();
     return authorizationHandler;
   }
 
@@ -91,29 +102,31 @@ public class AuthorizationHandler {
   }
 
   private void generateEachResultXml() {
-    for (Entry<AuthorizationResource, Boolean> e : results.entrySet()) {
+    for (Entry<AuthorizationResource, AuthorizationResponse.Status> e :
+         results.entrySet()) {
       writeResultElement(e.getKey(), e.getValue());
     }
   }
 
   private void writeResultElement(AuthorizationResource resource,
-      boolean permit) {
+      AuthorizationResponse.Status decision) {
     ServletUtil.writeXMLTag(out, 2, ServletUtil.XMLTAG_ANSWER, false);
-    if (resource.isFabricated()) {
-      // Just write out the element.
-      ServletUtil.writeXMLElement(out, 3, ServletUtil.XMLTAG_RESOURCE,
-          resource.getUrl());
-    } else {
-      // Have to add the connector name attribute to the element.
-      String attribute = ServletUtil.XMLTAG_CONNECTOR_NAME_ATTRIBUTE + "=\""
-          + resource.getConnectorName() + "\"";
-      ServletUtil.writeXMLTagWithAttrs(out, 3, ServletUtil.XMLTAG_RESOURCE,
-          attribute, false);
-      out.println(ServletUtil.indentStr(4) + resource.getUrl());
-      ServletUtil.writeXMLTag(out, 3, ServletUtil.XMLTAG_RESOURCE, true);
+    // Add the connector name attribute to the resource element.
+    try {
+      // TODO: Either fix ServletUtil XML code to XML escape attr values and
+      // element text bodies, or add the ability to append attributes to
+      // XmlUtils.appendStartTag().
+      out.write(ServletUtil.indentStr(3) + "<" + ServletUtil.XMLTAG_RESOURCE);
+      XmlUtils.xmlAppendAttr(ServletUtil.XMLTAG_CONNECTOR_NAME_ATTRIBUTE,
+                             resource.getConnectorName(), out);
+      out.append('>');
+      XmlUtils.xmlAppendAttrValue(resource.getUrl(), out);
+      XmlUtils.xmlAppendEndTag(ServletUtil.XMLTAG_RESOURCE, out);
+    } catch (IOException e) {
+      // Can't happen with PrintWriter.
     }
     ServletUtil.writeXMLElement(out, 3, ServletUtil.XMLTAG_DECISION,
-                                (permit) ? "Permit" : "Deny");
+                                decision.toString());
     ServletUtil.writeXMLTag(out, 2, ServletUtil.XMLTAG_ANSWER, true);
   }
 
@@ -135,25 +148,43 @@ public class AuthorizationHandler {
     for (String connectorName : urlsByConnector.getConnectors()) {
       NDC.pushAppend(connectorName);
       try {
+        // TODO [bmj]: It is conceivable that multiple URLs (resources) could
+        // map to the same repository document (docid).  We should handle the
+        // duplicates, somehow?
         QueryResources urlsByDocid = urlsByConnector.getQueryResources(connectorName);
         List<String> docidList = new ArrayList<String>(urlsByDocid.getDocids());
-        Set<String> answerSet =
+        Collection<AuthorizationResponse> answerSet =
             manager.authorizeDocids(connectorName, docidList, identity);
-        accumulateQueryResults(answerSet, urlsByDocid);
+        if (answerSet != null) {
+          accumulateQueryResults(answerSet, urlsByDocid);
+        }
       } finally {
         NDC.pop();
       }
     }
   }
 
-  private void accumulateQueryResults(Set<String> answerSet,
+  private void accumulateQueryResults(Collection<AuthorizationResponse> answerSet,
       QueryResources urlsByDocid) {
-    for (String docid : urlsByDocid.getDocids()) {
+    Set<String> docids = new HashSet<String>(urlsByDocid.getDocids());
+    for (AuthorizationResponse response : answerSet) {
+      String docid = response.getDocid();
       AuthorizationResource resource = urlsByDocid.getResource(docid);
-      Boolean permit = answerSet.contains(docid) ? Boolean.TRUE : Boolean.FALSE;
-      Object isDup = results.put(resource, permit);
-      if (isDup != null) {
-        //TODO (ziff): warning
+      if (resource == null) {
+        LOGGER.warning("Received unexpected AuthorizationResponse for document "
+                       + docid);
+      } else {
+        results.put(resource, response.getStatus());
+        docids.remove(docid);
+      }
+    }
+    // Return DENY for documents not returned by connector.
+    for (String docid : docids) {
+      AuthorizationResource resource = urlsByDocid.getResource(docid);
+      results.put(resource, AuthorizationResponse.Status.DENY);
+      if (LOGGER.isLoggable(Level.FINEST)) {
+        LOGGER.finest("AUTHORIZED " + docid + ": "
+                      + AuthorizationResponse.Status.DENY);
       }
     }
   }
