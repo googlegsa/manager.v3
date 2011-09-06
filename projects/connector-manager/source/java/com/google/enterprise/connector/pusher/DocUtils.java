@@ -234,7 +234,7 @@ public class DocUtils {
   }
 
   /**
-   * Return the appropriate {@link FeedType} for the supplied {@link Document}.
+   * Return the appropriate feed type for the supplied Document.
    * <p>
    * To support legacy settings without change, the logic goes like this:
    * <ol>
@@ -253,21 +253,32 @@ public class DocUtils {
    * Illegal values for feed type will be ignored and the default behavior will
    * be used.
    */
-  public static FeedType getFeedType(Document document)
+  public static String getFeedType(Document document)
       throws RepositoryException {
     FeedType feedType = null;
-    String feedTypeValue =
-        getOptionalString(document, SpiConstants.PROPNAME_FEEDTYPE);
+    String feedTypeValue = getOptionalString(document,
+        SpiConstants.PROPNAME_FEEDTYPE);
     if (feedTypeValue != null) {
       try {
-        return FeedType.valueOf(feedTypeValue.toUpperCase());
+        feedType = FeedType.valueOf(feedTypeValue);
       } catch (IllegalArgumentException iae) {
         LOGGER.warning("Illegal value for feedtype property: " + feedTypeValue);
       }
     }
-    // Have to go with default behavior.
-    String searchUrl =
-        getOptionalString(document, SpiConstants.PROPNAME_SEARCHURL);
-    return (searchUrl == null) ? FeedType.CONTENT : FeedType.WEB;
+    if (feedType == null) {
+      // Have to go with default behavior.
+      String searchUrl = getOptionalString(document,
+          SpiConstants.PROPNAME_SEARCHURL);
+      if (searchUrl == null) {
+        return XmlFeed.XML_FEED_INCREMENTAL;
+      } else {
+        return XmlFeed.XML_FEED_METADATA_AND_URL;
+      }
+    } else if (FeedType.CONTENT.equals(feedType)) {
+      return XmlFeed.XML_FEED_INCREMENTAL;
+    } else {
+      // Has to be WEB.
+      return XmlFeed.XML_FEED_METADATA_AND_URL;
+    }
   }
 }

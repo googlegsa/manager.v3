@@ -79,10 +79,4 @@ public class AuthenticationResponse {
   public Collection<String> getGroups() {
     return groups;
   }
-
-  @Override
-  public String toString() {
-    return "{ valid = " + valid + ", groups = " + groups
-           + ", data = " + data + " }";
-  }
 }

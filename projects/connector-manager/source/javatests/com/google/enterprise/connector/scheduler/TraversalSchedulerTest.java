@@ -55,7 +55,7 @@ public class TraversalSchedulerTest extends TestCase {
     if (shutdown) {
       // sleep to give it a chance to schedule something
       try {
-        Thread.sleep(11);
+        Thread.sleep(200);
       } catch (InterruptedException ie) {
         ie.printStackTrace();
         fail(ie.toString());

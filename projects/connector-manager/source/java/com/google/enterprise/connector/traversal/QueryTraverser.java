@@ -120,16 +120,14 @@ public class QueryTraverser implements Traverser {
       // We get here if the store for the connector is disabled.
       // That happens if the connector was deleted while we were asleep.
       // Our connector seems to have been deleted.  Don't process a batch.
-      LOGGER.fine("Halting traversal for connector " + connectorName
-                  + ": " + ise.getMessage());
+      LOGGER.finer("Halting traversal..." + ise.getMessage());
       return new BatchResult(TraversalDelayPolicy.ERROR);
     }
 
     DocumentList resultSet = null;
     if (connectorState == null) {
       try {
-        LOGGER.fine("START TRAVERSAL: Starting traversal for connector "
-                    + connectorName);
+        LOGGER.finer("Starting traversal...");
         resultSet = queryTraversalManager.startTraversal();
       } catch (Exception e) {
         LOGGER.log(Level.WARNING, "startTraversal threw exception: ", e);
@@ -137,8 +135,7 @@ public class QueryTraverser implements Traverser {
       }
     } else {
       try {
-        LOGGER.fine("RESUME TRAVERSAL: Resuming traversal for connector "
-            + connectorName + " from checkpoint " + connectorState);
+        LOGGER.finer("Resuming traversal...");
         resultSet = queryTraversalManager.resumeTraversal(connectorState);
       } catch (Exception e) {
         LOGGER.log(Level.WARNING, "resumeTraversal threw exception: ", e);
@@ -149,8 +146,7 @@ public class QueryTraverser implements Traverser {
     // If the traversal returns null, that means that the repository has
     // no new content to traverse.
     if (resultSet == null) {
-      LOGGER.fine("Result set from connector " + connectorName
-                  + " is NULL, no documents returned for traversal.");
+      LOGGER.finer("Result set is NULL, no documents returned for traversal.");
       return new BatchResult(TraversalDelayPolicy.POLL, 0);
     }
 
@@ -161,10 +157,10 @@ public class QueryTraverser implements Traverser {
       // Get a Pusher for feeding the returned Documents.
       pusher = pusherFactory.newPusher(connectorName);
 
-      while (true) {
+      while (counter < batchSize.getMaximum()) {
         if (Thread.currentThread().isInterrupted() || isCancelled()) {
           LOGGER.fine("Traversal for connector " + connectorName
-                      + " has been interrupted; breaking out of batch run.");
+                      + " has been interrupted...breaking out of batch run.");
           break;
         }
         if (clock.getTimeMillis() >= timeoutTime) {
@@ -193,11 +189,11 @@ public class QueryTraverser implements Traverser {
               docid = Value.getSingleValueString(nextDocument,
                                                  SpiConstants.PROPNAME_DOCID);
             } catch (IllegalArgumentException e1) {
-                LOGGER.finer("Unable to get document id for document ("
-                             + nextDocument + "): " + e1.getMessage());
+                LOGGER.fine("Unable to get document id for document ("
+                            + nextDocument + "): " + e1.getMessage());
             } catch (RepositoryException e1) {
-                LOGGER.finer("Unable to get document id for document ("
-                             + nextDocument + "): " + e1.getMessage());
+                LOGGER.fine("Unable to get document id for document ("
+                            + nextDocument + "): " + e1.getMessage());
             }
           }
           LOGGER.finer("Sending document (" + docid + ") from connector "
@@ -298,8 +294,7 @@ public class QueryTraverser implements Traverser {
 
   private String checkpointAndSave(DocumentList pm) {
     String connectorState = null;
-    LOGGER.fine("CHECKPOINT: Generating checkpoint for connector "
-                + connectorName);
+    LOGGER.finest("Checkpointing for connector " + connectorName + " ...");
     try {
       connectorState = pm.checkpoint();
     } catch (RepositoryException re) {
@@ -319,14 +314,14 @@ public class QueryTraverser implements Traverser {
         } else {
           throw new IllegalStateException("null TraversalStateStore");
         }
-        LOGGER.fine("CHECKPOINT: " + connectorState);
+        LOGGER.finest("...checkpoint " + connectorState + " created.");
       }
       return connectorState;
     } catch (IllegalStateException ise) {
       // We get here if the store for the connector is disabled.
       // That happens if the connector was deleted while we were working.
       // Our connector seems to have been deleted.  Don't save a checkpoint.
-      LOGGER.fine("Checkpoint discarded: " + connectorState);
+      LOGGER.finest("...checkpoint " + connectorState + " discarded.");
     }
     return null;
   }

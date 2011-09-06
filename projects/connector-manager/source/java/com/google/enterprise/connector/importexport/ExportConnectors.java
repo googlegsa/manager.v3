@@ -73,8 +73,9 @@ public class ExportConnectors {
           persistentStore.getConnectorConfiguration(storeContext);
       if (config != null) {
         // Encrypt sensitive properties before including them in the output.
-        config = new Configuration(encryptSensitiveProperties(config.getMap()),
-                                   config);
+        config = new Configuration(config.getTypeName(),
+            encryptSensitiveProperties(config.getMap()), config.getXml());
+
         // Try to determine the connector version.
         String typeVersion = null;
         if (manager != null) {

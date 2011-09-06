@@ -41,9 +41,10 @@ public class SetSchedule extends ConnectorManagerServlet {
   @Override
   protected void processDoPost(
       String xmlBody, Manager manager, PrintWriter out) {
-    NDC.append("Config");
+    NDC.push("Config");
     ConnectorMessageCode status = handleDoPost(xmlBody, manager);
     ServletUtil.writeResponse(out, status);
+    NDC.pop();
   }
 
   /**
@@ -65,14 +66,14 @@ public class SetSchedule extends ConnectorManagerServlet {
     String connectorName = XmlParseUtil.getFirstElementByTagName(
         root, ServletUtil.XMLTAG_CONNECTOR_NAME);
 
-    NDC.append(connectorName);
+    NDC.pushAppend(connectorName);
 
     // TODO: Remove this when the GSA enforces lowercase connector names.
     // Until then, this hack tries to determine if we are setting the
     // schedule for a newly created connector or an existing connector.
     if (!connectorName.equals(connectorName.toLowerCase())) {
       try {
-        manager.getConnectorConfiguration(connectorName);
+        manager.getConnectorConfig(connectorName);
       } catch (ConnectorNotFoundException e) {
         connectorName = connectorName.toLowerCase();
       }
@@ -105,6 +106,7 @@ public class SetSchedule extends ConnectorManagerServlet {
       LOGGER.log(Level.WARNING, ServletUtil.LOG_EXCEPTION_PERSISTENT_STORE, e);
     }
 
+    NDC.pop();
     return status;
   }
 }

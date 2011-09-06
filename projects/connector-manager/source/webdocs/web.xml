@@ -73,15 +73,6 @@
     </description>
   </context-param>
 
-  <!-- Set up the Servlet Logging Filter -->
-  <filter>
-    <filter-name>ServletLoggingFilter</filter-name>
-    <filter-class>com.google.enterprise.connector.servlet.ServletLoggingFilter</filter-class>
-  </filter>
-  <filter-mapping>
-    <filter-name>ServletLoggingFilter</filter-name>
-    <url-pattern>/*</url-pattern>
-  </filter-mapping>
 
   <!-- Define servlets that are included in the Connector Manager application -->
 
@@ -201,11 +192,6 @@
   <servlet>
     <servlet-name>RemoveConnector</servlet-name>
     <servlet-class>com.google.enterprise.connector.servlet.RemoveConnector</servlet-class>
-  </servlet>
-
-  <servlet>
-    <servlet-name>GetDocumentContent</servlet-name>
-    <servlet-class>com.google.enterprise.connector.servlet.GetDocumentContent</servlet-class>
   </servlet>
 
   <!-- Define servlet mappings -->
@@ -349,11 +335,6 @@
   <servlet-mapping>
     <servlet-name>RemoveConnector</servlet-name>
     <url-pattern>/removeConnector</url-pattern>
-  </servlet-mapping>
-
-  <servlet-mapping>
-    <servlet-name>GetDocumentContent</servlet-name>
-    <url-pattern>/getDocumentContent</url-pattern>
   </servlet-mapping>
 
 </web-app>

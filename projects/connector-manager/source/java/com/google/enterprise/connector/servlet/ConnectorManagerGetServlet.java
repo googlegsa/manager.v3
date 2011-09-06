@@ -14,8 +14,6 @@
 
 package com.google.enterprise.connector.servlet;
 
-import com.google.enterprise.connector.common.SecurityUtils;
-import com.google.enterprise.connector.instantiator.ExtendedConfigureResponse;
 import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.manager.Manager;
@@ -23,7 +21,6 @@ import com.google.enterprise.connector.spi.ConfigureResponse;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.servlet.http.HttpServlet;
@@ -73,7 +70,7 @@ public abstract class ConnectorManagerGetServlet extends HttpServlet {
     res.setCharacterEncoding("UTF-8");
     PrintWriter out = res.getWriter();
     String connectorName = req.getParameter(ServletUtil.XMLTAG_CONNECTOR_NAME);
-    NDC.pushAppend("Config " + connectorName);
+    NDC.push("Config " + connectorName);
     try {
       if (connectorName == null || connectorName.length() < 1) {
         ServletUtil.writeResponse(out, new ConnectorMessageCode(
@@ -92,7 +89,7 @@ public abstract class ConnectorManagerGetServlet extends HttpServlet {
       processDoGet(connectorName, lang, manager, out);
     } finally {
       out.close();
-      NDC.pop();
+      NDC.clear();
     }
   }
 
@@ -127,21 +124,6 @@ public abstract class ConnectorManagerGetServlet extends HttpServlet {
   public static void writeConfigureResponse(PrintWriter out,
       ConnectorMessageCode status, ConfigureResponse configRes,
       boolean doObfuscate) {
-    if (configRes != null && LOGGER.isLoggable(Level.FINEST)) {
-      LOGGER.finest("CONFIGURE RESPONSE: message = " + configRes.getMessage());
-      // TODO: Add a separate logger for formSnippet (since they are huge).
-      LOGGER.finest("CONFIGURE RESPONSE: formSnippet = "
-          + ((configRes.getFormSnippet() == null) ? "null" : "[...]"
-             // ServletUtil.filterSensitiveData(configRes.getFormSnippet())
-             ));
-      LOGGER.finest("CONFIGURE RESPONSE: configData = "
-          + SecurityUtils.getMaskedMap(configRes.getConfigData()));
-      if (configRes instanceof ExtendedConfigureResponse) {
-        LOGGER.finest("CONFIGURE RESPONSE: configXML = "
-            + ((ExtendedConfigureResponse) configRes).getConfigXml());
-      }
-    }
-
     ServletUtil.writeRootTag(out, false);
     // Have to check the configRes for a well formed HTML snippet before
     // committing to given status.
@@ -174,19 +156,7 @@ public abstract class ConnectorManagerGetServlet extends HttpServlet {
       if (formSnippet != null) {
         ServletUtil.writeXMLElement(
             out, 2, ServletUtil.XMLTAG_FORM_SNIPPET,
-            ServletUtil.XML_CDATA_START + formSnippet
-            + ServletUtil.XML_CDATA_END);
-      }
-      if (configRes instanceof ExtendedConfigureResponse) {
-        String configXml =
-            ((ExtendedConfigureResponse) configRes).getConfigXml();
-        if (configXml != null) {
-          ServletUtil.writeXMLElement(
-              out, 2, ServletUtil.XMLTAG_CONNECTOR_CONFIG_XML,
-              ServletUtil.XML_CDATA_START
-              + ServletUtil.escapeEndMarkers(configXml)
-              + ServletUtil.XML_CDATA_END);
-        }
+            "<![CDATA[" + formSnippet + "]]>");
       }
       if (configRes.getMessage() != null &&
           configRes.getMessage().length() > 0) {

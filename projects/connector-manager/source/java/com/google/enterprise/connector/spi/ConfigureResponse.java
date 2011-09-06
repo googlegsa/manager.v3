@@ -44,7 +44,10 @@ public class ConfigureResponse {
    *        a CDATA section.
    */
   public ConfigureResponse(String message, String formSnippet) {
-    this(message, formSnippet, null);
+    super();
+    this.message = message;
+    this.formSnippet = formSnippet;
+    this.configData = null;
   }
 
   /**

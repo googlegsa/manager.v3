@@ -32,7 +32,7 @@ import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
-import com.google.enterprise.connector.util.testing.AdjustableClock;
+import com.google.enterprise.connector.util.SystemClock;
 import com.google.enterprise.connector.database.DocumentStore;
 
 import junit.framework.TestCase;
@@ -47,12 +47,6 @@ import javax.jcr.query.QueryManager;
  * Tests for {@link com.google.enterprise.connector.traversal.QueryTraverser}.
  */
 public class QueryTraverserTest extends TestCase {
-  AdjustableClock clock;
-
-  @Override
-  protected void setUp() throws Exception {
-    clock = new AdjustableClock();
-  }
 
   /**
    * Test method for
@@ -67,8 +61,13 @@ public class QueryTraverserTest extends TestCase {
     runTestBatches(5);
   }
 
-  private void runTestBatches(int batchHint) {
-    ThreadPool threadPool = new ThreadPool(5, clock);
+  private void runTestBatches(int batchSize) {
+    runTestBatches(batchSize, batchSize);
+  }
+
+  private void runTestBatches(int batchHint, int batchMax) {
+    ThreadPool threadPool = new ThreadPool(5,
+        new SystemClock() /* TODO: use mock clock? */);
     MockInstantiator instantiator = new MockInstantiator(threadPool);
     try {
       MockRepositoryEventList mrel =
@@ -77,8 +76,8 @@ public class QueryTraverserTest extends TestCase {
       Traverser traverser = createTraverser(mrel, connectorName, instantiator);
 
       System.out.println();
-      BatchSize batchSize = new BatchSize(batchHint);
-      System.out.println("Running batch test batchsize " + batchHint);
+      BatchSize batchSize = new BatchSize(batchHint, batchMax);
+      System.out.println("Running batch test batchsize " + batchSize);
 
       int totalDocsProcessed = 0;
       int batchNumber = 0;
@@ -120,7 +119,8 @@ public class QueryTraverserTest extends TestCase {
 
     Traverser traverser = new QueryTraverser(new MockPusher(System.out), qtm,
         instantiator.getTraversalStateStore(connectorName), connectorName,
-        Context.getInstance().getTraversalContext(), clock, null);
+        Context.getInstance().getTraversalContext(),
+        new SystemClock() /* TODO: use a mock clock? */, null);
 
     instantiator.setupTraverser(connectorName, traverser);
     return traverser;
@@ -139,7 +139,7 @@ public class QueryTraverserTest extends TestCase {
     if (!largeFile.exists()) {
       byte[] text = "abcdefghijklmnopqrstuvwxyz\n".getBytes();
       FileOutputStream os = new FileOutputStream(largeFile);
-      for (int i = 0; i < 100000; i++) {
+      for (int i = 0; i < 1000000; i++) {
         os.write(text);
       }
       os.close();
@@ -158,7 +158,8 @@ public class QueryTraverserTest extends TestCase {
       fail("Unable to initialize largefile.txt: " + e.toString());
     }
 
-    ThreadPool threadPool = new ThreadPool(5, clock);
+    ThreadPool threadPool = new ThreadPool(5,
+        new SystemClock() /* TODO: use mock clock? */);
     MockInstantiator instantiator = new MockInstantiator(threadPool);
     try {
       MockRepositoryEventList mrel =
@@ -166,7 +167,7 @@ public class QueryTraverserTest extends TestCase {
       String connectorName = "foo";
       Traverser traverser = createTraverser(mrel, connectorName, instantiator);
       int docsProcessed = 0;
-      BatchSize batchSize = new BatchSize(1);
+      BatchSize batchSize = new BatchSize(1, 1);
       do {
         docsProcessed = traverser.runBatch(batchSize).getCountProcessed();
       } while (docsProcessed > 0);
@@ -184,9 +185,10 @@ public class QueryTraverserTest extends TestCase {
     ProductionTraversalContext context = new ProductionTraversalContext();
     context.setTraversalTimeLimitSeconds(1);
     QueryTraverser queryTraverser = new QueryTraverser(pusher, traversalManager,
-        stateStore, CONNECTOR_NAME, context, clock, null);
+        stateStore, CONNECTOR_NAME, context,
+        new SystemClock() /* TODO: use a mock clock */, null);
 
-    BatchResult result = queryTraverser.runBatch(new BatchSize(100));
+    BatchResult result = queryTraverser.runBatch(new BatchSize(100, 100));
     assertTrue(result.getCountProcessed() > 0);
     assertEquals(traversalManager.getDocumentCount(),
         result.getCountProcessed());
@@ -198,15 +200,15 @@ public class QueryTraverserTest extends TestCase {
   public void testBatchSize() {
     final String CONNECTOR_NAME = "barney_rubble";
     ValidatingPusher pusher = new ValidatingPusher(CONNECTOR_NAME);
-    LargeDocumentlistTraversalManager traversalManager =
-        new LargeDocumentlistTraversalManager(10);
+    NeverEndingDocumentlistTraversalManager traversalManager =
+        new NeverEndingDocumentlistTraversalManager(10);
     TraversalStateStore stateStore = new RecordingTraversalStateStore();
     ProductionTraversalContext context = new ProductionTraversalContext();
     context.setTraversalTimeLimitSeconds(1);
     QueryTraverser queryTraverser = new QueryTraverser(pusher, traversalManager,
-        stateStore, CONNECTOR_NAME, context, clock, null);
+        stateStore, CONNECTOR_NAME, context, new SystemClock(), null);
 
-    BatchResult result = queryTraverser.runBatch(new BatchSize(10));
+    BatchResult result = queryTraverser.runBatch(new BatchSize(10, 20));
     assertTrue(result.getCountProcessed() > 10);
     assertTrue(result.getCountProcessed() <= 20);
 
@@ -220,14 +222,13 @@ public class QueryTraverserTest extends TestCase {
   /**
    * A {@link TraversalManager} for a {@link NeverEndingDocumentList}.
    */
-  private class NeverEndingDocumentlistTraversalManager implements
+  private static class NeverEndingDocumentlistTraversalManager implements
       TraversalManager {
-    private int docMillis;
     private long documentCount;
-    protected DocumentList documentList;
+    private final DocumentList documentList;
 
     public NeverEndingDocumentlistTraversalManager(int docMillis) {
-      this.docMillis = docMillis;
+      this.documentList = new NeverEndingDocumentList(docMillis, this);
     }
 
     public DocumentList resumeTraversal(String checkPoint) {
@@ -239,12 +240,10 @@ public class QueryTraverserTest extends TestCase {
     }
 
     public DocumentList startTraversal() {
-      return new NeverEndingDocumentList(this);
+      return documentList;
     }
 
-    // Return a new document every {@code docMillis} milliseconds.
     synchronized Document newDocument() {
-      clock.adjustTime(docMillis);
       String id = Long.toString(documentCount++);
       return ConnectorTestUtils.createSimpleDocument(id);
     }
@@ -255,14 +254,16 @@ public class QueryTraverserTest extends TestCase {
   }
 
   /**
-   * {@link DocumentList} that never runs out of documents -
-   * returning new documents until interrupted.
+   * {@link DocumentList} that returns a new document every {@code docMillis}
+   * milliseconds until interrupted.
    */
-  private class NeverEndingDocumentList implements DocumentList {
+  private static class NeverEndingDocumentList implements DocumentList {
     private final NeverEndingDocumentlistTraversalManager traversalManager;
+    private final int docMillis;
 
-    public NeverEndingDocumentList(
+    public NeverEndingDocumentList(int docMillis,
         NeverEndingDocumentlistTraversalManager traversalManager) {
+      this.docMillis = docMillis;
       this.traversalManager = traversalManager;
     }
 
@@ -274,59 +275,16 @@ public class QueryTraverserTest extends TestCase {
      * Returns a new {@link Document} with an
      * SpiConstants.PROPNAME_DOCID property set to the number
      * previously returned.
+     *
+     * @throws RepositoryException interrupted while sleeping.
      */
     public Document nextDocument() throws RepositoryException {
-      return traversalManager.newDocument();
-    }
-  }
-
-  /**
-   * A {@link TraversalManager} for a {@link LargeDocumentList}.
-   */
-  private class LargeDocumentlistTraversalManager extends
-      NeverEndingDocumentlistTraversalManager {
-    private int batchHint;
-
-    public LargeDocumentlistTraversalManager(int docMillis) {
-      super(docMillis);
-    }
-
-    @Override
-    public void setBatchHint(int batchHint) {
-      this.batchHint = batchHint;
-    }
-
-    synchronized int getBatchHint() {
-      return batchHint;
-    }
-
-    @Override
-    public DocumentList startTraversal() {
-      return new LargeDocumentList(this);
-    }
-  }
-
-  /**
-   * {@link DocumentList} that returns twice the batchHint
-   * number of documents.
-   */
-  private class LargeDocumentList extends NeverEndingDocumentList {
-    private final LargeDocumentlistTraversalManager traversalManager;
-
-    public LargeDocumentList(
-          LargeDocumentlistTraversalManager traversalManager) {
-      super(traversalManager);
-      this.traversalManager = traversalManager;
-    }
-
-    @Override
-    public Document nextDocument() throws RepositoryException {
-      if (traversalManager.getDocumentCount() <
-          2 * traversalManager.getBatchHint()) {
-        return super.nextDocument();
-      } else {
-        return null;
+      try {
+        Thread.sleep(docMillis);
+      } catch (InterruptedException ie) {
+        throw new RepositoryException("Unexpected interrupt", ie);
       }
+      return traversalManager.newDocument();
     }
   }
 

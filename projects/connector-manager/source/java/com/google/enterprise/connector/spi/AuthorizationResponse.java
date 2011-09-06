@@ -19,7 +19,7 @@ package com.google.enterprise.connector.spi;
  * {@link AuthorizationManager#authorizeDocids
  * AuthorizationManager.authorizeDocids} method.
  */
-public class AuthorizationResponse implements Comparable {
+public class AuthorizationResponse {
 
   /**
    * Authorization Status codes.
@@ -106,11 +106,6 @@ public class AuthorizationResponse implements Comparable {
     return status;
   }
 
-  @Override
-  public String toString() {
-    return "{ status = " + status + ", docid = " + docid + " }";
-  }
-
   /**
    * Returns a hash code value for the object.
    *
@@ -159,37 +154,5 @@ public class AuthorizationResponse implements Comparable {
       return false;
     }
     return true;
-  }
-
-  /**
-   * Comparable for testing.
-   */
-  /* @Override */
-  public int compareTo(Object obj) {
-    if (this == obj) {
-      return 0;
-    }
-    if (obj == null) {
-      return 1;
-    }
-    if (getClass() != obj.getClass()) {
-      return 1;
-    }
-    AuthorizationResponse other = (AuthorizationResponse) obj;
-    if (docid == null && other.docid != null) {
-      return -1;
-    }
-    int result = docid.compareTo(other.docid);
-    if (result != 0) {
-      return result;
-    }
-    if (!status.equals(other.status)) {
-      switch (status) {
-      case DENY: return 1;
-      case PERMIT: return (other.status == Status.DENY) ? -1 : 1;
-      case INDETERMINATE: return -1;
-      }
-    }
-    return result;
   }
 }

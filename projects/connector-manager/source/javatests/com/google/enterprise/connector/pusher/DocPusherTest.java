@@ -74,7 +74,6 @@ import javax.jcr.query.QueryManager;
 public class DocPusherTest extends TestCase {
   private FileSizeLimitInfo fsli;
   private DocumentFilterChain dfc;
-  private String contentUrlPrefix;
 
   @Override
   protected void setUp() throws Exception {
@@ -85,9 +84,6 @@ public class DocPusherTest extends TestCase {
 
     // Set up an empty filter document chain.
     dfc = new DocumentFilterChain();
-
-    // A distinct contentUrlPrefix.
-    contentUrlPrefix = "http://contentUrlPrefix";
 
     // We're comparing date strings here, so we need a fixed time zone.
     Value.setFeedTimeZone("GMT");
@@ -378,7 +374,7 @@ public class DocPusherTest extends TestCase {
     TraversalManager qtm = new JcrTraversalManager(qm);
 
     MockFeedConnection feedConnection = new MockFeedConnection();
-    DocPusher dpusher = new DocPusher(feedConnection, "junit", fsli, dfc, null);
+    DocPusher dpusher = new DocPusher(feedConnection, "junit", fsli, dfc);
     DocumentList documentList = qtm.startTraversal();
 
     Document document = null;
@@ -458,8 +454,7 @@ public class DocPusherTest extends TestCase {
     while ((document = documentList.nextDocument()) != null) {
       System.out.println("Test " + i + " output");
       Assert.assertFalse(i == expectedXml.length);
-      DocPusher dpusher =
-          new DocPusher(feedConnection, "junit", fsli, dfc, null);
+      DocPusher dpusher = new DocPusher(feedConnection, "junit", fsli, dfc);
       dpusher.take(document, null);
       dpusher.flush();
       System.out.println("Test " + i + " assertions");
@@ -646,17 +641,11 @@ public class DocPusherTest extends TestCase {
         + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
         + "}\r\n" + "";
     String json2 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
-        + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
-        + ",\"google:searchurl\":\"http://www.sometesturl.com/docid\""
-        + ",\"google:feedtype\":\"CONTENT\""
-        + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
-        + "}\r\n" + "";
-    String json3 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
-        + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
-        + ",\"google:searchurl\":\"http://www.sometesturl.com/docid\""
-        + ",\"google:feedtype\":\"CONTENTURL\""
-        + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
-        + "}\r\n" + "";
+      + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
+      + ",\"google:searchurl\":\"http://www.sometesturl.com/docid\""
+      + ",\"google:feedtype\":\"CONTENT\""
+      + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
+      + "}\r\n" + "";
 
     // Web feed with searchurl.
     String resultXML = feedJsonEvent(json1);
@@ -677,16 +666,6 @@ public class DocPusherTest extends TestCase {
         resultXML);
     assertStringContains("<feedtype>incremental</feedtype>", resultXML);
     assertStringContains("<content encoding=\"base64binary\">", resultXML);
-
-    // ContentURL feed with searchurl.
-    resultXML = feedJsonEvent(json3);
-
-    assertStringNotContains("googleconnector://", resultXML);
-    assertStringContains("url=\"http://www.sometesturl.com/docid\"", resultXML);
-    assertStringContains("displayurl=\"http://www.sometesturl.com/test\"",
-        resultXML);
-    assertStringContains("<feedtype>metadata-and-url</feedtype>", resultXML);
-    assertStringNotContains("<content encoding=\"base64binary\">", resultXML);
   }
 
   /**
@@ -739,63 +718,6 @@ public class DocPusherTest extends TestCase {
     assertStringContains("<feedtype>incremental</feedtype>", resultXML);
     assertStringContains("<content encoding=\"base64binary\">", resultXML);
     assertStringContains("IA==", resultXML);
-  }
-
-  /**
-   * Test contentUrl.
-   */
-  public void testContentUrl() throws Exception {
-    String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
-      + ",\"author\":\"ziff\""
-      + ",\"google:feedtype\":\"CONTENTURL\""
-      + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
-      + "}\r\n" + "";
-
-    String json2 = "{\"timestamp\":\"10\",\"docid\":\"doc1&evil/value\""
-      + ",\"author\":\"ziff\""
-      + ",\"google:feedtype\":\"CONTENTURL\""
-      + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
-      + "}\r\n" + "";
-
-    // ContentURL feed.
-    String resultXML = feedJsonEvent(json1);
-    assertStringContains("url=\"" + contentUrlPrefix + "?"
-        + ServletUtil.XMLTAG_CONNECTOR_NAME + "=junit&amp;"
-        + ServletUtil.QUERY_PARAM_DOCID + "=doc1\"", resultXML);
-    assertStringContains("displayurl=\"http://www.sometesturl.com/test\"",
-        resultXML);
-    assertStringContains("<feedtype>metadata-and-url</feedtype>", resultXML);
-    assertStringNotContains("<content encoding=\"base64binary\">", resultXML);
-
-    // ContentURL feed - docid has special chars (Issue 214 regression).
-    resultXML = feedJsonEvent(json2);
-    assertStringContains("url=\"" + contentUrlPrefix + "?"
-        + ServletUtil.XMLTAG_CONNECTOR_NAME + "=junit&amp;"
-        + ServletUtil.QUERY_PARAM_DOCID + "=doc1%26evil%2Fvalue\"", resultXML);
-    assertStringContains("displayurl=\"http://www.sometesturl.com/test\"",
-        resultXML);
-    assertStringContains("<feedtype>metadata-and-url</feedtype>", resultXML);
-    assertStringNotContains("<content encoding=\"base64binary\">", resultXML);
-
-    // Test unset contentUrlPrefix.
-    contentUrlPrefix = null;
-    try {
-      resultXML = feedJsonEvent(json1);
-      fail("Expected RepositoryDocumentException");
-    } catch (RepositoryDocumentException expected) {
-      assertEquals("contentUrlPrefix must not be null or empty",
-                   expected.getMessage());
-    }
-
-    // Test empty contentUrlPrefix.
-    contentUrlPrefix = "";
-    try {
-      resultXML = feedJsonEvent(json1);
-      fail("Expected RepositoryDocumentException");
-    } catch (RepositoryDocumentException expected) {
-      assertEquals("contentUrlPrefix must not be null or empty",
-                   expected.getMessage());
-    }
   }
 
   /**
@@ -1233,8 +1155,7 @@ public class DocPusherTest extends TestCase {
   private String feedDocument(Document document,
       DocumentFilterFactory dff) throws Exception {
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
-    DocPusher dpusher =
-        new DocPusher(mockFeedConnection, "junit", fsli, dff, contentUrlPrefix);
+    DocPusher dpusher = new DocPusher(mockFeedConnection, "junit", fsli, dff);
     dpusher.take(document, null);
     dpusher.flush();
     return mockFeedConnection.getFeed();
@@ -1266,8 +1187,7 @@ public class DocPusherTest extends TestCase {
 
       // Setup the DocPusher.
       MockFeedConnection mockFeedConnection = new MockFeedConnection();
-      DocPusher dpusher =
-          new DocPusher(mockFeedConnection, "junit", fsli, dfc, null);
+      DocPusher dpusher = new DocPusher(mockFeedConnection, "junit", fsli, dfc);
       Document document;
       String resultXML;
 
@@ -1284,7 +1204,7 @@ public class DocPusherTest extends TestCase {
       assertFeedInLog(resultXML, TEST_LOG_FILE);
 
       // Test metadata-url feed with content.
-      dpusher = new DocPusher(mockFeedConnection, "junit", fsli, dfc, null);
+      dpusher = new DocPusher(mockFeedConnection, "junit", fsli, dfc);
       final String jsonMetaAndUrl =
           "{\"timestamp\":\"10\",\"docid\":\"doc2\""
               + ",\"content\":\"now is the time\""
@@ -1298,7 +1218,7 @@ public class DocPusherTest extends TestCase {
       assertFeedInLog(resultXML, TEST_LOG_FILE);
 
       // Test MSWord Document.
-      dpusher = new DocPusher(mockFeedConnection, "junit", fsli, dfc, null);
+      dpusher = new DocPusher(mockFeedConnection, "junit", fsli, dfc);
       final String jsonMsWord =
           "{\"timestamp\":\"10\",\"docid\":\"msword\""
               + ",\"google:mimetype\":\"application/msword\""
@@ -1439,15 +1359,14 @@ public class DocPusherTest extends TestCase {
     try {
       // Create DocPusher and send feed.
       MockFeedConnection mockFeedConnection = new MockFeedConnection();
-      DocPusher dpusher =
-          new DocPusher(mockFeedConnection, "junit", fsli, dfc, null);
+      DocPusher dpusher = new DocPusher(mockFeedConnection, "junit", fsli, dfc);
       dpusher.take(document, null);
       dpusher.flush();
       String resultXML = mockFeedConnection.getFeed();
       assertFeedTeed(resultXML, tffName);
 
       // Now send the feed again and compare with existing teed feed file.
-      dpusher = new DocPusher(mockFeedConnection, "junit", fsli, dfc, null);
+      dpusher = new DocPusher(mockFeedConnection, "junit", fsli, dfc);
       dpusher.take(document, null);
       dpusher.flush();
       String secondResultXML = mockFeedConnection.getFeed();
@@ -2240,8 +2159,7 @@ public class DocPusherTest extends TestCase {
     FileSizeLimitInfo limit = new FileSizeLimitInfo();
     limit.setMaxDocumentSize(1024 * 1024); // 1 MB
     limit.setMaxFeedSize(64 * 1024); // 64 KB
-    DocPusher dpusher =
-        new DocPusher(mockFeedConnection, "junit", limit, dfc, null);
+    DocPusher dpusher = new DocPusher(mockFeedConnection, "junit", limit, dfc);
     dpusher.take(document, null);
     dpusher.flush();
     return mockFeedConnection.getFeed();
@@ -2366,8 +2284,7 @@ public class DocPusherTest extends TestCase {
     Document document = getTestDocument();
     try {
       FeedConnection badFeedConnection = new BadFeedConnection1();
-      DocPusher dpusher =
-          new DocPusher(badFeedConnection, "junit", fsli, dfc, null);
+      DocPusher dpusher = new DocPusher(badFeedConnection, "junit", fsli, dfc);
       dpusher.take(document, null);
       dpusher.flush();
       fail("Expected FeedException, but got none.");
@@ -2386,8 +2303,7 @@ public class DocPusherTest extends TestCase {
     Document document = getTestDocument();
     try {
       FeedConnection badFeedConnection = new BadFeedConnection2();
-      DocPusher dpusher =
-          new DocPusher(badFeedConnection, "junit", fsli, dfc, null);
+      DocPusher dpusher = new DocPusher(badFeedConnection, "junit", fsli, dfc);
       dpusher.take(document, null);
       dpusher.flush();
       fail("Expected PushException, but got none.");
@@ -2410,11 +2326,10 @@ public class DocPusherTest extends TestCase {
     limit.setMaxFeedSize(32);
     limit.setMaxDocumentSize(64 * 1024);
 
-    // SlowFeedConnection waits 5 secs before transmission, allowing feeds
+    // SlowFeedConnection waits 10 secs before transmission, allowing feeds
     // to back up on this end of the connection.
     SlowFeedConnection slowFeedConnection = new SlowFeedConnection();
-    DocPusher dpusher =
-        new DocPusher(slowFeedConnection, "junit", limit, dfc, null);
+    DocPusher dpusher = new DocPusher(slowFeedConnection, "junit", limit, dfc);
     int count;
     for (count = 0; dpusher.take(document, null) && count < 30; count++) ;
     assertTrue(count >= 10); // Min. 10 feeds must be waiting to be a backlog.
@@ -2435,8 +2350,7 @@ public class DocPusherTest extends TestCase {
     limit.setMaxFeedSize(32);
     limit.setMaxDocumentSize(64 * 1024);
 
-    DocPusher dpusher =
-        new DocPusher(backlogFeedConnection, "junit", limit, dfc, null);
+    DocPusher dpusher = new DocPusher(backlogFeedConnection, "junit", limit, dfc);
     assertTrue(dpusher.take(document, null));
     backlogFeedConnection.setBacklogged(true);
     assertFalse(dpusher.take(document, null));
@@ -2459,8 +2373,7 @@ public class DocPusherTest extends TestCase {
 
     // If plenty of memory is available, DocPusher should indicate it is
     // OK to feed more (return true).
-    DocPusher dpusher =
-        new DocPusher(feedConnection, "junit", limit, dfc, null);
+    DocPusher dpusher = new DocPusher(feedConnection, "junit", limit, dfc);
     assertTrue(dpusher.take(document, null));
     dpusher.flush();
   }
@@ -2474,19 +2387,16 @@ public class DocPusherTest extends TestCase {
 
     Runtime rt = Runtime.getRuntime();
     rt.gc();
-    long memAvailable = rt.maxMemory() - (rt.totalMemory() - rt.freeMemory());
+    long freeMemory = rt.maxMemory() - (rt.totalMemory() - rt.freeMemory());
 
     FileSizeLimitInfo limit = new FileSizeLimitInfo();
-    // With these limits, the largest possible feed will be about 7/12 of
-    // available memory - there should not be room for a second one.
-    limit.setMaxDocumentSize(memAvailable/4);
-    limit.setMaxFeedSize(memAvailable/3);
+    limit.setMaxDocumentSize(freeMemory/4);
+    limit.setMaxFeedSize(freeMemory/4);
 
-    DocPusher dpusher =
-        new DocPusher(feedConnection, "junit", limit, dfc, null);
+    DocPusher dpusher = new DocPusher(feedConnection, "junit", limit, dfc);
     Map<String, Object> config = getTestDocumentConfig();
     config.put(SpiConstants.PROPNAME_CONTENT,
-               new HugeInputStream(limit.maxDocumentSize() - 10));
+               new HugeInputStream(freeMemory/4 - 10));
     Document bigDocument = ConnectorTestUtils.createSimpleDocument(config);
     boolean result = dpusher.take(bigDocument, null);
     assertFalse(result);
@@ -2542,7 +2452,7 @@ public class DocPusherTest extends TestCase {
    */
   private static class SlowFeedConnection extends MockFeedConnection {
     static Clock clock = new SystemClock(); // TODO: rewrite this to use a mock clock.
-    static long doneTime = clock.getTimeMillis() + 5000;
+    static long doneTime = clock.getTimeMillis() + 10000;
     @Override
     public String sendData(FeedData feedData)
         throws RepositoryException {

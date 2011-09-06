@@ -16,7 +16,6 @@ package com.google.enterprise.connector.instantiator;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.enterprise.connector.common.ScheduledTimer;
-import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
@@ -25,11 +24,7 @@ import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.ConnectorType;
-import com.google.enterprise.connector.spi.Retriever;
 
-import org.springframework.core.io.Resource;
-
-import java.io.IOException;
 import java.util.Locale;
 import java.util.Set;
 import java.util.logging.Level;
@@ -189,12 +184,6 @@ public class SpringInstantiator implements Instantiator {
   }
 
   /* @Override */
-  public Retriever getRetriever(String connectorName)
-      throws ConnectorNotFoundException, InstantiatorException {
-    return getConnectorCoordinator(connectorName).getRetriever();
-  }
-
-  /* @Override */
   public ConfigureResponse getConfigFormForConnector(String connectorName,
       String connectorTypeName, Locale locale)
       throws ConnectorNotFoundException, InstantiatorException {
@@ -202,17 +191,8 @@ public class SpringInstantiator implements Instantiator {
   }
 
   /* @Override */
-  public String getConnectorInstancePrototype(String connectorTypeName)
-      throws ConnectorTypeNotFoundException {
-    Resource resource = typeMap.getTypeInfo(connectorTypeName)
-                        .getConnectorInstancePrototype();
-    try {
-      return StringUtils.streamToStringAndThrow(resource.getInputStream());
-    } catch (IOException ioe) {
-        LOGGER.log(Level.WARNING, "Failed to extract connectorInstance.xml "
-            + " for connector " + connectorTypeName, ioe);
-    }
-    return null;
+  public String getConnectorInstancePrototype(String connectorTypeName) {
+    throw new UnsupportedOperationException();
   }
 
   /* @Override */

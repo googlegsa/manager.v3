@@ -199,23 +199,6 @@ public class Context {
       + " For example:\n"
       + "   feed.document.size.limit=31457280\n"
       + "\n"
-      + " The 'feed.contenturl.prefix' property is used for contentUrl\n"
-      + " generation. The prefix should include protocol, host and port,\n"
-      + " web app, and servlet to point back at this Connector Manager\n"
-      + " instance.\n"
-      + " For example:\n"
-      + " http://localhost:8080/connector-manager/getDocumentContent\n"
-      + "\n"
-      + " The 'feed.contenturl.compression' property is used for content URL\n"
-      + " feed content retrieval.  If 'true', document content retrieved\n"
-      + " using the content URL will be gzip compressed (if the requesting\n"
-      + " client supports compression).  If 'false', content is returned\n"
-      + " uncompressed.  Compression may benefit architectures with slow\n"
-      + " network communications between the GSA and the Connector Manager\n"
-      + " (such as a WAN).  However, use of compression may cause excessive\n"
-      + " CPU load on both the GSA and the Connector Manager.\n"
-      + " The default value is 'false'.\n"
-      + "\n"
       + " The 'feed.backlog.*' properties are used to throttle back the\n"
       + " document feed if the GSA has fallen behind processing outstanding\n"
       + " feed items.  The Connector Manager periodically polls the GSA,\n"
@@ -363,13 +346,6 @@ public class Context {
     LOGGER.config("Traversal and Feeds are "
         + ((feeding) ? "enabled." : "disabled."));
     this.isFeeding = feeding;
-  }
-
-  /**
-   * @return feeding to feed or not to feed
-   */
-  public boolean isFeeding() {
-    return this.isFeeding;
   }
 
   public static Context getInstance() {

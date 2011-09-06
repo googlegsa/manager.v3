@@ -15,7 +15,6 @@
 package com.google.enterprise.connector.servlet;
 
 import com.google.enterprise.connector.logging.NDC;
-import com.google.enterprise.connector.manager.Context;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -49,19 +48,15 @@ public class TestConnectivity extends HttpServlet {
       return;
     }
 
-    // If feeding, check if caller is the configured feed host.
-    boolean reqIsFeedHost = (Context.getInstance().isFeeding()) ?
-      RemoteAddressFilter.getInstance().isFeedHost(req.getRemoteAddr()) : true;
-
     res.setContentType(ServletUtil.MIMETYPE_XML);
     PrintWriter out = res.getWriter();
-    NDC.pushAppend("Support");
+    NDC.push("Support Manager");
     try {
       LOGGER.info("Hello from the TestConnectivity servlet!");
-      handleDoGet(out, reqIsFeedHost);
+      handleDoGet(out);
     } finally {
       out.close();
-      NDC.pop();
+      NDC.clear();
     }
   }
 
@@ -82,14 +77,11 @@ public class TestConnectivity extends HttpServlet {
    * Handler for doGet in order to do unit tests.
    *
    * @param out
-   * @param reqIsFeedHost true if the caller is the Feed Host
    */
-  public static void handleDoGet(PrintWriter out, boolean reqIsFeedHost) {
+  public static void handleDoGet(PrintWriter out) {
     ServletUtil.writeRootTag(out, false);
     ServletUtil.writeManagerSplash(out);
-    ServletUtil.writeStatusCode(out,
-        (reqIsFeedHost) ? ConnectorMessageCode.SUCCESS
-                        : ConnectorMessageCode.REQUESTOR_IS_NOT_FEED_HOST);
+    ServletUtil.writeStatusId(out, ConnectorMessageCode.SUCCESS);
     ServletUtil.writeRootTag(out, true);
   }
 }

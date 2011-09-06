@@ -36,47 +36,29 @@ public class DocUtilsTest extends TestCase {
     // Default to content feed.
     docProps.put(SpiConstants.PROPNAME_DOCID, "doc1");
     Document document = ConnectorTestUtils.createSimpleDocument(docProps);
-    assertEquals(FeedType.CONTENT, DocUtils.getFeedType(document));
+    assertEquals(XmlFeed.XML_FEED_INCREMENTAL, DocUtils.getFeedType(document));
 
     // Now default to web feed.
     docProps.put(SpiConstants.PROPNAME_SEARCHURL, "http://host/doc1.ext");
     document = ConnectorTestUtils.createSimpleDocument(docProps);
-    assertEquals(FeedType.WEB, DocUtils.getFeedType(document));
-
+    assertEquals(XmlFeed.XML_FEED_METADATA_AND_URL,
+        DocUtils.getFeedType(document));
+    
     // Now explicitly set content feed with searchurl.
     docProps.put(SpiConstants.PROPNAME_FEEDTYPE, FeedType.CONTENT.name());
     document = ConnectorTestUtils.createSimpleDocument(docProps);
-    assertEquals(FeedType.CONTENT, DocUtils.getFeedType(document));
+    assertEquals(XmlFeed.XML_FEED_INCREMENTAL, DocUtils.getFeedType(document));
 
     // Now explicitly set web feed.
     docProps.put(SpiConstants.PROPNAME_FEEDTYPE, FeedType.WEB.name());
     document = ConnectorTestUtils.createSimpleDocument(docProps);
-    assertEquals(FeedType.WEB, DocUtils.getFeedType(document));
-
-    // Now explicitly set contenturl feed.
-    docProps.put(SpiConstants.PROPNAME_FEEDTYPE, FeedType.CONTENTURL.name());
-    document = ConnectorTestUtils.createSimpleDocument(docProps);
-    assertEquals(FeedType.CONTENTURL, DocUtils.getFeedType(document));
-
+    assertEquals(XmlFeed.XML_FEED_METADATA_AND_URL,
+        DocUtils.getFeedType(document));
+    
     // Now test illegal value.  Should go with default behavior.
     docProps.put(SpiConstants.PROPNAME_FEEDTYPE, "BOGUS");
     document = ConnectorTestUtils.createSimpleDocument(docProps);
-    assertEquals(FeedType.WEB, DocUtils.getFeedType(document));
-  }
-
-  public void testEnhancedFeedType() throws Exception {
-    // Test FeedType compatibility.
-    assertTrue(FeedType.CONTENT.isCompatible(FeedType.CONTENT));
-    assertFalse(FeedType.CONTENT.isCompatible(FeedType.CONTENTURL));
-    assertFalse(FeedType.CONTENT.isCompatible(FeedType.WEB));
-    assertFalse(FeedType.WEB.isCompatible(FeedType.CONTENT));
-    assertFalse(FeedType.CONTENTURL.isCompatible(FeedType.CONTENT));
-    assertTrue(FeedType.CONTENTURL.isCompatible(FeedType.WEB));
-    assertTrue(FeedType.WEB.isCompatible(FeedType.CONTENTURL));
-
-    // Test FeedType legacy strings.
-    assertEquals("incremental", FeedType.CONTENT.toLegacyString());
-    assertEquals("metadata-and-url", FeedType.WEB.toLegacyString());
-    assertEquals("metadata-and-url", FeedType.CONTENTURL.toLegacyString());
+    assertEquals(XmlFeed.XML_FEED_METADATA_AND_URL,
+        DocUtils.getFeedType(document));
   }
 }

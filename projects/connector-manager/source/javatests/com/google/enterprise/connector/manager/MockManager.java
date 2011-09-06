@@ -15,29 +15,17 @@
 package com.google.enterprise.connector.manager;
 
 import com.google.common.base.Strings;
-import com.google.enterprise.connector.instantiator.Configuration;
-import com.google.enterprise.connector.instantiator.ExtendedConfigureResponse;
-import com.google.enterprise.connector.instantiator.InstantiatorException;
-import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.persist.PersistentStoreException;
 import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
-import com.google.enterprise.connector.spi.AuthorizationResponse;
-import com.google.enterprise.connector.spi.AuthorizationResponse.Status;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.ConnectorType;
-import com.google.enterprise.connector.spi.Document;
-import com.google.enterprise.connector.spi.SpiConstants;
-import com.google.enterprise.connector.test.ConnectorTestUtils;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -60,8 +48,6 @@ public class MockManager implements Manager {
 
   private static final String CONNECTOR1 = "connector1";
   private static final String CONNECTOR2 = "connector2";
-  private static final String CONNECTOR3 = "connector3";
-  private static final String CONNECTOR4 = "connector4";
 
   private boolean shouldVerifyIdentity;
   private String domain;
@@ -140,88 +126,15 @@ public class MockManager implements Manager {
   }
 
   /* @Override */
-  public Collection<AuthorizationResponse> authorizeDocids(String connectorName,
+  public Set<String> authorizeDocids(String connectorName,
       List<String> docidList, AuthenticationIdentity identity) {
-    // Connector4 always returns a null response.
-    if (CONNECTOR4.equals(connectorName)) {
-      return null;
-    }
-
-    // Sort the docids, so we process them in a predictable order for testing.
-    docidList = new ArrayList<String>(docidList);
-    Collections.sort(docidList);
-
-    Set<AuthorizationResponse> results = new TreeSet<AuthorizationResponse>();
     StringBuilder sb = new StringBuilder();
-    boolean permit = (shouldVerifyIdentity)? verifyIdentity(identity, sb) : true;
-    if (sb.length() > 0) {
+    if (shouldVerifyIdentity && !verifyIdentity(identity, sb)) {
       LOGGER.info(sb.toString());
+      return new HashSet<String>();
+    } else {
+      return new HashSet<String>(docidList);
     }
-
-    // Connector1 returns same response for every doc.
-    if (CONNECTOR1.equals(connectorName)) {
-      for (String docid : docidList) {
-        results.add(new AuthorizationResponse(permit, docid));
-      }
-    }
-
-    // Connector2 returns indeterminate every other doc.
-    if (CONNECTOR2.equals(connectorName)) {
-      boolean odd = false;
-      Status status = (permit) ? Status.PERMIT : Status.DENY;
-      for (String docid : docidList) {
-        results.add(new AuthorizationResponse(
-            ((odd) ? Status.INDETERMINATE : status), docid));
-        odd = !odd;
-      }
-    }
-
-    // Connector3 strictly returns permits, but only every other doc.
-    if (CONNECTOR3.equals(connectorName)) {
-      if (permit) {
-        for (String docid : docidList) {
-          if (permit) {
-            results.add(new AuthorizationResponse(permit, docid));
-          }
-          permit = !permit;
-        }
-      }
-    }
-    return results;
-  }
-
-  /* @Override */
-  public InputStream getDocumentContent(String connectorName, String docid)
-      throws ConnectorNotFoundException {
-    if (CONNECTOR1.equals(connectorName)) {
-      return new ByteArrayInputStream(docid.getBytes());
-    }
-    if (CONNECTOR2.equals(connectorName)) {
-      return null;  // no content
-    }
-    throw new ConnectorNotFoundException("Connector not found: "
-                                         + connectorName);
-  }
-
-  /* @Override */
-  public Document getDocumentMetaData(String connectorName, String docid)
-      throws ConnectorNotFoundException {
-    if (CONNECTOR1.equals(connectorName)) {
-      Map<String, Object> props =
-          ConnectorTestUtils.createSimpleDocumentBasicProperties(docid);
-      props.remove(SpiConstants.PROPNAME_CONTENT);
-      return ConnectorTestUtils.createSimpleDocument(props);
-    }
-    if (CONNECTOR2.equals(connectorName)) {
-      Map<String, Object> props =
-          ConnectorTestUtils.createSimpleDocumentBasicProperties(docid);
-      props.remove(SpiConstants.PROPNAME_CONTENT);
-      props.remove(SpiConstants.PROPNAME_LASTMODIFIED);
-      props.remove(SpiConstants.PROPNAME_MIMETYPE);
-      return ConnectorTestUtils.createSimpleDocument(props);
-    }
-    throw new ConnectorNotFoundException("Connector not found: "
-                                         + connectorName);
   }
 
   /* @Override */
@@ -236,13 +149,9 @@ public class MockManager implements Manager {
     throw new ConnectorTypeNotFoundException("Unsupported Operation");
   }
 
-  public String getConnectorInstancePrototype(String typeName) {
-    return "<?xml?><beans><bean id=\"" + typeName + "Instance\"/></beans>";
-  }
-
   /* @Override */
   public ConfigureResponse getConfigForm(String connectorTypeName,
-      String language) throws InstantiatorException {
+      String language) {
     String message =
         "Sample form for " + connectorTypeName + "lang " + language;
     String formSnippet =
@@ -254,13 +163,12 @@ public class MockManager implements Manager {
             + "      <td><input type=\"password\" name=\"passwd\" value=\"\">"
             + "    </td></tr>" + "    <tr><td>Seed URIs</td>"
             + "      <td><textarea name=\"seedUris\"></textarea></td></tr>";
-    return new ExtendedConfigureResponse(new ConfigureResponse(message,
-        formSnippet), getConnectorInstancePrototype(connectorTypeName));
+    return new ConfigureResponse(message, formSnippet);
   }
 
   /* @Override */
   public ConfigureResponse getConfigFormForConnector(String connectorName,
-      String language) throws InstantiatorException {
+      String language) {
     String message = "Sample form for " + connectorName + "lang " + language;
     String formSnippet =
         "<tr>\n" + "<td>Username</td>\n" + "<td>\n"
@@ -293,29 +201,17 @@ public class MockManager implements Manager {
   }
 
   /* @Override */
-  public ConfigureResponse setConnectorConfiguration(String connectorName,
-        Configuration configuration, String language, boolean update)
-        throws InstantiatorException {
+  public ConfigureResponse setConnectorConfig(String connectorName,
+      String connectorTypeName, Map<String, String> configData,
+      String language, boolean update) {
     LOGGER.info("setConnectorConfig() connectorName: " + connectorName);
     LOGGER.info("setConnectorConfig() update: " + update);
     LOGGER.info("configData: ");
-    for (Map.Entry<String, String> entry : configuration.getMap().entrySet()) {
+    for (Map.Entry<String, String> entry : configData.entrySet()) {
       LOGGER.info(entry.getKey() + "/" + entry.getValue());
-    }
-    if (configuration.getXml() == null) {
-      LOGGER.info("configXml: null");
-    } else {
-      LOGGER.info("configXml:");
-      LOGGER.info(configuration.getXml());
     }
     // null is a success response
     return null;
-  }
-
-  /* @Override */
-  public Configuration getConnectorConfiguration(String connectorName)
-      throws ConnectorNotFoundException {
-    return new Configuration("Mock", new HashMap<String, String>(), null);
   }
 
   final Properties managerConfig = new Properties();
@@ -331,7 +227,7 @@ public class MockManager implements Manager {
     if (!Strings.isNullOrEmpty(feederGateProtocol)) {
       managerConfig.put(Context.GSA_FEED_PROTOCOL_PROPERTY_KEY,
           feederGateProtocol);
-  }
+    }
     if (!Strings.isNullOrEmpty(feederGateHost)) {
       managerConfig.put(Context.GSA_FEED_HOST_PROPERTY_KEY,
           feederGateHost);
@@ -363,6 +259,11 @@ public class MockManager implements Manager {
   /* @Override */
   public void restartConnectorTraversal(String connectorName) {
     // do nothing;
+  }
+
+  /* @Override */
+  public Map<String, String> getConnectorConfig(String connectorName) {
+    return new HashMap<String, String>();
   }
 
   /* @Override */

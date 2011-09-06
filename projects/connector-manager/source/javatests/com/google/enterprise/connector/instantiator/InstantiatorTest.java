@@ -19,13 +19,11 @@ import com.google.enterprise.connector.manager.ConnectorManagerException;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
-import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.persist.MockPersistentStore;
 import com.google.enterprise.connector.persist.PersistentStore;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.TraversalManager;
-import com.google.enterprise.connector.test.ConnectorTestUtils;
 import com.google.enterprise.connector.test.JsonObjectAsMap;
 
 import junit.framework.TestCase;
@@ -80,8 +78,14 @@ public class InstantiatorTest extends TestCase {
 
   /**
    * Test method for adding, updating, deleting connectors.
+   *
+   * @throws JSONException
+   * @throws InstantiatorException
+   * @throws ConnectorExistsException
+   * @throws ConnectorNotFoundException
    */
-  public final void testAddUpdateDelete() throws Exception {
+  public final void testAddUpdateDelete() throws JSONException,
+      InstantiatorException, ConnectorNotFoundException, ConnectorExistsException {
     {
       /*
        * Test creation of a connector of type TestConnectorA.
@@ -247,115 +251,6 @@ public class InstantiatorTest extends TestCase {
     assertEquals(0, connectorCount());
   }
 
-  /**
-   * Test method for adding, updating, deleting connectors with
-   * connectorInstance.xml.
-   */
-  public final void testAddUpdateDeleteConnectorInstanceXml() throws Exception {
-    {
-      /*
-       * Test creation of a connector of type TestConnectorA.
-       * The type should already have been created.
-       */
-      String name = "connector100";
-      String typeName = "TestConnectorA";
-      String language = "en";
-      String jsonConfigString =
-          "{Username:foo, Password:bar, Color:red, "
-          + "RepositoryFile:MockRepositoryEventLog3.txt}";
-      updateConnectorTest(instantiator, name, language, false,
-          new Configuration(typeName, getConfigMap(jsonConfigString),
-          instantiator.getConnectorInstancePrototype(typeName)));
-    }
-
-    {
-      /*
-       * Test creation of a connector of type TestConnectorB.
-       * The type should already have been created.
-       */
-      String name = "connector200";
-      String typeName = "TestConnectorB";
-      String language = "en";
-      String jsonConfigString =
-          "{Username:foo, Password:bar, Flavor:minty-fresh, "
-          + "RepositoryFile:MockRepositoryEventLog3.txt}";
-      updateConnectorTest(instantiator, name, language, false,
-          new Configuration(typeName, getConfigMap(jsonConfigString),
-          instantiator.getConnectorInstancePrototype(typeName)
-          .replace("TestConnector", "ModifiedTestConnector")));
-    }
-
-    assertEquals(2, connectorCount());
-
-    {
-      /*
-       * Test update of a connector instance of type TestConnectorB.
-       * The instance was created in an earlier test.
-       */
-      String name = "connector200";
-      String typeName = "TestConnectorB";
-      String language = "en";
-      String jsonConfigString =
-          "{Username:foo, Password:bar, Flavor:butterscotch, "
-          + "RepositoryFile:MockRepositoryEventLog2.txt}";
-      updateConnectorTest(instantiator, name, language, true,
-          new Configuration(typeName, getConfigMap(jsonConfigString),
-          instantiator.getConnectorInstancePrototype(typeName)
-          .replace("TestConnector", "UpdatedTestConnector")));
-    }
-
-    assertEquals(2, connectorCount());
-
-    {
-      /*
-       * Test update of a connector instance of type TestConnectorB
-       * without specifying a connectorInstance.xml.  Should use the
-       * last one saved.
-       */
-      String name = "connector200";
-      String typeName = "TestConnectorB";
-      String language = "en";
-      String jsonConfigString =
-          "{Username:foo, Password:bar, Flavor:wild-cherry, "
-          + "RepositoryFile:MockRepositoryEventLog2.txt}";
-      updateConnectorTest(instantiator, name, language, true,
-          new Configuration(typeName, getConfigMap(jsonConfigString), null));
-
-      Configuration config = instantiator.getConnectorConfiguration(name);
-      assertNotNull(config);
-      assertNotNull(config.getXml());
-      assertTrue(config.getXml().contains("UpdatedTestConnector"));
-    }
-
-    assertEquals(2, connectorCount());
-
-    /*
-     * Test dropping connectors.  Once dropped, I should not be able to
-     * get items from its interface.  Regression test for Issue 60.
-     */
-    instantiator.removeConnector("connector100");
-    try {
-      AuthorizationManager authz =
-          instantiator.getAuthorizationManager("connector100");
-      assertNull(authz);
-    } catch (ConnectorNotFoundException e1) {
-      assertTrue(true);
-    }
-    assertFalse(connectorExists("connector100"));
-
-    instantiator.removeConnector("connector200");
-    try {
-      AuthenticationManager authn =
-          instantiator.getAuthenticationManager("connector200");
-      assertNull(authn);
-    } catch (ConnectorNotFoundException e2) {
-      assertTrue(true);
-    }
-    assertFalse(connectorExists("connector200"));
-
-    assertEquals(0, connectorCount());
-  }
-
   private class Issue63ChildThread extends Thread {
     volatile boolean didFinish = false;
     volatile Exception myException;
@@ -374,9 +269,9 @@ public class InstantiatorTest extends TestCase {
               + " must match newTraverser = " + newTraversalManager);
         }
 
-        // Sleep for a bit, allowing the test thread time
+        // Sleep for a few seconds, allowing the test thread time
         // to update the connector.
-        Thread.sleep(200);
+        Thread.sleep(3 * 1000);
 
         // Get the Traverser for our connector instance.
         // It should be a new traverser reflecting the updated connector.
@@ -446,7 +341,7 @@ public class InstantiatorTest extends TestCase {
 
     // Sleep for a bit, allowing the child to fetch the connector interface.
     try {
-      Thread.sleep(100);
+      Thread.sleep(1000);
     } catch (InterruptedException ie) {
       fail("Unexpected thread interruption.");
     }
@@ -491,31 +386,20 @@ public class InstantiatorTest extends TestCase {
     return false;
   }
 
-  /*
-   * Create a configMap from a JSON string.
-   */
-  private Map<String, String> getConfigMap(String jsonConfigString)
-      throws JSONException {
-    return new JsonObjectAsMap(new JSONObject(jsonConfigString));
-  }
-
-  private void updateConnectorTest(SpringInstantiator instantiator, String name,
-      String typeName, String language, boolean update, String jsonConfigString)
-      throws JSONException, InstantiatorException, ConnectorExistsException,
-             ConnectorNotFoundException, ConnectorTypeNotFoundException {
-    updateConnectorTest(instantiator, name, language, update,
-      new Configuration(typeName, getConfigMap(jsonConfigString), null));
-  }
-
   private void updateConnectorTest(SpringInstantiator instantiator,
-      String name, String language, boolean update, Configuration config)
-      throws JSONException, InstantiatorException, ConnectorExistsException,
-             ConnectorNotFoundException, ConnectorTypeNotFoundException {
+      String name, String typeName, String language, boolean update,
+      String jsonConfigString) throws JSONException, InstantiatorException,
+      ConnectorNotFoundException, ConnectorExistsException {
     TraversalManager oldTraversersalManager = null;
     if (update) {
       oldTraversersalManager =
           instantiator.getConnectorCoordinator(name).getTraversalManager();
     }
+
+    Map<String, String> configMap =
+        new JsonObjectAsMap(new JSONObject(jsonConfigString));
+    Configuration config = new Configuration(typeName, configMap, null);
+
     Locale locale = I18NUtil.getLocaleFromStandardLocaleString(language);
     instantiator.setConnectorConfiguration(name, config, locale, update);
 
@@ -523,7 +407,7 @@ public class InstantiatorTest extends TestCase {
     assertTrue(connectorExists(name));
 
     // Make sure that this connector has the correct type associated.
-    assertEquals(config.getTypeName(), instantiator.getConnectorTypeName(name));
+    assertEquals(typeName, instantiator.getConnectorTypeName(name));
 
     AuthorizationManager authz = instantiator.getAuthorizationManager(name);
     assertNotNull(authz);
@@ -537,32 +421,14 @@ public class InstantiatorTest extends TestCase {
 
     // If this is an update, make sure that we get a different traverser.
     // Regression test for Issues 35, 63.
-    if (update) {
+    if (update)
       assertNotSame(oldTraversersalManager, traversalManager);
-    }
-
-    Configuration newConfig = instantiator.getConnectorConfiguration(name);
 
     // the password will be decrypted in the InstanceInfo
-    Map<String, String> instanceProps = newConfig.getMap();
+    Map<String, String> instanceProps =
+        instantiator.getConnectorConfiguration(name).getMap();
     String instancePasswd = instanceProps.get("Password");
     String plainPasswd = config.getMap().get("Password");
     assertEquals(instancePasswd, plainPasswd);
-
-    // Check if the configuration properties match those set.
-    ConnectorTestUtils.compareMaps(config.getMap(), instanceProps);
-
-    // Creating a new connector with no connectorInstancePrototype should
-    // get you the default.
-    if (!update && config.getXml() == null) {
-      assertEquals(instantiator.getConnectorInstancePrototype(
-                   config.getTypeName()), newConfig.getXml());
-    }
-
-    // If a connectorInstancePrototype was supplied, make sure it was
-    // saved with the connector instance.
-    if (config.getXml() != null) {
-      assertEquals(config.getXml(), newConfig.getXml());
-    }
   }
 }

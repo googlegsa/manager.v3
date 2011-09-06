@@ -42,15 +42,6 @@ public class DocPusherFactory implements PusherFactory {
   private final FileSizeLimitInfo fileSizeLimit;
 
   /**
-   * The prefix that will be used for contentUrl generation.
-   * The prefix should include protocol, host and port, web app,
-   * and servlet to point back at this Connector Manager instance.
-   * For example:
-   * {@code http://localhost:8080/connector-manager/getDocumentContent}
-   */
-  private final String contentUrlPrefix;
-
-  /**
    * The {@link DocumentFilterFactory} is used to construct
    * {@code Document} instances that act as filters on a source
    * document.  Document filters may add, remove, or modify
@@ -68,8 +59,7 @@ public class DocPusherFactory implements PusherFactory {
    * @param feedConnection a FeedConnection
    */
   public DocPusherFactory(FeedConnection feedConnection) {
-    this(feedConnection, new FileSizeLimitInfo(), new DocumentFilterChain(),
-         null);
+    this(feedConnection, new FileSizeLimitInfo(), new DocumentFilterChain());
   }
 
   /**
@@ -83,30 +73,22 @@ public class DocPusherFactory implements PusherFactory {
    *        content and feed size.
    * @param documentFilterFactory a {@link DocumentFilterFactory} that creates
    *        document processing filters.
-   * @param contentUrlPrefix the prefix that will be used for Feed contentUrl
-   *        generation. The prefix should include protocol, host and port,
-   *        web app, and servlet to point back at this Connector Manager
-   *        instance. For example:
-   *        {@code http://localhost:8080/connector-manager/getDocumentContent}
    */
   public DocPusherFactory(FeedConnection feedConnection,
                           FileSizeLimitInfo fileSizeLimit,
-                          DocumentFilterFactory documentFilterFactory,
-                          String contentUrlPrefix) {
+                          DocumentFilterFactory documentFilterFactory) {
     this.feedConnection = feedConnection;
     this.fileSizeLimit = fileSizeLimit;
     this.documentFilterFactory = documentFilterFactory;
-    this.contentUrlPrefix = contentUrlPrefix;
 
     LOGGER.config(feedConnection.toString());
     LOGGER.config(fileSizeLimit.toString());
     LOGGER.config(documentFilterFactory.toString());
-    LOGGER.config("ContentURL prefix: " + contentUrlPrefix);
   }
 
   //@Override
   public Pusher newPusher(String dataSource) {
     return new DocPusher(feedConnection, dataSource, fileSizeLimit,
-                         documentFilterFactory, contentUrlPrefix);
+                         documentFilterFactory);
   }
 }
