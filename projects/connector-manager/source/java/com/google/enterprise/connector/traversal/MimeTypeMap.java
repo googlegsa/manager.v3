@@ -14,6 +14,8 @@
 
 package com.google.enterprise.connector.traversal;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -66,7 +68,7 @@ public class MimeTypeMap {
    * @param mimeTypes Set of mime types that are preferred.
    */
   public void setPreferredMimeTypes(Set<String> mimeTypes) {
-    LOGGER.config("Setting preferred mime types to " + mimeTypes.toString());
+    LOGGER.config("Setting preferred mime types to " + mimeTypes);
     initMimeTypes(mimeTypes, 8);
   }
 
@@ -79,7 +81,7 @@ public class MimeTypeMap {
    * @param mimeTypes Set of mime types that are preferred.
    */
   public void setSupportedMimeTypes(Set<String> mimeTypes) {
-    LOGGER.config("Setting supported mime types to " + mimeTypes.toString());
+    LOGGER.config("Setting supported mime types to " + mimeTypes);
     initMimeTypes(mimeTypes, 4);
   }
 
@@ -94,7 +96,7 @@ public class MimeTypeMap {
    * @param mimeTypes Set of mime types that are not indexable.
    */
   public void setUnsupportedMimeTypes(Set<String> mimeTypes) {
-    LOGGER.config("Setting unsupported mime types to " + mimeTypes.toString());
+    LOGGER.config("Setting unsupported mime types to " + mimeTypes);
     initMimeTypes(mimeTypes, -1);
   }
 
@@ -106,7 +108,7 @@ public class MimeTypeMap {
    * @param mimeTypes Set of mime types that should not be fed.
    */
   public void setExcludedMimeTypes(Set<String> mimeTypes) {
-    LOGGER.config("Setting excluded mime types to " + mimeTypes.toString());
+    LOGGER.config("Setting excluded mime types to " + mimeTypes);
     // -5 is for historical reasons, as Excluded was added after Unsupported.
     initMimeTypes(mimeTypes, -5);
   }
@@ -119,7 +121,8 @@ public class MimeTypeMap {
    * level +/- 1, accordingly.  Content types sans subtypes are preferred
    * least of all, so their support level is adjusted by -2.
    */
-  private void initMimeTypes(Set<String> mimeTypes, int supportLevel) {
+  @VisibleForTesting
+  void initMimeTypes(Set<String> mimeTypes, int supportLevel) {
     if (mimeTypes == null || mimeTypes.size() == 0)
       return;
 

@@ -336,7 +336,7 @@ public class QueryTraverser implements Traverser {
       LOGGER.log(Level.FINER, "Skipping document (" + docid
           + ") from connector " + connectorName + ": " + e.getMessage());
     }
-    if (documentStore != null) {
+    if (documentStore != null && document != null) {
       documentStore.storeDocument(new SkippedDocument(document, e));
     }
   }
