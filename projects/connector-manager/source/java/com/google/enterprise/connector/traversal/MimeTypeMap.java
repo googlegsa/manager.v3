@@ -141,13 +141,16 @@ public class MimeTypeMap {
 
     // Add the mimetypes to the map.  We adjust the support levels
     // slightly to prefer "vnd." subtypes over others, and prefer
-    // any other subtype over "x-" subtypes.  Content types sans
-    // subtypes are ranked below all others.
+    // any other subtype over "x-" subtypes.  Rank */plain below
+    // possibly more specific types.
+    // Content types sans subtypes are ranked below all others.
     for (Iterator<String> i = mimeTypes.iterator(); i.hasNext(); ) {
       String mimeType = i.next().trim().toLowerCase();
       if (mimeType.indexOf('/') < 0) {
         typeMap.put(mimeType, level0);
       } else if (mimeType.startsWith("x-") || (mimeType.indexOf("/x-") > 0)) {
+        typeMap.put(mimeType, level1);
+      } else if (mimeType.endsWith("/plain")) {
         typeMap.put(mimeType, level1);
       } else if (mimeType.indexOf("/vnd.") > 0) {
         typeMap.put(mimeType, level3);
