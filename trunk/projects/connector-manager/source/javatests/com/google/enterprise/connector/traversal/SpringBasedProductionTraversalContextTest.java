@@ -1,4 +1,4 @@
-// Copyright (C) 2007 Google Inc.
+// Copyright 2007 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,11 +17,12 @@ package com.google.enterprise.connector.traversal;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.spi.TraversalContext;
 
-import junit.framework.Assert;
 import junit.framework.TestCase;
 
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.FileSystemXmlApplicationContext;
+
+import java.util.Collections;
 
 /**
  * Tests that use Spring to test the ProductionTraversalContext class.
@@ -33,12 +34,14 @@ public class SpringBasedProductionTraversalContextTest extends TestCase {
         "testdata/traversalContextData/applicationContext.xml");
     TraversalContext traversalContext = (TraversalContext) applicationContext
         .getBean("TraversalContext");
-    Assert.assertNotNull(traversalContext);
-    Assert.assertEquals(2500000, traversalContext.maxDocumentSize());
-    Assert.assertTrue(traversalContext.mimeTypeSupportLevel("text/plain") <= 0);
-    Assert.assertTrue(traversalContext.mimeTypeSupportLevel("text/notplain")
+    assertNotNull(traversalContext);
+    assertEquals(2500000, traversalContext.maxDocumentSize());
+    assertTrue(traversalContext.mimeTypeSupportLevel("text/plain") <= 0);
+    assertTrue(traversalContext.mimeTypeSupportLevel("text/notplain")
                       <= 0);
-    Assert.assertEquals(1, traversalContext.mimeTypeSupportLevel("ibblefrix"));
+    assertEquals(1, traversalContext.mimeTypeSupportLevel("ibblefrix"));
+    assertEquals("ibblefrix", traversalContext.preferredMimeType(
+                 Collections.singleton("ibblefrix")));
   }
 
   public final void testContextBasedTraversalContext() {
@@ -50,7 +53,7 @@ public class SpringBasedProductionTraversalContextTest extends TestCase {
     Context.getInstance().start();
     TraversalContext traversalContext = Context.getInstance()
         .getTraversalContext();
-    Assert.assertNotNull(traversalContext);
+    assertNotNull(traversalContext);
     Context.getInstance().shutdown(true);
     Context.refresh();
   }
