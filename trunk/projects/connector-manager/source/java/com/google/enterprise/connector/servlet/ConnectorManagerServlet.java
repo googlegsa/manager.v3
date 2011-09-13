@@ -82,6 +82,9 @@ public abstract class ConnectorManagerServlet extends HttpServlet {
       return;
     }
 
+    if (req.getCharacterEncoding() == null) {
+      req.setCharacterEncoding("UTF-8");
+    }
     BufferedReader reader = req.getReader();
     res.setContentType(ServletUtil.MIMETYPE_XML);
     res.setCharacterEncoding("UTF-8");
