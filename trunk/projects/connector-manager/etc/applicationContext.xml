@@ -479,6 +479,16 @@
     </property>
   </bean>
 
+  <bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+    <property name="staticMethod"
+              value="com.google.enterprise.connector.util.MimeTypeDetector.setTraversalContext"/>
+    <property name="arguments">
+      <list>
+        <ref bean="TraversalContext"/>
+      </list>
+    </property>
+  </bean>
+
   <!-- The TraversalContext is supplied to the Connector's TraversalManager,
        so that it may make more intelligent decisions about what types of
        content to feed.
@@ -614,7 +624,7 @@
         <value>application/vnd.ms-excel.sheet.macroEnabled.12</value>
         <value>application/vnd.ms-excel.sheet.12</value>
         <value>application/vnd.ms-htmlhelp</value>
-	<value>application/vnd.ms-outlook</value>
+	      <value>application/vnd.ms-outlook</value>
         <value>application/mspowerpoint</value>
         <value>application/powerpoint</value>
         <value>application/vnd.ms-powerpoint</value>

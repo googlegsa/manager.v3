@@ -27,6 +27,7 @@ import eu.medsea.util.EncodingGuesser;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
@@ -46,11 +47,21 @@ public class MimeTypeDetector {
   public static final String UNKNOWN_MIME_TYPE =
       MimeUtil2.UNKNOWN_MIME_TYPE.toString();
 
+  /** TraversalContext used to rank differented mime types. */
+  private static TraversalContext traversalContext;
+
+  /** TraversalContext injected by Spring from the manager configuration. */
+  public static void setTraversalContext(TraversalContext traversalContext) {
+    Preconditions.checkNotNull(traversalContext,
+                               "traversalContext must not be null.");
+    MimeTypeDetector.traversalContext = traversalContext;
+  }
+
   public MimeTypeDetector() {
     delegate = new MimeUtil2();
     delegate.registerMimeDetector(ExtensionMimeDetector.class.getName());
     // TODO: Should we add the WindowsRegistryMimeDetector?  This might
-    // yeild different results when run on Windows vs. Unix.
+    // yield different results when run on Windows vs. Unix.
 
     // TODO: If "/usr/share/mime/mime.cache exists use
     //     OpendesktopMimeDetector instead of MagicMimeMimeDetector. It seems
@@ -101,25 +112,21 @@ public class MimeTypeDetector {
    * If {@code content} is {@code null}, only the filename extension will be
    * used to determine the MIME type.
    *
-   * @param traversalContext a {@link TraversalContext}
    * @param filename used for filename extension MIME type detection
    *        (may be {@code null})
    * @param content a byte array of document content used for MIME type
    *        detection (may be {@code null})
+   * @return the most preferred MIME type for the document
    * @throws IllegalArgumentException if both {@code filename} and
    *        {@code content} are {@code null}.
    */
-  public String getMimeType(TraversalContext traversalContext,
-                            String filename, byte[] content) {
-    Preconditions.checkNotNull(traversalContext,
-                               "traversalContext must not be null");
+  public String getMimeType(String filename, byte[] content) {
     Preconditions.checkArgument((filename != null || content != null),
                                 "filename and content may not both be null");
     // We munge the file name we pass to getMimeTypes so that it will
     // not find the file exists, open it and perform content based
     // detection here.
-    return pickBestMimeType(traversalContext, getMimeTypes(filename),
-                            getMimeTypes(content));
+    return pickBestMimeType(getMimeTypes(filename), getMimeTypes(content));
   }
 
   /**
@@ -142,24 +149,22 @@ public class MimeTypeDetector {
    * If {@code inputStreamFactory} is {@code null}, only the filename extension
    * will be used to determine the MIME type.
    *
-   * @param traversalContext a {@link TraversalContext}
    * @param filename used for filename extension MIME type detection
    *        (may be {@code null})
    * @param inputStreamFactory an {@link InputStreamFactory} used to fetch
    *        and {@code InputStream} from which the document content may be read
    *        (may be {@code null})
+   * @return the most preferred MIME type for the document
    * @throws IllegalArgumentException if both {@code filename} and
    *        {@code InputStreamFactory} are {@code null}
    * @throws IOException if there is an error reading from the InputStream
    */
-  public String getMimeType(TraversalContext traversalContext, String filename,
-      InputStreamFactory inputStreamFactory) throws IOException {
-    Preconditions.checkNotNull(traversalContext,
-                               "traversalContext must not be null");
+  public String getMimeType(String filename,
+        InputStreamFactory inputStreamFactory) throws IOException {
     Preconditions.checkArgument((filename != null || inputStreamFactory != null),
         "filename and inputStreamFactory may not both be null");
     Collection<MimeType> mimeTypes = getMimeTypes(filename);
-    String bestMimeType = pickBestMimeType(traversalContext, mimeTypes);
+    String bestMimeType = pickBestMimeType(mimeTypes);
     if (UNKNOWN_MIME_TYPE.equals(bestMimeType)) {
       InputStream is = inputStreamFactory.getInputStream();
       try {
@@ -168,7 +173,7 @@ public class MimeTypeDetector {
       } finally {
         is.close();
       }
-      bestMimeType = pickBestMimeType(traversalContext, mimeTypes);
+      bestMimeType = pickBestMimeType(mimeTypes);
     }
     return bestMimeType;
   }
@@ -192,17 +197,17 @@ public class MimeTypeDetector {
    * from the MIME types collected by the filename extension MIME type
    * detector and/or the document content MIME type detector.
    *
-   * @param traversalContext a {@link TraversalContext}
    * @param extensionMimeTypes a Collection of MimeTypes as determined by
    *        the filename extension (may be {@code null})
    * @param contentMimeTypes a Collection of MimeTypes as determined by
    *        the document content (may be {@code null})
-   * @return most suitable MIME type for current document
+   * @return most suitable MIME type for the document
    */
-  private String pickBestMimeType(TraversalContext traversalContext,
-                                  Collection<MimeType> extensionMimeTypes,
+  private String pickBestMimeType(Collection<MimeType> extensionMimeTypes,
                                   Collection<MimeType> contentMimeTypes) {
-    Set<String> mimeTypeNames = Sets.newHashSet();
+    // Use a LinkedHashSet so we preserve the order of the mimetypes
+    // as they are returned by MimeUtil.
+    Set<String> mimeTypeNames = new LinkedHashSet<String>();
     if (extensionMimeTypes != null) {
       extensionMimeTypes.remove(MimeUtil2.UNKNOWN_MIME_TYPE);
       for (MimeType mimeType : extensionMimeTypes) {
@@ -219,12 +224,13 @@ public class MimeTypeDetector {
       return UNKNOWN_MIME_TYPE;
     }
     // get the most suitable MIME type for this document
+    Preconditions.checkState(traversalContext != null,
+                             "traversalContext must be set.");
     return traversalContext.preferredMimeType(mimeTypeNames);
   }
 
-  private String pickBestMimeType(TraversalContext traversalContext,
-                                  Collection<MimeType> mimeTypes) {
-    return pickBestMimeType(traversalContext, mimeTypes, null);
+  private String pickBestMimeType(Collection<MimeType> mimeTypes) {
+    return pickBestMimeType(mimeTypes, null);
   }
 
   private String mimeTypeStringValue(MimeType mimeType) {
