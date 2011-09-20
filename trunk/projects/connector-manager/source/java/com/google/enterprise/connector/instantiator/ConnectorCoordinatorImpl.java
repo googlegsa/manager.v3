@@ -37,7 +37,11 @@ import com.google.enterprise.connector.spi.ConnectorPersistentStoreAware;
 import com.google.enterprise.connector.spi.ConnectorShutdownAware;
 import com.google.enterprise.connector.spi.ConnectorType;
 import com.google.enterprise.connector.spi.Retriever;
+import com.google.enterprise.connector.spi.TraversalContext;
+import com.google.enterprise.connector.spi.TraversalContextAware;
 import com.google.enterprise.connector.spi.TraversalManager;
+import com.google.enterprise.connector.spi.TraversalSchedule;
+import com.google.enterprise.connector.spi.TraversalScheduleAware;
 import com.google.enterprise.connector.traversal.BatchResult;
 import com.google.enterprise.connector.traversal.BatchResultRecorder;
 import com.google.enterprise.connector.traversal.BatchSize;
@@ -50,7 +54,6 @@ import com.google.enterprise.connector.database.DocumentStore;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -122,6 +125,16 @@ class ConnectorCoordinatorImpl implements
    * DocumentStore for the Pusher.
    */
   private DocumentStore documentStore;
+
+  /**
+   * The cached TraversalManager.
+   */
+  private TraversalManager traversalManager;
+
+  /**
+   * The cached Retriever.
+   */
+  private Retriever retriever;
 
   /**
    * Constructs a ConnectorCoordinator for the named {@link Connector}.
@@ -251,7 +264,36 @@ class ConnectorCoordinatorImpl implements
   /* @Override */
   public synchronized TraversalManager getTraversalManager()
       throws ConnectorNotFoundException, InstantiatorException {
-    return getConnectorInterfaces().getTraversalManager();
+    if (traversalManager == null) {
+      traversalManager = getConnectorInterfaces().getTraversalManager();
+      setTraversalContext(traversalManager);
+      setTraversalSchedule(traversalManager, getSchedule());
+    }
+    return traversalManager;
+  }
+
+  /** If target is TraversalContextAware, set its traversalContext. */
+  private void setTraversalContext(Object target) {
+    if (target != null && target instanceof TraversalContextAware) {
+      TraversalContext traversalContext =
+          Context.getInstance().getTraversalContext();
+      try {
+        ((TraversalContextAware) target).setTraversalContext(traversalContext);
+      } catch (Exception e) {
+        LOGGER.log(Level.WARNING, "Unable to set TraversalContext", e);
+      }
+    }
+  }
+
+  /** If target is TraversalScheduleAware, set its traversalSchedule. */
+  private void setTraversalSchedule(Object target, Schedule schedule) {
+    if (target != null && target instanceof TraversalScheduleAware) {
+      try {
+        ((TraversalScheduleAware) target).setTraversalSchedule(schedule);
+      } catch (Exception e) {
+        LOGGER.log(Level.WARNING, "Unable to set TraversalSchedule", e);
+      }
+    }
   }
 
   /**
@@ -268,7 +310,11 @@ class ConnectorCoordinatorImpl implements
   /* @Override */
   public Retriever getRetriever()
       throws ConnectorNotFoundException, InstantiatorException {
-    return getConnectorInterfaces().getRetriever();
+    if (retriever == null) {
+      retriever = getConnectorInterfaces().getRetriever();
+      setTraversalContext(retriever);
+    }
+    return retriever;
   }
 
   /**
@@ -392,6 +438,9 @@ class ConnectorCoordinatorImpl implements
     // Update the LoadManager with the new load.
     loadManager.setLoad(
         (schedule == null) ? EMPTY_SCHEDULE.getLoad() : schedule.getLoad());
+
+    // Let the traversal manager know the schedule changed.
+    setTraversalSchedule(traversalManager, schedule);
 
     // New Schedule may alter DelayPolicy.
     delayTraversal(TraversalDelayPolicy.IMMEDIATE);
@@ -620,15 +669,13 @@ class ConnectorCoordinatorImpl implements
       return false;
     }
 
-    // Don't run if we have postponed traversals.
-    if (clock.getTimeMillis() < traversalDelayEnd) {
+    // If the traversal schedule is disabled, don't run.
+    if (getSchedule().isDisabled()) {
       return false;
     }
 
-    Schedule schedule = getSchedule();
-
-    // Don't run if traversals are disabled.
-    if (schedule.isDisabled()) {
+    // Don't run if we have postponed traversals.
+    if (clock.getTimeMillis() < traversalDelayEnd) {
       return false;
     }
 
@@ -637,29 +684,8 @@ class ConnectorCoordinatorImpl implements
       return false;
     }
 
-    // OK to run if we are within one of the Schedule's traversal intervals.
-    Calendar now = Calendar.getInstance();
-    int hour = now.get(Calendar.HOUR_OF_DAY);
-    for (ScheduleTimeInterval interval : schedule.getTimeIntervals()) {
-      int startHour = interval.getStartTime().getHour();
-      int endHour = interval.getEndTime().getHour();
-      if (0 == endHour) {
-        endHour = 24;
-      }
-      if (endHour < startHour) {
-        // The traversal interval straddles midnight.
-        if ((hour >= startHour) || (hour < endHour)) {
-          return true;
-        }
-      } else {
-        // The traversal interval falls wholly within the day.
-        if ((hour >= startHour) && (hour < endHour)) {
-          return true;
-        }
-      }
-    }
-
-    return false;
+    // Run if we are within scheduled traversal interval.
+    return getSchedule().inScheduledInterval();
   }
 
   /**
@@ -680,8 +706,7 @@ class ConnectorCoordinatorImpl implements
     }
 
     try {
-      TraversalManager traversalManager =
-          getConnectorInterfaces().getTraversalManager();
+      TraversalManager traversalManager = getTraversalManager();
       if (traversalManager == null) {
         return false;
       }
@@ -743,6 +768,11 @@ class ConnectorCoordinatorImpl implements
     taskHandle = null;
     currentBatchKey = null;
     interfaces = null;
+
+    // Discard cached interface instances.
+    traversalManager = null;
+    retriever = null;
+    traversalSchedule = null;
   }
 
   /**
@@ -752,6 +782,11 @@ class ConnectorCoordinatorImpl implements
    * @param delete {@code true} if the {@code Connector} will be deleted.
    */
   private void shutdownConnector(boolean delete) {
+    // Discard cached instances.
+    traversalManager = null;
+    retriever = null;
+    traversalSchedule = null;
+
     if (instanceInfo != null
         && instanceInfo.getConnector() instanceof ConnectorShutdownAware) {
       ConnectorShutdownAware csa =
