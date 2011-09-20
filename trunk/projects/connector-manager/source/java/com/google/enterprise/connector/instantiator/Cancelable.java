@@ -1,4 +1,4 @@
-// Copyright 2009 Google Inc.
+// Copyright 2011 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,14 +15,14 @@
 package com.google.enterprise.connector.instantiator;
 
 /**
- * A {@link Runnable} that supports cancellation and timeout.
+ * A {@link Runnable} that supports cancellation.
  */
-public interface TimedCancelable extends Cancelable {
+public interface Cancelable extends Runnable {
   /**
-   * Complete the operations performed by this {@link Runnable} due to the
-   * expiration of its time interval. While this {@link Runnable#run} method is
-   * running in one thread this may be called in another so implementors must
-   * provide any needed synchronization.
+   * Cancel the operation performed by this {@link Runnable}.
+   * While this {@link Runnable#run} method is running in one thread this
+   * may be called in another so implementors must provide any needed
+   * synchronization.
    */
-  public void timeout(TaskHandle taskHandle);
+  public void cancel();
 }

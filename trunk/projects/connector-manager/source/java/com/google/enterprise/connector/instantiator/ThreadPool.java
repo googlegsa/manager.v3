@@ -41,7 +41,9 @@ import java.util.logging.Logger;
  * The ThreadPool enforces a configurable maximum time interval for tasks. Each
  * task is guarded by a <b>time out task</b> that will cancel the primary task
  * if the primary task does not complete within the allowed interval.
- *
+ * <p>
+ * If the configured maximum time interval is zero, tasks are allowed to run
+ * until explicitly cancelled, or shutdown.
  * <p>
  * Task cancellation includes two actions that are visible for the task task's
  * {@link TimedCancelable}
@@ -100,7 +102,8 @@ public class ThreadPool {
    * Create a {@link ThreadPool}.
    *
    * @param taskLifeSeconds minimum number of seconds to allow a task to run
-   *        before automatic cancellation.
+   *        before automatic cancellation.  If zero, tasks will not time out.
+   * @param a {@link Clock} that is used to time tasks.
    */
   // TODO: This method, called from Spring, multiplies the supplied [soft]
   // timeout value by 2.  The actual value wants to be 2x or 1.5x of a user
@@ -146,18 +149,21 @@ public class ThreadPool {
   }
 
   /**
-   * Submit a {@link TimedCancelable} for execution and return a
+   * Submit a {@link Cancelable} for execution and return a
    * {@link TaskHandle} for the running task or null if the task has not been
    * accepted. After {@link ThreadPool#shutdown(boolean, long)} returns this
    * will always return null.
    */
-  public TaskHandle submit(TimedCancelable cancelable) {
+  public TaskHandle submit(Cancelable cancelable) {
     if (isShutdown) {
       return null;
     }
-    return getInstance().submit(cancelable);
+    if (cancelable instanceof TimedCancelable && maximumTaskLifeMillis != 0L) {
+      return getInstance().submit((TimedCancelable) cancelable);
+    } else {
+      return getInstance().submit(cancelable);
+    }
   }
-
 
   /**
    * Lazily constructed ThreadPool implementation.
@@ -198,8 +204,12 @@ public class ThreadPool {
       completionService = new ExecutorCompletionService<Object>(executor);
       completionExecutor = Executors.newSingleThreadExecutor(
           new ThreadNamingThreadFactory("ThreadPoolCompletion"));
-      timeoutService = new ScheduledThreadPoolExecutor(1,
-          new ThreadNamingThreadFactory("ThreadPoolTimeout"));
+      if (maximumTaskLifeMillis != 0L) {
+        timeoutService = new ScheduledThreadPoolExecutor(1,
+            new ThreadNamingThreadFactory("ThreadPoolTimeout"));
+      } else {
+        timeoutService = null;
+      }
       completionExecutor.execute(new CompletionTask());
     }
 
@@ -220,12 +230,16 @@ public class ThreadPool {
       } else {
         executor.shutdown();
       }
-      timeoutService.shutdown();
+      if (timeoutService != null) {
+        timeoutService.shutdown();
+      }
       try {
         return executor.awaitTermination(waitMillis, TimeUnit.MILLISECONDS);
       } finally {
         completionExecutor.shutdownNow();
-        timeoutService.shutdownNow();
+        if (timeoutService != null) {
+          timeoutService.shutdownNow();
+        }
       }
     }
 
@@ -261,6 +275,30 @@ public class ThreadPool {
                                 TimeUnit.MILLISECONDS);
         // TODO(strellis): test/handle timer pop/cancel before submit. In
         // production with a 30 minute timeout this should never happen.
+        completionService.submit(taskFuture, null);
+      } catch (RejectedExecutionException re) {
+        if (!executor.isShutdown()) {
+          LOGGER.log(Level.SEVERE, "Unable to execute task", re);
+        }
+        handle = null;
+      }
+      return handle;
+    }
+
+    /**
+     * Submit a {@link Cancelable} for execution and return a
+     * {@link TaskHandle} for the running task or null if the task has not been
+     * accepted. After {@link LazyThreadPool#shutdown(boolean, long)} returns
+     * this will always return null.
+     */
+    TaskHandle submit(Cancelable cancelable) {
+      // taskFuture is used to cancel 'cancelable' and to determine if
+      // 'cancelable' is done.
+      FutureTask<?> taskFuture =
+          new FutureTask<Object>(cancelable, null);
+      TaskHandle handle =
+          new TaskHandle(cancelable, taskFuture, clock.getTimeMillis());
+      try {
         completionService.submit(taskFuture, null);
       } catch (RejectedExecutionException re) {
         if (!executor.isShutdown()) {
