@@ -17,13 +17,13 @@ Bundle-Version: 2.1.3-G1
 Bnd-LastModified: 1262673014099
 Bundle-ManifestVersion: 2
 Bundle-License: http://www.apache.org/licenses/LICENSE-2.0.txt
-Bundle-Description: mime-util is a simple to use, small, light weight 
- and fast open source java utility library that can detect		MIME types
-  from files, input streams, URL's and byte arrays.		Due to the use of
-  regular expressions and the java.nio packages it requires at least J
- ava 1.4.
+Bundle-Description: mime-util is a simple to use, small, light weight
+  and fast open source java utility library that can detect MIME types
+  from files, input streams, URL's and byte arrays.  Due to the use of
+  regular expressions and the java.nio packages, it requires at least
+   Java 1.4.
 Bundle-DocURL: http://www.medsea.eu
 Bundle-SymbolicName: eu.medsea.mimeutil.mime-util
 Import-Package: org.slf4j;version="1.5"
-Google-Modified: Updated mime-types.properties corrects errors and adds
- several new filename extension to mime-type mappings. [Brett Johnson]
+Google-Modified: Updated mime-types.properties: correct errors and add
+  many new filename extension to mime-type mappings. [Brett Johnson]
