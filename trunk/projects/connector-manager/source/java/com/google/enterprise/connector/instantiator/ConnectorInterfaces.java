@@ -17,6 +17,8 @@ package com.google.enterprise.connector.instantiator;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.Connector;
+import com.google.enterprise.connector.spi.Lister;
+import com.google.enterprise.connector.spi.ListerAware;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.RepositoryLoginException;
 import com.google.enterprise.connector.spi.Retriever;
@@ -43,6 +45,8 @@ public class ConnectorInterfaces {
   private AuthorizationManager authorizationManager;
   private Retriever retriever;
   private boolean gotRetriever = false;
+  private Lister lister;
+  private boolean gotLister = false;
 
   ConnectorInterfaces(String connectorName, Connector connector) {
     this.connectorName = connectorName;
@@ -104,6 +108,35 @@ public class ConnectorInterfaces {
   }
 
   /**
+   * Return a {@link Lister} that may be used to feed documents to the GSA.
+   * If the connector does not support the {@link Lister} interface,
+   * {@code null} is returned.
+   *
+   * @return a {@link Lister}, or {@code null} if none is available
+   * @throws InstantiatorException if unable to instantiate the requested
+   *         {@link Lister}
+   */
+  Lister getLister() throws InstantiatorException {
+    if (!gotLister) {
+      Session s = getSession();
+      gotLister = true;
+      lister = null;
+      if (s instanceof ListerAware) {
+        try {
+          lister = ((ListerAware) s).getLister();
+          LOGGER.fine("Got Lister " + lister);
+        } catch (RepositoryException e) {
+          // TODO(ziff): think about how this could be re-tried
+          throw new InstantiatorException(e);
+        } catch (Exception e) {
+          throw new InstantiatorException(e);
+        }
+      }
+    }
+    return lister;
+  }
+
+  /**
    * Return a {@link Retriever} that may be used to access content for the
    * document identified by a document ID.  If the connector does not support
    * the {@link Retriever} interface, {@code null} is returned.
@@ -118,9 +151,8 @@ public class ConnectorInterfaces {
       gotRetriever = true;
       retriever = null;
       if (s instanceof RetrieverAware) {
-        RetrieverAware ras = (RetrieverAware) s;
         try {
-          retriever = ras.getRetriever();
+          retriever = ((RetrieverAware) s).getRetriever();
           LOGGER.fine("Got Retriever " + retriever);
         } catch (RepositoryException e) {
           // TODO(ziff): think about how this could be re-tried

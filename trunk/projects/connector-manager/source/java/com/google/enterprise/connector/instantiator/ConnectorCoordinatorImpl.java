@@ -36,6 +36,8 @@ import com.google.enterprise.connector.spi.ConnectorPersistentStore;
 import com.google.enterprise.connector.spi.ConnectorPersistentStoreAware;
 import com.google.enterprise.connector.spi.ConnectorShutdownAware;
 import com.google.enterprise.connector.spi.ConnectorType;
+import com.google.enterprise.connector.spi.Lister;
+import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.Retriever;
 import com.google.enterprise.connector.spi.TraversalContext;
 import com.google.enterprise.connector.spi.TraversalContextAware;
@@ -45,6 +47,7 @@ import com.google.enterprise.connector.spi.TraversalScheduleAware;
 import com.google.enterprise.connector.traversal.BatchResult;
 import com.google.enterprise.connector.traversal.BatchResultRecorder;
 import com.google.enterprise.connector.traversal.BatchSize;
+import com.google.enterprise.connector.traversal.DocumentAcceptorImpl;
 import com.google.enterprise.connector.traversal.QueryTraverser;
 import com.google.enterprise.connector.traversal.TraversalDelayPolicy;
 import com.google.enterprise.connector.traversal.Traverser;
@@ -130,6 +133,11 @@ class ConnectorCoordinatorImpl implements
    * The cached TraversalManager.
    */
   private TraversalManager traversalManager;
+
+  /**
+   * The cached Lister.
+   */
+  private Lister lister;
 
   /**
    * The cached Retriever.
@@ -297,6 +305,54 @@ class ConnectorCoordinatorImpl implements
   }
 
   /**
+   * Returns the {@link Lister} for the {@link Connector}
+   * instance.
+   *
+   * @return a Lister
+   * @throws InstantiatorException
+   */
+  public synchronized Lister getLister()
+      throws ConnectorNotFoundException, InstantiatorException {
+    if (lister == null) {
+      lister = getConnectorInterfaces().getLister();
+      setTraversalContext(lister);
+      setTraversalSchedule(lister, getSchedule());
+    }
+    return lister;
+  }
+
+  /** Start up the Lister for the connector, if this CM allows feeding. */
+  private void startLister() throws InstantiatorException {
+    if (Context.getInstance().isFeeding()) {
+      try {
+        Lister lister = getLister();
+        if (lister != null) {
+          lister.setDocumentAcceptor(new DocumentAcceptorImpl(
+              name, pusherFactory.newPusher(name), documentStore));
+          lister.start();
+        }
+      } catch (ConnectorNotFoundException e) {
+        throw new InstantiatorException("Connector not found " + name, e);
+      } catch (Exception e) {
+        LOGGER.log(Level.WARNING, "Failed to start Lister for connector "
+                   + name, e);
+      }
+    }
+  }
+
+  /** Stop the Lister for the connector. */
+  private void stopLister() {
+    if (lister != null) {
+      try {
+        lister.shutdown();
+      } catch (Exception e) {
+        LOGGER.log(Level.WARNING, "Failed to shut down Lister for connector "
+                   + name, e);
+      }
+    }
+  }
+
+  /**
    * Return a {@link Retriever} that may be used to access content for the
    * document identified by {@code docid}.  If the connector does not support
    * the {@link Retriever} interface, {@code null} is returned.
@@ -441,6 +497,9 @@ class ConnectorCoordinatorImpl implements
 
     // Let the traversal manager know the schedule changed.
     setTraversalSchedule(traversalManager, schedule);
+
+    // Let the lister know the schedule changed.
+    setTraversalSchedule(lister, schedule);
 
     // New Schedule may alter DelayPolicy.
     delayTraversal(TraversalDelayPolicy.IMMEDIATE);
@@ -787,6 +846,10 @@ class ConnectorCoordinatorImpl implements
     retriever = null;
     traversalSchedule = null;
 
+    // Shut down the Lister, if running.
+    stopLister();
+    lister = null;
+
     if (instanceInfo != null
         && instanceInfo.getConnector() instanceof ConnectorShutdownAware) {
       ConnectorShutdownAware csa =
@@ -1013,6 +1076,9 @@ class ConnectorCoordinatorImpl implements
 
     // The load value in a Schedule is docs/minute.
     loadManager.setLoad(getSchedule().getLoad());
+
+    // Start up a Lister, if the Connector supports one.
+    startLister();
 
     // Allow newly modified connector to resume traversals immediately.
     delayTraversal(TraversalDelayPolicy.IMMEDIATE);

@@ -43,12 +43,14 @@ public class MockPusher implements Pusher, PusherFactory {
     printStream = ps;
   }
 
+  /* @Override */
   public Pusher newPusher(String connectorName) {
     return this;
   }
 
+  /* @Override */
   public boolean take(Document document, DocumentStore ignored)
-      throws RepositoryException {
+      throws PushException, FeedException, RepositoryException {
     printStream.println("<document>");
 
     // first take care of some special attributes
@@ -76,10 +78,12 @@ public class MockPusher implements Pusher, PusherFactory {
     return true;
   }
 
-  public void flush() {
+  /* @Override */
+  public void flush() throws PushException, FeedException, RepositoryException {
     printStream.flush();
   }
 
+  /* @Override */
   public void cancel() {
     totalDocs = 0;
   }
