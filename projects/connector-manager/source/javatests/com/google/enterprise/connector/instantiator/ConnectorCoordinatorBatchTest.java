@@ -161,9 +161,10 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
     runBatch(1, 1, 1);
   }
 
-  private void runBatch(int expectLoginCount, int expectStartTraversalCount,
-      int expectResumeTraversalCount) throws RepositoryException,
-      ConnectorNotFoundException, InterruptedException {
+  private void runBatch(int expectTraversalManagerCount,
+      int expectStartTraversalCount, int expectResumeTraversalCount)
+      throws RepositoryException, ConnectorNotFoundException,
+      InterruptedException {
     List<SimpleDocument> expectList =
         SyncingConnector.createaAndQueueDocumentList();
     String expectId =
@@ -179,7 +180,8 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
         Value.getSingleValueString(got.getDocument(),
             SpiConstants.PROPNAME_DOCID);
     assertEquals(expectId, gotId);
-    assertEquals(tracker.toString(), expectLoginCount, tracker.getLoginCount());
+    assertEquals(tracker.toString(), expectTraversalManagerCount,
+                 tracker.getTraversalManagerCount());
     assertEquals(tracker.toString(), expectStartTraversalCount, tracker
         .getStartTraversalCount());
     assertEquals(tracker.toString(), expectResumeTraversalCount, tracker
@@ -374,7 +376,7 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
     assertEquals(1, tracker.getStartTraversalCount());
     coordinator.restartConnectorTraversal();
     tracker.blockUntilTraversingInterrupted();
-    assertEquals(1, tracker.getLoginCount());
+    assertEquals(1, tracker.getTraversalManagerCount());
     assertEquals(1, tracker.getInterruptedCount());
     assertEquals(1, tracker.getStartTraversalCount());
 
@@ -395,7 +397,7 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
     config.getMap().put("hi", "mom");
     coordinator.setConnectorConfiguration(typeInfo, config, locale, true);
     tracker.blockUntilTraversingInterrupted();
-    assertEquals(1, tracker.getLoginCount());
+    assertEquals(1, tracker.getTraversalManagerCount());
     assertEquals(1, tracker.getInterruptedCount());
     assertEquals(1, tracker.getStartTraversalCount());
 
@@ -414,7 +416,7 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
         SyncingConnector.getTracker();
     tracker.blockUntilTraversingInterrupted();
 
-    assertEquals(tracker.toString(), 1, tracker.getLoginCount());
+    assertEquals(tracker.toString(), 1, tracker.getTraversalManagerCount());
     assertEquals(tracker.toString(), 1, tracker.getStartTraversalCount());
     assertEquals(tracker.toString(), 1, tracker.getInterruptedCount());
 
