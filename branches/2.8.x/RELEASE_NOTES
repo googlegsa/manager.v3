@@ -11,13 +11,13 @@ issues and work-arounds.
 Web Site: http://code.google.com/p/google-enterprise-connector-manager/
 
 
-Release 2.8.2, 05 September 2011
+Release 2.8.2, 23 September 2011
 ================================
 
 Introduction
 ------------
-This is an internal release for the Connector Manager on-board the GSA,
-not for general use.
+This is a patch release that fixes a few small problems discovered in the
+the previous release. Users of the previous release are encouraged to upgrade.
 
 Summary of Changes
 ------------------
@@ -25,6 +25,9 @@ Summary of Changes
     GSA Admin console.
 
   * Adds support for Flexible Authorization for Connectors.
+
+  * Improves MIME type recognition for many Microsoft Office file formats
+    when using the third-party mime-util detector.
 
 
 Release 2.8.0, 08 July 2011
