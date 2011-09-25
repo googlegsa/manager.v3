@@ -12,12 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.connector.traversal;
+package com.google.enterprise.connector.pusher;
 
 import com.google.enterprise.connector.database.DocumentStore;
-import com.google.enterprise.connector.pusher.FeedException;
-import com.google.enterprise.connector.pusher.Pusher;
-import com.google.enterprise.connector.pusher.PushException;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.DocumentAcceptor;
 import com.google.enterprise.connector.spi.DocumentAcceptorException;
@@ -63,18 +60,14 @@ public class DocumentAcceptorImpl implements DocumentAcceptor {
     try {
       pusher.take(document, documentStore);
     } catch (PushException e) {
-      LOGGER.log(Level.SEVERE, "DocumentAcceptor catches PushException.", e);
+      LOGGER.log(Level.SEVERE, "DocumentAcceptor failed to take document", e);
       throw new DocumentAcceptorException("Failed to take document", e);
     } catch (FeedException e) {
-      LOGGER.log(Level.SEVERE, "DocumentAcceptor catches FeedException.", e);
+      LOGGER.log(Level.SEVERE, "DocumentAcceptor failed to take document", e);
       throw new DocumentAcceptorException("Failed to take document", e);
     } catch (RepositoryException e) {
-      LOGGER.log(Level.SEVERE, "DocumentAcceptor catches RepositoryException.",
-                 e);
+      LOGGER.log(Level.WARNING, "DocumentAcceptor failed to take document", e);
       throw e;
-    } catch (Throwable t) {
-      LOGGER.log(Level.SEVERE, "Uncaught Exception", t);
-      throw new DocumentAcceptorException("Failed to take document", t);
     }
   }
 
@@ -93,18 +86,14 @@ public class DocumentAcceptorImpl implements DocumentAcceptor {
     try {
       pusher.flush();
     } catch (PushException e) {
-      LOGGER.log(Level.SEVERE, "DocumentAcceptor catches PushException.", e);
+      LOGGER.log(Level.SEVERE, "DocumentAcceptor failed to flush feed.", e);
       throw new DocumentAcceptorException("Failed to flush feed", e);
     } catch (FeedException e) {
-      LOGGER.log(Level.SEVERE, "DocumentAcceptor catches FeedException.", e);
+      LOGGER.log(Level.SEVERE, "DocumentAcceptor failed to flush feed.", e);
       throw new DocumentAcceptorException("Failed to flush feed", e);
     } catch (RepositoryException e) {
-      LOGGER.log(Level.SEVERE, "DocumentAcceptor catches RepositoryException.",
-                 e);
+      LOGGER.log(Level.WARNING, "DocumentAcceptor failed to flush feed.", e);
       throw e;
-    } catch (Throwable t) {
-      LOGGER.log(Level.SEVERE, "Uncaught Exception", t);
-      throw new DocumentAcceptorException("Failed to flush feed", t);
     }
   }
 
