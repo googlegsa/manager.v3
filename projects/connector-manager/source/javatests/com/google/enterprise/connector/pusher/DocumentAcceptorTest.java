@@ -12,14 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.connector.traversal;
+package com.google.enterprise.connector.pusher;
 
 import com.google.enterprise.connector.database.DocumentStore;
 import com.google.enterprise.connector.pusher.ExceptionalPusher;
 import com.google.enterprise.connector.pusher.ExceptionalPusher.Where;
-import com.google.enterprise.connector.pusher.FeedException;
-import com.google.enterprise.connector.pusher.MockPusher;
-import com.google.enterprise.connector.pusher.PushException;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.DocumentAcceptor;
 import com.google.enterprise.connector.spi.DocumentAcceptorException;
@@ -27,6 +24,7 @@ import com.google.enterprise.connector.spi.Lister;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.TraversalContext;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
+import com.google.enterprise.connector.traversal.MockLister;
 
 import junit.framework.TestCase;
 
@@ -51,7 +49,6 @@ public class DocumentAcceptorTest extends TestCase {
     // With no inter-document delay, MockLister feeds all documents
     // from its start() method, then returns when done.
     lister.start();
-    assertEquals(10, lister.getDocumentCount());
     assertEquals(10, pusher.getTotalDocs());
   }
 
@@ -143,8 +140,7 @@ public class DocumentAcceptorTest extends TestCase {
         assertEquals(DocumentAcceptorException.class, e.getClass());
         assertEquals(FeedException.class, e.getCause().getClass());
       } else if (exception instanceof RuntimeException) {
-        assertEquals(DocumentAcceptorException.class, e.getClass());
-        assertEquals(RuntimeException.class, e.getCause().getClass());
+        assertEquals(RuntimeException.class, e.getClass());
       } else {
         assertEquals(RepositoryException.class, e.getClass());
       }
@@ -163,8 +159,7 @@ public class DocumentAcceptorTest extends TestCase {
         assertEquals(DocumentAcceptorException.class, e.getClass());
         assertEquals(FeedException.class, e.getCause().getClass());
       } else if (exception instanceof RuntimeException) {
-        assertEquals(DocumentAcceptorException.class, e.getClass());
-        assertEquals(RuntimeException.class, e.getCause().getClass());
+        assertEquals(RuntimeException.class, e.getClass());
       } else {
         assertEquals(RepositoryException.class, e.getClass());
       }

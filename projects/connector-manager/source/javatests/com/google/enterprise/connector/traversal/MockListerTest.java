@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.traversal;
 
+import com.google.enterprise.connector.pusher.DocumentAcceptorImpl;
 import com.google.enterprise.connector.pusher.MockPusher;
 import com.google.enterprise.connector.spi.DocumentAcceptor;
 import com.google.enterprise.connector.spi.DocumentAcceptorException;

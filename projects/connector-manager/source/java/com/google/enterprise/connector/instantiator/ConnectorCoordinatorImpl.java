@@ -23,6 +23,7 @@ import com.google.enterprise.connector.database.ConnectorPersistentStoreFactory;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
+import com.google.enterprise.connector.pusher.DocumentAcceptorImpl;
 import com.google.enterprise.connector.pusher.PusherFactory;
 import com.google.enterprise.connector.scheduler.LoadManager;
 import com.google.enterprise.connector.scheduler.LoadManagerFactory;
@@ -47,7 +48,6 @@ import com.google.enterprise.connector.spi.TraversalScheduleAware;
 import com.google.enterprise.connector.traversal.BatchResult;
 import com.google.enterprise.connector.traversal.BatchResultRecorder;
 import com.google.enterprise.connector.traversal.BatchSize;
-import com.google.enterprise.connector.traversal.DocumentAcceptorImpl;
 import com.google.enterprise.connector.traversal.QueryTraverser;
 import com.google.enterprise.connector.traversal.TraversalDelayPolicy;
 import com.google.enterprise.connector.traversal.Traverser;
@@ -133,11 +133,17 @@ class ConnectorCoordinatorImpl implements
    * The cached TraversalManager.
    */
   private TraversalManager traversalManager;
+  private boolean traversalEnabled;
 
   /**
    * The cached Lister.
    */
   private Lister lister;
+
+  /**
+   * The running Lister TaskHandle.
+   */
+  private TaskHandle listerHandle;
 
   /**
    * The cached Retriever.
@@ -173,6 +179,7 @@ class ConnectorCoordinatorImpl implements
     this.loadManager = loadManagerFactory.newLoadManager(name);
     this.connectorPersistentStoreFactory = connectorPersistentStoreFactory;
     this.documentStore = null;
+    this.traversalEnabled = true;
   }
 
   /**
@@ -272,10 +279,16 @@ class ConnectorCoordinatorImpl implements
   /* @Override */
   public synchronized TraversalManager getTraversalManager()
       throws ConnectorNotFoundException, InstantiatorException {
-    if (traversalManager == null) {
+    if (traversalManager == null && traversalEnabled) {
       traversalManager = getConnectorInterfaces().getTraversalManager();
-      setTraversalContext(traversalManager);
-      setTraversalSchedule(traversalManager, getSchedule());
+      if (traversalManager == null) {
+        LOGGER.info("Connector " + name + " has no TraversalManager;"
+                    + " disabling traversals.");
+        traversalEnabled = false;
+      } else {
+        setTraversalContext(traversalManager);
+        setTraversalSchedule(traversalManager, getSchedule());
+      }
     }
     return traversalManager;
   }
@@ -322,14 +335,15 @@ class ConnectorCoordinatorImpl implements
   }
 
   /** Start up the Lister for the connector, if this CM allows feeding. */
-  private void startLister() throws InstantiatorException {
+  private synchronized void startLister() throws InstantiatorException {
     if (Context.getInstance().isFeeding()) {
       try {
         Lister lister = getLister();
         if (lister != null) {
+          LOGGER.fine("Starting Lister for connector " + name);
           lister.setDocumentAcceptor(new DocumentAcceptorImpl(
               name, pusherFactory.newPusher(name), documentStore));
-          lister.start();
+          listerHandle = threadPool.submit(new CancelableLister(name, lister));
         }
       } catch (ConnectorNotFoundException e) {
         throw new InstantiatorException("Connector not found " + name, e);
@@ -341,14 +355,10 @@ class ConnectorCoordinatorImpl implements
   }
 
   /** Stop the Lister for the connector. */
-  private void stopLister() {
-    if (lister != null) {
-      try {
-        lister.shutdown();
-      } catch (Exception e) {
-        LOGGER.log(Level.WARNING, "Failed to shut down Lister for connector "
-                   + name, e);
-      }
+  private synchronized void stopLister() {
+    if (listerHandle != null && !listerHandle.isDone()) {
+      LOGGER.fine("Stopping Lister for connector " + name);
+      listerHandle.cancel();
     }
   }
 
@@ -720,6 +730,11 @@ class ConnectorCoordinatorImpl implements
   synchronized boolean shouldRun() {
     // If we do not have a traversing instance, don't run.
     if (instanceInfo == null) {
+      return false;
+    }
+
+    // If traversals are disabled, don't run.
+    if (!traversalEnabled) {
       return false;
     }
 
