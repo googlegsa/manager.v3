@@ -29,11 +29,10 @@ import java.util.logging.Logger;
 
 /**
  * Handler class for SetManagerConfig servlet class.
- *
  */
 public class SetManagerConfigHandler {
   private static final Logger LOGGER =
-    Logger.getLogger(SetManagerConfigHandler.class.getName());
+      Logger.getLogger(SetManagerConfigHandler.class.getName());
 
   private ConnectorMessageCode status = new ConnectorMessageCode();
   private String feederGateProtocol = null;
@@ -41,8 +40,8 @@ public class SetManagerConfigHandler {
   private int feederGatePort = 0;
   private int feederGateSecurePort = Context.GSA_FEED_SECURE_PORT_INVALID;
 
-  /*
-   * Reads from a request input XML string
+  /**
+   * Reads from a request input XML string.
    *
    * @param manager Manager
    * @param xmlBody String Input XML body string.
@@ -115,11 +114,11 @@ public class SetManagerConfigHandler {
         if (feederGateSecurePort != Context.GSA_FEED_SECURE_PORT_INVALID) {
           message += "; feederGateSecurePort=" + feederGateSecurePort;
         }
-      LOGGER.warning(message);
-      this.status = new ConnectorMessageCode(
-          ConnectorMessageCode.ATTEMPT_TO_CHANGE_LOCKED_CONNECTOR_MANAGER);
-      return;
-    }
+        LOGGER.warning(message);
+        this.status = new ConnectorMessageCode(
+            ConnectorMessageCode.ATTEMPT_TO_CHANGE_LOCKED_CONNECTOR_MANAGER);
+        return;
+      }
     }
 
     // If we get here, update the manager configuration.

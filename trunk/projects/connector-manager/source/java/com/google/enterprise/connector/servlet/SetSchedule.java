@@ -64,6 +64,10 @@ public class SetSchedule extends ConnectorManagerServlet {
 
     String connectorName = XmlParseUtil.getFirstElementByTagName(
         root, ServletUtil.XMLTAG_CONNECTOR_NAME);
+    if (connectorName == null) {
+      status.setMessageId(ConnectorMessageCode.RESPONSE_NULL_CONNECTOR);
+      return status;
+    }
 
     NDC.append(connectorName);
 
@@ -78,10 +82,12 @@ public class SetSchedule extends ConnectorManagerServlet {
       }
     }
 
-    int load = Integer.parseInt(XmlParseUtil.getFirstElementByTagName(
-        root, ServletUtil.XMLTAG_LOAD));
-    boolean disabled = (XmlParseUtil.getFirstElementByTagName(root,
-        ServletUtil.XMLTAG_DISABLED) != null);
+    String loadStr = XmlParseUtil.getFirstElementByTagName(root,
+        ServletUtil.XMLTAG_LOAD);
+    int load = (loadStr == null) ? 0 : Integer.parseInt(loadStr);
+    String disabledStr = XmlParseUtil.getFirstElementByTagName(root,
+        ServletUtil.XMLTAG_DISABLED);
+    boolean disabled = Boolean.parseBoolean(disabledStr);
     int retryDelayMillis = Schedule.defaultRetryDelayMillis();
     String delayStr = XmlParseUtil.getFirstElementByTagName(root,
         ServletUtil.XMLTAG_DELAY);

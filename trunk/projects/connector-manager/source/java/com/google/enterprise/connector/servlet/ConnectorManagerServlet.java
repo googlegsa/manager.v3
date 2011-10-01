@@ -91,7 +91,9 @@ public abstract class ConnectorManagerServlet extends HttpServlet {
     PrintWriter out = res.getWriter();
     NDC.push(NDC.peek());
     try {
-      String xmlBody = StringUtils.readAllToString(reader);
+      // I encountered a null reader if no content or body.
+      String xmlBody =
+          (reader == null) ? null : StringUtils.readAllToString(reader);
       if (Strings.isNullOrEmpty(xmlBody)) {
         ServletUtil.writeResponse(
             out, ConnectorMessageCode.RESPONSE_EMPTY_REQUEST);
