@@ -143,7 +143,7 @@ public class GetDocumentContent extends HttpServlet {
       // a modified-since time of the crawl time, rather than the document's
       // actual supplied lastModified meta-data, fudge the time by a minute
       // to avoid client/server clock disparities.
-      if (lastModified < ifModifiedSince - (60 * 1000)) {
+      if (lastModified != -1 && lastModified < ifModifiedSince - (60 * 1000)) {
         if (LOGGER.isLoggable(Level.FINEST)) {
           LOGGER.finest("RETRIEVER: Document " + docid + " unchanged");
         }
