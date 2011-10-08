@@ -144,6 +144,7 @@ class ConnectorCoordinatorImpl implements
     this.instanceInfo = instanceInfo;
     this.typeInfo = instanceInfo.getTypeInfo();
     this.loadManager.setLoad(getSchedule().getLoad());
+    prefetchAuthorizationManager();
   }
 
   /**
@@ -734,7 +735,24 @@ class ConnectorCoordinatorImpl implements
     // Allow newly modified connector to resume traversals immediately.
     delayTraversal(TraversalDelayPolicy.IMMEDIATE);
 
+    // Prefetch an AuthorizationManager to avoid AuthZ time-outs.
+    prefetchAuthorizationManager();
+
     return null;
+  }
+
+  /**
+   * Prefetches an AuthorizationManager to avoid AuthZ time-outs
+   * when logging in to repository at search time.
+   */
+  private void prefetchAuthorizationManager() {
+    try {
+      getAuthorizationManager();
+    } catch (InstantiatorException ie) {
+      // Not going to happen here, but even if it did, we don't care.
+    } catch (ConnectorNotFoundException cnfe) {
+      // Not going to happen here, but even if it did, we don't care.
+    }
   }
 
   private static ConfigureResponse validateConfig(String name,
