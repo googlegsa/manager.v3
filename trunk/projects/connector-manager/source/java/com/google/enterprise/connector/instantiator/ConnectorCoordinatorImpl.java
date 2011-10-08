@@ -1089,6 +1089,14 @@ class ConnectorCoordinatorImpl implements
     instanceInfo = newInstanceInfo;
     typeInfo = newTypeInfo;
 
+    // Prefetch an AuthorizationManager to avoid AuthZ time-outs
+    // when logging in to repository at search time.
+    try {
+      getAuthorizationManager();
+    } catch (ConnectorNotFoundException cnfe) {
+      // Not going to happen here, but even if it did, we don't care.
+    }
+
     // The load value in a Schedule is docs/minute.
     loadManager.setLoad(getSchedule().getLoad());
 
