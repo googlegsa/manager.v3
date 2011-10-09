@@ -29,23 +29,46 @@ import java.io.InputStream;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Detector for MIME type based on file name and content.
  */
 public class MimeTypeDetector {
-  private final MimeUtil2 delegate;
-
-  static {
-    setSupportedEncodings(
-        Sets.newHashSet("UTF-8", "ISO-8859-1", "windows-1252"));
-  }
+  private static final Logger LOGGER =
+      Logger.getLogger(MimeTypeDetector.class.getName());
 
   /**
    * MIME type for documents whose MIME type cannot be determined.
    */
   public static final String UNKNOWN_MIME_TYPE =
       MimeUtil2.UNKNOWN_MIME_TYPE.toString();
+
+  private static MimeUtil2 delegate;
+
+  /**
+   * The mime-util library leaks memory like a sieve on each new instance.
+   * So just keep a single instance that everybody uses.
+   */
+  private static synchronized void init() {
+    if (delegate == null) {
+      LOGGER.info("Initializing MimeTypeDetector");
+      setSupportedEncodings(
+          Sets.newHashSet("UTF-8", "ISO-8859-1", "windows-1252"));
+
+      delegate = new MimeUtil2();
+      delegate.registerMimeDetector(ExtensionMimeDetector.class.getName());
+      // TODO: Should we add the WindowsRegistryMimeDetector?  This might
+      // yield different results when run on Windows vs. Unix.
+
+      // TODO: If "/usr/share/mime/mime.cache exists use
+      // OpendesktopMimeDetector instead of MagicMimeMimeDetector. It seems
+      // more accurate but was logging NullPointerExceptions so I temporarily
+      // removed it pending further testing/fixing.
+      delegate.registerMimeDetector(MagicMimeMimeDetector.class.getName());
+    }
+  }
 
   /** TraversalContext used to rank differented mime types. */
   private static TraversalContext traversalContext;
@@ -58,16 +81,7 @@ public class MimeTypeDetector {
   }
 
   public MimeTypeDetector() {
-    delegate = new MimeUtil2();
-    delegate.registerMimeDetector(ExtensionMimeDetector.class.getName());
-    // TODO: Should we add the WindowsRegistryMimeDetector?  This might
-    // yield different results when run on Windows vs. Unix.
-
-    // TODO: If "/usr/share/mime/mime.cache exists use
-    //     OpendesktopMimeDetector instead of MagicMimeMimeDetector. It seems
-    //     more accurate but was logging NullPointerExceptions so I temporarily
-    //     removed it pending further testing/fixing.
-    delegate.registerMimeDetector(MagicMimeMimeDetector.class.getName());
+    init();
   }
 
   /**
@@ -126,7 +140,13 @@ public class MimeTypeDetector {
     // We munge the file name we pass to getMimeTypes so that it will
     // not find the file exists, open it and perform content based
     // detection here.
-    return pickBestMimeType(getMimeTypes(filename), getMimeTypes(content));
+    String bestMimeType =
+        pickBestMimeType(getMimeTypes(filename), getMimeTypes(content));
+    if (LOGGER.isLoggable(Level.FINEST)) {
+      LOGGER.finest("MimeType " + bestMimeType + " determined for "
+                    + ((filename == null) ? "content." : filename));
+    }
+    return bestMimeType;
   }
 
   /**
@@ -175,21 +195,35 @@ public class MimeTypeDetector {
       }
       bestMimeType = pickBestMimeType(mimeTypes);
     }
+    if (LOGGER.isLoggable(Level.FINEST)) {
+      LOGGER.finest("MimeType " + bestMimeType + " determined for "
+                    + ((filename == null) ? "content." : filename));
+    }
     return bestMimeType;
   }
 
   @SuppressWarnings("unchecked")
-  private synchronized Collection<MimeType> getMimeTypes(String filename) {
+  private Collection<MimeType> getMimeTypes(String filename) {
+    if (filename == null) {
+      return null;
+    }
+
     // We munge the file name we pass to getMimeTypes so that it will
     // not find the file exists, open it and perform content based
     // detection here.
-    return (filename == null) ? null :
-        delegate.getMimeTypes("/dev/null/" + filename);
+    synchronized (delegate) {
+      return delegate.getMimeTypes("/dev/null/" + filename);
+    }
   }
 
   @SuppressWarnings("unchecked")
-  private synchronized Collection<MimeType> getMimeTypes(byte[] content) {
-    return (content == null) ? null : delegate.getMimeTypes(content);
+  private Collection<MimeType> getMimeTypes(byte[] content) {
+    if (content == null) {
+      return null;
+    }
+    synchronized (delegate) {
+      return delegate.getMimeTypes(content);
+    }
   }
 
   /**
