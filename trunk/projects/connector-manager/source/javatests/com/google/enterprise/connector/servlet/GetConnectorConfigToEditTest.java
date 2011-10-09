@@ -276,12 +276,11 @@ public class GetConnectorConfigToEditTest extends TestCase {
     // be parsed and make sure the reserved XML properties are preserved.
     GetConnectorConfigToEdit.handleDoGet(connectorName, "en", manager, out);
     out.flush();
-    StringBuffer result = writer.getBuffer();
+    String result = writer.toString();
     out.close();
-    LOGGER.info("Result:\n" + result.toString());
-    LOGGER.info("ExpectedResult:\n" + expectedResult);
-
-    assertEquals (StringUtils.normalizeNewlines(expectedResult),
-                  StringUtils.normalizeNewlines(result.toString()));
+    LOGGER.info("Expected Response:\n" + expectedResult);
+    LOGGER.info("Actual Response:\n" + result);
+    assertEquals(StringUtils.normalizeNewlines(expectedResult),
+                 StringUtils.normalizeNewlines(result));
   }
 }

@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright 2006 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,10 +14,10 @@
 
 package com.google.enterprise.connector.servlet;
 
+import com.google.common.base.Function;
 import com.google.enterprise.connector.common.SecurityUtils;
 import com.google.enterprise.connector.spi.XmlUtils;
 
-import junit.framework.Assert;
 import junit.framework.TestCase;
 
 import java.io.File;
@@ -45,8 +45,36 @@ public class ServletUtilTest extends TestCase {
 
   private void onePrependTest(String original, String expected) {
     String result = ServletUtil.prependCmPrefix(original);
-    Assert.assertEquals(expected, result);
-    Assert.assertEquals(original, ServletUtil.stripCmPrefix(result));
+    assertEquals(expected, result);
+    assertEquals(original, ServletUtil.stripCmPrefix(result));
+  }
+
+  public void testGetRealPath() throws Exception {
+    final String webInfDir = "/connector-manager/WEB-INF/";
+    Function<String, String> f =
+        new Function<String, String>() {
+          public String apply(String path) {
+            // Force relative paths to be relative to WEB-INF.
+            return new File(webInfDir, path).getAbsolutePath();
+          }
+        };
+
+    // Test simple relative.
+    assertEquals(webInfDir + "temp", ServletUtil.getRealPath("temp", f));
+
+    // Test already starts with WEB-INF.
+    assertEquals(webInfDir + "temp",
+                 ServletUtil.getRealPath("/WEB-INF/temp", f));
+    assertEquals(webInfDir + "temp",
+                 ServletUtil.getRealPath("WEB-INF/temp", f));
+
+    // Test absolute paths are preserved.
+    assertEquals("/var/tmp/temp",
+                 ServletUtil.getRealPath("/var/tmp/temp", f));
+
+    // Test file: URL paths are returned as absolute paths.
+    assertEquals("/var/tmp/temp",
+                 ServletUtil.getRealPath("file:///var/tmp/temp", f));
   }
 
   public void testEmptyTextArea() throws Exception {

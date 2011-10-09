@@ -24,6 +24,9 @@ import com.google.enterprise.connector.manager.MockManager;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
+
 import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -146,16 +149,16 @@ public class GetConfigFormTest extends TestCase {
     ConnectorManagerGetServlet.writeConfigureResponse(
         out, new ConnectorMessageCode(), configResponse);
     out.flush();
-    StringBuffer result = writer.getBuffer();
-    LOGGER.info("Result:\n" + result.toString());
-    LOGGER.info("ExpectedResult:\n" + expectedResult);
-    assertEquals(StringUtils.normalizeNewlines(expectedResult),
-        StringUtils.normalizeNewlines(result.toString()));
+    String result = writer.toString();
     out.close();
+    LOGGER.info("Expected Response:\n" + expectedResult);
+    LOGGER.info("Actual Response:\n" + result);
+    assertEquals(StringUtils.normalizeNewlines(expectedResult),
+                 StringUtils.normalizeNewlines(result));
   }
 
   /** Test null ConnectorType returns status code. */
-  public void testNullConnectorType() {
+  public void testNullConnectorType() throws Exception {
     String expectedResult =
       "<CmResponse>\n" +
       "  <StatusId>5216</StatusId>\n" +
@@ -164,7 +167,7 @@ public class GetConfigFormTest extends TestCase {
   }
 
   /** Test empty ConnectorType returns status code. */
-  public void testEmptyConnectorType() {
+  public void testEmptyConnectorType() throws Exception {
     String expectedResult =
       "<CmResponse>\n" +
       "  <StatusId>5216</StatusId>\n" +
@@ -173,7 +176,7 @@ public class GetConfigFormTest extends TestCase {
   }
 
   /** Test ConnectorTypeNotFound returns status code. */
-  public void testConnectorTypeNotFound() {
+  public void testConnectorTypeNotFound() throws Exception {
     String connectorType = "UnknownConnectorType";
     String expectedResult =
       "<CmResponse>\n" +
@@ -184,14 +187,14 @@ public class GetConfigFormTest extends TestCase {
   }
 
   /** Test InstantiatorException returns status code. */
-  public void testInstantiatorException() {
+  public void testInstantiatorException() throws Exception {
     manager = new ExceptionThrowingManager();
     String connectorType = "UnknownConnectorType";
     String expectedResult =
       "<CmResponse>\n" +
       "  <StatusId>5305</StatusId>\n" +
       "</CmResponse>\n";
-    doTest(connectorType, expectedResult);
+    doHandlerTest(connectorType, expectedResult);
   }
 
   /** A MockManager that throws exception when getting config form. */
@@ -205,8 +208,7 @@ public class GetConfigFormTest extends TestCase {
   }
 
   /** Test ProductionManager supplies connectorInstancePrototype in response. */
-  public void testProductionManagerGetConfigXml()
-      throws ConnectorTypeNotFoundException, InstantiatorException {
+  public void testProductionManagerGetConfigXml() throws Exception {
     String connectorType = "TestConnectorA";
     String expectedResult =
         "<CmResponse>\n"
@@ -238,21 +240,36 @@ public class GetConfigFormTest extends TestCase {
     doTest(connectorType, expectedResult);
   }
 
-  private void doTest(String connectorType, String expectedResult) {
+  private void doTest(String connectorType, String expectedResult)
+      throws Exception {
+    doHandlerTest(connectorType, expectedResult);
+    doServletTest(connectorType, expectedResult);
+  }
+
+  private void doHandlerTest(String connectorType, String expectedResult) {
     // Use the Servlet to get the unpopulated config form.  Make sure it can be
     // parsed and make sure the reserved XML properties are preserved.
     StringWriter writer = new StringWriter();
     PrintWriter out = new PrintWriter(writer);
 
     GetConfigForm.handleDoGet(connectorType, "en", manager, out);
+
     out.flush();
-
-    StringBuffer result = writer.getBuffer();
-    LOGGER.info("Result:\n" + result.toString());
-    LOGGER.info("ExpectedResult:\n" + expectedResult);
-    assertEquals(StringUtils.normalizeNewlines(expectedResult),
-        StringUtils.normalizeNewlines(result.toString()));
-
+    String result = writer.toString();
     out.close();
+    LOGGER.info("Expected Response:\n" + expectedResult);
+    LOGGER.info("Actual Response:\n" + result);
+    assertEquals(StringUtils.normalizeNewlines(expectedResult),
+                 StringUtils.normalizeNewlines(result));
+  }
+
+  private void doServletTest(String connectorType, String expectedResult)
+      throws Exception {
+    MockHttpServletRequest req = new MockHttpServletRequest("GET","");
+    req.setParameter(ServletUtil.XMLTAG_CONNECTOR_TYPE, connectorType);
+    MockHttpServletResponse res = new MockHttpServletResponse();
+    new GetConfigForm().doGet(req, res);
+    assertEquals(StringUtils.normalizeNewlines(expectedResult),
+                 StringUtils.normalizeNewlines(res.getContentAsString()));
   }
 }

@@ -500,7 +500,7 @@ public class DocPusherTest extends TestCase {
 
     try {
       String resultXML = feedDocument(document);
-      assertStringContains("last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\"",
+      assertStringContains("last-modified=\"Thu, 01 Jan 1970 01:00:00 GMT\"",
                            resultXML);
       assertStringContains("url=\"" + ServletUtil.PROTOCOL + "junit.localhost"
                            + ServletUtil.DOCID + "doc1\"", resultXML);
@@ -535,7 +535,7 @@ public class DocPusherTest extends TestCase {
 
     try {
       String resultXML = feedDocument(document);
-      assertStringContains("last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\"",
+      assertStringContains("last-modified=\"Thu, 01 Jan 1970 01:00:00 GMT\"",
                            resultXML);
       assertStringContains("url=\"" + ServletUtil.PROTOCOL + "junit.localhost"
                            + ServletUtil.DOCID + "doc1\"", resultXML);
