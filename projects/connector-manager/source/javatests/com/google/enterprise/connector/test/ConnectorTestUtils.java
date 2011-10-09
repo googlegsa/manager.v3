@@ -141,7 +141,7 @@ public class ConnectorTestUtils {
       String docId) {
     Map<String, Object> props = new HashMap<String, Object>();
     Calendar cal = Calendar.getInstance();
-    cal.setTimeInMillis(10 * 1000);
+    cal.setTimeInMillis(3600 * 1000);
     props.put(SpiConstants.PROPNAME_LASTMODIFIED, cal);
     props.put(SpiConstants.PROPNAME_DOCID, docId);
     props.put(SpiConstants.PROPNAME_MIMETYPE, "text/plain");

@@ -294,8 +294,9 @@ public class MockManager implements Manager {
 
   /* @Override */
   public ConfigureResponse setConnectorConfiguration(String connectorName,
-        Configuration configuration, String language, boolean update)
-        throws InstantiatorException {
+      Configuration configuration, String language, boolean update)
+      throws ConnectorNotFoundException, ConnectorExistsException,
+             PersistentStoreException, InstantiatorException {
     LOGGER.info("setConnectorConfig() connectorName: " + connectorName);
     LOGGER.info("setConnectorConfig() update: " + update);
     LOGGER.info("configData: ");
@@ -347,7 +348,8 @@ public class MockManager implements Manager {
   }
 
   /* @Override */
-  public void setSchedule(String connectorName, String schedule) {
+  public void setSchedule(String connectorName, String schedule)
+      throws ConnectorNotFoundException, PersistentStoreException {
     // do nothing
   }
 
@@ -361,7 +363,8 @@ public class MockManager implements Manager {
   }
 
   /* @Override */
-  public void restartConnectorTraversal(String connectorName) {
+  public void restartConnectorTraversal(String connectorName)
+      throws ConnectorNotFoundException, InstantiatorException {
     // do nothing;
   }
 

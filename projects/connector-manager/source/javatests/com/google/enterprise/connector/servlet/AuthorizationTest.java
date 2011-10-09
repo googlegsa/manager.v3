@@ -17,7 +17,6 @@ package com.google.enterprise.connector.servlet;
 import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.manager.MockManager;
 
-import junit.framework.Assert;
 import junit.framework.TestCase;
 
 import java.io.PrintWriter;
@@ -550,11 +549,11 @@ public class AuthorizationTest extends TestCase {
             out);
     authorizationHandler.handleDoPost();
     out.flush();
-    StringBuffer result = writer.getBuffer();
-    LOGGER.info("Expected Response:\n" + expectedResult);
-    LOGGER.info("Actual Response:\n" + result.toString());
-    Assert.assertEquals(StringUtils.normalizeNewlines(expectedResult),
-        StringUtils.normalizeNewlines(result.toString()));
+    String result = writer.toString();
     out.close();
+    LOGGER.info("Expected Response:\n" + expectedResult);
+    LOGGER.info("Actual Response:\n" + result);
+    assertEquals(StringUtils.normalizeNewlines(expectedResult),
+                 StringUtils.normalizeNewlines(result));
   }
 }

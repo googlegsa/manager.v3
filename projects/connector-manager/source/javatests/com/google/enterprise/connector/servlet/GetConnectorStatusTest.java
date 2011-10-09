@@ -15,10 +15,10 @@
 package com.google.enterprise.connector.servlet;
 
 import com.google.enterprise.connector.common.StringUtils;
+import com.google.enterprise.connector.manager.ConnectorStatus;
 import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.manager.MockManager;
 
-import junit.framework.Assert;
 import junit.framework.TestCase;
 
 import java.io.PrintWriter;
@@ -31,15 +31,14 @@ import java.util.logging.Logger;
  *
  */
 public class GetConnectorStatusTest extends TestCase {
-  private static final Logger LOG =
-    Logger.getLogger(GetConnectorStatusTest.class.getName());
+  private static final Logger LOGGER =
+      Logger.getLogger(GetConnectorStatusTest.class.getName());
 
   /**
    * Test method for {@link com.google.enterprise.connector.servlet.GetConnectorStatus
    * #handleDoGet(String, Manager, PrintWriter)}.
    *
    * connectorStatus = null
-   *
    */
   public void testHandleDoGet2() {
     String name = null;
@@ -77,21 +76,67 @@ public class GetConnectorStatusTest extends TestCase {
         "    <ConnectorSchedules version=\"3\">" + name + ":100:0:0-0</ConnectorSchedules>\n" +
         "  </ConnectorStatus>\n" +
         "</CmResponse>\n";
-    doTest(name, expectedResult);
+    doTest(MockManager.getInstance(), name, expectedResult);
   }
 
-  private void doTest(String connectorName,
+  private void doTest(Manager manager, String connectorName,
                       String expectedResult) {
     StringWriter writer = new StringWriter();
     PrintWriter out = new PrintWriter(writer);
-    Manager manager = MockManager.getInstance();
     GetConnectorStatus.handleDoGet(connectorName, manager, out);
     out.flush();
-    StringBuffer result = writer.getBuffer();
-    LOG.info(result.toString());
-    LOG.info(expectedResult);
-    Assert.assertEquals (StringUtils.normalizeNewlines(expectedResult),
-        StringUtils.normalizeNewlines(result.toString()));
+    String result = writer.toString();
     out.close();
+    LOGGER.info("Expected Response:\n" + expectedResult);
+    LOGGER.info("Actual Response:\n" + result);
+    assertEquals(StringUtils.normalizeNewlines(expectedResult),
+                 StringUtils.normalizeNewlines(result));
+  }
+
+  /** Test manager returns null ConnectorStatus. */
+  public void testNullConnectorStatus() {
+    String name = "nullStatusConnector";
+    String expectedResult = "<CmResponse>\n"
+        + "  <StatusId>"
+        + ConnectorMessageCode.RESPONSE_NULL_CONNECTOR_STATUS
+        + "</StatusId>\n"
+        + "  <CMParams Order=\"0\" CMParam=\"" + name + "\"/>\n"
+        + "</CmResponse>\n";
+    doTest(new NullStatusManager(), name, expectedResult);
+  }
+
+  /** A Manager that returns null ConnectorStatus. */
+  private static class NullStatusManager extends MockManager {
+    @Override
+    public ConnectorStatus getConnectorStatus(String connectorName) {
+      return null;
+    }
+  }
+
+  /** Test manager returns ConnectorStatus with null Schedule. */
+  public void testNullConnectorSchedule() {
+    String name = "foo";
+    String type = "Documentum";
+    String expectedResult =
+        "<CmResponse>\n" +
+        "  <StatusId>0</StatusId>\n" +
+        "  <ConnectorStatus>\n" +
+        "    <ConnectorName>" + name + "</ConnectorName>\n" +
+        "    <ConnectorType>" + type + "</ConnectorType>\n" +
+        "    <Status>0</Status>\n" +
+        "    <ConnectorSchedules></ConnectorSchedules>\n" +
+        "  </ConnectorStatus>\n" +
+        "</CmResponse>\n";
+    doTest(new NullScheduleManager(), name, expectedResult);
+  }
+
+  /** A Manager that returns null ConnectorStatus. */
+  private static class NullScheduleManager extends MockManager {
+    @Override
+    public ConnectorStatus getConnectorStatus(String connectorName) {
+      ConnectorStatus status = super.getConnectorStatus(connectorName);
+      return new ConnectorStatus(status.getName(), status.getType(),
+                                 status.getStatus(), null);
+    }
   }
 }

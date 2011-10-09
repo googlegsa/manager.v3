@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.servlet;
 
+import com.google.common.base.Strings;
 import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.instantiator.Instantiator;
 import com.google.enterprise.connector.instantiator.InstantiatorException;
@@ -27,12 +28,18 @@ import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.MockConnector;
 import com.google.enterprise.connector.spi.MockRetriever;
+import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.util.SystemClock;
+
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
 
 import junit.framework.TestCase;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.logging.Logger;
+import java.util.zip.GZIPInputStream;
 
 /**
  * Tests {@link GetDocumentContent} servlet class.
@@ -76,7 +83,7 @@ public class GetDocumentContentTest extends TestCase {
     // Connector1 has a lastModifiedDate
     lastModified = GetDocumentContent.handleGetLastModified(
                    manager, "connector1", "xyzzy");
-    assertEquals(10 * 1000, lastModified);
+    assertEquals(3600 * 1000, lastModified);
 
     // Connector2 has no lastModifiedDate
     lastModified = GetDocumentContent.handleGetLastModified(
@@ -113,6 +120,26 @@ public class GetDocumentContentTest extends TestCase {
 
     assertEquals(expectedStatus, status);
     assertEquals(expectedOutput, buffer.toString());
+  }
+
+  /** Test ProductionManager getDocumentContent with null connectorName. */
+  public void testGetDocumentContentNullConnectorName() throws Exception {
+    checkGetDocumentContent(null, docid, 400, "");
+  }
+
+  /** Test ProductionManager getDocumentContent with empty connectorName. */
+  public void testGetDocumentContentEmptyConnectorName() throws Exception {
+    checkGetDocumentContent("", docid, 400, "");
+  }
+
+  /** Test ProductionManager getDocumentContent with null docid. */
+  public void testGetDocumentContentNullDocid() throws Exception {
+    checkGetDocumentContent(connectorName, null, 400, "");
+  }
+
+  /** Test ProductionManager getDocumentContent with empty docid. */
+  public void testGetDocumentContentEmptyDocid() throws Exception {
+    checkGetDocumentContent(connectorName, "", 400, "");
   }
 
   /** Test ProductionManager getDocumentContent with ConnectorNotFound. */
@@ -177,7 +204,7 @@ public class GetDocumentContentTest extends TestCase {
     // Connector regular docids have lastModified.
     lastModified = GetDocumentContent.handleGetLastModified(
         manager, connectorName, docid);
-    assertEquals(10 * 1000, lastModified);
+    assertEquals(3600 * 1000, lastModified);
 
     // This Document has no lastModifiedDate
     lastModified = GetDocumentContent.handleGetLastModified(
@@ -193,5 +220,105 @@ public class GetDocumentContentTest extends TestCase {
     lastModified = GetDocumentContent.handleGetLastModified(
         manager, connectorName, MockRetriever.DOCID_NOT_FOUND);
     assertEquals(-1L, lastModified);
+  }
+
+  private void patchRealProductionManager() throws Exception {
+    MockInstantiator instantiator =
+        new MockInstantiator(new ThreadPool(5, new SystemClock()));
+    instantiator.setupTestTraversers();
+    instantiator.addConnector(connectorName,
+        new MockConnector(null, null, null, new MockRetriever()));
+    assertTrue(Context.getInstance().getManager() instanceof ProductionManager);
+    ProductionManager manager =
+        (ProductionManager) (Context.getInstance().getManager());
+    manager.setInstantiator(instantiator);
+  }
+
+  /**
+   * Test method for the HttpServlet.doGet.
+   */
+  public void testDoGetNoIfModifiedSince() throws Exception {
+    patchRealProductionManager();
+    MockHttpServletRequest req = new MockHttpServletRequest("GET",
+        "/connector-manager/getDocumentContent");
+    req.setParameter(ServletUtil.XMLTAG_CONNECTOR_NAME, connectorName);
+    req.setParameter(ServletUtil.QUERY_PARAM_DOCID, docid);
+    MockHttpServletResponse res = new MockHttpServletResponse();
+    new GetDocumentContent().doGet(req, res);
+    assertEquals(200, res.getStatus());
+    assertEquals(docid, res.getContentAsString());
+    assertNull(res.getHeader("Content-Encoding"));
+  }
+
+  /**
+   * Test compression in the Servlet.
+   */
+  public void testDoGetWithCompression() throws Exception {
+    patchRealProductionManager();
+    String docid = "NowIsTheTimeForAllGoodMenToComeToTheAidOfTheCountry";
+    MockHttpServletRequest req = new MockHttpServletRequest("GET",
+        "/connector-manager/getDocumentContent");
+    req.setParameter(ServletUtil.XMLTAG_CONNECTOR_NAME, connectorName);
+    req.setParameter(ServletUtil.QUERY_PARAM_DOCID, docid);
+    req.addHeader("Accept-Encoding", "gzip");
+    GetDocumentContent.setUseCompression(true);
+    MockHttpServletResponse res = new MockHttpServletResponse();
+    new GetDocumentContent().doGet(req, res);
+    assertEquals(200, res.getStatus());
+    assertEquals("gzip", res.getHeader("Content-Encoding"));
+    assertFalse(docid.equals(res.getContentAsString()));
+    assertTrue(docid.equals(StringUtils.streamToString(
+        new GZIPInputStream(new ByteArrayInputStream(
+        res.getContentAsByteArray())))));
+  }
+
+  /**
+   * Test IsModifiedSince, where lastModified returns -1.
+   */
+  public void testDoGetIsModifiedSinceNoLastModified() throws Exception {
+    patchRealProductionManager();
+    String docid = MockRetriever.DOCID_NO_LASTMODIFIED;
+    MockHttpServletRequest req = new MockHttpServletRequest("GET",
+        "/connector-manager/getDocumentContent");
+    req.setParameter(ServletUtil.XMLTAG_CONNECTOR_NAME, connectorName);
+    req.setParameter(ServletUtil.QUERY_PARAM_DOCID, docid);
+    req.addHeader("If-Modified-Since", SystemClock.INSTANCE.getTimeMillis());
+    MockHttpServletResponse res = new MockHttpServletResponse();
+    new GetDocumentContent().doGet(req, res);
+    assertEquals(200, res.getStatus());
+    assertEquals(docid, res.getContentAsString());
+  }
+
+  /**
+   * Test IsModifiedSince, where lastModified newer.
+   */
+  public void testDoGetIsModifiedSinceLastModified() throws Exception {
+    patchRealProductionManager();
+    MockHttpServletRequest req = new MockHttpServletRequest("GET",
+        "/connector-manager/getDocumentContent");
+    req.setParameter(ServletUtil.XMLTAG_CONNECTOR_NAME, connectorName);
+    req.setParameter(ServletUtil.QUERY_PARAM_DOCID, docid);
+    req.addHeader("If-Modified-Since", 1);
+    MockHttpServletResponse res = new MockHttpServletResponse();
+    new GetDocumentContent().doGet(req, res);
+    assertEquals(200, res.getStatus());
+    assertEquals(docid, res.getContentAsString());
+  }
+
+
+  /**
+   * Test IsModifiedSince, where unmodified.
+   */
+  public void testDoGetUnModifiedSinceLastModified() throws Exception {
+    patchRealProductionManager();
+    MockHttpServletRequest req = new MockHttpServletRequest("GET",
+        "/connector-manager/getDocumentContent");
+    req.setParameter(ServletUtil.XMLTAG_CONNECTOR_NAME, connectorName);
+    req.setParameter(ServletUtil.QUERY_PARAM_DOCID, docid);
+    req.addHeader("If-Modified-Since", SystemClock.INSTANCE.getTimeMillis());
+    MockHttpServletResponse res = new MockHttpServletResponse();
+    new GetDocumentContent().doGet(req, res);
+    assertEquals(304, res.getStatus());
+    assertTrue(Strings.isNullOrEmpty(res.getContentAsString()));
   }
 }
