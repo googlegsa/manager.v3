@@ -11,8 +11,8 @@ issues and work-arounds.
 Web Site: http://code.google.com/p/google-enterprise-connector-manager/
 
 
-Release 2.8.2, 23 September 2011
-================================
+Release 2.8.2, 10 October 2011
+==============================
 
 Introduction
 ------------
@@ -28,6 +28,8 @@ Summary of Changes
 
   * Improves MIME type recognition for many Microsoft Office file formats
     when using the third-party mime-util detector.
+
+  * Reduces the likelihood of search result authorization timeouts.
 
 
 Release 2.8.0, 08 July 2011
