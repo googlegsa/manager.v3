@@ -342,14 +342,9 @@ public class GsaFeedConnection implements FeedConnection {
       long now = clock.getTimeMillis();
       if ((now - lastBacklogCheck) > backlogCheckInterval) {
         lastBacklogCheck = now;
-        // If we got a feed error and the feed is still down, delay.
-        if (gotFeedError) {
-          if (isFeedAvailable()) {
-            gotFeedError = false;
-          } else {
-            // Feed is still unavailable.
-            return true;
-          }
+        // If the feed is down, delay.
+        if (!isFeedAvailable()) {
+          return true;
         }
         try {
           int backlogCount = getBacklogCount();
@@ -377,7 +372,7 @@ public class GsaFeedConnection implements FeedConnection {
         }
       }
     }
-    return isBacklogged;
+    return isBacklogged || gotFeedError;
   }
 
   /**
@@ -412,22 +407,35 @@ public class GsaFeedConnection implements FeedConnection {
    * @return True if feed host is likely to accept a feed request.
    */
   private boolean isFeedAvailable() {
+    String message;
     try {
-      HttpResponse response = doGet(feedUrl, "XmlFeed");
+      HttpResponse response = doGet(feedUrl, "Feed connection",
+          (gotFeedError) ? Level.FINEST : Level.INFO);
       if (response != null) {
         if (response.responseCode == HttpURLConnection.HTTP_BAD_REQUEST) {
           // The expected responseCode if no error conditions are present.
-          LOGGER.finest("XmlFeed connection seems to be accepting new feeds.");
+          LOGGER.log((gotFeedError) ? Level.INFO : Level.FINEST,
+                     "Feed connection seems to be accepting new feeds.");
+          gotFeedError = false;
           return true;
         }
-        if (response.content != null) {
-          response.content.contains(SUCCESS_RESPONSE);
+        if (response.responseCode == HttpURLConnection.HTTP_OK
+            && response.content != null) {
+          message = response.content;
+        } else {
+          message = "";
         }
+      } else {
+        message = "";
       }
-    } catch (UnsupportedOperationException ignored) {
+    } catch (UnsupportedOperationException e) {
       // This GSA does not support feeds?  Return false.
+      message = e.getMessage();
     }
     // If we get here something bad happened.
+    LOGGER.log((gotFeedError) ? Level.FINEST : Level.INFO,
+        "Feed connection does not seem to be accepting feeds. " + message);
+    gotFeedError = true;
     return false;
   }
 
@@ -437,7 +445,7 @@ public class GsaFeedConnection implements FeedConnection {
    */
   private String getDtd() {
     try {
-      HttpResponse response = doGet(dtdUrl, "DTD");
+      HttpResponse response = doGet(dtdUrl, "Feed DTD");
       if (response != null && response.content != null) {
         return response.content;
       }
@@ -462,6 +470,24 @@ public class GsaFeedConnection implements FeedConnection {
    *         not support the requested feature.
    */
   private HttpResponse doGet(URL url, String name) {
+    return doGet(url, name, Level.FINEST);
+  }
+
+  /**
+   * Get the response to a URL request.  The response is returned
+   * as an HttpResponse containing the HTTP ResponseCode and the
+   * returned content as a String. The content String is only returned
+   * if the response code was OK.
+   *
+   * @param url the URL to request
+   * @param name the name of the feature requested (for logging)
+   * @param logLevel logging Level for failure messages
+   * @return HttpResponse representing response to an HTTP GET.
+   *         or null if the GSA is unavailable.
+   * @throws UnsupportedOperationException if the GSA does
+   *         not support the requested feature.
+   */
+  private HttpResponse doGet(URL url, String name, Level logLevel) {
     HttpURLConnection conn = null;
     BufferedReader br = null;
     String str = null;
@@ -494,16 +520,19 @@ public class GsaFeedConnection implements FeedConnection {
         return new HttpResponse(responseCode);
       }
     } catch (IOException ioe) {
-      LOGGER.finest("Error while reading " + name + ": " + ioe.getMessage());
+      LOGGER.log(logLevel, "Error while reading " + name + ": "
+                 + ioe.getMessage());
     } catch (GeneralSecurityException e) {
-      LOGGER.finest("Error while reading " + name + ": " + e.getMessage());
+      LOGGER.log(logLevel, "Error while reading " + name + ": "
+                 + e.getMessage());
     } finally {
       try {
         if (br != null) {
           br.close();
         }
       } catch (IOException e) {
-        LOGGER.finest("Error after reading " + name + ": " + e.getMessage());
+        LOGGER.log(logLevel, "Error after reading " + name + ": "
+                   + e.getMessage());
       }
       if (conn != null) {
         conn.disconnect();
