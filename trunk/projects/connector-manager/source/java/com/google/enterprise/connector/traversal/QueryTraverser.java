@@ -158,7 +158,7 @@ public class QueryTraverser implements Traverser {
           break;
         }
         if (clock.getTimeMillis() >= timeoutTime) {
-          LOGGER.fine("Traversal for connector " + connectorName
+          LOGGER.fine("Traversal batch for connector " + connectorName
               + " is completing due to time limit.");
           break;
         }
@@ -169,6 +169,9 @@ public class QueryTraverser implements Traverser {
           LOGGER.finer("Pulling next document from connector " + connectorName);
           nextDocument = resultSet.nextDocument();
           if (nextDocument == null) {
+            LOGGER.finer("Traversal batch for connector " + connectorName
+                + " at end after processing " + counter + " documents.");
+
             break;
           } else {
             // Since there are a couple of places below that could throw
@@ -194,8 +197,9 @@ public class QueryTraverser implements Traverser {
               + connectorName + " to Pusher");
 
           if (!pusher.take(nextDocument, documentStore)) {
-            LOGGER.fine("Traversal for connector " + connectorName
-                + " is completing at the request of the Pusher.");
+            LOGGER.fine("Traversal batch for connector " + connectorName
+                + " is completing at the request of the Pusher,"
+                + " after processing " + counter + " documents.");
             break;
           }
 
