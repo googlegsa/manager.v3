@@ -28,7 +28,7 @@ import java.util.List;
  */
 public class DatabaseResourceBundleManagerTest extends TestCase {
   private static final String TEST_DIR =
-      "testdata/contextTests/DatabaseResourceBundleTests/";
+      "testdata/contextTests/databaseResourceBundleTests/";
 
   private static final String APPLICATION_CONTEXT =
       TEST_DIR + "DatabaseResourceBundleManagerTest.xml";
