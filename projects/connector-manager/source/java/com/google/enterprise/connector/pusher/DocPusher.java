@@ -339,9 +339,11 @@ public class DocPusher implements Pusher {
    */
   public void flush() throws PushException, FeedException, RepositoryException {
     checkSubmissions();
-    if (!feedSender.isShutdown() && xmlFeed != null) {
-      LOGGER.fine("Flushing accumulated feed to GSA");
-      submitFeed();
+    if (!feedSender.isShutdown()) {
+      if (xmlFeed != null) {
+        LOGGER.fine("Flushing accumulated feed to GSA");
+        submitFeed();
+      }
       feedSender.shutdown();
     }
     while (!feedSender.isTerminated()) {
