@@ -209,7 +209,9 @@ class ConnectorCoordinatorImpl implements
   public void removeConnector() {
     synchronized(this) {
       resetBatch();
-      instanceInfo.removeConnector();
+      if (instanceInfo != null) {
+        instanceInfo.removeConnector();
+      }
     }
     // This must not be called while holding the lock.
     changeDetector.detect();

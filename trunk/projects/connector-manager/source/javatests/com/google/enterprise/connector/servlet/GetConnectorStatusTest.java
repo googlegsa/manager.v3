@@ -18,6 +18,7 @@ import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.manager.ConnectorStatus;
 import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.manager.MockManager;
+import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 
 import junit.framework.TestCase;
 
@@ -93,6 +94,27 @@ public class GetConnectorStatusTest extends TestCase {
                  StringUtils.normalizeNewlines(result));
   }
 
+  /** Test manager throws ConnectorNotFoundException. */
+  public void testConnectorNotFound() {
+    String name = "NonExistentConnector";
+    String expectedResult = "<CmResponse>\n"
+        + "  <StatusId>"
+        + ConnectorMessageCode.EXCEPTION_CONNECTOR_NOT_FOUND
+        + "</StatusId>\n"
+        + "  <CMParams Order=\"0\" CMParam=\"" + name + "\"/>\n"
+        + "</CmResponse>\n";
+    doTest(new ConnectorNotFoundManager(), name, expectedResult);
+  }
+
+  /** A Manager that throws ConnectorNotFoundException. */
+  private static class ConnectorNotFoundManager extends MockManager {
+    @Override
+    public ConnectorStatus getConnectorStatus(String connectorName)
+        throws ConnectorNotFoundException {
+      throw new ConnectorNotFoundException("Not found: " + connectorName);
+    }
+  }
+
   /** Test manager returns null ConnectorStatus. */
   public void testNullConnectorStatus() {
     String name = "nullStatusConnector";
@@ -133,7 +155,8 @@ public class GetConnectorStatusTest extends TestCase {
   /** A Manager that returns null ConnectorStatus. */
   private static class NullScheduleManager extends MockManager {
     @Override
-    public ConnectorStatus getConnectorStatus(String connectorName) {
+    public ConnectorStatus getConnectorStatus(String connectorName)
+        throws ConnectorNotFoundException {
       ConnectorStatus status = super.getConnectorStatus(connectorName);
       return new ConnectorStatus(status.getName(), status.getType(),
                                  status.getStatus(), null);
