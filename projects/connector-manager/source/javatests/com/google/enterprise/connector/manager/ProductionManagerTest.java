@@ -387,9 +387,9 @@ public class ProductionManagerTest extends TestCase {
 
     try {
       status = manager.getConnectorStatus("nonexistent");
-    } catch (IllegalArgumentException expected) {
+      fail("Expected ConnectorNotFoundException");
+    } catch (ConnectorNotFoundException expected) {
       // Expected
-      // TODO: should throw ConnectorNotFoundException.
     }
   }
 
