@@ -23,6 +23,10 @@ public class MockConnector implements Connector {
   private final AuthorizationManager authorizationManager;
   private final Retriever retriever;
 
+  public MockConnector() {
+    this(null, null, null, null);
+  }
+
   public MockConnector(TraversalManager traversalManager,
                        AuthenticationManager authenticationManager,
                        AuthorizationManager authorizationManager,

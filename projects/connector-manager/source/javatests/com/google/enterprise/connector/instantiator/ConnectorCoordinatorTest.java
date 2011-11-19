@@ -22,6 +22,9 @@ import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.scheduler.Schedule;
 import com.google.enterprise.connector.spi.ConfigureResponse;
+import com.google.enterprise.connector.spi.ConnectorFactory;
+import com.google.enterprise.connector.spi.MockConnector;
+import com.google.enterprise.connector.spi.MockConnectorType;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
 import com.google.enterprise.connector.test.JsonObjectAsMap;
 import com.google.enterprise.connector.traversal.TraversalDelayPolicy;
@@ -36,6 +39,7 @@ import java.io.File;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
@@ -53,6 +57,11 @@ public class ConnectorCoordinatorTest extends TestCase {
     Context context = Context.getInstance();
     context.setStandaloneContext(APPLICATION_CONTEXT,
         Context.DEFAULT_JUNIT_COMMON_DIR_PATH);
+
+    TypeInfo typeInfo = new TypeInfo(ValidatePropertiesConnectorType.TYPE_NAME,
+        new ValidatePropertiesConnectorType(), null, null);
+    TypeMap typeMap = getTypeMap();
+    typeMap.addTypeInfo(typeInfo);
 
     getTypeMap().init();
   }
@@ -492,15 +501,9 @@ public class ConnectorCoordinatorTest extends TestCase {
     String plainPasswd = configuration.getMap().get("Password");
     assertEquals(instancePasswd, plainPasswd);
 
-    // Verify that the googleConnectorName property is intact.
-    assertTrue(
-        instanceProps.containsKey(PropertiesUtils.GOOGLE_CONNECTOR_NAME));
-    assertEquals(instance.getConnectorName(), instanceProps
-        .get(PropertiesUtils.GOOGLE_CONNECTOR_NAME));
-
-    // Verify that the google*WorkDir properties are intact.
-    assertTrue(instanceProps.containsKey(PropertiesUtils.GOOGLE_WORK_DIR));
-    assertTrue(instanceProps
+    // Verify that the google*WorkDir properties were not persisted.
+    assertFalse(instanceProps.containsKey(PropertiesUtils.GOOGLE_WORK_DIR));
+    assertFalse(instanceProps
         .containsKey(PropertiesUtils.GOOGLE_CONNECTOR_WORK_DIR));
   }
 
@@ -513,5 +516,109 @@ public class ConnectorCoordinatorTest extends TestCase {
     instance.removeConnector();
     assertFalse(instance.exists());
     assertFalse(connectorDir.exists());
+  }
+
+  /** Test setting special google* properties in the Connector. */
+  public void testGoogleProperties() throws Exception {
+    String name = "connector3";
+    ConnectorCoordinatorImpl instance = createValidatePropsConnector(name);
+
+    InstanceInfo info = instance.getInstanceInfo();
+    assertEquals(name, info.getName());
+    assertTrue(info.getConnector() instanceof ValidatePropertiesConnector);
+
+    ValidatePropertiesConnector connector =
+        (ValidatePropertiesConnector) (info.getConnector());
+    assertEquals(name, connector.connectorName);
+    assertTrue(connector.connectorWorkDir.contains(
+               Context.DEFAULT_JUNIT_COMMON_DIR_PATH));
+    assertTrue(connector.connectorWorkDir.contains(
+               ValidatePropertiesConnectorType.TYPE_NAME));
+    assertTrue(connector.connectorWorkDir.contains(name));
+    assertTrue(connector.googleWorkDir.contains(
+               Context.DEFAULT_JUNIT_COMMON_DIR_PATH));
+  }
+
+  private ConnectorCoordinatorImpl createValidatePropsConnector(String name)
+      throws JSONException, InstantiatorException, ConnectorNotFoundException,
+      ConnectorExistsException, ConnectorTypeNotFoundException {
+    final ConnectorCoordinatorImpl instance = newCoordinator(name);
+    assertFalse(instance.exists());
+
+    Configuration config = new Configuration(
+        ValidatePropertiesConnectorType.TYPE_NAME,
+        new HashMap<String, String>(),
+        ValidatePropertiesConnector.CONNECTOR_INSTANCE_PROTOTYPE);
+
+    updateConnectorTest(instance, config, false);
+    return instance;
+  }
+
+  /**
+   * A ConnectorType that can be used to check that google* properties are
+   * passed to validateConfig.
+   */
+  private static class ValidatePropertiesConnectorType
+      extends MockConnectorType {
+    static final String TYPE_NAME = "ValidatePropertiesConnectorType";
+
+    public ValidatePropertiesConnectorType() {
+      super(TYPE_NAME);
+    }
+
+    @Override
+    public ConfigureResponse validateConfig(Map<String, String> configMap,
+        Locale locale, ConnectorFactory factory) {
+      assertTrue(configMap.containsKey(PropertiesUtils.GOOGLE_CONNECTOR_NAME));
+
+      assertTrue(configMap.containsKey(PropertiesUtils.GOOGLE_WORK_DIR));
+      assertTrue(configMap.get(PropertiesUtils.GOOGLE_WORK_DIR)
+           .contains(Context.DEFAULT_JUNIT_COMMON_DIR_PATH));
+
+      assertTrue(configMap.containsKey(
+          PropertiesUtils.GOOGLE_CONNECTOR_WORK_DIR));
+      assertTrue(configMap.get(PropertiesUtils.GOOGLE_CONNECTOR_WORK_DIR)
+          .contains(Context.DEFAULT_JUNIT_COMMON_DIR_PATH));
+      assertTrue(configMap.get(PropertiesUtils.GOOGLE_CONNECTOR_WORK_DIR)
+          .contains(TYPE_NAME));
+      assertTrue(configMap.get(PropertiesUtils.GOOGLE_CONNECTOR_WORK_DIR)
+          .contains(configMap.get(PropertiesUtils.GOOGLE_CONNECTOR_NAME)));
+
+      return null;
+    }
+  }
+
+  /** A Connector that accepts special google* config properties. */
+  private static class ValidatePropertiesConnector extends MockConnector {
+    static final String CONNECTOR_INSTANCE_PROTOTYPE =
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+        + "<!DOCTYPE beans PUBLIC \"-//SPRING//DTD BEAN//EN\" "
+        + "\"http://www.springframework.org/dtd/spring-beans.dtd\">\n"
+        + "<beans>"
+        + "  <bean class=\"" + ValidatePropertiesConnector.class.getName()
+        + "\">"
+        + "    <property name=\"googleConnectorName\""
+        + "              value=\"${googleConnectorName}\" />"
+        + "    <property name=\"googleConnectorWorkDir\""
+        + "              value=\"${googleConnectorWorkDir}\" />"
+        + "    <property name=\"googleWorkDir\" value=\"${googleWorkDir}\" />"
+        + "  </bean>"
+        + "</beans>\n";
+
+    String connectorName;
+    String connectorWorkDir;
+    String googleWorkDir;
+
+    public void setGoogleConnectorName(String name) {
+      connectorName = name;
+    }
+
+    public void setGoogleConnectorWorkDir(String dir) {
+      connectorWorkDir = dir;
+    }
+
+    public void setGoogleWorkDir(String dir) {
+      googleWorkDir = dir;
+    }
   }
 }

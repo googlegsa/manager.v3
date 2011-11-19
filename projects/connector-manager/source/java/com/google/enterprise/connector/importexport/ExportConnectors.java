@@ -14,6 +14,8 @@
 
 package com.google.enterprise.connector.importexport;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.Maps;
 import com.google.enterprise.connector.common.JarUtils;
 import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.instantiator.Configuration;
@@ -23,6 +25,7 @@ import com.google.enterprise.connector.persist.PersistentStore;
 import com.google.enterprise.connector.persist.StoreContext;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Logger;
@@ -72,9 +75,13 @@ public class ExportConnectors {
       Configuration config =
           persistentStore.getConnectorConfiguration(storeContext);
       if (config != null) {
+        // Strip the often transient google properties (such as google work dir).
         // Encrypt sensitive properties before including them in the output.
-        config = new Configuration(encryptSensitiveProperties(config.getMap()),
-                                   config);
+        // Note that the order of operations is important here.  We strip the
+        // google* properties first, then encrypt passwords, which adds back a
+        // googlePropertiesVersion - needed to decrypt the properties correctly.
+        config = new Configuration(encryptSensitiveProperties(
+            removeGoogleProperties(config.getMap())), config);
         // Try to determine the connector version.
         String typeVersion = null;
         if (manager != null) {
@@ -98,6 +105,23 @@ public class ExportConnectors {
   }
 
   /**
+   * Removes properties whose names start with "google" from the Configuration.
+   *
+   * @param configMap a Map of configuration properties.
+   * @return configMap with "google*" properties filtered out.
+   */
+  private Map<String, String> removeGoogleProperties(
+      Map<String, String> configMap) {
+    // We don't bother making a copy, since encryptSensitiveProperties
+    // makes a copy first thing.
+    return Maps.filterKeys(configMap, new Predicate<String>() {
+        public boolean apply(String input) {
+          return !input.startsWith("google");
+        }
+      });
+  }
+
+  /**
    * Encrypts sensitive configuration properties in the supplied configMap.
    *
    * @param configMap a Map of configuration properties.
@@ -107,6 +131,7 @@ public class ExportConnectors {
       Map<String, String> configMap) {
     Properties props = PropertiesUtils.fromMap(configMap);
     PropertiesUtils.encryptSensitiveProperties(props);
+    PropertiesUtils.stampPropertiesVersion(props);
     return PropertiesUtils.toMap(props);
   }
 }

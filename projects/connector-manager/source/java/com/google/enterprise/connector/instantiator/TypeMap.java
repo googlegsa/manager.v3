@@ -121,6 +121,13 @@ public class TypeMap {
     }
   }
 
+  /** Adds a TypeInfo to the map. */
+  /* Used by tests to inject test types into the map. */
+  void addTypeInfo(TypeInfo typeInfo) {
+    innerMap.put(typeInfo.getConnectorTypeName(), typeInfo);
+    LOGGER.info("Added connector type: " + typeInfo.getConnectorTypeName());
+  }
+
   private void initializeBaseDirectories(String baseDirPath) {
     File baseDirectory = null;
     if (baseDirPath == null) {
