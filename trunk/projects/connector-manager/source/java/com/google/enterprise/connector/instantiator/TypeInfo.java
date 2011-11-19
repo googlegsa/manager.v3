@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.instantiator;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.enterprise.connector.spi.ConnectorType;
 
 import org.springframework.beans.factory.xml.XmlBeanFactory;
@@ -82,7 +83,8 @@ public class TypeInfo {
     this.connectorTypeDir = connectorTypeDir;
   }
 
-  private TypeInfo(String connectorTypeName, ConnectorType connectorType,
+  /* @VisibleForTesting */
+  TypeInfo(String connectorTypeName, ConnectorType connectorType,
       Resource connectorInstancePrototype, Resource connectorDefaultPrototype) {
     this.connectorTypeName = connectorTypeName;
     this.connectorType = connectorType;
