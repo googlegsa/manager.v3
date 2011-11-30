@@ -16,6 +16,8 @@ package com.google.enterprise.connector.instantiator;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Maps;
 import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.database.ConnectorPersistentStoreFactory;
@@ -48,7 +50,6 @@ import com.google.enterprise.connector.database.DocumentStore;
 import java.io.File;
 import java.io.IOException;
 import java.util.Calendar;
-import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.logging.Level;
@@ -178,7 +179,9 @@ class ConnectorCoordinatorImpl implements
   public void removeConnector() {
     synchronized(this) {
       resetBatch();
-      instanceInfo.removeConnector();
+      if (instanceInfo != null) {
+        instanceInfo.removeConnector();
+      }
     }
     // This must not be called while holding the lock.
     changeDetector.detect();
@@ -515,9 +518,14 @@ class ConnectorCoordinatorImpl implements
   public synchronized Configuration getConnectorConfiguration()
       throws ConnectorNotFoundException {
     Configuration config = getInstanceInfo().getConnectorConfiguration();
-    if (config != null && config.getXml() == null) {
-      return new Configuration(config,
-                               getConnectorInstancePrototype(name, typeInfo));
+    if (config != null) {
+      // Strip any "google*" properties that were saved by previous versions.
+      config = removeGoogleProperties(config);
+
+      if (config.getXml() == null) {
+        return new Configuration(config,
+            getConnectorInstancePrototype(name, typeInfo));
+      }
     }
     return config;
   }
@@ -794,7 +802,8 @@ class ConnectorCoordinatorImpl implements
       throw new IllegalStateException(
           "Create new connector when one already exists.");
     }
-    File connectorDir = makeConnectorDirectory(name, newTypeInfo);
+    File connectorDir = getConnectorDir(newTypeInfo);
+    boolean didMakeConnectorDir = makeConnectorDirectory(connectorDir);
 
     // If there is no connectorInstance.xml in the config, look to see if
     // there is one stored.  If not, fetch the connectorInstancePrototype
@@ -814,12 +823,15 @@ class ConnectorCoordinatorImpl implements
     try {
       ConfigureResponse result =
           resetConfig(connectorDir, newTypeInfo, configuration, locale);
-      if (result != null && result.getMessage() != null) {
+      if (result != null && result.getMessage() != null
+          && didMakeConnectorDir) {
         removeConnectorDirectory(connectorDir);
       }
       return result;
     } catch (InstantiatorException ie) {
-      removeConnectorDirectory(connectorDir);
+      if (didMakeConnectorDir) {
+        removeConnectorDirectory(connectorDir);
+      }
       throw (ie);
     }
   }
@@ -831,12 +843,8 @@ class ConnectorCoordinatorImpl implements
       throw new IllegalStateException(
           "Create new connector when one already exists.");
     }
-    File connectorDir = new File(newTypeInfo.getConnectorTypeDir(), name);
-    boolean didMakeConnectorDir = false;
-    if (!connectorDir.exists()) {
-      connectorDir = makeConnectorDirectory(name, newTypeInfo);
-      didMakeConnectorDir = true;
-    }
+    File connectorDir = getConnectorDir(newTypeInfo);
+    boolean didMakeConnectorDir = makeConnectorDirectory(connectorDir);
     try {
       connectorConfigurationChanged(newTypeInfo, configuration);
     } catch (InstantiatorException ie) {
@@ -852,15 +860,7 @@ class ConnectorCoordinatorImpl implements
       throws InstantiatorException {
     // Copy the configuration map, adding a couple of additional
     // context properties. validateConfig() may also alter this map.
-    Map<String, String> newConfig = new HashMap<String, String>();
-    newConfig.putAll(config.getMap());
-    newConfig.put(PropertiesUtils.GOOGLE_CONNECTOR_NAME, name);
-    newConfig.put(PropertiesUtils.GOOGLE_CONNECTOR_WORK_DIR, connectorDir
-        .getPath());
-    newConfig.put(PropertiesUtils.GOOGLE_WORK_DIR, Context.getInstance()
-        .getCommonDirPath());
-
-    Configuration newConfiguration = new Configuration(newConfig, config);
+    Configuration newConfiguration = addGoogleProperties(config, connectorDir);
 
     // Validate the configuration.
     ConfigureResponse response =
@@ -898,7 +898,8 @@ class ConnectorCoordinatorImpl implements
 
     // Only after validateConfig and instantiation succeeds do we
     // save the new configuration to persistent store.
-    newInstanceInfo.setConnectorConfiguration(newConfiguration);
+    newInstanceInfo.setConnectorConfiguration(
+        removeGoogleProperties(newConfiguration));
 
     return null;
   }
@@ -914,12 +915,12 @@ class ConnectorCoordinatorImpl implements
   /* @Override */
   public void connectorConfigurationChanged(TypeInfo newTypeInfo,
       Configuration config) throws InstantiatorException {
+    File connectorDir = getConnectorDir(newTypeInfo);
+
     // We have an apparently valid configuration. Create a connector instance
     // with that configuration.
-    String connectorWorkDir =
-        config.getMap().get(PropertiesUtils.GOOGLE_CONNECTOR_WORK_DIR);
-    InstanceInfo newInstanceInfo = new InstanceInfo(name,
-        new File(connectorWorkDir), newTypeInfo, config);
+    InstanceInfo newInstanceInfo = new InstanceInfo(name, connectorDir,
+        newTypeInfo, addGoogleProperties(config, connectorDir));
 
     // Tell old connector instance to shut down, as it is being replaced.
     resetBatch();
@@ -942,6 +943,61 @@ class ConnectorCoordinatorImpl implements
 
     // Allow newly modified connector to resume traversals immediately.
     delayTraversal(TraversalDelayPolicy.IMMEDIATE);
+  }
+
+  /**
+   * Sets GData configuration for GData aware Connectors.
+   */
+  /* TODO: This should either set real GData configuration or we should supply
+   * the connector with a GDataClientFactory.  Unfortunately full GData
+   * configuration (protocol, addr, port, userId, userPwd) in the CM doesn't
+   * work for on-board Connector Managers, as it isn't editable.  At this
+   * point, we supply just the GSA Feed Host to the connector and leave the
+   * rest of the GData configuration to the connector.
+   * A GDataClientFactory runs into problems when the feed host changes.
+   */
+  /* TODO: This is not HA safe! (But no change to CM config is.) */
+  public void setGDataConfig()
+      throws ConnectorNotFoundException, InstantiatorException {
+    Map<String, String> newConfig = Maps.newHashMap();
+    newConfig.put(PropertiesUtils.GOOGLE_FEED_HOST,
+                  Context.getInstance().getGsaFeedHost());
+    getInstanceInfo().setGDataConfig(newConfig);
+  }
+
+  /**
+   * Adds special "google" properties to the Configuration.
+   */
+  private Configuration addGoogleProperties(Configuration config,
+       File connectorDir) {
+    Map<String, String> newConfig = Maps.newHashMap(config.getMap());
+    newConfig.put(PropertiesUtils.GOOGLE_CONNECTOR_NAME, name);
+    newConfig.put(PropertiesUtils.GOOGLE_CONNECTOR_WORK_DIR,
+                  connectorDir.getPath());
+    Context context = Context.getInstance();
+    newConfig.put(PropertiesUtils.GOOGLE_WORK_DIR,
+                  context.getCommonDirPath());
+    // TODO: This should either set real GData configuration or supply the
+    // connector with a GDataClientFactory. See comment on setGDataConfig().
+    if (context.getGsaFeedHost() != null) {  // Because Properties hate nulls.
+      newConfig.put(PropertiesUtils.GOOGLE_FEED_HOST, context.getGsaFeedHost());
+    }
+    return new Configuration(newConfig, config);
+  }
+
+  /**
+   * Removes properties whose names start with "google" from the Configuration.
+   */
+  private Configuration removeGoogleProperties(Configuration config) {
+    // Make a copy of the map with google* entries removed.
+    Map<String, String> newConfig = Maps.newHashMap(
+        Maps.filterKeys(config.getMap(), new Predicate<String>() {
+            public boolean apply(String input) {
+              return !input.startsWith("google");
+            }
+        }));
+
+    return new Configuration(newConfig, config);
   }
 
   @SuppressWarnings("unchecked")
@@ -988,9 +1044,19 @@ class ConnectorCoordinatorImpl implements
     return null;
   }
 
-  private static File makeConnectorDirectory(String name, TypeInfo typeInfo)
+  /** Manufactures the connector directory path from the TypeInfo and name. */
+  private File getConnectorDir(TypeInfo typeInfo) {
+    return new File(typeInfo.getConnectorTypeDir(), name);
+  }
+
+  /**
+   * Make the on-disk {@link Connector} directory, if it doesn't already exist.
+   *
+   * @return true if directory was created, false otherwise.
+   * @throws InstantiatorException if the directory could not be created.
+   */
+  private boolean makeConnectorDirectory(File connectorDir)
       throws InstantiatorException {
-    File connectorDir = new File(typeInfo.getConnectorTypeDir(), name);
     if (connectorDir.exists()) {
       if (connectorDir.isDirectory()) {
         // we don't know why this directory already exists, but we're ok with it
@@ -1007,8 +1073,9 @@ class ConnectorCoordinatorImpl implements
             + "connector directory at " + connectorDir.getAbsolutePath()
             + " for connector " + name);
       }
+      return true;
     }
-    return connectorDir;
+    return false;
   }
 
   /**

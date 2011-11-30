@@ -238,7 +238,8 @@ public class MockManager implements Manager {
   }
 
   /* @Override */
-  public ConnectorStatus getConnectorStatus(String connectorName) {
+  public ConnectorStatus getConnectorStatus(String connectorName)
+      throws ConnectorNotFoundException {
     String name = connectorName;
     String type = "Documentum";
     int status = 0;
@@ -249,8 +250,12 @@ public class MockManager implements Manager {
   /* @Override */
   public List<ConnectorStatus> getConnectorStatuses() {
     List<ConnectorStatus> statuses = new ArrayList<ConnectorStatus>();
-    statuses.add(getConnectorStatus(CONNECTOR1));
-    statuses.add(getConnectorStatus(CONNECTOR2));
+    try {
+      statuses.add(getConnectorStatus(CONNECTOR1));
+      statuses.add(getConnectorStatus(CONNECTOR2));
+    } catch (ConnectorNotFoundException ignored) {
+      // Ignored.
+    }
     return statuses;
   }
 

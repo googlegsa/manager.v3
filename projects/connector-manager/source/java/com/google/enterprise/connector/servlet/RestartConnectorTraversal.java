@@ -53,16 +53,6 @@ public class RestartConnectorTraversal extends ConnectorManagerGetServlet {
    */
   public static void handleDoGet(String connectorName, Manager manager,
       PrintWriter out) {
-    // First check the status of the connector to make sure it exists.
-    ConnectorStatus connectorStatus = manager.getConnectorStatus(connectorName);
-    if (connectorStatus == null) {
-      ServletUtil.writeResponse(out, new ConnectorMessageCode(
-          ConnectorMessageCode.RESPONSE_NULL_CONNECTOR_STATUS, connectorName));
-      LOGGER.warning(
-          "Connector manager returns no status for " + connectorName);
-      return;
-    }
-
     try {
       // Force the connector to reindex the repository.
       manager.restartConnectorTraversal(connectorName);

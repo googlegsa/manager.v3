@@ -169,28 +169,25 @@ public class ProductionManager implements Manager {
   }
 
   /* @Override */
-  public ConnectorStatus getConnectorStatus(String connectorName) {
-    String connectorTypeName = null;
-    try {
-      connectorTypeName = instantiator.getConnectorTypeName(connectorName);
-      Schedule schedule = instantiator.getConnectorSchedule(connectorName);
-      // TODO: resolve the third parameter - we need to give status a meaning
-      return new ConnectorStatus(connectorName, connectorTypeName, 0,
-          ((schedule == null) ? null : schedule.toString()));
-    } catch (ConnectorNotFoundException e) {
-      // TODO: this should become part of the signature - so we should just
-      // let this exception bubble up
-      LOGGER.log(Level.WARNING, "Connector type " + connectorTypeName
-          + " Not Found: ", e);
-      throw new IllegalArgumentException();
-    }
+  public ConnectorStatus getConnectorStatus(String connectorName)
+      throws ConnectorNotFoundException {
+    String connectorTypeName = instantiator.getConnectorTypeName(connectorName);
+    Schedule schedule = instantiator.getConnectorSchedule(connectorName);
+    // TODO: resolve the third parameter - we need to give status a meaning
+    return new ConnectorStatus(connectorName, connectorTypeName, 0,
+        ((schedule == null) ? null : schedule.toString()));
   }
 
   /* @Override */
   public List<ConnectorStatus> getConnectorStatuses() {
     List<ConnectorStatus> result = new ArrayList<ConnectorStatus>();
     for (String connectorName : instantiator.getConnectorNames()) {
-      result.add(getConnectorStatus(connectorName));
+      try {
+        result.add(getConnectorStatus(connectorName));
+      } catch (ConnectorNotFoundException e) {
+        // This is unlikely to happen, but skip this one anyway.
+        LOGGER.finest("Connector not found: " + connectorName);
+      }
     }
     return result;
   }

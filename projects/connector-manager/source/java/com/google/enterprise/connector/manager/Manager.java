@@ -92,9 +92,12 @@ public interface Manager {
    * Returns the status of a particular connector.
    *
    * @param connectorName the name of the connector instance
+   * @throws ConnectorNotFoundException If the named connector is not known to
+   *         this manager.
    * @return Document containing XML configuration - DTD TBD.
    */
-  public ConnectorStatus getConnectorStatus(String connectorName);
+  public ConnectorStatus getConnectorStatus(String connectorName)
+      throws ConnectorNotFoundException;
 
   /**
    * Get initial configuration form snippet for a connector type.
