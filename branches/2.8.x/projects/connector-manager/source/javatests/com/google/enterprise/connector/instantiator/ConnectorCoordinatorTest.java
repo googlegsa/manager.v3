@@ -492,15 +492,9 @@ public class ConnectorCoordinatorTest extends TestCase {
     String plainPasswd = configuration.getMap().get("Password");
     assertEquals(instancePasswd, plainPasswd);
 
-    // Verify that the googleConnectorName property is intact.
-    assertTrue(
-        instanceProps.containsKey(PropertiesUtils.GOOGLE_CONNECTOR_NAME));
-    assertEquals(instance.getConnectorName(), instanceProps
-        .get(PropertiesUtils.GOOGLE_CONNECTOR_NAME));
-
-    // Verify that the google*WorkDir properties are intact.
-    assertTrue(instanceProps.containsKey(PropertiesUtils.GOOGLE_WORK_DIR));
-    assertTrue(instanceProps
+    // Verify that the google*WorkDir properties were not persisted.
+    assertFalse(instanceProps.containsKey(PropertiesUtils.GOOGLE_WORK_DIR));
+    assertFalse(instanceProps
         .containsKey(PropertiesUtils.GOOGLE_CONNECTOR_WORK_DIR));
   }
 

@@ -235,6 +235,12 @@ public interface ConnectorCoordinator {
       throws ConnectorNotFoundException;
 
   /**
+   * Sets {@code GData} configuration for GData aware Connectors.
+   */
+  public void setGDataConfig()
+      throws ConnectorNotFoundException, InstantiatorException;
+
+  /**
    * Starts running a batch for this {@link ConnectorCoordinator} if a batch is
    * not already running.
    *

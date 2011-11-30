@@ -23,6 +23,8 @@ import com.google.enterprise.connector.scheduler.Schedule;
 import com.google.enterprise.connector.spi.Connector;
 
 import org.springframework.beans.BeansException;
+import org.springframework.beans.MutablePropertyValues;
+import org.springframework.beans.PropertyAccessorFactory;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.beans.factory.xml.XmlBeanDefinitionReader;
 import org.springframework.core.io.ByteArrayResource;
@@ -259,6 +261,19 @@ final class InstanceInfo {
     }
   }
 
+  /**
+   * Sets {@code GData} host for Connectors that want it.
+   */
+  public void setGDataConfig(Map<String, String> gdataConfig)
+      throws PropertyProcessingFailureException {
+    try {
+      PropertyAccessorFactory.forBeanPropertyAccess(connector)
+          .setPropertyValues(new MutablePropertyValues(gdataConfig), true);
+    } catch (BeansException be) {
+      throw new PropertyProcessingFailureException(be, "GData Host",
+                                                   connectorName);
+    }
+  }
 
   /* **** Manage the Connector Instance Persistent data store. **** */
 
@@ -422,9 +437,13 @@ final class InstanceInfo {
   static class PropertyProcessingFailureException extends InstanceInfoException {
     PropertyProcessingFailureException(Throwable cause, Resource prototype,
         String connectorName) {
+      this(cause, prototype.getDescription(), connectorName);
+    }
+
+    PropertyProcessingFailureException(Throwable cause, String description,
+        String connectorName) {
       super("Problem while processing configuration properties for connector "
-            + connectorName + " using resource "
-            + prototype.getDescription(), cause);
+            + connectorName + " using resource " + description, cause);
     }
   }
 }

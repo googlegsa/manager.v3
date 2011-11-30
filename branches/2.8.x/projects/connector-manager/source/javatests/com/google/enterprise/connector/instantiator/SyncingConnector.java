@@ -33,28 +33,21 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 /**
- * Test Connector that provides
+ * A Test Connector that provides
  * <OL>
  * <LI> Synchronization between a test and the {@link TraversalManager} so the
  * test can coordinate test actions such as cancel during the running of a
- * batch.
- * <LI> Tracking of traversal related events for test validation purposes.
+ * batch.</LI>
+ * <LI> Tracking of traversal related events for test validation purposes.</LI>
  * </OL>
  * This implementation supports repeated instantiation by Spring. Currently
  * tests interact with the {@link TraversalManager} through static singleton
  * Objects. Hence concurrent management of multiple active
  * {@link TraversalManager} instances is not well supported.
  */
-public class SyncingConnector implements Connector,
-    ConnectorShutdownAware {
+public class SyncingConnector implements Connector, ConnectorShutdownAware {
   private static final Logger LOGGER =
       Logger.getLogger(SyncingConnector.class.getName());
-
-  /**
-   * Milliseconds a traversal will block polling traversalResults for a
-   * {@link DocumentList} before giving up.
-   */
-  public static final int POLL_TIME_LIMIT_MILLIS = 5000;
 
   private volatile static Tracker tracker = new Tracker();
 
@@ -62,12 +55,25 @@ public class SyncingConnector implements Connector,
     new ArrayBlockingQueue<DocumentList>(100);
 
   /**
+   * Milliseconds a traversal will block polling traversalResults for a
+   * {@link DocumentList} before giving up.
+   */
+  public static final int POLL_TIME_LIMIT_MILLIS = 5000;
+
+  /**
+   * Gets the Poll timeout in milliseconds.
+   */
+  private static long getPollTimeout() {
+    return POLL_TIME_LIMIT_MILLIS;
+  }
+
+  /**
    * Creates a single document {@link DocumentList} and queues it for the
    * {@link TraversalManager} to return on an upcoming
    * {@link TraversalManager#startTraversal()} or
    * {@link TraversalManager#resumeTraversal(String)} call. Note these calls
-   * block until a {@link DocumentList} has been queued or the {@link
-   * SyncingConnector#POLL_TIME_LIMIT_MILLIS} milliseconds have elapsed.
+   * block until a {@link DocumentList} has been queued or the
+   * {@code timeOutMillis} milliseconds have elapsed.
    *
    * @return A {@link List} with the queued document.
    */
@@ -88,6 +94,7 @@ public class SyncingConnector implements Connector,
   public SyncingConnector() {
   }
 
+  /* @Override */
   public Session login() {
     tracker.incrementLoginCount();
     return new SyncingConnectorSession();
@@ -120,6 +127,7 @@ public class SyncingConnector implements Connector,
     }
 
     public TraversalManager getTraversalManager() {
+      tracker.incrementTraversalManagerCount();
       return new SyncingConnectorTraversalManager();
     }
   }
@@ -144,7 +152,7 @@ public class SyncingConnector implements Connector,
 
     private DocumentList poll() {
       try {
-        DocumentList result = traversalResults.poll(POLL_TIME_LIMIT_MILLIS,
+        DocumentList result = traversalResults.poll(getPollTimeout(),
             TimeUnit.MILLISECONDS);
         if(result == null) {
           LOGGER.warning("poll returned null document.");
@@ -178,6 +186,7 @@ public class SyncingConnector implements Connector,
     private int deleteCount;
     private int shutdownCount;
     private int interruptedCount;
+    private int traversalManagerCount;
     private int startTraversalCount;
     private int resumeTraversalCount;
     private int nextDocId;
@@ -186,16 +195,18 @@ public class SyncingConnector implements Connector,
       traversingQueue.add(new Object());
     }
 
-    public final void blockUntilTraversing() throws InterruptedException {
-      traversingQueue.poll(POLL_TIME_LIMIT_MILLIS, TimeUnit.MILLISECONDS);
+    public final void blockUntilTraversing()
+        throws InterruptedException {
+      traversingQueue.poll(getPollTimeout(), TimeUnit.MILLISECONDS);
     }
 
     public final void traversingInterrupted() {
       traversingInterrupted.add(new Object());
     }
 
-    public void blockUntilTraversingInterrupted() throws InterruptedException {
-      if(null == traversingInterrupted.poll(POLL_TIME_LIMIT_MILLIS,
+    public void blockUntilTraversingInterrupted()
+        throws InterruptedException {
+      if (null == traversingInterrupted.poll(getPollTimeout(),
           TimeUnit.MILLISECONDS)) {
         throw new InterruptedException("poll timed out");
       }
@@ -231,6 +242,14 @@ public class SyncingConnector implements Connector,
 
     public void incrementInterruptedCount() {
       interruptedCount++;
+    }
+
+    public synchronized int getTraversalManagerCount() {
+      return traversalManagerCount;
+    }
+
+    public synchronized void incrementTraversalManagerCount() {
+      traversalManagerCount++;
     }
 
     public synchronized int getStartTraversalCount() {
