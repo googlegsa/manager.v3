@@ -1047,6 +1047,8 @@ public class Context {
     gsaFeedHost = feederGateHost;
     isGsaFeedHostInitialized = true;
 
+    // TODO: The following should probably be done in ProductionManager.
+
     // Notify the GsaFeedConnection of new host and port.
     if (feeder != null) {
       try {
@@ -1059,6 +1061,11 @@ public class Context {
       } catch (MalformedURLException e) {
         throw new InstantiatorException("Invalid GSA Feed specification", e);
       }
+    }
+
+    // Notify GData aware Connectors.
+    if (instantiator != null) {
+      instantiator.setGDataConfig();
     }
   }
 

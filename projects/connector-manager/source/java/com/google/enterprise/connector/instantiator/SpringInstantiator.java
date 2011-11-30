@@ -277,4 +277,17 @@ public class SpringInstantiator implements Instantiator {
       throws ConnectorNotFoundException {
     return getConnectorCoordinator(connectorName).getConnectorSchedule();
   }
+
+  /* @Override */
+  public void setGDataConfig() {
+    for (String name : getConnectorNames()) {
+      try {
+        getConnectorCoordinator(name).setGDataConfig();
+      } catch (ConnectorNotFoundException cnfe) {
+        // Shouldn't happen, but if it does, skip it.
+      } catch (InstantiatorException ie) {
+        LOGGER.log(Level.WARNING, "", ie);
+      }
+    }
+  }
 }

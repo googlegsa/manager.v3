@@ -144,6 +144,10 @@ class MockConnectorCoordinator implements ConnectorCoordinator {
     return null;
   }
 
+  public void setGDataConfig() {
+    // Do nothing.
+  }
+
   public synchronized void setConnectorSchedule(Schedule schedule) {
     persistentStore.storeConnectorSchedule(storeContext, schedule);
     if (schedule != null) {

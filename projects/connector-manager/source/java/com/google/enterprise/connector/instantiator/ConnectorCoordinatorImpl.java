@@ -1109,6 +1109,26 @@ class ConnectorCoordinatorImpl implements
   }
 
   /**
+   * Sets GData configuration for GData aware Connectors.
+   */
+  /* TODO: This should either set real GData configuration or we should supply
+   * the connector with a GDataClientFactory.  Unfortunately full GData
+   * configuration (protocol, addr, port, userId, userPwd) in the CM doesn't
+   * work for on-board Connector Managers, as it isn't editable.  At this
+   * point, we supply just the GSA Feed Host to the connector and leave the
+   * rest of the GData configuration to the connector.
+   * A GDataClientFactory runs into problems when the feed host changes.
+   */
+  /* TODO: This is not HA safe! (But no change to CM config is.) */
+  public void setGDataConfig()
+      throws ConnectorNotFoundException, InstantiatorException {
+    Map<String, String> newConfig = Maps.newHashMap();
+    newConfig.put(PropertiesUtils.GOOGLE_FEED_HOST,
+                  Context.getInstance().getGsaFeedHost());
+    getInstanceInfo().setGDataConfig(newConfig);
+  }
+
+  /**
    * Adds special "google" properties to the Configuration.
    */
   private Configuration addGoogleProperties(Configuration config,
@@ -1120,6 +1140,11 @@ class ConnectorCoordinatorImpl implements
     Context context = Context.getInstance();
     newConfig.put(PropertiesUtils.GOOGLE_WORK_DIR,
                   context.getCommonDirPath());
+    // TODO: This should either set real GData configuration or supply the
+    // connector with a GDataClientFactory. See comment on setGDataConfig().
+    if (context.getGsaFeedHost() != null) {  // Because Properties hate nulls.
+      newConfig.put(PropertiesUtils.GOOGLE_FEED_HOST, context.getGsaFeedHost());
+    }
     return new Configuration(newConfig, config);
   }
 
