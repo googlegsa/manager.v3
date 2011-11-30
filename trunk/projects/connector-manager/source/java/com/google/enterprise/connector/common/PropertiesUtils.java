@@ -36,11 +36,11 @@ public class PropertiesUtils {
   private static final Logger LOGGER =
       Logger.getLogger(PropertiesUtils.class.getName());
 
-  public static final String GOOGLE_CONNECTOR_NAME =
-      "googleConnectorName";
+  public static final String GOOGLE_CONNECTOR_NAME = "googleConnectorName";
   public static final String GOOGLE_CONNECTOR_WORK_DIR =
       "googleConnectorWorkDir";
   public static final String GOOGLE_WORK_DIR = "googleWorkDir";
+  public static final String GOOGLE_FEED_HOST = "googleFeedHost";
   public static final String GOOGLE_PROPERTIES_VERSION =
       "googlePropertiesVersion";
   public static final int GOOGLE_PROPERTIES_VERSION_NUMBER = 3;

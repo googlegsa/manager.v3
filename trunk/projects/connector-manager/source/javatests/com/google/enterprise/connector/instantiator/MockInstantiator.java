@@ -54,6 +54,8 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.jcr.Repository;
 
@@ -64,6 +66,9 @@ import javax.jcr.Repository;
  * or {@link #setupTraverser(String, Traverser)};
  */
 public class MockInstantiator implements Instantiator {
+  private static final Logger LOGGER =
+      Logger.getLogger(MockInstantiator.class.getName());
+
   public static final String TRAVERSER_NAME1 = "foo";
   public static final String TRAVERSER_NAME2 = "bar";
   public static final String TRAVERSER_NAME_NOOP = "noop";
@@ -322,6 +327,18 @@ public class MockInstantiator implements Instantiator {
   public String getConnectorState(String connectorName)
       throws ConnectorNotFoundException {
     return getConnectorCoordinator(connectorName).getConnectorState();
+  }
+
+  public void setGDataConfig() {
+    for (String name : getConnectorNames()) {
+      try {
+        getConnectorCoordinator(name).setGDataConfig();
+      } catch (ConnectorNotFoundException cnfe) {
+        // Shouldn't happen, but if it does, skip it.
+      } catch (InstantiatorException ie) {
+        LOGGER.log(Level.WARNING, "", ie);
+      }
+    }
   }
 
   private ConnectorCoordinator getConnectorCoordinator(String connectorName)

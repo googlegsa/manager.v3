@@ -210,6 +210,11 @@ public interface Instantiator {
       throws ConnectorNotFoundException;
 
   /**
+   * Sets {@code GData} configuration for GData aware Connectors.
+   */
+  public void setGDataConfig();
+
+  /**
    * Starts running a batch for a named connector if a batch is not
    * already running.
    *
