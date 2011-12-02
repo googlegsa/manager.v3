@@ -250,8 +250,7 @@ public class ProductionManager implements Manager {
   /* @Override */
   public ConnectorStatus getConnectorStatus(String connectorName)
       throws ConnectorNotFoundException {
-    String connectorTypeName = null;
-    connectorTypeName = instantiator.getConnectorTypeName(connectorName);
+    String connectorTypeName = instantiator.getConnectorTypeName(connectorName);
     Schedule schedule = instantiator.getConnectorSchedule(connectorName);
     // TODO: resolve the third parameter - we need to give status a meaning
     return new ConnectorStatus(connectorName, connectorTypeName, 0,
