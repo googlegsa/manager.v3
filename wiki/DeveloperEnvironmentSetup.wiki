@@ -8,7 +8,7 @@ The steps in this document are suggestions, not requirements.  For example, Ant 
 
 == Prerequisites ==
 
-Install [http://ant.apache.org/ Apache Ant], [http://www.eclipse.org/ Eclipse], and [http://tomcat.apache.org/ Tomcat].  See those websites for download and installation instructions.
+Install [http://ant.apache.org/ Apache Ant] (version 1.8 or newer), [http://www.eclipse.org/ Eclipse], and [http://tomcat.apache.org/ Tomcat] (version 6).  See those websites for download and installation instructions.
 
 Install a subversion (svn) client.  See the [http://code.google.com/p/google-enterprise-connector-manager/ Connector Manager Code Site] (under the "Source" tab) for a list of svn clients.
 
