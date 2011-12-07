@@ -50,8 +50,8 @@ public class JdbcDataSourceFactory {
     // then consider the DataSource to be unconfigured.  Create a stub
     // in its place.
     if (Strings.isNullOrEmpty(propertyValue)) {
-      LOGGER.config(description + " JDBC DataSource has not been configured."
-                    + " Creating a disabled stub in its place.");
+      LOGGER.fine(description + " JDBC DataSource has not been configured."
+                  + " Creating a disabled stub in its place.");
       return new FakeDataSource(description);
     }
 
@@ -61,15 +61,17 @@ public class JdbcDataSourceFactory {
     try {
       clazz = Class.forName(className);
     } catch (ClassNotFoundException cnfe) {
-      LOGGER.config(description + " JDBC DataSource implementation not found."
-                    + " Creating a disabled stub in its place.");
+      LOGGER.warning(description + " JDBC DataSource implementation not found."
+                     + " Creating a disabled stub in its place.");
       return new FakeDataSource(description);
     } catch (NoClassDefFoundError ncdfe) {
-      LOGGER.config(description + " JDBC DataSource implementation not found."
-                    + " Creating a disabled stub in its place.");
+      LOGGER.warning(description + " JDBC DataSource implementation not found."
+                     + " Creating a disabled stub in its place.");
       return new FakeDataSource(description);
     }
 
-    return (DataSource) clazz.newInstance();
+    DataSource dataSource = (DataSource) clazz.newInstance();
+    LOGGER.config(description + " JDBC DataSource created: " + dataSource);
+    return dataSource;
   }
 }
