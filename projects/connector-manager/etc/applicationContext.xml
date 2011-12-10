@@ -78,9 +78,11 @@
              Values <= 0 imply never.  For stand-alone deployments,
              never or long intervals are probably sufficient.  For
              clustered deployments with a shared configuration store,
-             60 - 300 seconds is probably sufficient.
+             60 - 300 seconds is probably sufficient.  The default
+             value of 15 minutes is intended to try to recover from
+             transient connector instantiation problems.
         -->
-        <prop key="config.change.detect.interval">0</prop>
+        <prop key="config.change.detect.interval">900</prop>
 
         <!-- JDBC DataSource configuration. -->
         <prop key="jdbc.datasource.type">EmbeddedH2</prop>
