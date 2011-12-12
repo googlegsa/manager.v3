@@ -85,9 +85,13 @@ public class SetSchedule extends ConnectorManagerServlet {
     String loadStr = XmlParseUtil.getFirstElementByTagName(root,
         ServletUtil.XMLTAG_LOAD);
     int load = (loadStr == null) ? 0 : Integer.parseInt(loadStr);
-    String disabledStr = XmlParseUtil.getFirstElementByTagName(root,
-        ServletUtil.XMLTAG_DISABLED);
-    boolean disabled = Boolean.parseBoolean(disabledStr);
+
+    // TODO: Either commit to presence/absence of the disabled tag and
+    // support <disabled/> (which getFirstElementByTagName fails to do),
+    // or have the GSA provide true boolean value like Import/Export uses.
+    boolean disabled = (XmlParseUtil.getFirstElementByTagName(root,
+        ServletUtil.XMLTAG_DISABLED) != null);
+
     int retryDelayMillis = Schedule.defaultRetryDelayMillis();
     String delayStr = XmlParseUtil.getFirstElementByTagName(root,
         ServletUtil.XMLTAG_DELAY);
