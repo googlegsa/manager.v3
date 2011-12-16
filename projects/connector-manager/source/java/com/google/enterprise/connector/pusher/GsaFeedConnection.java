@@ -319,15 +319,29 @@ public class GsaFeedConnection implements FeedConnection {
   /* @Override */
   public synchronized String getContentEncodings() {
     if (contentEncodings == null) {
-      String dtd = getDtd();
-      if (dtd == null) {
-        // Failed to get a DTD. Assume the GSA only supports base64 encoded.
+      try {
+        String dtd = doGet(dtdUrl, "Feed DTD");
+        if (Strings.isNullOrEmpty(dtd)) {
+          // Failed to get a DTD. Assume the GSA only supports base64 encoded.
+          contentEncodings = "base64binary";
+        } else {
+          // TODO: Extract the supported content encodings from the DTD.
+          // As of GSA 6.2, returning a DTD at all also means compression
+          // is supported.
+          contentEncodings = "base64binary,base64compressed";
+        }
+      } catch (FeedException e) {
+        if (gotFeedError) {
+          LOGGER.finest("Failed to read Feed DTD: " + e.getMessage());
+        } else {
+          LOGGER.log(Level.WARNING, "Failed to read Feed DTD. ", e);
+        }
+        return "base64binary";  // Assume only base64 encoded support for now.
+      } catch (UnsupportedOperationException e) {
+        // This older GSA does not support getdtd, so assume the GSA only
+        // supports base64 encoded.
+        LOGGER.fine("Unsupported GSA version lacks get Feed DTD support.");
         contentEncodings = "base64binary";
-      } else {
-        // TODO: Extract the supported content encodings from the DTD.
-        // As of GSA 6.2, returning a DTD at all also means compression
-        // is supported.
-        contentEncodings = "base64binary,base64compressed";
       }
       if (LOGGER.isLoggable(Level.FINE)) {
         LOGGER.fine("GSA supports Content Encodings: " + contentEncodings);
@@ -342,13 +356,13 @@ public class GsaFeedConnection implements FeedConnection {
       long now = clock.getTimeMillis();
       if ((now - lastBacklogCheck) > backlogCheckInterval) {
         lastBacklogCheck = now;
-        // If the feed is down, delay.
-        if (!isFeedAvailable()) {
-          return true;
-        }
         try {
           int backlogCount = getBacklogCount();
           if (backlogCount >= 0) {
+            if (gotFeedError) {
+              gotFeedError = false;
+              LOGGER.info("Feed connection seems to be accepting new feeds.");
+            }
             if (isBacklogged) {
               // If we were backlogged, but have dropped below the
               // floor value, then we are no longer backlogged.
@@ -363,12 +377,23 @@ public class GsaFeedConnection implements FeedConnection {
               LOGGER.info("Pausing traversal due to excessive feed backlog.");
             }
           }
+        } catch (FeedException e) {
+          if (gotFeedError) {
+            LOGGER.finest(
+                "Feed connection still does not seem to be accepting feeds. "
+                + e.getMessage());
+          } else {
+            LOGGER.log(Level.WARNING,
+                "Feed connection does not seem to be accepting feeds.", e);
+            gotFeedError = true;
+          }
         } catch (UnsupportedOperationException e) {
           // This older GSA does not support getbacklogcount.
           // Assume never backlogged and don't check again.
           isBacklogged = false;
           lastBacklogCheck = Long.MAX_VALUE;
-          LOGGER.fine("Older GSA lacks backlogcount support.");
+          LOGGER.warning("Unsupported GSA version, unable to check for feed"
+                         + " backlog or errors.");
         }
       }
     }
@@ -380,80 +405,16 @@ public class GsaFeedConnection implements FeedConnection {
    *         or -1 if the count is unavailable.
    * @throws UnsupportedOperationException if the GSA does
    *         not support getbacklogcount.
+   * @throws FeedException if there was any other error retrieving the count
    */
-  private int getBacklogCount() {
+  private int getBacklogCount() throws FeedException {
+    String response = doGet(backlogUrl, "backlogcount");
     try {
-      HttpResponse response = doGet(backlogUrl, "backlogcount");
-      if (response != null && response.content != null) {
-        return Integer.parseInt(response.content);
-      }
-    } catch (NumberFormatException ignored) {
-      // Got a non-integer backlog count - probably an error message,
-      // which we have already logged (at Finest).  Simply return -1,
-      // indicating that the backlogcount is not currently available.
+      return Strings.isNullOrEmpty(response) ? -1 : Integer.parseInt(response);
+    } catch (NumberFormatException nfe) {
+      // Got a non-integer backlog count - probably an error message.
+      throw new FeedException(response);
     }
-    // If we get here something bad happened.  It is not the case that the
-    // GSA doesn't support getbacklogcount, but we still failed to retrieve it.
-    return -1;
-  }
-
-  /**
-   * Tests for feed error conditions such as insufficient disk space,
-   * unauthorized clients, etc.  If the /xmlfeed command is sent with no
-   * arguments, the server will return an error message and a 200 response
-   * code if it can't accept feeds.  If it can continue to accept feeds, then
-   * it will return a 400 bad request since it's missing required parameters.
-   *
-   * @return True if feed host is likely to accept a feed request.
-   */
-  private boolean isFeedAvailable() {
-    String message;
-    try {
-      HttpResponse response = doGet(feedUrl, "Feed connection",
-          (gotFeedError) ? Level.FINEST : Level.INFO);
-      if (response != null) {
-        if (response.responseCode == HttpURLConnection.HTTP_BAD_REQUEST) {
-          // The expected responseCode if no error conditions are present.
-          LOGGER.log((gotFeedError) ? Level.INFO : Level.FINEST,
-                     "Feed connection seems to be accepting new feeds.");
-          gotFeedError = false;
-          return true;
-        }
-        if (response.responseCode == HttpURLConnection.HTTP_OK
-            && response.content != null) {
-          message = response.content;
-        } else {
-          message = "";
-        }
-      } else {
-        message = "";
-      }
-    } catch (UnsupportedOperationException e) {
-      // This GSA does not support feeds?  Return false.
-      message = e.getMessage();
-    }
-    // If we get here something bad happened.
-    LOGGER.log((gotFeedError) ? Level.FINEST : Level.INFO,
-        "Feed connection does not seem to be accepting feeds. " + message);
-    gotFeedError = true;
-    return false;
-  }
-
-  /**
-   * @return the current feed XML DTD for the GSA,
-   *         or null if the DTD is unavailable.
-   */
-  private String getDtd() {
-    try {
-      HttpResponse response = doGet(dtdUrl, "Feed DTD");
-      if (response != null && response.content != null) {
-        return response.content;
-      }
-    } catch (UnsupportedOperationException ignored) {
-      // This older GSA does not support getdtd, so return null.
-      LOGGER.fine("Older GSA lacks get DTD support.");
-    }
-    return null;
   }
 
   /**
@@ -464,30 +425,13 @@ public class GsaFeedConnection implements FeedConnection {
    *
    * @param url the URL to request
    * @param name the name of the feature requested (for logging)
-   * @return HttpResponse representing response to an HTTP GET.
-   *         or null if the GSA is unavailable.
+   * @return String representing response to an HTTP GET.
    * @throws UnsupportedOperationException if the GSA does
    *         not support the requested feature.
+   * @throws FeedException if any other error prevented reading
+   *         a valid response.
    */
-  private HttpResponse doGet(URL url, String name) {
-    return doGet(url, name, Level.FINEST);
-  }
-
-  /**
-   * Get the response to a URL request.  The response is returned
-   * as an HttpResponse containing the HTTP ResponseCode and the
-   * returned content as a String. The content String is only returned
-   * if the response code was OK.
-   *
-   * @param url the URL to request
-   * @param name the name of the feature requested (for logging)
-   * @param logLevel logging Level for failure messages
-   * @return HttpResponse representing response to an HTTP GET.
-   *         or null if the GSA is unavailable.
-   * @throws UnsupportedOperationException if the GSA does
-   *         not support the requested feature.
-   */
-  private HttpResponse doGet(URL url, String name, Level logLevel) {
+  private String doGet(URL url, String name) throws FeedException {
     HttpURLConnection conn = null;
     BufferedReader br = null;
     String str = null;
@@ -512,48 +456,31 @@ public class GsaFeedConnection implements FeedConnection {
         if (LOGGER.isLoggable(Level.FINEST)) {
           LOGGER.finest("Received " + name + ": " + str);
         }
-        return new HttpResponse(responseCode, str);
+        return str;
       } else if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
         throw new UnsupportedOperationException(
             "GSA lacks " + name + " support.");
       } else {
-        return new HttpResponse(responseCode);
+        throw new FeedException(responseCode + "  "
+                                + conn.getResponseMessage());
       }
     } catch (IOException ioe) {
-      LOGGER.log(logLevel, "Error while reading " + name + ": "
-                 + ioe.getMessage());
+      throw new FeedException(ioe);
     } catch (GeneralSecurityException e) {
-      LOGGER.log(logLevel, "Error while reading " + name + ": "
-                 + e.getMessage());
+      throw new FeedException(e);
     } finally {
       try {
         if (br != null) {
           br.close();
         }
       } catch (IOException e) {
-        LOGGER.log(logLevel, "Error after reading " + name + ": "
-                   + e.getMessage());
+        LOGGER.warning("Error after reading response for " + name + ": "
+                       + e.getMessage());
+      } finally {
+        if (conn != null) {
+          conn.disconnect();
+        }
       }
-      if (conn != null) {
-        conn.disconnect();
-      }
-    }
-    // If we get here something bad happened. It is not the case that the GSA
-    // doesn't support the requested feature, but we failed to retrieve it.
-    return null;
-  }
-
-  private static class HttpResponse {
-    public int responseCode;  // The HTTP response code.
-    public String content;    // The returned content as a String.
-
-    public HttpResponse(int responseCode) {
-      this(responseCode, null);
-    }
-
-    public HttpResponse(int responseCode, String content) {
-      this.responseCode = responseCode;
-      this.content = content;
     }
   }
 }
