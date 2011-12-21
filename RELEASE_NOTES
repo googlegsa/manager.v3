@@ -11,6 +11,55 @@ issues and work-arounds.
 Web Site: http://code.google.com/p/google-enterprise-connector-manager/
 
 
+Release 2.8.4, 25 December 2011
+===============================
+
+Introduction
+------------
+This is a patch release that fixes a few small problems discovered in the
+the previous release. Users of the previous release are encouraged to upgrade.
+
+Summary of Changes
+------------------
+  * Fix Issue 5599305 - Retry Connector startup if instantiation fails.
+    The FileSystem Connector fails Connector bean instantiation if the file
+    share is off-line.  The other connectors that use the Diffing package
+    (LDAP and Database) can suffer similar failures.  This fix allows a
+    failed Connector instantiation to be retried after a period, in hopes
+    that any transient errors may have been corrected.
+
+  * Fix Issues 5370948 and 5481676 - Better recovery from FeedExceptions.
+    If submitting a feed to the GSA fails for some reason, the Connector
+    Manager retrys the feed after 15 minutes.  But first, the Connector
+    Manager would test the GSA to verify that it is accepting feeds.
+    Unfortunately, that test would actually kill a functioning GSA
+    feedergate, disabling feeds for a short period of time while it
+    restarts. Effectively, the feed problem recovery strategy would
+    kill feeds every 15 minutes.  This problem only affects GSA version
+    6.12. This fix avoids the problem, using a slightly different strategy
+    to check for GSA feed availability.
+
+  * Address Issue 5382030 - If Flexible Authorization is misconfigured
+    to use connector authorization with a credential group which has no
+    authentication rules defined, the GSA sends a null Identity to the
+    Connector Manager during Authorization.  This was handled poorly
+    by most Connectors.  Although Issue 5382030 is actually a problem
+    with the Security Manager, the Connector Manager now considers a null
+    Identity to be an error, and returns an error status code to the
+    GSA.
+
+  * Adds rudimentary GData configuration for Connectors.  The new
+    googleFeedHost property supplied to Connectors may be used to
+    access the GData interface on the GSA.  This should be considered,
+    at best, a temporary solution.  This change also removes the
+    googleWorkDir and googleConnectorWorkDir properties from the saved
+    properties files, to avoid problems when moving connector instances
+    to a different directory. The properties still appear in the Properties
+    objects in the SPI.
+
+  * Various improvements in diagnostic logging.
+
+
 Release 2.8.2, 10 October 2011
 ==============================
 
