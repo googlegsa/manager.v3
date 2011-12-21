@@ -38,6 +38,7 @@ public class ConnectorMessageCodeTest extends TestCase {
   private ConnectorMessageCode messageIdStringParamCode;
   private ConnectorMessageCode successIdCode;
   private ConnectorMessageCode successIdParamCode;
+  private ConnectorMessageCode aboveSuccessIdCode;
 
   @Override
   protected void setUp() throws Exception {
@@ -58,6 +59,7 @@ public class ConnectorMessageCodeTest extends TestCase {
         ConnectorMessageCode.SUCCESS_RESTART_TRAVERSAL);
     successIdParamCode = new ConnectorMessageCode(
         ConnectorMessageCode.SUCCESS_RESTART_TRAVERSAL, PARAMS1);
+    aboveSuccessIdCode = new ConnectorMessageCode(ConnectorMessageCode.UNSUPPORTED_CALL);
   }
 
   @Override
@@ -71,6 +73,16 @@ public class ConnectorMessageCodeTest extends TestCase {
     messageIdStringParamCode = null;
     successIdCode = null;
     successIdParamCode = null;
+  }
+
+  private void assertEmpty(Object[] params) {
+    assertNotNull(params);
+    assertEquals(0, params.length);
+  }
+
+  private void assertEqualParams(String message, Object[] expected,
+      Object[] params) {
+    assertEquals(message, Arrays.toString(expected), Arrays.toString(params));
   }
 
   /**
@@ -100,7 +112,7 @@ public class ConnectorMessageCodeTest extends TestCase {
     assertEquals("messageIdParamCode.getMessageId()",
         ConnectorMessageCode.INVALID_CONNECTOR_MANAGER_NAME,
         messageIdParamCode.getMessageId());
-    assertEquals("messageIdParamCode.getParams()", PARAMS1,
+    assertEqualParams("messageIdParamCode.getParams()", PARAMS1,
         messageIdParamCode.getParams());
 
     assertFalse("messageIdParam2Code.isSuccess()",
@@ -110,7 +122,7 @@ public class ConnectorMessageCodeTest extends TestCase {
     assertEquals("messageIdParam2Code.getMessageId()",
         ConnectorMessageCode.MISMATCHED_CONNECTOR_MANAGER,
         messageIdParam2Code.getMessageId());
-    assertEquals("messageIdParam2Code.getParams()",
+    assertEqualParams("messageIdParam2Code.getParams()",
         PARAMS2, messageIdParam2Code.getParams());
 
     assertFalse("messageIdStringCode.isSuccess()",
@@ -134,7 +146,7 @@ public class ConnectorMessageCodeTest extends TestCase {
     assertEquals("messageIdStringParamCode.getMessage()",
         MESSAGE_STRING_PAR,
         messageIdStringParamCode.getMessage());
-    assertEquals("messageIdStringParamCode.getParams()", PARAMS1,
+    assertEqualParams("messageIdStringParamCode.getParams()", PARAMS1,
         messageIdStringParamCode.getParams());
 
     assertFalse("successIdCode.isSuccess()", successIdCode.isSuccess());
@@ -154,8 +166,23 @@ public class ConnectorMessageCodeTest extends TestCase {
         successIdParamCode.getMessageId());
     assertTrue("successIdParamCode.isSuccessMessage()",
         successIdParamCode.isSuccessMessage());
-    assertEquals("successIdParamCode.getParams()", PARAMS1,
+    assertEqualParams("successIdParamCode.getParams()", PARAMS1,
         successIdParamCode.getParams());
+  }
+
+  public void testSetMessageId() {
+    String message = messageIdStringParamCode.getMessage();
+    Object[] params = messageIdStringParamCode.getParams();
+    messageIdStringParamCode.setMessageId(
+        ConnectorMessageCode.SUCCESS_RESTART_TRAVERSAL);
+    assertEquals(message, messageIdStringParamCode.getMessage());
+    assertEqualParams("messageIdStringParamCode.getParams()", params,
+        messageIdStringParamCode.getParams());
+
+    messageIdStringParamCode.setMessageId(ConnectorMessageCode.SUCCESS);
+    assertEquals(null, messageIdStringParamCode.getMessage());
+    assertEqualParams("messageIdStringParamCode.getParams()", new Object[0],
+        messageIdStringParamCode.getParams());
   }
 
   public void testSetMessage() {
@@ -187,17 +214,74 @@ public class ConnectorMessageCodeTest extends TestCase {
     // Add params to a success code.
     successCode.setParams(NEW_PARAMS);
     assertTrue("successCode.isSuccess()", successCode.isSuccess());
-    assertEquals("successCode.getParams()",
+    assertEqualParams("successCode.getParams()",
         NEW_PARAMS, successCode.getParams());
 
     // Change params on a error message.
     messageIdParamCode.setParams(NEW_PARAMS);
-    assertEquals("messageIdParamCode.getParams()",
+    assertEqualParams("messageIdParamCode.getParams()",
         NEW_PARAMS, messageIdParamCode.getParams());
 
     // Change params on a success message.
     successIdParamCode.setParams(NEW_PARAMS);
-    assertEquals("successIdParamCode.getParams()",
+    assertEqualParams("successIdParamCode.getParams()",
         NEW_PARAMS, successIdParamCode.getParams());
+  }
+
+  private void testNullOrEmptyParams(Object[] params) {
+    ConnectorMessageCode code;
+    code = new ConnectorMessageCode(
+        ConnectorMessageCode.SUCCESS, params);
+    assertEmpty(code.getParams());
+
+    code = new ConnectorMessageCode(
+        ConnectorMessageCode.SUCCESS, null, params);
+    assertEmpty(code.getParams());
+
+    code = new ConnectorMessageCode(
+        ConnectorMessageCode.SUCCESS, MESSAGE_STRING, params);
+    assertEmpty(code.getParams());
+  }
+
+  public void testNullParams() {
+    assertEmpty(defaultCode.getParams());
+    assertEmpty(successCode.getParams());
+    assertEmpty(messageIdCode.getParams());
+    testNullOrEmptyParams(null);
+  }
+
+  public void testEmptyParams() {
+    testNullOrEmptyParams(new Object[0]);
+  }
+
+  public void testIsSuccessMessage() {
+    assertFalse("successIdCode.isSuccessMessage()",
+        successCode.isSuccessMessage());
+    assertFalse("successIdCode.isSuccessMessage()",
+        messageIdCode.isSuccessMessage());
+    assertTrue("successIdCode.isSuccessMessage()",
+        successIdCode.isSuccessMessage());
+    assertFalse("successIdCode.isSuccessMessage()",
+        aboveSuccessIdCode.isSuccessMessage());
+  }
+
+  public void testHasMessage() {
+    ConnectorMessageCode code;
+
+    assertFalse(successCode.hasMessage());
+
+    code = new ConnectorMessageCode(
+        ConnectorMessageCode.SUCCESS, MESSAGE_STRING);
+    assertFalse(code.hasMessage());
+
+    code = new ConnectorMessageCode(
+        ConnectorMessageCode.SUCCESS_RESTART_TRAVERSAL);
+    assertFalse(code.hasMessage());
+
+    code = new ConnectorMessageCode(
+        ConnectorMessageCode.SUCCESS_RESTART_TRAVERSAL, "", null);
+    assertFalse(code.hasMessage());
+
+    assertTrue(messageIdStringParamCode.hasMessage());
   }
 }

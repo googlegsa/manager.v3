@@ -69,12 +69,11 @@ public class AuthorizationTest extends TestCase {
   private static final String TEST_XML4 =
       "<AuthorizationQuery>\n" +
       "<ConnectorQuery>\n" +
-      "  <Identity source=\"gsa\"></Identity>\n" +
+      "  <Identity/>\n" +
       "  <Resource>" + ServletUtil.PROTOCOL + "connector1.localhost" +
          ServletUtil.DOCID + "foo1</Resource>\n" +
       "</ConnectorQuery>\n" +
       "</AuthorizationQuery>";
-
 
   private static final String TEST_XML5 =
       "<AuthorizationQuery>\n" + "<ConnectorQuery>\n"
@@ -132,7 +131,8 @@ public class AuthorizationTest extends TestCase {
     + "</AuthorizationQuery>";
 
   /**
-   * The connector name is null.
+   * The connector name of one resource is null.  Any others should be
+   * processed accordingly.
    */
   public void _testHandleDoPost2() {
     String expectedBadDocumentResponse = "<CmResponse>\n"
@@ -141,6 +141,13 @@ public class AuthorizationTest extends TestCase {
       + "      <Resource connectorname=\"connector1\">"
       + ServletUtil.PROTOCOL + "connector1.localhost"
       + ServletUtil.DOCID + "foo1"
+      + "</Resource>\n"
+      + "      <Decision>PERMIT</Decision>\n"
+      + "    </Answer>\n"
+      + "    <Answer>\n"
+      + "      <Resource connectorname=\"connector3\">"
+      + ServletUtil.PROTOCOL + "connector3.localhost"
+      + ServletUtil.DOCID + "foo3"
       + "</Resource>\n"
       + "      <Decision>PERMIT</Decision>\n"
       + "    </Answer>\n"
@@ -165,16 +172,14 @@ public class AuthorizationTest extends TestCase {
   }
 
   /**
-   * The identity is null (empty).
+   * The identity is null.
    */
   public void _testHandleDoPost4() {
     String expectedResult =
-        "<CmResponse>\n" + "  <AuthorizationResponse>\n" + "    <Answer>\n"
-            + "      <Resource connectorname=\"connector1\">" + ServletUtil.PROTOCOL
-            + "connector1.localhost" + ServletUtil.DOCID + "foo1</Resource>\n"
-            + "      <Decision>PERMIT</Decision>\n" + "    </Answer>\n"
-            + "  </AuthorizationResponse>\n" + "  <StatusId>0</StatusId>\n"
-            + "</CmResponse>\n";
+        "<CmResponse>\n" + "  <StatusId>"
+        + ConnectorMessageCode.RESPONSE_NULL_IDENTITY + "</StatusId>\n"
+        + "  <StatusMsg>Null Identity</StatusMsg>\n"
+        + "</CmResponse>\n";
     doTest(TEST_XML4, expectedResult, false, null, null, null);
   }
 
@@ -525,6 +530,11 @@ public class AuthorizationTest extends TestCase {
         + "https://www.sphost/sites/mylist/test1.doc</Resource>\n"
         + "      <Decision>PERMIT</Decision>\n"
         + "    </Answer>\n"
+        + "    <Answer>\n"
+        + "      <Resource connectorname=\"connector3\">"
+        + "https://www.sphost/sites/mylist/test3.doc</Resource>\n"
+        + "      <Decision>PERMIT</Decision>\n"
+        + "    </Answer>\n"
         + "  </AuthorizationResponse>\n"
         + "  <StatusId>" + ConnectorMessageCode.RESPONSE_NULL_CONNECTOR
         + "</StatusId>\n"
@@ -537,7 +547,8 @@ public class AuthorizationTest extends TestCase {
 
   private void doTest(String xmlBody, String expectedResult,
       boolean verifyIdentity, String username, String password, String domain) {
-    LOGGER.info("xmlBody: " + xmlBody);
+    LOGGER.info("Test: " + getName());
+    LOGGER.info("xmlBody:\n " + xmlBody);
     MockManager manager = MockManager.getInstance();
     manager.setShouldVerifyIdentity(verifyIdentity);
     if (verifyIdentity) {
