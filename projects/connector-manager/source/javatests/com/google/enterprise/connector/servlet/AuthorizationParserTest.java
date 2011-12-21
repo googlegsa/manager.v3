@@ -189,7 +189,7 @@ public class AuthorizationParserTest extends TestCase {
   public void testMalformedXml() {
     AuthorizationParser ap = new AuthorizationParser(MALFORMED_XML);
     assertEquals(ConnectorMessageCode.ERROR_PARSING_XML_REQUEST,
-        ap.getStatus());
+                 ap.getStatus().getMessageId());
   }
 
   private static final String ONE_DOMAINSPECIFIC_IDENTITY =
