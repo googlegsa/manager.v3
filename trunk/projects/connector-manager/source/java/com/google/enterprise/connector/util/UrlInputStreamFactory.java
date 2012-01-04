@@ -28,7 +28,7 @@ public class UrlInputStreamFactory implements InputStreamFactory {
   /**
    * {@link UrlInputStreamFactory} constructor.
    *
-   * @param file a {@link URL} for which to generate an {@link InputStream}
+   * @param url a {@link URL} for which to generate an {@link InputStream}
    */
   public UrlInputStreamFactory(URL url) {
     this.url = url;
