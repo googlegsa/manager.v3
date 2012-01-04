@@ -35,9 +35,59 @@ import java.util.regex.PatternSyntaxException;
  * {@link Property Properties}.  The filter will scrutinize the
  * {@link Value Values} returned by the supplied {@link Property Properties}.
  * If the value (as a string) matches the regular expression {@code pattern},
- * then all matching regions of the value will be replace with the
+ * then all matching regions of the value will be replaced with the
  * {@code replacement} string.
- * The modified value may then either augment or overwrite the original value.
+ * <p/>
+ * If the {@code overwrite} flag is {@code true}, the modified
+ * property values replace any matching values of the target property.
+ * Otherwise, the modified property values supplement any existing values
+ * of the target property.
+ * <p/>
+ * <b>Example {@code documentFilters.xml} Configurations:</b>
+ * <p/>
+ * The following example replaces all instances of the word "Foo" with "Bar"
+ * in the {@code Category} property.
+ * <pre><code>
+   &lt;bean id="FooToBar"
+       class="com.google.enterprise.connector.util.filter.ModifyPropertyFilter"&gt;
+     &lt;property name="propertyName" value="Category"/&gt;
+     &lt;property name="pattern" value="Foo"/&gt;
+     &lt;property name="replacement" value="Bar"/&gt;
+     &lt;property name="overwrite" value="true"/&gt;
+   &lt;/bean&gt;
+   </code></pre>
+ * The following example adds "Paul Erd&ouml;s" to the list of {@code Authors}
+ * of documents for which I am also an author. This will give me an Erd&ouml;s
+ * Number of 1!
+ * <pre><code>
+   &lt;!-- Add Erd&ouml;s as co-author of all my documents. --&gt;
+   &lt;bean id="AddErdosAuthor"
+       class="com.google.enterprise.connector.util.filter.AddPropertyFilter"&gt;
+     &lt;property name="propertyName" value="Author"/&gt;
+     &lt;property name="pattern" value="C'est Moi"/&gt;
+     &lt;property name="replacement" value="Paul Erd&ouml;s"/&gt;
+     &lt;property name="overwrite" value="false"/&gt;
+   &lt;/bean&gt;
+   </code></pre>
+ * The following example replaces one or more instances of the characters
+ * '.' or '_' with a single space for all values of the {@code Foo} and
+ * {@code Bar} properties.  The original values are kept, and new values
+ * with whitespace delimiters are added to the properties.
+ * <pre><code>
+   &lt;!-- Replace '.' and '_' with a space. --&gt;
+   &lt;bean id="DotUnderscoreToWhiteSpace"
+      class="com.google.enterprise.connector.util.filter.ModifyPropertyFilter"&gt;
+     &lt;property name="propertyNames"/&gt;
+       &lt;set&gt;
+         &lt;value&gt;Foo&lt;/value&gt;
+         &lt;value&gt;Bar&lt;/value&gt;
+       &lt;/set&gt;
+     &lt;/property&gt;
+     &lt;property name="pattern" value="[_.]+"/&gt;
+     &lt;property name="replacement" value=" "/&gt;
+     &lt;property name="overwrite" value="false"/&gt;
+   &lt;/bean&gt;
+   </code></pre>
  */
 public class ModifyPropertyFilter extends AbstractDocumentFilter {
 
@@ -62,6 +112,9 @@ public class ModifyPropertyFilter extends AbstractDocumentFilter {
 
   /**
    * Sets the the name of the {@link Property} to filter.
+   * <p/>
+   * A convenience method that is equivalent to calling
+   * {@code setPropertyNames(Collections.singleton(propertyName)}.
    *
    * @param propertyName the name of the {@link Property} to filter
    * @throws IllegalArgumentException if {@code propertyName} is {@code null}
@@ -135,10 +188,9 @@ public class ModifyPropertyFilter extends AbstractDocumentFilter {
    * {@link Document} has a property of that name, then that property
    * is returned.
    * <p/>
-   * {@link Value Values} returned by the supplied {@link Property Properties}.
    * If any of the Property's values (as a string) match the regular
    * expression {@code pattern}, then all matching regions of the value
-   * will be replace with the {@code replacement} string.
+   * will be replaced with the {@code replacement} string.
    * <p/>
    * The modified value may either augment or overwrite the original value,
    * based upon the {@code overwrite} flag.

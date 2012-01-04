@@ -86,7 +86,7 @@ public class MimeTypeDetector {
 
   /**
    * Sets the supported
-   * <a href="http://download.oracle.com/javase/1.5.0/docs/guide/intl/encoding.doc.html">
+   * <a href="http://docs.oracle.com/javase/1.5.0/docs/guide/intl/encoding.doc.html">
    * character encodings</a> for the {@code MimeTypeDetector}. When determining
    * Mime type based upon content, MimeTypeDetector will interpret the content
    * using the various encodings until it has found a match.  For performance
@@ -95,9 +95,11 @@ public class MimeTypeDetector {
    * <p/>
    * The default set of supported encodings is "UTF-8", "ISO-8859-1",
    * "windows-1252", and the current JVM default encoding.
+   * <p/>
+   * @see <a href="http://docs.oracle.com/javase/1.5.0/docs/guide/intl/encoding.doc.html">Java Supported Encodings</a>
+   *
    *
    * @param encodings a Set of canonical encoding names.
-   * @see http://download.oracle.com/javase/1.5.0/docs/guide/intl/encoding.doc.html
    */
   public static synchronized void setSupportedEncodings(Set<String> encodings) {
     Set<String> enc = Sets.newHashSet(encodings);

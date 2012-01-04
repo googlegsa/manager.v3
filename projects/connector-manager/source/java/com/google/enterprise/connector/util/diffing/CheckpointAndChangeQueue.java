@@ -39,12 +39,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
 /**
- * Queue of {@link CheckpointAndChange} objects to be processed by the
+ * Queue of {@code CheckpointAndChange} objects to be processed by the
  * {@link DiffingConnectorTraversalManager}. Objects are added to the queue from
  * a {@link ChangeSource} and assigned a {@link DiffingConnectorCheckpoint}.
  * The client accesses objects by calling {@link #resume(String)}.
  * To facilitate retry of processing for objects in the queue
- * {@link CheckpointAndChange} objects remain until the client
+ * {@code CheckpointAndChange} objects remain until the client
  * indicates they have completed processing by calling {@link #resume(String)}
  * with the object's checkpoint or a later object's checkpoint.
  *
