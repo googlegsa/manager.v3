@@ -37,7 +37,7 @@ import junit.framework.TestCase;
 public class SkipDocumentFilterTest extends DocumentFilterTest {
 
   /** Creates a SkipDocumentFilter. */
-  private static Document createFilter(
+  private Document createFilter(
       String propName, String pattern, boolean skipOnMatch) {
     SkipDocumentFilter factory = new SkipDocumentFilter();
     factory.setPropertyName(propName);
@@ -47,7 +47,7 @@ public class SkipDocumentFilterTest extends DocumentFilterTest {
   }
 
   /** Creates a Properties subset with specified properties removed. */
-  private static Map<String, List<Value>> createPropertiesSubset(
+  private Map<String, List<Value>> createPropertiesSubset(
       String... names) {
     Map<String, List<Value>> props = createProperties();
     for (String name : names) {

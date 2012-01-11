@@ -32,15 +32,15 @@ import junit.framework.TestCase;
 public class MovePropertyFilterTest extends DocumentFilterTest {
 
   /** Creates a MovePropertyFilter. */
-  protected static Document createFilter() {
+  protected Document createFilter() {
     Map<String, String>renames = new HashMap<String, String>();
     renames.put(PROP1, "foo");
     renames.put(PROP3, "bar");
     return createFilter(renames, false);
   }
 
-  protected static Document createFilter(Map<String, String>renames,
-                                         boolean overwrite) {
+  protected Document createFilter(Map<String, String>renames,
+                                  boolean overwrite) {
     MovePropertyFilter factory = new MovePropertyFilter();
     factory.setPropertyNameMap(renames);
     factory.setOverwrite(overwrite);
