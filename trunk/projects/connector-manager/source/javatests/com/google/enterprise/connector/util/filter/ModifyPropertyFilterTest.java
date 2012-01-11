@@ -15,19 +15,13 @@
 package com.google.enterprise.connector.util.filter;
 
 import com.google.enterprise.connector.spi.Document;
-import com.google.enterprise.connector.spi.Property;
-import com.google.enterprise.connector.spi.SimpleDocument;
 import com.google.enterprise.connector.spi.Value;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import junit.framework.TestCase;
 
 /**
  * Tests ModifyPropertyFilter.
@@ -35,18 +29,18 @@ import junit.framework.TestCase;
 public class ModifyPropertyFilterTest extends DocumentFilterTest {
 
   /** Creates a ModifyPropertyFilter. */
-  protected static Document createFilter(String propName, String pattern) {
+  protected Document createFilter(String propName, String pattern) {
     return createFilter(propName, pattern, false);
   }
 
   /** Creates a ModifyPropertyFilter. */
-  protected static Document createFilter(
+  protected Document createFilter(
       String propName, String pattern, boolean overwrite) {
     return createFilter(Collections.singleton(propName), pattern, overwrite);
   }
 
   /** Creates a ModifyPropertyFilter. */
-  protected static Document createFilter(
+  protected Document createFilter(
       Set<String> propNames, String pattern, boolean overwrite) {
     ModifyPropertyFilter factory = new ModifyPropertyFilter();
     factory.setPropertyNames(propNames);
@@ -247,8 +241,10 @@ public class ModifyPropertyFilterTest extends DocumentFilterTest {
     factory.setPropertyName("foo");
     factory.setPattern(PATTERN);
     factory.setReplacement("bar");
+    factory.setMimeType("text/plain");
     factory.setOverwrite(true);
-    assertEquals("ModifyPropertyFilter: ([foo] , \"[_\\.]+\" , \"bar\" , true)",
+    assertEquals("ModifyPropertyFilter: ([foo] , \"[_\\.]+\" , \"bar\" , "
+        + "true , \"UTF-8\" , [text/plain])",
         factory.toString());
   }
 }

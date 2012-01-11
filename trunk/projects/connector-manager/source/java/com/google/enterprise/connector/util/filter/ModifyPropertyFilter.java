@@ -16,15 +16,22 @@ package com.google.enterprise.connector.util.filter;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.io.ByteStreams;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.Property;
-import com.google.enterprise.connector.spi.SimpleProperty;
-import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.spi.RepositoryException;
+import com.google.enterprise.connector.spi.SimpleProperty;
+import com.google.enterprise.connector.spi.SpiConstants;
+import com.google.enterprise.connector.spi.Value;
+import com.google.enterprise.connector.spiimpl.BinaryValue;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -88,6 +95,16 @@ import java.util.regex.PatternSyntaxException;
      &lt;property name="overwrite" value="false"/&gt;
    &lt;/bean&gt;
    </code></pre>
+ * <p>
+ * When used with binary values, the entire value is buffered and the
+ * modified value is stored in a {@code byte} array.
+ */
+/*
+ * TODO: Find a way to process the InputStreams without buffering them,
+ * maybe using java.util.Scanner or a similar third-party tool.
+ * TODO: Binary values based on byte arrays are likely rare outside
+ * the tests, but it might be nice to build the string from the
+ * underlying byte array directly, rather than copying it.
  */
 public class ModifyPropertyFilter extends AbstractDocumentFilter {
 
@@ -97,6 +114,12 @@ public class ModifyPropertyFilter extends AbstractDocumentFilter {
 
   /** The names of the Properties to filter. */
   protected Set<String> propertyNames;
+  
+  /** The names of the mimetypes to filter. */
+  protected Set<String> mimeTypes;
+  
+  /** The name of the encoding type used to convert binary data to string */
+  protected String encoding = "UTF-8";
 
   /** The regex pattern to match in the property {@link Value Values}. */
   protected Pattern pattern;
@@ -139,6 +162,28 @@ public class ModifyPropertyFilter extends AbstractDocumentFilter {
   }
 
   /**
+   * Sets the media types of the {@link Document} objects to modify.
+   *
+   * @param mimeTypes a {@code Set} of names of the media types to filter
+   * @throws NullPointerException if {@code mimeTypes} is {@code null}
+   */
+  public void setMimeTypes(Set<String> mimeTypes) {
+    Preconditions.checkNotNull(mimeTypes, "mimeTypes may not be null");
+    this.mimeTypes = mimeTypes;
+  }
+  
+  /**
+   * Sets the media types of the {@link Document} objects to modify.
+   *
+   * @param mimeTypes the name of the media type to filter
+   * @throws NullPointerException if {@code mimeType} is {@code null}
+   */
+  public void setMimeType(String mimeType) {
+    Preconditions.checkNotNull(mimeType, "mimeType may not be null");
+    this.mimeTypes = Collections.singleton(mimeType);
+  }
+
+  /**
    * Sets the regular expression pattern to match in the values.
    * The supplied {@code pattern} must conform to the syntax defined in
    * <a href="http://java.sun.com/j2se/1.5/docs/api/java/util/regex/Pattern.html">
@@ -146,7 +191,8 @@ public class ModifyPropertyFilter extends AbstractDocumentFilter {
    *
    * @param pattern the regular expression pattern to match in the values
    * @throws PatternSyntaxException if {@code pattern}'s syntax is invalid
-   * @throws IllegalArgumentException if {@code pattern} is {@code null} or empty
+   * @throws IllegalArgumentException if {@code pattern} is {@code
+   * null} or empty
    */
   public void setPattern(String pattern) throws PatternSyntaxException {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(pattern),
@@ -182,6 +228,15 @@ public class ModifyPropertyFilter extends AbstractDocumentFilter {
   public void setOverwrite(boolean overwrite) {
     this.overwrite = overwrite;
   }
+  
+  /**
+   * Sets the the name of the character encoding type to be used.
+   *
+   * @param encoding name of encoding type
+   */
+  public void setEncoding(String encoding) {
+    this.encoding = encoding;
+  }
 
   /**
    * Finds a {@link Property} by {@code name}. If the {@code source}
@@ -210,32 +265,115 @@ public class ModifyPropertyFilter extends AbstractDocumentFilter {
     // If a value matches the pattern, either replace or augment that value.
     LinkedList<Value> values = new LinkedList<Value>();
     for (Value value : super.getPropertyValues(source, name)) {
-      String original = value.toString();
-      String modified = pattern.matcher(original).replaceAll(replacement);
-      if (original.equals(modified)) {
-        values.add(value);
-      } else if (overwrite) {
-        values.add(Value.getStringValue(modified));
-        if (LOGGER.isLoggable(Level.FINEST)) {
-          LOGGER.finest("Property Filter replaced " + name + " value "
-                        + "\"" + original +  "\" with \""+ modified + "\"");
+      String original = null;
+      String modified = null;
+      Value originalValue = null;
+      Value modifiedValue = null;      
+      if (value instanceof BinaryValue) {
+        Property prop = source.findProperty(SpiConstants.PROPNAME_MIMETYPE);
+        if (prop == null){
+          // There is no mimetype property in the document. 
+          return source.findProperty(name);
+        }
+        String mimeType = prop.nextValue().toString();
+        if (mimeType.contains(";")) {
+          mimeType = mimeType.substring(0, mimeType.indexOf(";"));
+        }
+        // Initializing with default set
+        if (mimeTypes == null) {
+          mimeTypes = initDefaultMimeTypes();
+        }
+        // TODO(kiran) should allow match top-level 
+        // (e.g. "text/xml" matches "text")
+        if (!mimeTypes.contains(mimeType)) {
+          return source.findProperty(name);
+        }
+        // It's a Binary Value, to be read using input stream
+        InputStream in = ((BinaryValue) value).getInputStream();
+        byte[] data = null;
+        try {
+          data = ByteStreams.toByteArray(in);
+        } catch (IOException e) {
+          throw new RepositoryException("Error while reading the source", e);
+        }
+        originalValue = Value.getBinaryValue(data);
+        try {
+          original = new String(data, encoding);
+        } catch (UnsupportedEncodingException e) {
+          throw new RepositoryException("Error while converting"
+              + " data with " + encoding, e);
+        }
+        modified = pattern.matcher(original).replaceAll(replacement);
+        try {
+          modifiedValue = Value.getBinaryValue(modified.getBytes(encoding));
+        } catch (UnsupportedEncodingException e) {
+          throw new RepositoryException("Error while converting"
+              + " data with " + encoding, e);
         }
       } else {
-        values.add(value);
-        values.add(Value.getStringValue(modified));
+        original = value.toString();
+        originalValue = value;
+        modified = pattern.matcher(original).replaceAll(replacement);
+        modifiedValue = Value.getStringValue(modified);
+      }
+      if (original.equals(modified)) {
+        values.add(originalValue);
+      } else if (overwrite) {
+        values.add(modifiedValue);
+        if (LOGGER.isLoggable(Level.FINEST)) {
+          LOGGER.finest("Property Filter replaced " + name + " value "
+                        + "\"" + originalValue
+                        + "\" with \"" + modifiedValue + "\"");
+        }
+      } else {
+        values.add(originalValue);
+        values.add(modifiedValue);
         if (LOGGER.isLoggable(Level.FINEST)) {
           LOGGER.finest("Property Filter injected " + name
-                        + " value \"" + modified + "\"");
+                        + " value \"" + modifiedValue + "\"");
         }
       }
     }
     return new SimpleProperty(values);
   }
 
+  private Set<String> initDefaultMimeTypes() {
+    Set<String> mimeTypes = new TreeSet<String>();
+    mimeTypes.add("text/xml");
+    mimeTypes.add("text/xhtml");
+    mimeTypes.add("text/tab-separated-values");
+    mimeTypes.add("text/x-sgml");
+    mimeTypes.add("text/calendar");
+    mimeTypes.add("text/csv");
+    mimeTypes.add("text/plain");
+    mimeTypes.add("text/html");
+    mimeTypes.add("text/sgml");
+    mimeTypes.add("application/plain");
+    mimeTypes.add("application/rdf+xml");
+    mimeTypes.add("application/xhtml+xml");
+    mimeTypes.add("application/xml");
+    mimeTypes.add("message/http");
+    mimeTypes.add("message/s-http");
+    return mimeTypes;
+  }
+
   @Override
   public String toString() {
-    return super.toString() + ": (" + propertyNames + " , \""
-           + pattern.pattern() + "\" , \"" + replacement + "\" , "
-           + overwrite + ")";
+    StringBuffer buf = new StringBuffer();
+    buf.append(super.toString());
+    buf.append(": (");
+    buf.append(propertyNames);
+    buf.append(" , \"");
+    buf.append(pattern.pattern());
+    buf.append("\" , \"");
+    buf.append(replacement);
+    buf.append("\" , ");
+    buf.append(overwrite);
+    buf.append(" , \"");
+    buf.append(encoding);
+    buf.append("\" , ");
+    buf.append(mimeTypes);
+    buf.append(")");
+    return buf.toString();
   }
 }
