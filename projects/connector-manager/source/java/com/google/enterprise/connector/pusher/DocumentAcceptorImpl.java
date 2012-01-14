@@ -35,14 +35,16 @@ public class DocumentAcceptorImpl implements DocumentAcceptor {
       Logger.getLogger(DocumentAcceptorImpl.class.getName());
 
   private final String connectorName;
-  private final Pusher pusher;
+  private final PusherFactory pusherFactory;
   private final DocumentStore documentStore;
 
-  public DocumentAcceptorImpl(String connectorName, Pusher pusher,
-      DocumentStore documentStore)
+  private Pusher pusher;
+
+  public DocumentAcceptorImpl(String connectorName,
+      PusherFactory pusherFactory, DocumentStore documentStore)
       throws DocumentAcceptorException, RepositoryException {
     this.connectorName = connectorName;
-    this.pusher = pusher;
+    this.pusherFactory = pusherFactory;
     this.documentStore = documentStore;
   }
 
@@ -56,9 +58,23 @@ public class DocumentAcceptorImpl implements DocumentAcceptor {
    *         DocumentAcceptor
    */
   public synchronized void take(Document document)
-    throws DocumentAcceptorException, RepositoryException {
+      throws DocumentAcceptorException, RepositoryException {
     try {
       pusher.take(document, documentStore);
+    } catch (NullPointerException e) {
+      // Ugly, but avoids checking for null Pusher on every call to take.
+      if (pusher == null) {
+        // Opps. We need to get a new Pusher.
+        try {
+          pusher = pusherFactory.newPusher(connectorName);
+          this.take(document);
+        } catch (PushException pe) {
+          LOGGER.log(Level.SEVERE, "DocumentAcceptor failed to get Pusher", e);
+          throw new DocumentAcceptorException("Failed to get Pusher", e);
+        }
+      } else {
+        throw e;
+      }
     } catch (PushException e) {
       LOGGER.log(Level.SEVERE, "DocumentAcceptor failed to take document", e);
       throw new DocumentAcceptorException("Failed to take document", e);
@@ -82,9 +98,13 @@ public class DocumentAcceptorImpl implements DocumentAcceptor {
    * @throws DocumentAcceptorException if a transient error occurs in the
    *         DocumentAcceptor
    */
-  public void flush() throws DocumentAcceptorException, RepositoryException {
+  public synchronized void flush()
+      throws DocumentAcceptorException, RepositoryException {
     try {
-      pusher.flush();
+      if (pusher != null) {
+        pusher.flush();
+        pusher = null;
+      }
     } catch (PushException e) {
       LOGGER.log(Level.SEVERE, "DocumentAcceptor failed to flush feed.", e);
       throw new DocumentAcceptorException("Failed to flush feed", e);
@@ -102,7 +122,10 @@ public class DocumentAcceptorImpl implements DocumentAcceptor {
    * documents submitted to this DocumentAcceptor may have already been
    * sent on to the GSA.
    */
-  public void cancel() {
-    pusher.cancel();
+  public synchronized void cancel() {
+    if (pusher != null) {
+      pusher.cancel();
+      pusher = null;
+    }
   }
 }

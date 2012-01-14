@@ -46,10 +46,39 @@ public class DocumentAcceptorTest extends TestCase {
         new DocumentAcceptorImpl(connectorName, pusher, null);
     MockLister lister = new MockLister(10, 0);
     lister.setDocumentAcceptor(documentAcceptor);
+
     // With no inter-document delay, MockLister feeds all documents
     // from its start() method, then returns when done.
     lister.start();
     assertEquals(10, pusher.getTotalDocs());
+  }
+
+  /** Test feeding more docs after a flush. */
+  public void testFeedAfterFlush() throws Exception {
+    String connectorName = getName();
+    MockPusher pusher = new MockPusher();
+    DocumentAcceptorImpl documentAcceptor =
+        new DocumentAcceptorImpl(connectorName, pusher, null);
+
+    // Feed a couple of documents.
+    assertEquals(0, pusher.getTotalDocs());
+    documentAcceptor.take(ConnectorTestUtils.createSimpleDocument("foo"));
+    documentAcceptor.take(ConnectorTestUtils.createSimpleDocument("bar"));
+
+    // Flush the feed.  This shuts down the Pusher.
+    documentAcceptor.flush();
+    assertEquals(2, pusher.getTotalDocs());
+    assertTrue(pusher.isShutdown());
+
+    // Feed another document. Should get a new Pusher.
+    documentAcceptor.take(ConnectorTestUtils.createSimpleDocument("baz"));
+    assertEquals(1, pusher.getTotalDocs());
+    assertFalse(pusher.isShutdown());
+
+    // Cancel that feed, without flushing.
+    documentAcceptor.cancel();
+    assertEquals(0, pusher.getTotalDocs());
+    assertTrue(pusher.isShutdown());
   }
 
   /** Test PushException in take(). */
@@ -152,6 +181,25 @@ public class DocumentAcceptorTest extends TestCase {
       assertFalse("Expected Exception", (where == Where.FLUSH));
     } catch (Exception e) {
       assertTrue("Unexpected Exception", (where == Where.FLUSH));
+      if (exception instanceof PushException) {
+        assertEquals(DocumentAcceptorException.class, e.getClass());
+        assertEquals(PushException.class, e.getCause().getClass());
+      } else if (exception instanceof FeedException) {
+        assertEquals(DocumentAcceptorException.class, e.getClass());
+        assertEquals(FeedException.class, e.getCause().getClass());
+      } else if (exception instanceof RuntimeException) {
+        assertEquals(RuntimeException.class, e.getClass());
+      } else {
+        assertEquals(RepositoryException.class, e.getClass());
+      }
+    }
+
+    // Test take() again after flush().
+    try {
+      documentAcceptor.take(ConnectorTestUtils.createSimpleDocument("testDoc"));
+      assertFalse("Expected Exception", (where == Where.TAKE));
+    } catch (Exception e) {
+      assertTrue("Unexpected Exception", (where == Where.TAKE));
       if (exception instanceof PushException) {
         assertEquals(DocumentAcceptorException.class, e.getClass());
         assertEquals(PushException.class, e.getCause().getClass());

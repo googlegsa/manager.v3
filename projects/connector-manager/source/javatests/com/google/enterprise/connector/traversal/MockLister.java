@@ -68,6 +68,8 @@ public class MockLister implements Lister {
    */
   /* @Override */
   public void start() throws RepositoryException {
+    isShutdown = false;
+    documentCount = 0;
     // If no interdoc delay, run in this thread for simplicity.
     if (delayMillis == 0L) {
       try {
