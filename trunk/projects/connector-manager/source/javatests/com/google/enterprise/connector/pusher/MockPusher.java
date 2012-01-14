@@ -28,10 +28,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 
-
 public class MockPusher implements Pusher, PusherFactory {
 
-  private int totalDocs;
+  private boolean isShutdown = false;
+  private int totalDocs = 0;
   private PrintStream printStream;
 
   public MockPusher() {
@@ -39,18 +39,24 @@ public class MockPusher implements Pusher, PusherFactory {
   }
 
   public MockPusher(PrintStream ps) {
-    totalDocs = 0;
     printStream = ps;
   }
 
   /* @Override */
   public Pusher newPusher(String connectorName) {
+    totalDocs = 0;
+    isShutdown = false;
     return this;
   }
 
   /* @Override */
   public boolean take(Document document, DocumentStore ignored)
       throws PushException, FeedException, RepositoryException {
+    // Mirror behaviour of DocPusher.
+    if (isShutdown) {
+      throw new IllegalStateException("Pusher is shut down");
+    }
+
     printStream.println("<document>");
 
     // first take care of some special attributes
@@ -81,11 +87,13 @@ public class MockPusher implements Pusher, PusherFactory {
   /* @Override */
   public void flush() throws PushException, FeedException, RepositoryException {
     printStream.flush();
+    isShutdown = true;
   }
 
   /* @Override */
   public void cancel() {
     totalDocs = 0;
+    isShutdown = true;
   }
 
   private void processProperty(String name, Property property)
@@ -134,5 +142,9 @@ public class MockPusher implements Pusher, PusherFactory {
 
   public int getTotalDocs() {
     return totalDocs;
+  }
+
+  public boolean isShutdown() {
+    return isShutdown;
   }
 }

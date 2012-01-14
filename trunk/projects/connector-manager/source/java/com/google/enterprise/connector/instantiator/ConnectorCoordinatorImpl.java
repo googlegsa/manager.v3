@@ -345,7 +345,7 @@ class ConnectorCoordinatorImpl implements
         if (lister != null) {
           LOGGER.fine("Starting Lister for connector " + name);
           lister.setDocumentAcceptor(new DocumentAcceptorImpl(
-              name, pusherFactory.newPusher(name), documentStore));
+              name, pusherFactory, documentStore));
           listerHandle = threadPool.submit(new CancelableLister(name, lister));
         }
       } catch (ConnectorNotFoundException e) {
