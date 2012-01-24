@@ -31,15 +31,15 @@ import junit.framework.TestCase;
 public class CopyPropertyFilterTest extends DocumentFilterTest {
 
   /** Creates a CopyPropertyFilter. */
-  protected static Document createFilter() {
+  protected Document createFilter() {
     Map<String, String> aliases = new HashMap<String, String>();
     aliases.put(PROP1, "foo");
     aliases.put(PROP3, "bar");
     return createFilter(aliases, false);
   }
 
-  protected static Document createFilter(Map<String, String>aliases,
-                                         boolean overwrite) {
+  protected Document createFilter(Map<String, String>aliases,
+                                  boolean overwrite) {
     CopyPropertyFilter factory = new CopyPropertyFilter();
     factory.setPropertyNameMap(aliases);
     factory.setOverwrite(overwrite);

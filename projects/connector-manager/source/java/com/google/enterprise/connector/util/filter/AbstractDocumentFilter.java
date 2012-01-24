@@ -28,8 +28,9 @@ import java.util.logging.Logger;
 /**
  * A base {@link Document} filter implementation that does nothing.
  * It is meant to used as a base class for document filter subclasses.
- * Subclasses are exected to override {@code findProperty} and/or
- * {@code getPropertyNames}, but not {@code newDocumentFilter}.
+ * Subclasses are exected to override {@link #findProperty(Document, String)}
+ * and/or {@link #getPropertyNames(Document)}, but not
+ * {@link #newDocumentFilter(Document)}.
  */
 public abstract class AbstractDocumentFilter implements DocumentFilterFactory {
 
