@@ -11,8 +11,8 @@ issues and work-arounds.
 Web Site: http://code.google.com/p/google-enterprise-connector-manager/
 
 
-Release 2.8.4, 25 December 2011
-===============================
+Release 2.8.4, 23 January 2012
+==============================
 
 Introduction
 ------------
@@ -21,6 +21,11 @@ the previous release. Users of the previous release are encouraged to upgrade.
 
 Summary of Changes
 ------------------
+  * Fix Issue 5723358 - Escape special characters in user and group names
+    returned in an Authentication response.  User or group names that contained
+    certain characters that have special meaning in XML syntax would cause
+    failures reading the Authentication response.
+
   * Fix Issue 5599305 - Retry Connector startup if instantiation fails.
     The FileSystem Connector fails Connector bean instantiation if the file
     share is off-line.  The other connectors that use the Diffing package
