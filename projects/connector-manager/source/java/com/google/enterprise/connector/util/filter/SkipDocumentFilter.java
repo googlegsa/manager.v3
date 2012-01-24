@@ -33,7 +33,7 @@ import java.util.regex.PatternSyntaxException;
  * <p/>
  * <b>Example {@code documentFilters.xml} Configurations:</b>
  * <p/>
- * The following example skips documnents that have a {@code NoIndex Property}.
+ * The following example skips documents that have a {@code NoIndex Property}.
  * <pre><code>
    &lt;bean id="NoIndex"
       class="com.google.enterprise.connector.util.filter.SkipDocumentFilter"&gt;
