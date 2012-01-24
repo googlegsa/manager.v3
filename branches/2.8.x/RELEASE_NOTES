@@ -62,6 +62,15 @@ Summary of Changes
     to a different directory. The properties still appear in the Properties
     objects in the SPI.
 
+  * Adds several improvements to the Document Filters.
+    The ModifyPropertyFilter adds support for modifying the CONTENT
+    property of text documents (determined according to MIME type).
+    A SkipDocumentFilter can force a document to be skipped (or not)
+    based upon the presence/abscence of a specific Property, or based
+    upon a match on one of the values of that property.
+    The JavaDoc documentation for the Document Filters has been
+    improved, including example configurations.
+
   * Various improvements in diagnostic logging.
 
 

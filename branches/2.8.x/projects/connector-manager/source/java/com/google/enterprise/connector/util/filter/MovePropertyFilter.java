@@ -31,6 +31,27 @@ import java.util.Set;
  * property values replace any existing values of the target property.
  * Otherwise, the moved property values supplement any existing values
  * of the target property.
+ * <p/>
+ * <b>Example {@code documentFilters.xml} Configurations:</b>
+ * <p/>
+ * The following example moves {@code HeadLine} and {@code ByLine} property
+ * values to the {@code Title} and {@code Author} properties, respectively.
+ * The original {@code HeadLine} and {@code ByLine} properties will not be
+ * indexed and will not be searchable. This latter behaviour differs from the
+ * {@link CopyPropertyFilter} from which this filter derives.
+ * <pre><code>
+   &lt;!-- Make news articles appear in title and author searches. --&gt;
+   &lt;bean id="MoveNewsProps"
+      class="com.google.enterprise.connector.util.filter.CopyPropertyFilter"&gt;
+     &lt;property name="propertyNameMap"&gt;
+       &lt;map&gt;
+         &lt;entry key="HeadLine" value="Title"/&gt;
+         &lt;entry key="ByLine" value="Author"/&gt;
+       &lt;/map&gt;
+     &lt;/property&gt;
+     &lt;property name="overwrite" value="false"/&gt;
+   &lt;/bean&gt;
+   </code></pre>
  */
 public class MovePropertyFilter extends CopyPropertyFilter {
   /**
