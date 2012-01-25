@@ -1,4 +1,4 @@
-// Copyright (C) 2006-2009 Google Inc.
+// Copyright 2006 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -34,8 +34,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Logger;
 
 public class ConnectorTestUtils {
+  private static final Logger LOGGER =
+      Logger.getLogger(ConnectorTestUtils.class.getName());
 
   private ConnectorTestUtils() {
     // prevents instantiation
@@ -51,6 +54,20 @@ public class ConnectorTestUtils {
                                + ServletUtil.MANAGER_NAME);
     if (start >= 0) {
       buffer.delete(start, buffer.indexOf("\n", start) + 1);
+    }
+  }
+
+  /**
+   * Removes colspan="1" rowspan="1" attributes from processed
+   * XML form snippets.  These seem to be added by some Java
+   * DOM engines, but not others.
+   */
+  public static String removeColRowSpan(String str) {
+    if (str == null) {
+      return null;
+    } else {
+      return str.replaceAll(" colspan=\"1\"", "")
+                .replaceAll(" rowspan=\"1\"", "");
     }
   }
 
@@ -88,19 +105,18 @@ public class ConnectorTestUtils {
     compareMaps(expected.getMap(), config.getMap());
   }
 
-  public static boolean deleteAllFiles(File dir) {
-    if(!dir.exists()) {
-        return true;
+  public static boolean deleteAllFiles(File file) {
+    if (!file.exists()) {
+      return true;
     }
-    boolean res = true;
-    if(dir.isDirectory()) {
-        File[] files = dir.listFiles();
-        for(int i = 0; i < files.length; i++) {
-            res &= deleteAllFiles(files[i]);
-        }
-        res = dir.delete(); // Delete dir itself.
-    } else {
-        res = dir.delete();
+    if (file.isDirectory()) {
+      for (File f : file.listFiles()) {
+        deleteAllFiles(f);
+      }
+    }
+    boolean res = file.delete();
+    if (!res) {
+      LOGGER.warning("Failed to delete " + file.getPath());
     }
     return res;
   }

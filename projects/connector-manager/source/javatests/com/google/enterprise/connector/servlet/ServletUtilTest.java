@@ -17,6 +17,7 @@ package com.google.enterprise.connector.servlet;
 import com.google.common.base.Function;
 import com.google.enterprise.connector.common.SecurityUtils;
 import com.google.enterprise.connector.spi.XmlUtils;
+import com.google.enterprise.connector.test.ConnectorTestUtils;
 
 import junit.framework.TestCase;
 
@@ -90,15 +91,15 @@ public class ServletUtilTest extends TestCase {
         + "</tr>";
     String expectedForm =
         "<tr>"
-        + "<td colspan=\"1\" rowspan=\"1\">Sensitive input to force parsing</td>"
-        + "<td colspan=\"1\" rowspan=\"1\"><input name=\"Password\" type=\"password\" value=\"*********\"></td>"
+        + "<td>Sensitive input to force parsing</td>"
+        + "<td><input name=\"Password\" type=\"password\" value=\"*********\"></td>"
         + "</tr>"
         + "<tr>"
-        + "<td colspan=\"1\" rowspan=\"1\">Sample text</td>"
-        + "<td colspan=\"1\" rowspan=\"1\"><textarea cols=\"50\" name=\"SampleText\" rows=\"5\"></textarea></td>"
+        + "<td>Sample text</td>"
+        + "<td><textarea cols=\"50\" name=\"SampleText\" rows=\"5\"></textarea></td>"
         + "</tr>";
     addDtdToClassLoader();
-    String obfuscateForm = ServletUtil.filterSensitiveData(configForm);
+    String obfuscateForm = filterSensitiveData(configForm);
     assertNotNull("Form returned", obfuscateForm);
     assertEquals("Form changed as expected", expectedForm, obfuscateForm);
   }
@@ -278,7 +279,7 @@ public class ServletUtilTest extends TestCase {
 
     // Filter out sensitive data.
     addDtdToClassLoader();
-    String obfuscatedForm = ServletUtil.filterSensitiveData(configForm);
+    String obfuscatedForm = filterSensitiveData(configForm);
     assertNotNull("Form returned", obfuscatedForm);
     assertTrue("Form does not contain protected values",
         obfuscatedForm.indexOf(protectedValue) == -1);
@@ -287,7 +288,7 @@ public class ServletUtilTest extends TestCase {
 
     // Test exception cases.
     configForm = configForm.substring(1);
-    obfuscatedForm = ServletUtil.filterSensitiveData(configForm);
+    obfuscatedForm = filterSensitiveData(configForm);
     assertNull("Null form returned when form invalid", obfuscatedForm);
   }
 
@@ -308,7 +309,7 @@ public class ServletUtilTest extends TestCase {
       + "</td>\n"
       + "</tr>";
     addDtdToClassLoader();
-    String obfuscateForm = ServletUtil.filterSensitiveData(configForm);
+    String obfuscateForm = filterSensitiveData(configForm);
     assertNotNull("Form returned", obfuscateForm);
     assertEquals("Form not changed", configForm, obfuscateForm);
   }
@@ -348,26 +349,26 @@ public class ServletUtilTest extends TestCase {
         + "</tr>";
     String expectedForm =
         "<tr>"
-        + "<td colspan=\"1\" rowspan=\"1\">"
+        + "<td>"
         + "Sensitive input to force parsing</td>"
-        + "<td colspan=\"1\" rowspan=\"1\"><input name=\"Password\""
+        + "<td><input name=\"Password\""
         + " type=\"password\" value=\"*********\"></td>"
         + "</tr>"
         + "<tr>"
-        + "<td colspan=\"1\" rowspan=\"1\">HTML and XML &amp; &lt;</td>"
-        + "<td colspan=\"1\" rowspan=\"1\"><input name=\"HtmlAndXml\""
+        + "<td>HTML and XML &amp; &lt;</td>"
+        + "<td><input name=\"HtmlAndXml\""
         + " type=\"text\" value=\"clear\"></td>"
         + "</tr>"
         + "<tr>"
-        + "<td colspan=\"1\" rowspan=\"1\">"
+        + "<td>"
         + "Some&nbsp;of&nbsp;the&nbsp;other 252 &copy; &copy; &copy;</td>"
-        + "<td colspan=\"1\" rowspan=\"1\"><input name=\"Other252\""
+        + "<td><input name=\"Other252\""
         + " type=\"text\" value=\"clear\"></td>"
         + "</tr>"
         + "<tr>"
-        + "<td colspan=\"1\" rowspan=\"1\">"
+        + "<td>"
         + "Value has non-252 but needs to be preserved</td>"
-        + "<td colspan=\"1\" rowspan=\"1\"><input name=\"ValueHas\""
+        + "<td><input name=\"ValueHas\""
         + " type=\"text\" value=\"clear1"
         + System.getProperty("line.separator")
         + "clear2"
@@ -375,21 +376,21 @@ public class ServletUtilTest extends TestCase {
         + "clear3\"></td>"
         + "</tr>"
         + "<tr>"
-        + "<td colspan=\"1\" rowspan=\"1\">Two words</td>"
-        + "<td colspan=\"1\" rowspan=\"1\"><textarea cols=\"40\""
+        + "<td>Two words</td>"
+        + "<td><textarea cols=\"40\""
         + " name=\"url\" rows=\"5\">"
         + "http://www.example.com/doc?a=b&amp;c=d"
         + "</textarea></td>"
         + "</tr>"
         + "<tr>"
-        + "<td colspan=\"1\" rowspan=\"1\">Two words</td>"
-        + "<td colspan=\"1\" rowspan=\"1\"><textarea cols=\"40\""
+        + "<td>Two words</td>"
+        + "<td><textarea cols=\"40\""
         + " name=\"quote\" rows=\"5\">"
         + "Is that a &dagger; I see before me?"
         + "</textarea></td>"
         + "</tr>";
     addDtdToClassLoader();
-    String obfuscateForm = ServletUtil.filterSensitiveData(configForm);
+    String obfuscateForm = filterSensitiveData(configForm);
     assertNotNull("Form returned", obfuscateForm);
     assertEquals("Form changed as expected", expectedForm, obfuscateForm);
   }
@@ -432,18 +433,18 @@ public class ServletUtilTest extends TestCase {
         + "  }"
         + "</script>"
         + "<tr>"
-        + "<td colspan=\"1\" rowspan=\"1\">Sensitive input to force parsing</td>"
-        + "<td colspan=\"1\" rowspan=\"1\"><input name=\"Password\" type=\"password\" value=\"*********\"></td>"
+        + "<td>Sensitive input to force parsing</td>"
+        + "<td><input name=\"Password\" type=\"password\" value=\"*********\"></td>"
         + "</tr>"
         + "<tr>"
-        + "<td colspan=\"1\" rowspan=\"1\"><div style=\"float: left;\">Select Version</div></td>"
-        + "<td colspan=\"1\" rowspan=\"1\"><select id=\"SPType\" name=\"Version\" onchange=\"checkSelect();\" size=\"1\">"
+        + "<td><div style=\"float: left;\">Select Version</div></td>"
+        + "<td><select id=\"SPType\" name=\"Version\" onchange=\"checkSelect();\" size=\"1\">"
         + "  <option selected value=\"version1\">Version 1</option>"
         + "  <option value=\"version2\">Version 2</option></select>"
         + "</td>"
         + "</tr>";
     addDtdToClassLoader();
-    String obfuscateForm = ServletUtil.filterSensitiveData(configForm);
+    String obfuscateForm = filterSensitiveData(configForm);
     assertNotNull("Form returned", obfuscateForm);
     assertEquals("Form changed as expected", expectedForm, obfuscateForm);
   }
@@ -584,6 +585,11 @@ public class ServletUtilTest extends TestCase {
           (SecurityUtils.isKeySensitive(entry.getKey())) ?
               ServletUtil.obfuscateValue(entry.getValue()) : entry.getValue());
     }
+  }
+
+  private String filterSensitiveData(String form) {
+    return ConnectorTestUtils.removeColRowSpan(
+           ServletUtil.filterSensitiveData(form));
   }
 
   private static final String DTD_DIRECTORY = "source/dtds/";

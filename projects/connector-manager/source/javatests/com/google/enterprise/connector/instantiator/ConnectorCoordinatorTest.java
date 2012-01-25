@@ -636,7 +636,7 @@ public class ConnectorCoordinatorTest extends TestCase {
     File baseDirectory = new File("testdata/tmp/SetManagerConfigTest");
     File propFile = new File(baseDirectory, "testContext.properties");
 
-    assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
+    ConnectorTestUtils.deleteAllFiles(baseDirectory);
     assertTrue(baseDirectory.mkdirs());
 
     // Create an original set of feed host properties.

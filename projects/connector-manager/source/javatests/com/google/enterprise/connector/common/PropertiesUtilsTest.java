@@ -55,7 +55,7 @@ public class PropertiesUtilsTest extends TestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
+    ConnectorTestUtils.deleteAllFiles(baseDirectory);
     assertTrue(baseDirectory.mkdirs());
     expected = new Properties();
     expected.setProperty(PROP1, PROP1_VALUE);
@@ -65,7 +65,7 @@ public class PropertiesUtilsTest extends TestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
-      assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
+      ConnectorTestUtils.deleteAllFiles(baseDirectory);
     } finally {
       super.tearDown();
     }
