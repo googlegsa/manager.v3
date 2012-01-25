@@ -124,20 +124,20 @@ enable-auto-props = yes
 }}}
   # Save the configuration file.
 
-== Configuring Tomcat for Connector Manager deployment ==
+== Configuring Tomcat for Connector Manager Deployment ==
 
 The Connector Manager runs as a web application under Tomcat.  For ease of configuration, Tomcat v6.0.26 or newer should be used.  Download a binary distribution of Tomcat from the Apache site and unpack it.   Tomcat must then be configured slightly to enable Connector Manager ContextLogging.  Specifically, the connector-logging.jar file must be on the system classpath.  Tomcat can be configuration can often be altered using optional `$CATALINA_BASE/bin/setenv.sh` or `%CATALINA_BASE%\bin\setenv.bat` files.
 
 Here is an example `setenv.sh` script for my particular environment:
 
 {{{
-# Use Java 1.6 JDK:
+# Use Java 1.6 JDK
 JAVA_HOME=/System/Library/Frameworks/JavaVM.framework/Versions/1.6/Home
 
-# JVM memory config similar to the Goolgle Connector Installer:                                                                                                                                         
+# JVM memory config similar to the Goolgle Connector Installer
 JAVA_OPTS="$JAVA_OPTS -Xms256m -Xmx1024m"
 
-# Determine the Connector Manager directory.                                                                                                                                                             
+# Determine the Connector Manager directory
 CONNECTOR_MANAGER=webapps/connector-manager/WEB-INF
 if [ -n "$CATALINA_BASE" ] && [ -d "$CATALINA_BASE/$CONNECTOR_MANAGER" ]; then
   CONNECTOR_MANAGER="$CATALINA_BASE/$CONNECTOR_MANAGER"
@@ -145,22 +145,22 @@ else
   CONNECTOR_MANAGER="$CATALINA_HOME/$CONNECTOR_MANAGER"
 fi
 
-# Google Enterprise Search Connector Logging Configuration                                                                                                                                               
+# Google Enterprise Search Connector Logging Configuration
 CONNECTOR_LOGGING_CONFIG="$CONNECTOR_MANAGER"/classes/logging.properties
 if [ -f "$CONNECTOR_LOGGING_CONFIG" ] ; then
-  # The Logging config for Tomcat 6.0.20 and later:                                                                                                                                                      
+  # The Logging config for Tomcat 6.0.20 and later
   LOGGING_MANAGER="-Djava.util.logging.manager=java.util.logging.LogManager"
   LOGGING_CONFIG="-Djava.util.logging.config.file=$CONNECTOR_LOGGING_CONFIG"
 
-  # Google Enterprise Connector Logging must be on the system CLASSPATH                                                                                                                                  
-  # if using java.util.logging.FileHandler                                                                                                                                                               
+  # Google Enterprise Connector Logging must be on the system CLASSPATH
+  # when using java.util.logging.FileHandler
   CONNECTOR_LOGGING="$CONNECTOR_MANAGER"/lib/connector-logging.jar
   if [ -f "$CONNECTOR_LOGGING" ] ; then
     CLASSPATH="$CLASSPATH":"$CONNECTOR_LOGGING"
   fi
 fi
 
-# Google Enterprise Connector for Documentum Additions to CLASSPATH                                                                                                                                      
+# Google Enterprise Connector for Documentum Additions to CLASSPATH
 if [ -n "$DOCUMENTUM_SHARED" ] ; then
   CLASSPATH="$CLASSPATH":"$DOCUMENTUM_SHARED"/dfc/dfc.jar:"$DOCUMENTUM_SHARED"/config
 fi
