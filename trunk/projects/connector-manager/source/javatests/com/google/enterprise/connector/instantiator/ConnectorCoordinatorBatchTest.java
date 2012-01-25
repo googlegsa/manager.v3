@@ -69,7 +69,7 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
 
   @Override
   protected void setUp() throws Exception {
-    assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
+    ConnectorTestUtils.deleteAllFiles(baseDirectory);
     // Then recreate it empty.
     assertTrue(baseDirectory.mkdirs());
 
@@ -96,7 +96,7 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
       }
     } finally {
       coordinator = null;
-      assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
+      ConnectorTestUtils.deleteAllFiles(baseDirectory);
     }
   }
 

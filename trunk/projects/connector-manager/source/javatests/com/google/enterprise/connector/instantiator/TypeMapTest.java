@@ -17,7 +17,6 @@ package com.google.enterprise.connector.instantiator;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
 
-import junit.framework.Assert;
 import junit.framework.TestCase;
 
 import java.io.File;
@@ -35,14 +34,14 @@ public class TypeMapTest extends TestCase {
   protected void setUp() throws Exception {
     super.setUp();
     // Make sure that the test directory does not exist.
-    Assert.assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
+    ConnectorTestUtils.deleteAllFiles(baseDirectory);
     // Then recreate it empty.
-    Assert.assertTrue(baseDirectory.mkdirs());
+    assertTrue(baseDirectory.mkdirs());
   }
 
   @Override
   protected void tearDown() throws Exception {
-    Assert.assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
+    ConnectorTestUtils.deleteAllFiles(baseDirectory);
     super.tearDown();
   }
 
@@ -83,6 +82,6 @@ public class TypeMapTest extends TestCase {
   private void verifyType(TypeMap typeMap, String typeName)
       throws ConnectorTypeNotFoundException {
     TypeInfo typeInfo = typeMap.getTypeInfo(typeName);
-    Assert.assertEquals(typeName, typeInfo.getConnectorTypeName());
+    assertEquals(typeName, typeInfo.getConnectorTypeName());
   }
 }

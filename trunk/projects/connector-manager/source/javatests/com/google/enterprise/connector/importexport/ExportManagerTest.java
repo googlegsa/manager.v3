@@ -53,13 +53,13 @@ public class ExportManagerTest extends TestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
+    ConnectorTestUtils.deleteAllFiles(baseDirectory);
     assertTrue(baseDirectory.mkdirs());
   }
 
   @Override
   protected void tearDown() throws Exception {
-    assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
+    ConnectorTestUtils.deleteAllFiles(baseDirectory);
     super.tearDown();
   }
 

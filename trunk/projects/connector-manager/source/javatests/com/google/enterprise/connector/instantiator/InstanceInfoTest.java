@@ -91,7 +91,7 @@ public class InstanceInfoTest extends AbstractTestInstanceInfo {
 
     // Make sure that the test directory does not exist
     File connectorDir = new File(typeInfo.getConnectorTypeDir(), connectorName);
-    assertTrue(ConnectorTestUtils.deleteAllFiles(connectorDir));
+    ConnectorTestUtils.deleteAllFiles(connectorDir);
     // Then recreate it empty
     assertTrue(connectorDir.mkdirs());
 
@@ -141,6 +141,6 @@ public class InstanceInfoTest extends AbstractTestInstanceInfo {
                  config.getMap().get("RepositoryFile"));
 
     // Clean up temp directory and files
-    assertTrue(ConnectorTestUtils.deleteAllFiles(new File(testDirName)));
+    ConnectorTestUtils.deleteAllFiles(new File(testDirName));
   }
 }
