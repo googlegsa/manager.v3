@@ -59,17 +59,17 @@ Use a shell or command window and change directory into the {{{connector-manager
 
 Useful build targets are:
 
-`clean-all`:  Clean connector-manager and test connector projects.
+  * `clean-all`:  Clean connector-manager and test connector projects.
 
-`build-all`:  Builds connector-manager and test connector projects.
+  * `build-all`:  Builds connector-manager and test connector projects.
 
-`install-all`: Copies the built connector-manager and test connector to `dist` directory.
+  * `install-all`: Copies the built connector-manager and test connector to `dist` directory.
 
-`test-all`: Run the JUnit tests using Cobertura code instrumentation.  Output is placed in the `projects/connector-manager/reports` directory.
+  * `test-all`: Run the JUnit tests using Cobertura code instrumentation.  Output is placed in the `projects/connector-manager/reports` directory.
 
-`connector-manager-war-prod`: Builds a connector-manager.war file and places it in the `dist` directory.
+  * `connector-manager-war-prod`: Builds a connector-manager.war file and places it in the `dist` directory.
 
-`download-connector-manager`: Builds full download distribution archives, including war files, javadoc, licenses, release notes, etc. and places the output in the `downloads` directory.  These are the files that are uploaded to the Connector Manager codesite Downloads page.
+  * `download-connector-manager`: Builds full download distribution archives, including war files, javadoc, licenses, release notes, etc. and places the output in the `downloads` directory.  These are the files that are uploaded to the Connector Manager codesite Downloads page.
 
 == Advanced Test Configurations ==
 
@@ -192,3 +192,14 @@ fi
 }}}
 
 The Google Connector Installer also configures a Tomcat `RemoteAddrValve` in `$CATALINA_BASE/conf/server.xml` that limits access to the configured GSA and localhost.  I do not recommend this for development, especially when switching between several GSAs.
+
+== Deploying the Connector Manager under Tomcat ==
+
+As mentioned previously, the `connector-manager-war-prod` ant task builds the Connector Manager WAR file that may be deployed as a Tomcat web application in the traditional manner.  The deployed WAR file will be unpacked into Tomcat with most of the interesting bits found in the `webapps/connector-manager/WEB-INF` directory.  
+
+Th Connector Manager WAR file contains only the Connector Manager and most of its associated files.  It _does not_ contain any connectors.  Connectors may be manually deployed by installing their connector JAR files (and any required third-party JAR files) in the `webapps/connector-manager/WEB-INF/lib` directory.  There is a [http://code.google.com/p/googlesearchapplianceconnectors/source/browse/#svn%2Ftrunk%2Fprojects%2Fgsa-connectors-war tool] that can be used to bundle a Connector Manager and several Connectors into a single WAR file for deployment, however its configuration is specific to GSA on-board deployments, rather than external Tomcat deployments.
+
+
+
+
+
