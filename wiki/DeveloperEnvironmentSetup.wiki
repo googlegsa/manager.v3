@@ -81,7 +81,7 @@ You can run individual test classes by specifying the "test.suite" system proper
 
 {{{ ant run_tests -Dtest.suite=LogLevel }}}
 
-
+The Connector Manager tests have their own `logging.properties` file in `projects/connector-manager/testdata/config`.  The default logging level is `INFO`, but you might wish to increase the logging verbosity when running down test failures.
 
 == Set up Eclipse Projects ==
 
@@ -191,4 +191,4 @@ if [ -n "$DOCUMENTUM_SHARED" ] ; then
 fi
 }}}
 
-The Google Connector Installer also configures a Tomcat `RemoteAddrValve` in `conf/server.xml` that limits access to the configured GSA and localhost.  I do not recommend this for development, especially when switching between several GSAs.
+The Google Connector Installer also configures a Tomcat `RemoteAddrValve` in `$CATALINA_BASE/conf/server.xml` that limits access to the configured GSA and localhost.  I do not recommend this for development, especially when switching between several GSAs.
