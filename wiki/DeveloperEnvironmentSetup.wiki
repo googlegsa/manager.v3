@@ -51,13 +51,14 @@ You generally will not need to build these and they are not built from the defau
 
 == Copy the JCR Jar to the Right Place ==
 
-IMPORTANT: Copy the jcr-1.0.jar to {{{connector-manager/projects/connector-manager/third-party/test/}}}.
+*IMPORTANT*: Copy the jcr-1.0.jar to {{{connector-manager/projects/connector-manager/third-party/test/}}}.
 
 == Verify that the Connector Manager Builds ==
 
 Use a shell or command window and change directory into the {{{connector-manager/projects}}} directory.  Run "ant" in that directory.  There should be no errors reported.  A common cause of problems here is not copying the `jcr-1.0.jar` to the proper place, using an old version of `ant`, or not having a Java 5 or 6 JDK on the path.
 
 Useful build targets are:
+
 `clean-all`:  Clean connector-manager and test connector projects.
 
 `build-all`:  Builds connector-manager and test connector projects.
@@ -69,6 +70,18 @@ Useful build targets are:
 `connector-manager-war-prod`: Builds a connector-manager.war file and places it in the `dist` directory.
 
 `download-connector-manager`: Builds full download distribution archives, including war files, javadoc, licenses, release notes, etc. and places the output in the `downloads` directory.  These are the files that are uploaded to the Connector Manager codesite Downloads page.
+
+== Advanced Test Configurations ==
+
+When the tests are run from the `projects` directory, they are run using Cobertura code instrumentation.  This slows down the tests, approximately doubling the time taken to run them.
+
+You can run the tests directly from the `projects/connector-manager` directory using the command "ant run_tests".   
+
+You can run individual test classes by specifying the "test.suite" system property, indicating the test classname (less the "Test" part).  For instance, suppose you wish to run the `LogLevelTest` class, you would use:
+
+{{{ ant run_tests -Dtest.suite=LogLevel }}}
+
+
 
 == Set up Eclipse Projects ==
 
