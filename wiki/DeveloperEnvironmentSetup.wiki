@@ -8,13 +8,13 @@ The steps in this document are suggestions, not requirements.  For example, Ant 
 
 == Prerequisites ==
 
-Install [http://ant.apache.org/ Apache Ant] (version 1.8 or newer), [http://www.eclipse.org/ Eclipse], and [http://tomcat.apache.org/ Tomcat] (version 6).  See those websites for download and installation instructions.
+Install a [http://www.oracle.com/technetwork/java/javase/downloads/index.html Java 5 or 6 JDK], [http://ant.apache.org/ Apache Ant] (version 1.8 or newer), [http://www.eclipse.org/ Eclipse], and [http://tomcat.apache.org/ Apache Tomcat] (version 6).  See those websites for download and installation instructions.
 
 Install a subversion (svn) client.  See the [http://code.google.com/p/google-enterprise-connector-manager/ Connector Manager Code Site] (under the "Source" tab) for a list of svn clients.
 
 For building tests, download the JSR-170 api: jcr-1.0.jar.  See the [http://jcp.org/en/jsr/detail?id=170 JSR-170] Site.
 
-Note on the JDK version: the connector manager is designed so that it can be built and run using JDK 1.5.0.  It should work fine with newer JDKs.
+Note on the JDK version: the connector manager is designed so that it can be built and run using JDK 1.5.0 (Java 5).  It should work fine with newer JDKs.
 
 == Checking out the Connector Manager Code ==
 
@@ -47,7 +47,7 @@ There are several other ancillary projects as well:
     * {{{mime-util/}}}
     * {{{slf4j-stub/}}}
 
-You generally will not need to build these and they are not built from the default `build.xml` file in the `projects` directory.  The `loadbalancer` project deploys an already built Connector Manager as 2 separate web applications within Tomcat to emulate a load-balanced environment.  The `mime-util` and `slf4j-stub` projects have patches to the third party Mime-Util package used by the Connector Manager
+You generally will not need to build these and they are not built from the default `build.xml` file in the `projects` directory.  The `loadbalancer` project deploys an already built Connector Manager as 2 separate web applications within Tomcat to emulate a load-balanced environment.  The `mime-util` and `slf4j-stub` projects have patches to the third party Mime-Util package used by the Connector Manager.
 
 == Copy the JCR Jar to the Right Place ==
 
@@ -201,6 +201,18 @@ The Connector Manager WAR file contains only the Connector Manager and most of i
 
 The Connector Manager WAR file does not include two key components (besides connectors) that are installed by the [http://code.google.com/p/googlesearchapplianceconnectors/downloads/list Google Connector Installer]:
 
-  * `logging.properties`: A current TODO is to unify Connector logging, including having a single `logging.properties` supplied by the Connector Manager.  Currently, however, each Connector supplies its own `logging.properties` file, slightly different than the others, and the last one installed wins.  My best suggestion is to take a [http://code.google.com/p/google-enterprise-connector-file-system/source/browse/trunk/projects/file-system-connector/config/logging.properties logging.properties file from a connector] you are using to test your Connector Manager.  The `logging.properties` file should be placed in `webapps/connector-manager/WEB-INF/classes` directory.
+  * `logging.properties`: A current TODO is to unify Connector logging, including having a single `logging.properties` supplied by the Connector Manager.  Currently, however, each Connector supplies its own `logging.properties` file, slightly different than the others, and the last one installed wins.  My best suggestion is to take a [http://code.google.com/p/google-enterprise-connector-file-system/source/browse/trunk/projects/file-system-connector/config/logging.properties logging.properties file from a connector] you are using to test your Connector Manager.  The `logging.properties` file should be placed in `webapps/connector-manager/WEB-INF/classes` directory.  You *will* need to restart Tomcat after installing a new `logging.properties`.
 
   * `Manager` scripts: These are used invoke certain Connector Manager functions when run from the command line. (See EncryptPassword, DumpConnectors, MigrateStore).  These scripts are not necessarily unless you need run to one of these command line utilities.  (They are not needed for the web application to function.)  The `Manager` and `Manager.bat` scripts are found in `projects/connector-manager/source/scripts` directory.  The installer places them in the `Scripts` directory within the Connector installation.  However, you may install them in a convenient location as long as the `CATALINA_HOME` or `CATALINA_BASE` environment variable points to the Tomcat hosting the Connector Manager.
+
+You can test to see if the Connector Manager is running properly by opening a browser and loading http://localhost:8080/connector-manager/testConnectivity (assuming Tomcat is running locally on its default port).  Firefox and Chrome tend to present the returned XML in a prettier fashion than IE or Safari.
+
+== Updating a Connector Manager or Connector Deployment on Tomcat ==
+
+If you are making changes to the Connector Manager source and wish to test them, it is not always necessary (or even desirable) to redeploy a full WAR file.  This runs the risk of overwriting any Connector Manager configuration, connector instances, and customized logging.properties.  It is often more convenient (and quicker) to copy the `connector*.jar` files into `webapps/connector-manager/WEB-INF/lib`.  If you modified `applicationContext.xml` or `web.xml`, you will need to copy those to  `webapps/connector-manager/WEB-INF`, as well.
+
+You will need to shutdown Tomcat, copy over the new files, then restart Tomcat.  However, be aware that Tomcat actually takes some time shutting down, so you will need to wait 15 or 20 seconds after the shutdown request before restarting.  If you don't wait long enough Tomcat will complain about "port already in use" when restarting.
+
+I just have a little script that does the {stop, sleep 15, copy, start} for me.  We should add a `deploy` target to the ant `build.xml` file that does this.
+
+
