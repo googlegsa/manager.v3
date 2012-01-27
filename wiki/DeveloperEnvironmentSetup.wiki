@@ -215,4 +215,16 @@ You will need to shutdown Tomcat, copy over the new files, then restart Tomcat. 
 
 I just have a little script that does the {stop, sleep 15, copy, start} for me.  We should add a `deploy` target to the ant `build.xml` file that does this.
 
+== Shared Packages, Build Files, and Third-party Components ==
 
+Certain portions of the Connector Manager are shared with the Connectors and the GSA, so care should be taken when changing, moving, or removing them.
+
+  * The packages `com.google.enterprise.connector.spi` and `com.google.enterprise.connector.util` are used by Connectors and the GSA.
+
+  * Some classes in package `com.google.enterprise.connector.servlet` are used by the GSA.
+
+  * JAR files in `projects/connector-manager/thirdparty` are used by Connectors.
+
+  * Some ant build files my be included by connectors.  Currently only the `projects/svnbuild.xml` is used.  However, much of the Cobertura targets and config should be extracted as well to reduce the heavy redundancy within all the individual connector build files.
+
+Theoretically, a well-behaved Connector should only need access to the Connector Manager's `connector-spi.jar` (and the third-party jars) to compile an run its tests.  However, not all connectors are so well behaved.  Several of them access internal Connector Manager classes when running tests (bad! _bad!_ connector), so don't be surprised if some random connector unit test breaks after you add a constructor arg to `DocPusher`.
