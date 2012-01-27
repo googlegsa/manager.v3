@@ -18,11 +18,11 @@ Note on the JDK version: the connector manager is designed so that it can be bui
 
 == Checking out the Connector Manager Code ==
 
-Create a new empty directory.  You may use any name for this directory, but for clarity we will use "connector-manager" in the decriptions below.  Checkout the Connector Manager code into the "connector-manager" directory.  Use the svn client of your choice.  Point the client to the Connector Manager Code Site, and supply your name and password if required. 
+Create a new empty directory.  You may use any name for this directory, but for clarity we will use "google-enterprise-connector-manager" in the decriptions below.  Checkout the Connector Manager code into the "google-enterprise-connector-manager" directory.  Use the svn client of your choice.  Point the client to the Connector Manager Code Site, and supply your name and password if required. 
 
 == Directory Layout ==
 
-Inside the connector-manager directory, you will find the following directories (this list is not complete):
+Inside the `google-enterprise-connector-manager` directory, you will find the following directories (this list is not complete):
 
   * {{{projects/}}}
     * {{{connector-manager/}}}
@@ -51,11 +51,11 @@ You generally will not need to build these and they are not built from the defau
 
 == Copy the JCR Jar to the Right Place ==
 
-*IMPORTANT*: Copy the jcr-1.0.jar to {{{connector-manager/projects/connector-manager/third-party/test/}}}.
+*IMPORTANT*: Copy the jcr-1.0.jar to {{{google-enterprise-connector-manager/projects/connector-manager/third-party/test/}}}.
 
 == Verify that the Connector Manager Builds ==
 
-Use a shell or command window and change directory into the {{{connector-manager/projects}}} directory.  Run "ant" in that directory.  There should be no errors reported.  A common cause of problems here is not copying the `jcr-1.0.jar` to the proper place, using an old version of `ant`, or not having a Java 5 or 6 JDK on the path.
+Use a shell or command window and change directory into the {{{google-enterprise-connector-manager/projects}}} directory.  Run "ant" in that directory.  There should be no errors reported.  A common cause of problems here is not copying the `jcr-1.0.jar` to the proper place, using an old version of `ant`, or not having a Java 5 or 6 JDK on the path.
 
 Useful build targets are:
 
@@ -77,7 +77,7 @@ When the tests are run from the `projects` directory, they are run using Cobertu
 
 You can run the tests directly from the `projects/connector-manager` directory using the command "ant run_tests".   
 
-You can run individual test classes by specifying the "test.suite" system property, indicating the test classname (less the "Test" part).  For instance, suppose you wish to run the `LogLevelTest` class, you would use:
+You can run individual test classes by specifying the "test.suite" system property, indicating the test classname (less the "Test" part of the name).  For instance, suppose you wish to run the the `LogLevelTest` class, you would use:
 
 {{{ ant run_tests -Dtest.suite=LogLevel }}}
 
@@ -151,7 +151,7 @@ enable-auto-props = yes
 
 == Configuring Tomcat for Connector Manager Deployment ==
 
-The Connector Manager runs as a web application under Tomcat.  For ease of configuration, Tomcat v6.0.26 or newer should be used.  Download a binary distribution of Tomcat from the Apache site and unpack it.   Tomcat must then be configured slightly to enable Connector Manager ContextLogging.  Specifically, the connector-logging.jar file must be on the system classpath.  Tomcat can be configuration can often be altered using optional `$CATALINA_BASE/bin/setenv.sh` or `%CATALINA_BASE%\bin\setenv.bat` files.
+The Connector Manager runs as a web application under Tomcat.  For ease of configuration, Tomcat v6.0.26 or newer should be used.  Download a binary distribution of Tomcat from the Apache site and unpack it.  Tomcat must then be configured slightly to enable Connector Manager ContextLogging.  Specifically, the connector-logging.jar file must be on the system classpath.  Tomcat can be configuration can often be altered using optional `$CATALINA_BASE/bin/setenv.sh` or `%CATALINA_BASE%\bin\setenv.bat` files.
 
 Here is an example `setenv.sh` script for my particular environment:
 
@@ -191,15 +191,16 @@ if [ -n "$DOCUMENTUM_SHARED" ] ; then
 fi
 }}}
 
-The Google Connector Installer also configures a Tomcat `RemoteAddrValve` in `$CATALINA_BASE/conf/server.xml` that limits access to the configured GSA and localhost.  I do not recommend this for development, especially when switching between several GSAs.
+The Google Connector Installer also configures a Tomcat RemoteAddrValve in `$CATALINA_BASE/conf/server.xml` that limits access to the configured GSA and localhost.  I do not recommend this for development, especially when [ChangeGSA switching between several GSAs].
 
-== Deploying the Connector Manager under Tomcat ==
+== Deploying the Development Connector Manager under Tomcat ==
 
 As mentioned previously, the `connector-manager-war-prod` ant task builds the Connector Manager WAR file that may be deployed as a Tomcat web application in the traditional manner.  The deployed WAR file will be unpacked into Tomcat with most of the interesting bits found in the `webapps/connector-manager/WEB-INF` directory.  
 
-Th Connector Manager WAR file contains only the Connector Manager and most of its associated files.  It _does not_ contain any connectors.  Connectors may be manually deployed by installing their connector JAR files (and any required third-party JAR files) in the `webapps/connector-manager/WEB-INF/lib` directory.  There is a [http://code.google.com/p/googlesearchapplianceconnectors/source/browse/#svn%2Ftrunk%2Fprojects%2Fgsa-connectors-war tool] that can be used to bundle a Connector Manager and several Connectors into a single WAR file for deployment, however its configuration is specific to GSA on-board deployments, rather than external Tomcat deployments.
+The Connector Manager WAR file contains only the Connector Manager and most of its associated files.  It _does not_ contain any connectors.  Connectors may be manually deployed by installing their connector JAR files (and any required third-party JAR files) in the `webapps/connector-manager/WEB-INF/lib` directory.  There is a [http://code.google.com/p/googlesearchapplianceconnectors/source/browse/#svn%2Ftrunk%2Fprojects%2Fgsa-connectors-war tool] that can be used to bundle a Connector Manager and several Connectors into a single WAR file for deployment, however its configuration is specific to GSA on-board deployments, rather than external Tomcat deployments.
 
+The Connector Manager WAR file does not include two key components (besides connectors) that are installed by the [http://code.google.com/p/googlesearchapplianceconnectors/downloads/list Google Connector Installer]:
 
+  * `logging.properties`: A current TODO is to unify Connector logging, including having a single `logging.properties` supplied by the Connector Manager.  Currently, however, each Connector supplies its own `logging.properties` file, slightly different than the others, and the last one installed wins.  My best suggestion is to take a [http://code.google.com/p/google-enterprise-connector-file-system/source/browse/trunk/projects/file-system-connector/config/logging.properties logging.properties file from a connector] you are using to test your Connector Manager.  The `logging.properties` file should be placed in `webapps/connector-manager/WEB-INF/classes` directory.
 
-
-
+  * `Manager` scripts: These are used invoke certain Connector Manager functions when run from the command line. (See EncryptPassword, DumpConnectors, MigrateStore).  The `Manager` and `Manager.bat` scripts are found in `projects/connector-manager/source/scripts` directory.  The installer places them in the `Scripts` directory within the Connector installation.  However, you may install them in a convenient location as long as the `CATALINA_HOME` or `CATALINA_BASE` environment variable points to the Tomcat hosting the Connector Manager.
