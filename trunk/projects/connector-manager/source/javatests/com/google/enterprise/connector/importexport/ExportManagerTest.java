@@ -54,7 +54,7 @@ public class ExportManagerTest extends TestCase {
   protected void setUp() throws Exception {
     super.setUp();
     ConnectorTestUtils.deleteAllFiles(baseDirectory);
-    assertTrue(baseDirectory.mkdirs());
+    assertTrue(ConnectorTestUtils.mkdirs(baseDirectory));
   }
 
   @Override

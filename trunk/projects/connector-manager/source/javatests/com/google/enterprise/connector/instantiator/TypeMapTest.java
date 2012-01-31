@@ -36,7 +36,7 @@ public class TypeMapTest extends TestCase {
     // Make sure that the test directory does not exist.
     ConnectorTestUtils.deleteAllFiles(baseDirectory);
     // Then recreate it empty.
-    assertTrue(baseDirectory.mkdirs());
+    assertTrue(ConnectorTestUtils.mkdirs(baseDirectory));
   }
 
   @Override

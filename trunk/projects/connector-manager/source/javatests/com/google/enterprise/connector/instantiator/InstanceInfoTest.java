@@ -93,7 +93,7 @@ public class InstanceInfoTest extends AbstractTestInstanceInfo {
     File connectorDir = new File(typeInfo.getConnectorTypeDir(), connectorName);
     ConnectorTestUtils.deleteAllFiles(connectorDir);
     // Then recreate it empty
-    assertTrue(connectorDir.mkdirs());
+    assertTrue(ConnectorTestUtils.mkdirs(connectorDir));
 
     // Force use of FileStore PersistentStore.
     FileStore fileStore = new FileStore();

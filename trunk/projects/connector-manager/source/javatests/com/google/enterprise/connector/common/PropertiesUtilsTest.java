@@ -56,7 +56,7 @@ public class PropertiesUtilsTest extends TestCase {
   protected void setUp() throws Exception {
     super.setUp();
     ConnectorTestUtils.deleteAllFiles(baseDirectory);
-    assertTrue(baseDirectory.mkdirs());
+    assertTrue(ConnectorTestUtils.mkdirs(baseDirectory));
     expected = new Properties();
     expected.setProperty(PROP1, PROP1_VALUE);
     expected.setProperty(PROP2, PROP2_VALUE);

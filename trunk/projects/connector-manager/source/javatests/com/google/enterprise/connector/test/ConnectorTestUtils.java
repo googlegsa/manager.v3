@@ -105,6 +105,17 @@ public class ConnectorTestUtils {
     compareMaps(expected.getMap(), config.getMap());
   }
 
+  public static boolean mkdirs(File file) {
+    if (file.exists() && file.isDirectory()) {
+      return true;
+    }
+    boolean res = file.mkdirs();
+    if (!res) {
+      LOGGER.warning("Failed to create directory " + file.getPath());
+    }
+    return res;
+  }
+
   public static boolean deleteAllFiles(File file) {
     if (!file.exists()) {
       return true;

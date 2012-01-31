@@ -56,7 +56,7 @@ public class LogLevelTest extends TestCase {
   protected void setUp() throws Exception {
     super.setUp();
     ConnectorTestUtils.deleteAllFiles(baseDirectory);
-    assertTrue(baseDirectory.mkdirs());
+    assertTrue(ConnectorTestUtils.mkdirs(baseDirectory));
     propFile = TEST_DIR_NAME + PROP_FILE;
     appPropFile = TEST_DIR_NAME + APP_PROP_FILE;
     ConnectorTestUtils.copyFile("testdata/config/" + PROP_FILE, propFile);

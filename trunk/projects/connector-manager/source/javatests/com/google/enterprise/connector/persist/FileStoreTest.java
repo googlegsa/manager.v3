@@ -33,7 +33,7 @@ public class FileStoreTest extends PersistentStoreTestAbstract {
   protected void setUp() throws Exception {
     super.setUp();
     ConnectorTestUtils.deleteAllFiles(baseDirectory);
-    assertTrue(baseDirectory.mkdirs());
+    assertTrue(ConnectorTestUtils.mkdirs(baseDirectory));
     typeMap = new TypeMap(TEST_DIR_NAME);
     typeMap.init();
     FileStore fileStore = new FileStore();
@@ -61,9 +61,7 @@ public class FileStoreTest extends PersistentStoreTestAbstract {
   protected File getConnectorDir(StoreContext context) {
     File typeDir = new File(typeMap.getTypesDirectory(), context.getTypeName());
     File connectorDir = new File(typeDir, context.getConnectorName());
-    if (!connectorDir.exists()) {
-      assertTrue(connectorDir.mkdirs());
-    }
+    assertTrue(ConnectorTestUtils.mkdirs(connectorDir));
     return connectorDir;
   }
 
