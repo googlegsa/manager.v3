@@ -7,7 +7,7 @@
 
   <property name="projects.dir" value=".." />
   <property file="${projects.dir}/version.properties"/>
-  <property name="jvm.version" value="1.5" />
+  <property file="${user.home}/google-enterprise-connector-manager.properties"/>
 
   <!-- Fetch catalina.base from CATALINA_BASE or CATALINA_HOME env vars -->
   <property environment="env"/>
@@ -23,6 +23,8 @@
   <property name="connector-manager.dir" value="${projects.dir}/connector-manager" />
   <property name="COMPILE_DEBUG_FLAG" value="true" />
   <property name="COMPILE_DEBUG_LEVEL" value="source,lines,vars" />
+  <property name="jvm.version" value="1.5" />
+  <property name="COMPILE_BOOTCLASSPATH" value="${build.bootclasspath}" />
 
   <property name="build" value="build" />
   <property name="conf" value="conf" />
@@ -78,10 +80,11 @@
            includeantruntime="false"
            debug="${COMPILE_DEBUG_FLAG}" debuglevel="${COMPILE_DEBUG_LEVEL}"
            target="${jvm.version}" source="${jvm.version}">
-    	<classpath>
+      <bootclasspath path="${COMPILE_BOOTCLASSPATH}"/>
+      <classpath>
         <fileset dir="${catalina-lib.dir}" includes="*.jar" />
         <pathelement location="${catalina-bin.dir}/tomcat-juli.jar"/>
-     </classpath>
+      </classpath>
       <compilerarg value="-Xlint"/>
       <compilerarg value="-Xlint:-serial"/>
     </javac>
