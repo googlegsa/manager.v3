@@ -49,7 +49,7 @@ public class SetManagerConfigTest extends TestCase {
   protected void setUp() throws Exception {
     super.setUp();
     ConnectorTestUtils.deleteAllFiles(baseDirectory);
-    assertTrue(baseDirectory.mkdirs());
+    assertTrue(ConnectorTestUtils.mkdirs(baseDirectory));
 
     // Create an original set of properties.
     Properties props = new Properties();

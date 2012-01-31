@@ -422,7 +422,7 @@ public class ServletUtilTest extends TestCase {
         + "</select></td>"
         + "</tr>";
     String expectedForm =
-        "<script language=\"JavaScript\" type=\"text/javascript\" xml:space=\"preserve\">"
+        "<script language=\"JavaScript\" type=\"text/javascript\">"
         + "  function checkSelect() {"
         + "    var opt = document.getElementById('Version');"
         + "    if (opt == 'version1') {"
@@ -446,7 +446,9 @@ public class ServletUtilTest extends TestCase {
     addDtdToClassLoader();
     String obfuscateForm = filterSensitiveData(configForm);
     assertNotNull("Form returned", obfuscateForm);
-    assertEquals("Form changed as expected", expectedForm, obfuscateForm);
+    // Filter out the "xml:space" attribute some DOM engines might inject.
+    assertEquals("Form changed as expected", expectedForm,
+                 obfuscateForm.replaceAll(" xml:space=\"preserve\"", ""));
   }
 
   public void testObfuscateTools() {
