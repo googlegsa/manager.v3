@@ -2493,6 +2493,42 @@ public class DocPusherTest extends TestCase {
     dpusher.flush();
     assertFalse(feedConnection.isBacklogged());
   }
+  
+  /**
+   * Tests ACL document.
+   */
+  public void testSimpleAclDoc() throws Exception {
+    Map<String, Object> props = getTestDocumentConfig();
+
+    props.put(SpiConstants.PROPNAME_FEEDTYPE, 
+        SpiConstants.FeedType.ACL.toString());
+    props.put(SpiConstants.PROPNAME_ACLINHERITANCETYPE,
+        SpiConstants.InheritanceType.PARENT_OVERRIDES.toString());
+    props.put(SpiConstants.PROPNAME_ACLINHERITFROM, "parent-doc");
+    props.put(SpiConstants.PROPNAME_ACLUSERS, "John Doe");
+    props.put(SpiConstants.PROPNAME_ACLUSERS, "John Doe");
+    props.put(SpiConstants.PROPNAME_ACLDENYUSERS, "Jason Wang");
+    props.put(SpiConstants.PROPNAME_ACLGROUPS, "Engineering");
+
+    Document document = ConnectorTestUtils.createSimpleDocument(props);
+
+    String resultXML = feedDocument(document);
+    
+    System.out.println(resultXML);
+
+    assertStringContains("<acl url=\"googleconnector://junit.localhost/doc"
+        + "?docid=doc1\" inheritance-type=\"parent-overrides\"" + 
+        " inherit-from=\"parent-doc\">", resultXML);
+    assertStringContains(
+        "<principal scope=\"USER\" access=\"PERMIT\">John Doe</principal>", 
+        resultXML);
+    assertStringContains(
+        "<principal scope=\"USER\" access=\"DENY\">Jason Wang</principal>", 
+        resultXML);
+    assertStringContains(
+        "<principal scope=\"GROUP\" access=\"PERMIT\">Engineering</principal>",
+        resultXML);
+  }
 
   private static class MockIdGenerator implements UniqueIdGenerator {
     // Return a predictable non-unique ID to ease expected output comparisons.

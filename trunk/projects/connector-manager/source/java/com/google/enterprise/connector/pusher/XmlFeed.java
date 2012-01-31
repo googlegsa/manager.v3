@@ -37,6 +37,7 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -109,6 +110,27 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
 
   private static final String CONNECTOR_AUTHMETHOD = "httpbasic";
 
+  private static final String XML_ACL = "acl";
+  private static final String XML_TYPE = "inheritance-type";
+  private static final String XML_INHERIT_FROM = "inherit-from";
+  private static final String XML_PRINCIPAL = "principal";
+  private static final String XML_SCOPE = "scope";
+  private static final String XML_ACCESS = "access";
+  
+  /**
+   * Enum for the list of possible Scope values.
+   */
+  public enum Scope {
+    USER, GROUP
+  }
+
+  /**
+   * Enum for the list of possible Access values.
+   */
+  public enum Access {
+    PERMIT, DENY
+  }
+  
   public XmlFeed(String dataSource, FeedType feedType, int maxFeedSize,
       Appendable feedLogBuilder, String contentUrlPrefix) throws IOException {
     super(maxFeedSize);
@@ -304,11 +326,26 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
 
   /*
    * Generate the record tag for the xml data.
+   * 
+   * @throws IOException only from Appendable, and that can't really
+   *         happen when using StringBuilder. 
+   */
+  private void xmlWrapRecord(Document document, InputStream contentStream, 
+      String contentEncoding) throws RepositoryException, IOException {
+    if (feedType == FeedType.ACL) {
+      xmlWrapAclRecord(document);
+    } else {
+      xmlWrapDocumentRecord(document, contentStream, contentEncoding);
+    }
+  }
+  
+  /*
+   * Generate the record tag for the xml data.
    *
    * @throws IOException only from Appendable, and that can't really
    *         happen when using StringBuilder.
    */
-  private void xmlWrapRecord(Document document, InputStream contentStream,
+  private void xmlWrapDocumentRecord(Document document, InputStream contentStream,
       String contentEncoding) throws RepositoryException, IOException {
 
     boolean metadataAllowed = true;
@@ -318,18 +355,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
     StringBuilder prefix = new StringBuilder();
     prefix.append("<").append(XML_RECORD);
 
-    String searchUrl = DocUtils.getOptionalString(document,
-        SpiConstants.PROPNAME_SEARCHURL);
-    if (searchUrl != null) {
-      validateSearchUrl(searchUrl);
-    } else if (feedType == FeedType.CONTENTURL) {
-      searchUrl = constructContentUrl(
-          DocUtils.getRequiredString(document, SpiConstants.PROPNAME_DOCID));
-    } else {
-      // Fabricate a URL from the docid.
-      searchUrl = constructGoogleConnectorUrl(
-          DocUtils.getRequiredString(document, SpiConstants.PROPNAME_DOCID));
-    }
+    String searchUrl = getRecordUrl(document);
     XmlUtils.xmlAppendAttr(XML_URL, searchUrl, prefix);
 
     String displayUrl = DocUtils.getOptionalString(document,
@@ -438,6 +464,111 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
     }
   }
 
+  /**
+   * Constructs the record URL for the given doc id, feed type and search url
+   * 
+   * @throws RepositoryDocumentException if searchUrl is invalid.
+   */
+  private String getRecordUrl(Document document)
+      throws RepositoryException, RepositoryDocumentException {
+    String docId = DocUtils.getOptionalString(document,
+        SpiConstants.PROPNAME_DOCID);        
+    String recordUrl = DocUtils.getOptionalString(document,
+        SpiConstants.PROPNAME_SEARCHURL);    
+    if (recordUrl != null) {
+      validateSearchUrl(recordUrl);
+    } else if (feedType == FeedType.CONTENTURL) {
+      recordUrl = constructContentUrl(docId);
+    } else {
+      // Fabricate a URL from the docid.
+      recordUrl = constructGoogleConnectorUrl(docId);
+    }
+
+    return recordUrl;
+  }
+  
+  /*
+   * Generate the record tag for the ACL xml data.
+   */
+  private void xmlWrapAclRecord(Document acl)  
+      throws IOException, RepositoryException {
+    StringBuffer aclBuff = new StringBuffer();
+
+    String docId = DocUtils.getOptionalString(acl, 
+        SpiConstants.PROPNAME_DOCID);        
+    String searchUrl = DocUtils.getOptionalString(acl, 
+        SpiConstants.PROPNAME_SEARCHURL);
+    String inheritFrom = DocUtils.getOptionalString(acl, 
+        SpiConstants.PROPNAME_ACLINHERITFROM);
+    String inheritanceType = DocUtils.getOptionalString(acl, 
+        SpiConstants.PROPNAME_ACLINHERITANCETYPE);
+    
+    aclBuff.append("<").append(XML_ACL);
+    XmlUtils.xmlAppendAttr(XML_URL, getRecordUrl(acl), aclBuff);
+    if (!Strings.isNullOrEmpty(inheritanceType)) {
+      XmlUtils.xmlAppendAttr(XML_TYPE, inheritanceType, aclBuff);
+    }
+    
+    if (!Strings.isNullOrEmpty(inheritFrom)) {
+      XmlUtils.xmlAppendAttr(XML_INHERIT_FROM, inheritFrom, aclBuff);
+    }
+    aclBuff.append(">\n");
+
+    // add principal info
+    getPrincipalXml(acl, aclBuff);
+    XmlUtils.xmlAppendEndTag(XML_ACL, aclBuff);
+
+    write(aclBuff.toString().getBytes(XML_DEFAULT_ENCODING));
+  }
+  
+  /*
+   * Generate the ACL principal XML data
+   */
+  private void getPrincipalXml(Document acl, StringBuffer buff)
+      throws IOException, RepositoryException {
+    Property property;
+    
+    property = acl.findProperty(SpiConstants.PROPNAME_ACLUSERS);
+    if (property != null) {
+      wrapAclPrincipal(buff, property, Scope.USER, Access.PERMIT);
+    }
+
+    property = acl.findProperty(SpiConstants.PROPNAME_ACLGROUPS);
+    if (property != null) {
+      wrapAclPrincipal(buff, property, Scope.GROUP, Access.PERMIT);
+    }
+
+    property = acl.findProperty(SpiConstants.PROPNAME_ACLDENYUSERS);
+    if (property != null) {
+      wrapAclPrincipal(buff, property, Scope.USER, Access.DENY);
+    }
+
+    property = acl.findProperty(SpiConstants.PROPNAME_ACLDENYGROUPS);
+    if (property != null) {
+      wrapAclPrincipal(buff, property, Scope.GROUP, Access.DENY);
+    }
+  }
+  
+  /*
+   * Wrap the ACL principal info as XML data
+   */
+  private static void wrapAclPrincipal(StringBuffer buff, Property property,
+      Scope scope, Access access)
+      throws RepositoryException, IOException {
+    ValueImpl value;
+    while ((value = (ValueImpl) property.nextValue()) != null) {
+      String valString = value.toFeedXml();
+      if (valString != null && valString.length() > 0) {
+        buff.append("<").append(XML_PRINCIPAL);
+        XmlUtils.xmlAppendAttr(XML_SCOPE, scope.toString(), buff);
+        XmlUtils.xmlAppendAttr(XML_ACCESS, access.toString(), buff);
+        buff.append(">");
+        XmlUtils.xmlAppendAttrValue(value.toFeedXml(), buff);
+        XmlUtils.xmlAppendEndTag(XML_PRINCIPAL, buff);
+      }
+    }
+  }  
+  
   /**
    * Wrap the metadata and append it to the string buffer. Empty metadata
    * properties are not appended.

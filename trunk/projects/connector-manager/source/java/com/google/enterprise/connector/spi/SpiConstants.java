@@ -244,6 +244,47 @@ public class SpiConstants {
   public static final String PROPNAME_ACLUSERS = "google:aclusers";
 
   /**
+   * Identifies a multiple-valued String property that gives the list of
+   * groups that are denied access to this document. For details, see
+   * the {@link #PROPNAME_ACLGROUPS}.
+   * <p/>
+   * Value: google:acldenygroups
+   */
+  public static final String PROPNAME_ACLDENYGROUPS = "google:acldenygroups";
+
+  /**
+   * Identifies a multiple-valued String property that gives the list of
+   * users that are denied access to this document. For details, see
+   * the {@link #PROPNAME_ACLGROUPS}.
+   * <p/>
+   * Value: google:acldenyusers
+   */
+  //TODO : clarify the behavior of and support for roles in DENY ACEs
+  public static final String PROPNAME_ACLDENYUSERS = "google:acldenyusers";
+
+  /**
+   * Identifies a single-valued InheritanceType property. This value is 
+   * used to identify the ACL inheritance when no specific acl principal is 
+   * specified.
+   * <p/>
+   * Value: google:aclinheritancetype
+   * 
+   * @since 3.0
+   */
+  public static final String PROPNAME_ACLINHERITANCETYPE = 
+      "google:aclinheritancetype";
+
+  /**
+   * Identifies a single-valued String property. This value is 
+   * used to identify the document id from which the ACL is inherited from.
+   * <p/>
+   * Value: google:aclinheritfrom
+   * 
+   * @since 3.0
+   */
+  public static final String PROPNAME_ACLINHERITFROM = "google:aclinheritfrom";
+
+  /**
    * Prefix added to the front of the group ACL Scope ID when creating a group
    * roles property name. If the Connector wants to define specific roles
    * associated with a group ACL Scope ID related to a document they should be
@@ -355,7 +396,7 @@ public class SpiConstants {
    * @since 2.4.2
    */
   public enum FeedType {
-    CONTENT, WEB, CONTENTURL;
+    CONTENT, WEB, CONTENTURL, ACL;
 
     /**
      * @param other a FeedType
@@ -364,7 +405,8 @@ public class SpiConstants {
      * @since 3.0
      */
     public boolean isCompatible(FeedType other) {
-      return (this == other || (this != CONTENT && other != CONTENT));
+      return (this == other || this == ACL 
+          || (this != CONTENT && other != CONTENT));
     }
 
     /**
@@ -615,5 +657,24 @@ public class SpiConstants {
         put(PROPNAME_PERSISTED_CUSTOMDATA_1, "custom1").
         put(PROPNAME_PERSISTED_CUSTOMDATA_2, "custom2").
         build();
+  }
+
+  /**
+   * Enum for the list of possible inheritance types.
+   */
+  public enum InheritanceType {
+    PARENT_OVERRIDES("parent-overrides"), CHILD_OVERRIDES("child-overrides"), 
+    AND_BOTH_PERMIT("and-both-permit");
+
+    private final String tag;
+
+    private InheritanceType(String tag) {
+      this.tag = tag;
+    }
+
+    @Override
+    public String toString() {
+      return tag;
+    }
   }
 }
