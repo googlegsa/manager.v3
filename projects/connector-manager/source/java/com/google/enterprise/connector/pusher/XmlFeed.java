@@ -23,6 +23,8 @@ import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.RepositoryDocumentException;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.SpiConstants;
+import com.google.enterprise.connector.spi.SpiConstants.AclAccess;
+import com.google.enterprise.connector.spi.SpiConstants.AclScope;
 import com.google.enterprise.connector.spi.SpiConstants.FeedType;
 import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.spi.XmlUtils;
@@ -116,20 +118,6 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
   private static final String XML_PRINCIPAL = "principal";
   private static final String XML_SCOPE = "scope";
   private static final String XML_ACCESS = "access";
-  
-  /**
-   * Enum for the list of possible Scope values.
-   */
-  public enum Scope {
-    USER, GROUP
-  }
-
-  /**
-   * Enum for the list of possible Access values.
-   */
-  public enum Access {
-    PERMIT, DENY
-  }
   
   public XmlFeed(String dataSource, FeedType feedType, int maxFeedSize,
       Appendable feedLogBuilder, String contentUrlPrefix) throws IOException {
@@ -530,22 +518,22 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
     
     property = acl.findProperty(SpiConstants.PROPNAME_ACLUSERS);
     if (property != null) {
-      wrapAclPrincipal(buff, property, Scope.USER, Access.PERMIT);
+      wrapAclPrincipal(buff, property, AclScope.USER, AclAccess.PERMIT);
     }
 
     property = acl.findProperty(SpiConstants.PROPNAME_ACLGROUPS);
     if (property != null) {
-      wrapAclPrincipal(buff, property, Scope.GROUP, Access.PERMIT);
+      wrapAclPrincipal(buff, property, AclScope.GROUP, AclAccess.PERMIT);
     }
 
     property = acl.findProperty(SpiConstants.PROPNAME_ACLDENYUSERS);
     if (property != null) {
-      wrapAclPrincipal(buff, property, Scope.USER, Access.DENY);
+      wrapAclPrincipal(buff, property, AclScope.USER, AclAccess.DENY);
     }
 
     property = acl.findProperty(SpiConstants.PROPNAME_ACLDENYGROUPS);
     if (property != null) {
-      wrapAclPrincipal(buff, property, Scope.GROUP, Access.DENY);
+      wrapAclPrincipal(buff, property, AclScope.GROUP, AclAccess.DENY);
     }
   }
   
@@ -553,7 +541,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
    * Wrap the ACL principal info as XML data.
    */
   private static void wrapAclPrincipal(StringBuffer buff, Property property,
-      Scope scope, Access access)
+      AclScope scope, AclAccess access)
       throws RepositoryException, IOException {
     ValueImpl value;
     while ((value = (ValueImpl) property.nextValue()) != null) {

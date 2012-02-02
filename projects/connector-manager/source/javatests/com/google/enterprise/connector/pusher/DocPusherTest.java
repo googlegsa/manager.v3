@@ -2503,7 +2503,7 @@ public class DocPusherTest extends TestCase {
     props.put(SpiConstants.PROPNAME_FEEDTYPE, 
         SpiConstants.FeedType.ACL.toString());
     props.put(SpiConstants.PROPNAME_ACLINHERITANCETYPE,
-        SpiConstants.InheritanceType.PARENT_OVERRIDES.toString());
+        SpiConstants.AclInheritanceType.PARENT_OVERRIDES.toString());
     props.put(SpiConstants.PROPNAME_ACLINHERITFROM, "parent-doc");
     props.put(SpiConstants.PROPNAME_ACLUSERS, "John Doe");
     props.put(SpiConstants.PROPNAME_ACLUSERS, "John Doe");
