@@ -465,13 +465,13 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
   }
 
   /**
-   * Constructs the record URL for the given doc id, feed type and search url
+   * Constructs the record URL for the given doc id, feed type and search URL.
    * 
    * @throws RepositoryDocumentException if searchUrl is invalid.
    */
   private String getRecordUrl(Document document)
       throws RepositoryException, RepositoryDocumentException {
-    String docId = DocUtils.getOptionalString(document,
+    String docId = DocUtils.getRequiredString(document,
         SpiConstants.PROPNAME_DOCID);        
     String recordUrl = DocUtils.getOptionalString(document,
         SpiConstants.PROPNAME_SEARCHURL);    
@@ -494,7 +494,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
       throws IOException, RepositoryException {
     StringBuffer aclBuff = new StringBuffer();
 
-    String docId = DocUtils.getOptionalString(acl, 
+    String docId = DocUtils.getRequiredString(acl, 
         SpiConstants.PROPNAME_DOCID);        
     String searchUrl = DocUtils.getOptionalString(acl, 
         SpiConstants.PROPNAME_SEARCHURL);
@@ -522,7 +522,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
   }
   
   /*
-   * Generate the ACL principal XML data
+   * Generate the ACL principal XML data.
    */
   private void getPrincipalXml(Document acl, StringBuffer buff)
       throws IOException, RepositoryException {
@@ -550,7 +550,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
   }
   
   /*
-   * Wrap the ACL principal info as XML data
+   * Wrap the ACL principal info as XML data.
    */
   private static void wrapAclPrincipal(StringBuffer buff, Property property,
       Scope scope, Access access)
@@ -558,7 +558,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
     ValueImpl value;
     while ((value = (ValueImpl) property.nextValue()) != null) {
       String valString = value.toFeedXml();
-      if (valString != null && valString.length() > 0) {
+      if (!Strings.isNullOrEmpty(valString)) {
         buff.append("<").append(XML_PRINCIPAL);
         XmlUtils.xmlAppendAttr(XML_SCOPE, scope.toString(), buff);
         XmlUtils.xmlAppendAttr(XML_ACCESS, access.toString(), buff);

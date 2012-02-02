@@ -2513,8 +2513,6 @@ public class DocPusherTest extends TestCase {
     Document document = ConnectorTestUtils.createSimpleDocument(props);
 
     String resultXML = feedDocument(document);
-    
-    System.out.println(resultXML);
 
     assertStringContains("<acl url=\"googleconnector://junit.localhost/doc"
         + "?docid=doc1\" inheritance-type=\"parent-overrides\"" + 
