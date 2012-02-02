@@ -184,6 +184,15 @@ public class ConnectorTestUtils {
    */
   public static SimpleDocument createSimpleDocument(Map<String,
       Object> props) {
+    return new SimpleDocument(createSpiProperties(props));
+  }
+
+  /**
+   * Creates a properties map matching the SPI type, mapping String
+   * property names to {@code List<Value>}.
+   */
+  public static Map<String, List<Value>> createSpiProperties(
+      Map<String, Object> props) {
     Map<String, List<Value>> spiValues = new HashMap<String, List<Value>>();
     for (Map.Entry<String, Object> entry : props.entrySet()) {
       Object obj = entry.getValue();
@@ -201,7 +210,6 @@ public class ConnectorTestUtils {
       values.add(val);
       spiValues.put(entry.getKey(), values);
     }
-    return new SimpleDocument(spiValues);
+    return spiValues;
   }
-
 }

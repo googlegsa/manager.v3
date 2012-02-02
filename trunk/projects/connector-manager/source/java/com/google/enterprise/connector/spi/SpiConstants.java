@@ -249,6 +249,8 @@ public class SpiConstants {
    * the {@link #PROPNAME_ACLGROUPS}.
    * <p/>
    * Value: google:acldenygroups
+   *
+   * @since 3.0
    */
   public static final String PROPNAME_ACLDENYGROUPS = "google:acldenygroups";
 
@@ -258,13 +260,15 @@ public class SpiConstants {
    * the {@link #PROPNAME_ACLGROUPS}.
    * <p/>
    * Value: google:acldenyusers
+   *
+   * @since 3.0
    */
-  //TODO : clarify the behavior of and support for roles in DENY ACEs
+  // TODO: clarify the behavior of and support for roles in DENY ACEs
   public static final String PROPNAME_ACLDENYUSERS = "google:acldenyusers";
 
   /**
    * Identifies a single-valued InheritanceType property. This value is 
-   * used to identify the ACL inheritance when no specific acl principal is 
+   * used to identify the ACL inheritance when no specific ACL principal is 
    * specified.
    * <p/>
    * Value: google:aclinheritancetype
@@ -276,7 +280,7 @@ public class SpiConstants {
 
   /**
    * Identifies a single-valued String property. This value is 
-   * used to identify the document id from which the ACL is inherited from.
+   * used to identify the document ID from which the ACL is inherited from.
    * <p/>
    * Value: google:aclinheritfrom
    * 
@@ -661,14 +665,16 @@ public class SpiConstants {
 
   /**
    * Enum for the list of possible inheritance types.
+   *
+   * @since 3.0
    */
-  public enum InheritanceType {
+  public enum AclInheritanceType {
     PARENT_OVERRIDES("parent-overrides"), CHILD_OVERRIDES("child-overrides"), 
     AND_BOTH_PERMIT("and-both-permit");
 
     private final String tag;
 
-    private InheritanceType(String tag) {
+    private AclInheritanceType(String tag) {
       this.tag = tag;
     }
 
@@ -676,5 +682,23 @@ public class SpiConstants {
     public String toString() {
       return tag;
     }
+  }
+
+  /**
+   * Enum for the list of possible ACL scope values.
+   *
+   * @since 3.0
+   */
+  public enum AclScope {
+    USER, GROUP
+  }
+
+  /**
+   * Enum for the list of possible ACL access values.
+   *
+   * @since 3.0
+   */
+  public enum AclAccess {
+    PERMIT, DENY
   }
 }
