@@ -31,7 +31,7 @@ import junit.framework.TestCase;
 public class AddPropertyFilterTest extends DocumentFilterTest {
 
   /** Creates a AddPropertyFilter. */
-  protected static Document createFilter(boolean overwrite,
+  protected Document createFilter(boolean overwrite,
       String propertyName, String... values) {
     AddPropertyFilter factory = new AddPropertyFilter();
     factory.setPropertyName(propertyName);

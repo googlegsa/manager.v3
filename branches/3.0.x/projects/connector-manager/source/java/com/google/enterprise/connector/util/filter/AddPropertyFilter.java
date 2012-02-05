@@ -36,6 +36,32 @@ import java.util.logging.Level;
  * property values replace any existing values of the target property.
  * Otherwise, the new property values augment any existing values
  * of the target property.
+ * <p/>
+ * <b>Example {@code documentFilters.xml} Configurations:</b>
+ * <p/>
+ * The following example tags all fed documents with source department
+ * identification meta-data. It adds a {@code DeptId} property, with
+ * the single value {@code Finance} to all documents.
+ * <pre><code>
+   &lt;!-- Tag all documents fed from this department with a source ID. --&gt;
+   &lt;bean id="AddDeptId"
+      class="com.google.enterprise.connector.util.filter.AddPropertyFilter"&gt;
+     &lt;property name="propertyName" value="DeptId"/&gt;
+     &lt;property name="propertyValue" value="Finance"/&gt;
+     &lt;property name="overwrite" value="true"/&gt;
+   &lt;/bean&gt;
+   </code></pre>
+ * The following example adds "Carlton Whitfield" to the list of {@code Authors}
+ * for all documents.
+ * <pre><code>
+   &lt;!-- Add myself as co-author of all documents. Gain citation notoriety. --&gt;
+   &lt;bean id="AddAuthor"
+      class="com.google.enterprise.connector.util.filter.AddPropertyFilter"&gt;
+     &lt;property name="propertyName" value="Author"/&gt;
+     &lt;property name="propertyValue" value="Carlton Whitfield"/&gt;
+     &lt;property name="overwrite" value="false"/&gt;
+   &lt;/bean&gt;
+   </code></pre>
  */
 public class AddPropertyFilter extends AbstractDocumentFilter {
 
@@ -85,6 +111,9 @@ public class AddPropertyFilter extends AbstractDocumentFilter {
   /**
    * Sets the additional String value that will be returned for
    * the configured Property.
+   * <p/>
+   * A convenience method that wraps the {@code value} in a single
+   * item List and calls {@link #setPropertyValues}.
    *
    * @param value a String value.
    */

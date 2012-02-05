@@ -14,17 +14,16 @@
 
 package com.google.enterprise.connector.scheduler;
 
+import com.google.enterprise.connector.spi.TraversalSchedule;
+
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 
 /**
  * A traversal schedule.
  */
-/*
- * TODO: Implement equals and hashCode, rather than forcing string
- * comparisons in the tests?
- */
-public class Schedule {
+public class Schedule implements TraversalSchedule {
 
   private static int defaultRetryDelayMillis = (5 * 60 * 1000);
 
@@ -228,6 +227,11 @@ public class Schedule {
     this.connectorName = connectorName;
   }
 
+  /* @Override */
+  public int getTraversalRate() {
+    return getLoad();
+  }
+
   public int getLoad() {
     return load;
   }
@@ -238,6 +242,10 @@ public class Schedule {
 
   public int getRetryDelayMillis() {
     return retryDelayMillis;
+  }
+
+  public int getRetryDelay() {
+    return retryDelayMillis / 1000;
   }
 
   public void setRetryDelayMillis(int retryDelayMillis) {
@@ -261,6 +269,7 @@ public class Schedule {
     setTimeIntervals(parseTimeIntervals(timeIntervals));
   }
 
+  /* @Override */
   public boolean isDisabled() {
     return disabled;
   }
@@ -286,5 +295,78 @@ public class Schedule {
       buf.append(endTime.getHour());
     }
     return buf.toString();
+  }
+
+  /**
+   * Return {@code true} if the current time is within a scheduled traversal
+   * interval; {@code false} otherwise.
+   */
+  /* @Override */
+  public boolean inScheduledInterval() {
+    // OK to run if we are within one of the Schedule's traversal intervals.
+    if (timeIntervals.isEmpty()) {
+      return false;
+    }
+    Calendar now = Calendar.getInstance();
+    int hour = now.get(Calendar.HOUR_OF_DAY);
+    for (ScheduleTimeInterval interval : getTimeIntervals()) {
+      int startHour = interval.getStartTime().getHour();
+      int endHour = interval.getEndTime().getHour();
+      if (0 == endHour) {
+        endHour = 24;
+      }
+      if (endHour < startHour) {
+        // The traversal interval straddles midnight.
+        if ((hour >= startHour) || (hour < endHour)) {
+          return true;
+        }
+      } else {
+        // The traversal interval falls wholly within the day.
+        if ((hour >= startHour) && (hour < endHour)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Return {@code true} if this Schedule would allow traversals to run
+   * at this time; {@code false} otherwise.
+   */
+  /* @Override */
+  public boolean shouldRun() {
+    return !isDisabled() && inScheduledInterval();
+  }
+
+  /**
+   * Returns a hash code value for the object.
+   *
+   * @return a hash code value for this object
+   */
+  @Override
+  public int hashCode() {
+    return toString().hashCode();
+  }
+
+  /**
+   * Indicates whether some other object is "equal to" this one.
+   *
+   * @return {@code true} if this object is the same as the {@code obj}
+   *         argument; {@code false} otherwise
+   */
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    }
+    if (obj == null) {
+      return false;
+    }
+    if (getClass() != obj.getClass()) {
+      return false;
+    }
+    Schedule other = (Schedule) obj;
+    return toString().equals(other.toString());
   }
 }

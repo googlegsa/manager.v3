@@ -16,6 +16,7 @@ package com.google.enterprise.connector.servlet;
 
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 
 import com.google.enterprise.connector.common.JarUtils;
 import com.google.enterprise.connector.common.SecurityUtils;
@@ -31,6 +32,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Map;
@@ -70,6 +73,7 @@ public class ServletUtil {
 
   public static final String PROTOCOL = "googleconnector://";
   public static final String DOCID = "/doc?docid=";
+  public static final String QUERY_PARAM_DOCID = "docid";
 
   public static final String QUERY_PARAM_LANG = "Lang";
   public static final String DEFAULT_LANGUAGE = "en";
@@ -440,6 +444,28 @@ public class ServletUtil {
     } else {
       return XMLIndent[XMLIndent.length - 1]
           + indentStr(level + 1 - XMLIndent.length);
+    }
+  }
+
+  /**
+   * Append a query parameter to a URL.
+   *
+   * @param url an Appendable with URL under contruction
+   * @param paramName the name of the query parameter
+   * @param paramValue the value of the query parameter
+   */
+  public static void appendQueryParam(StringBuilder url, String paramName,
+                                      String paramValue) {
+    // TODO: Use java.net.URI instead of URLEncoder. Better we should write our
+    // own RFC 3986 compliant encoder instead.
+    if (!Strings.isNullOrEmpty(paramValue)) {
+      try {
+        url.append(((url.indexOf("?") == -1) ? '?' : '&'));
+        url.append(URLEncoder.encode(paramName, "UTF-8")).append('=');
+        url.append(URLEncoder.encode(paramValue, "UTF-8"));
+      } catch (UnsupportedEncodingException ignored) {
+        // Can't happen with UTF-8.
+      }
     }
   }
 

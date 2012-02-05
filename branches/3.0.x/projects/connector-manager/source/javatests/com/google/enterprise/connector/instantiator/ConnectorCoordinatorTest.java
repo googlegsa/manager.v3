@@ -22,6 +22,9 @@ import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.scheduler.Schedule;
 import com.google.enterprise.connector.spi.ConfigureResponse;
+import com.google.enterprise.connector.spi.ConnectorFactory;
+import com.google.enterprise.connector.spi.MockConnector;
+import com.google.enterprise.connector.spi.MockConnectorType;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
 import com.google.enterprise.connector.test.JsonObjectAsMap;
 import com.google.enterprise.connector.traversal.TraversalDelayPolicy;
@@ -36,8 +39,10 @@ import java.io.File;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Properties;
 
 /**
  * Unit tests for {@link ConnectorCoordinatorImpl}.
@@ -47,13 +52,19 @@ public class ConnectorCoordinatorTest extends TestCase {
   private static final String APPLICATION_CONTEXT =
       "testdata/contextTests/TestContext.xml";
 
+  private static final String BEANS_PREFIX =
+     "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+     + "<!DOCTYPE beans PUBLIC \"-//SPRING//DTD BEAN//EN\" "
+     + "\"http://www.springframework.org/dtd/spring-beans.dtd\">\n"
+     + "<beans>\n";
+  private static final String BEANS_POSTFIX = "</beans>\n";
+
   @Override
   protected void setUp() throws Exception {
     Context.refresh();
     Context context = Context.getInstance();
     context.setStandaloneContext(APPLICATION_CONTEXT,
         Context.DEFAULT_JUNIT_COMMON_DIR_PATH);
-
     getTypeMap().init();
   }
 
@@ -492,15 +503,9 @@ public class ConnectorCoordinatorTest extends TestCase {
     String plainPasswd = configuration.getMap().get("Password");
     assertEquals(instancePasswd, plainPasswd);
 
-    // Verify that the googleConnectorName property is intact.
-    assertTrue(
-        instanceProps.containsKey(PropertiesUtils.GOOGLE_CONNECTOR_NAME));
-    assertEquals(instance.getConnectorName(), instanceProps
-        .get(PropertiesUtils.GOOGLE_CONNECTOR_NAME));
-
-    // Verify that the google*WorkDir properties are intact.
-    assertTrue(instanceProps.containsKey(PropertiesUtils.GOOGLE_WORK_DIR));
-    assertTrue(instanceProps
+    // Verify that the google*WorkDir properties were not persisted.
+    assertFalse(instanceProps.containsKey(PropertiesUtils.GOOGLE_WORK_DIR));
+    assertFalse(instanceProps
         .containsKey(PropertiesUtils.GOOGLE_CONNECTOR_WORK_DIR));
   }
 
@@ -513,5 +518,206 @@ public class ConnectorCoordinatorTest extends TestCase {
     instance.removeConnector();
     assertFalse(instance.exists());
     assertFalse(connectorDir.exists());
+  }
+
+  /** Test setting special google* properties in the Connector. */
+  public void testGoogleProperties() throws Exception {
+    // Inject our test ConnectorType into the TypeMap.
+    TypeInfo typeInfo = new TypeInfo(ValidatePropertiesConnectorType.TYPE_NAME,
+        new ValidatePropertiesConnectorType(), null, null);
+    getTypeMap().addTypeInfo(typeInfo);
+
+    String name = "connector3";
+    ConnectorCoordinatorImpl instance = createValidatePropsConnector(name);
+
+    InstanceInfo info = instance.getInstanceInfo();
+    assertEquals(name, info.getName());
+    assertTrue(info.getConnector() instanceof ValidatePropertiesConnector);
+
+    ValidatePropertiesConnector connector =
+        (ValidatePropertiesConnector) (info.getConnector());
+    assertEquals(name, connector.connectorName);
+    assertTrue(connector.connectorWorkDir.contains(
+               Context.DEFAULT_JUNIT_COMMON_DIR_PATH));
+    assertTrue(connector.connectorWorkDir.contains(
+               ValidatePropertiesConnectorType.TYPE_NAME));
+    assertTrue(connector.connectorWorkDir.contains(name));
+    assertTrue(connector.googleWorkDir.contains(
+               Context.DEFAULT_JUNIT_COMMON_DIR_PATH));
+
+    removeConnector(instance);
+  }
+
+  private ConnectorCoordinatorImpl createValidatePropsConnector(String name)
+      throws JSONException, InstantiatorException, ConnectorNotFoundException,
+      ConnectorExistsException, ConnectorTypeNotFoundException {
+    final ConnectorCoordinatorImpl instance = newCoordinator(name);
+    assertFalse(instance.exists());
+
+    Configuration config = new Configuration(
+        ValidatePropertiesConnectorType.TYPE_NAME,
+        new HashMap<String, String>(),
+        ValidatePropertiesConnector.CONNECTOR_INSTANCE_PROTOTYPE);
+
+    updateConnectorTest(instance, config, false);
+    return instance;
+  }
+
+  /**
+   * A ConnectorType that can be used to check that google* properties are
+   * passed to validateConfig.
+   */
+  private static class ValidatePropertiesConnectorType
+      extends MockConnectorType {
+    static final String TYPE_NAME = "ValidatePropertiesConnectorType";
+
+    public ValidatePropertiesConnectorType() {
+      super(TYPE_NAME);
+    }
+
+    @Override
+    public ConfigureResponse validateConfig(Map<String, String> configMap,
+        Locale locale, ConnectorFactory factory) {
+      assertTrue(configMap.containsKey(PropertiesUtils.GOOGLE_CONNECTOR_NAME));
+
+      assertTrue(configMap.containsKey(PropertiesUtils.GOOGLE_WORK_DIR));
+      assertTrue(configMap.get(PropertiesUtils.GOOGLE_WORK_DIR)
+           .contains(Context.DEFAULT_JUNIT_COMMON_DIR_PATH));
+
+      assertTrue(configMap.containsKey(
+          PropertiesUtils.GOOGLE_CONNECTOR_WORK_DIR));
+      assertTrue(configMap.get(PropertiesUtils.GOOGLE_CONNECTOR_WORK_DIR)
+          .contains(Context.DEFAULT_JUNIT_COMMON_DIR_PATH));
+      assertTrue(configMap.get(PropertiesUtils.GOOGLE_CONNECTOR_WORK_DIR)
+          .contains(TYPE_NAME));
+      assertTrue(configMap.get(PropertiesUtils.GOOGLE_CONNECTOR_WORK_DIR)
+          .contains(configMap.get(PropertiesUtils.GOOGLE_CONNECTOR_NAME)));
+
+      return null;
+    }
+  }
+
+  /** A Connector that accepts special google* config properties. */
+  private static class ValidatePropertiesConnector extends MockConnector {
+    static final String CONNECTOR_INSTANCE_PROTOTYPE = BEANS_PREFIX
+        + "<bean class=\"" + ValidatePropertiesConnector.class.getName() + "\">"
+        + "  <property name=\"googleConnectorName\""
+        + "            value=\"${googleConnectorName}\" />"
+        + "  <property name=\"googleConnectorWorkDir\""
+        + "            value=\"${googleConnectorWorkDir}\" />"
+        + "  <property name=\"googleWorkDir\" value=\"${googleWorkDir}\" />"
+        + "</bean>\n" + BEANS_POSTFIX;
+
+    String connectorName;
+    String connectorWorkDir;
+    String googleWorkDir;
+
+    public void setGoogleConnectorName(String name) {
+      connectorName = name;
+    }
+
+    public void setGoogleConnectorWorkDir(String dir) {
+      connectorWorkDir = dir;
+    }
+
+    public void setGoogleWorkDir(String dir) {
+      googleWorkDir = dir;
+    }
+  }
+
+  /**
+   * Test setting a new gsa.feed.host gets propagated to Connectors
+   * with setters for googleFeedHost property (used for GData config).
+   */
+  public void testUpdateGDataHost() throws Exception {
+    // Context setup taken largely from SetManagerConfigTest.
+    String applicationContext =
+        "testdata/contextTests/SetManagerConfigTest.xml";
+    File baseDirectory = new File("testdata/tmp/SetManagerConfigTest");
+    File propFile = new File(baseDirectory, "testContext.properties");
+
+    ConnectorTestUtils.deleteAllFiles(baseDirectory);
+    assertTrue(ConnectorTestUtils.mkdirs(baseDirectory));
+
+    // Create an original set of feed host properties.
+    Properties props = new Properties();
+    props.put(Context.GSA_FEED_HOST_PROPERTY_KEY, "fubar");
+    PropertiesUtils.storeToFile(props, propFile, "Initial Props");
+
+    Context.refresh();
+    Context context = Context.getInstance();
+    context.setStandaloneContext(applicationContext,
+        Context.DEFAULT_JUNIT_COMMON_DIR_PATH);
+    context.setFeeding(false);
+
+    // Inject our test ConnectorType into the TypeMap.
+    TypeInfo typeInfo = new TypeInfo(GDataPropertiesConnectorType.TYPE_NAME,
+        new GDataPropertiesConnectorType(), null, null);
+    getTypeMap().addTypeInfo(typeInfo);
+    context.start();
+
+    // Create the Connector and verify it was seeded with initial feed host.
+    ConnectorCoordinatorImpl instance = createGDataPropsConnector("gdata");
+    GDataPropertiesConnector connector =
+        (GDataPropertiesConnector) instance.getInstanceInfo().getConnector();
+    assertEquals("fubar", connector.googleFeedHost);
+
+    // Change the feed host and verify it gets updated in connector.
+    context.setConnectorManagerConfig("", "shme", 14,
+        Context.GSA_FEED_SECURE_PORT_INVALID);
+    assertEquals("shme", connector.googleFeedHost);
+
+    removeConnector(instance);
+    context.shutdown(true);
+    ConnectorTestUtils.deleteAllFiles(baseDirectory);
+  }
+
+  private ConnectorCoordinatorImpl createGDataPropsConnector(String name)
+      throws JSONException, InstantiatorException, ConnectorNotFoundException,
+      ConnectorExistsException, ConnectorTypeNotFoundException {
+    final ConnectorCoordinatorImpl instance = newCoordinator(name);
+    assertFalse(instance.exists());
+
+    Configuration config = new Configuration(
+        GDataPropertiesConnectorType.TYPE_NAME,
+        new HashMap<String, String>(),
+        GDataPropertiesConnector.CONNECTOR_INSTANCE_PROTOTYPE);
+
+    updateConnectorTest(instance, config, false);
+    return instance;
+  }
+
+  /**
+   * A ConnectorType that can be used to check that googleFeedHost property
+   * is passed to validateConfig.
+   */
+  private static class GDataPropertiesConnectorType
+      extends MockConnectorType {
+    static final String TYPE_NAME = "GDataPropertiesConnectorType";
+
+    public GDataPropertiesConnectorType() {
+      super(TYPE_NAME);
+    }
+
+    @Override
+    public ConfigureResponse validateConfig(Map<String, String> configMap,
+        Locale locale, ConnectorFactory factory) {
+      assertTrue(configMap.containsKey(PropertiesUtils.GOOGLE_FEED_HOST));
+      return null;
+    }
+  }
+
+  /** A Connector that accepts special googleFeedHost config property. */
+  private static class GDataPropertiesConnector extends MockConnector {
+    static final String CONNECTOR_INSTANCE_PROTOTYPE = BEANS_PREFIX
+        + "<bean class=\"" + GDataPropertiesConnector.class.getName() + "\">"
+        + "  <property name=\"googleFeedHost\" value=\"${googleFeedHost}\" />"
+        + "</bean>\n" + BEANS_POSTFIX;
+
+    String googleFeedHost;
+
+    public void setGoogleFeedHost(String addr) {
+      googleFeedHost = addr;
+    }
   }
 }

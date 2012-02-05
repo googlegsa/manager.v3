@@ -47,6 +47,12 @@
         <!-- The default time zone for Date values of fed Documents. -->
         <prop key="feed.timezone"></prop>
 
+        <!-- The default content URL prefix. -->
+        <prop key="feed.contenturl.prefix"></prop>
+
+        <!-- The default content URL prefix. -->
+        <prop key="feed.contenturl.compression">false</prop>
+
         <!-- Feed logging configuration.
              TODO: [Issue 163] These should be moved to logging.properties.
         -->
@@ -72,9 +78,11 @@
              Values <= 0 imply never.  For stand-alone deployments,
              never or long intervals are probably sufficient.  For
              clustered deployments with a shared configuration store,
-             60 - 300 seconds is probably sufficient.
+             60 - 300 seconds is probably sufficient.  The default
+             value of 15 minutes is intended to try to recover from
+             transient connector instantiation problems.
         -->
-        <prop key="config.change.detect.interval">0</prop>
+        <prop key="config.change.detect.interval">900</prop>
 
         <!-- JDBC DataSource configuration. -->
         <prop key="jdbc.datasource.type">EmbeddedH2</prop>
@@ -116,7 +124,7 @@
     <constructor-arg index="2" type="int" value="${gsa.feed.port}"/>
     <constructor-arg index="3" type="int" value="${gsa.feed.securePort}"/>
     <property name="clock" ref="Clock"/>
-    <property name="validateCertificate" 
+    <property name="validateCertificate"
               value="${gsa.feed.validateCertificate}"/>
   </bean>
 
@@ -145,6 +153,16 @@
     <property name="arguments">
       <list>
         <value>${feed.timezone}</value>
+      </list>
+    </property>
+  </bean>
+
+  <bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+    <property name="staticMethod"
+              value="com.google.enterprise.connector.servlet.GetDocumentContent.setUseCompression"/>
+    <property name="arguments">
+      <list>
+        <value>${feed.contenturl.compression}</value>
       </list>
     </property>
   </bean>
@@ -382,6 +400,7 @@
     <constructor-arg index="0" ref="FeedConnection" />
     <constructor-arg index="1" ref="FileSizeLimitInfo"/>
     <constructor-arg index="2" ref="DocumentFilters"/>
+    <constructor-arg index="3" value="${feed.contenturl.prefix}"/>
   </bean>
 
   <bean id="LoadManagerFactory"
@@ -458,6 +477,16 @@
     <property name="arguments">
       <list>
         <value>${traversal.poll.interval}</value>
+      </list>
+    </property>
+  </bean>
+
+  <bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+    <property name="staticMethod"
+              value="com.google.enterprise.connector.util.MimeTypeDetector.setTraversalContext"/>
+    <property name="arguments">
+      <list>
+        <ref bean="TraversalContext"/>
       </list>
     </property>
   </bean>
@@ -597,7 +626,7 @@
         <value>application/vnd.ms-excel.sheet.macroEnabled.12</value>
         <value>application/vnd.ms-excel.sheet.12</value>
         <value>application/vnd.ms-htmlhelp</value>
-	<value>application/vnd.ms-outlook</value>
+	      <value>application/vnd.ms-outlook</value>
         <value>application/mspowerpoint</value>
         <value>application/powerpoint</value>
         <value>application/vnd.ms-powerpoint</value>

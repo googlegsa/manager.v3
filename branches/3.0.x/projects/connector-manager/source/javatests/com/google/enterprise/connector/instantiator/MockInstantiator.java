@@ -15,7 +15,6 @@
 package com.google.enterprise.connector.instantiator;
 
 import com.google.enterprise.connector.jcr.JcrConnector;
-import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.mock.MockRepository;
 import com.google.enterprise.connector.mock.MockRepositoryEventList;
 import com.google.enterprise.connector.mock.jcr.MockJcrRepository;
@@ -34,7 +33,11 @@ import com.google.enterprise.connector.spi.AuthorizationResponse;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.Connector;
 import com.google.enterprise.connector.spi.ConnectorType;
+import com.google.enterprise.connector.spi.MockConnectorType;
+import com.google.enterprise.connector.spi.Retriever;
 import com.google.enterprise.connector.spi.Session;
+import com.google.enterprise.connector.spi.SimpleTraversalContext;
+import com.google.enterprise.connector.spi.TraversalContext;
 import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.traversal.CancellableQueryTraverser;
 import com.google.enterprise.connector.traversal.InterruptibleQueryTraverser;
@@ -51,6 +54,8 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.jcr.Repository;
 
@@ -61,6 +66,9 @@ import javax.jcr.Repository;
  * or {@link #setupTraverser(String, Traverser)};
  */
 public class MockInstantiator implements Instantiator {
+  private static final Logger LOGGER =
+      Logger.getLogger(MockInstantiator.class.getName());
+
   public static final String TRAVERSER_NAME1 = "foo";
   public static final String TRAVERSER_NAME2 = "bar";
   public static final String TRAVERSER_NAME_NOOP = "noop";
@@ -88,6 +96,7 @@ public class MockInstantiator implements Instantiator {
   private final Map<String, ConnectorCoordinator> connectorMap;
   private final PersistentStore persistentStore;
   private final ThreadPool threadPool;
+  private final TraversalContext traversalContext;
 
   public MockInstantiator(ThreadPool threadPool) {
     this(new MockPersistentStore(), threadPool);
@@ -98,8 +107,10 @@ public class MockInstantiator implements Instantiator {
     this.persistentStore = persistentStore;
     this.connectorMap = new HashMap<String, ConnectorCoordinator>();
     this.threadPool = threadPool;
+    this.traversalContext = new SimpleTraversalContext();
   }
 
+  /* @Override */
   public synchronized void shutdown(boolean interrupt, long timeoutMillis) {
     for (Map.Entry<String, ConnectorCoordinator> e : connectorMap.entrySet()) {
       e.getValue().shutdown();
@@ -134,18 +145,9 @@ public class MockInstantiator implements Instantiator {
    * {@link Traverser} with this {@link Instantiator}.
    */
   public void setupTraverser(String traverserName, Traverser traverser) {
-    setupTraverser(getStoreContext(traverserName), traverser);
-  }
-
-  /**
-   * Creates and registers a {@link Connector} for the provided
-   * {@link Traverser} with this {@link Instantiator}.
-   */
-  public void setupTraverser(StoreContext storeContext, Traverser traverser) {
-    String traverserName = storeContext.getConnectorName();
-    ConnectorInterfaces interfaces =
-        new ConnectorInterfaces(traverserName, null, nullAuthenticationManager,
-            nullAuthorizationManager);
+    StoreContext storeContext = getStoreContext(traverserName);
+    ConnectorInterfaces interfaces =  new ConnectorInterfaces(traverserName,
+        null, nullAuthenticationManager, nullAuthorizationManager);
     ConnectorCoordinator cc =
         new MockConnectorCoordinator(traverserName, interfaces, traverser,
             persistentStore, storeContext, threadPool);
@@ -161,7 +163,13 @@ public class MockInstantiator implements Instantiator {
     MockRepository mockRepository = new MockRepository(mrel);
     Repository repository = new MockJcrRepository(mockRepository);
     Connector connector = new JcrConnector(repository);
+    addConnector(connectorName, connector);
+  }
 
+  /**
+   * Registers the supplied {@link Connector} with this {@link Instantiator}.
+   */
+  public void addConnector(String connectorName, Connector connector) {
     TraversalManager traversalManager;
     try {
       Session session = connector.login();
@@ -175,14 +183,20 @@ public class MockInstantiator implements Instantiator {
     QueryTraverser queryTraverser =
         new QueryTraverser(new MockPusher(), traversalManager,
             new MockTraversalStateStore(persistentStore, storeContext),
-            connectorName, Context.getInstance().getTraversalContext(),
+            connectorName, traversalContext,
             new SystemClock() /* TODO: use a mock clock */, null);
 
-    setupTraverser(storeContext, queryTraverser);
+    ConnectorInterfaces interfaces =
+        new ConnectorInterfaces(connectorName, connector);
+    ConnectorCoordinator cc =
+        new MockConnectorCoordinator(connectorName, interfaces, queryTraverser,
+            persistentStore, storeContext, threadPool);
+    connectorMap.put(connectorName, cc);
   }
 
+  /* @Override */
   public ConnectorType getConnectorType(String connectorTypeName) {
-    throw new UnsupportedOperationException();
+    return new MockConnectorType(connectorTypeName);
   }
 
   /**
@@ -195,20 +209,24 @@ public class MockInstantiator implements Instantiator {
                                        getStoreContext(connectorName));
   }
 
+  /* @Override */
   public void restartConnectorTraversal(String connectorName)
       throws ConnectorNotFoundException {
     ConnectorCoordinator cc = connectorMap.get(connectorName);
     cc.restartConnectorTraversal();
   }
 
+  /* @Override */
   public String getConnectorInstancePrototype(String connectorTypeName) {
     return "";
   }
 
+  /* @Override */
   public Set<String> getConnectorTypeNames() {
     return connectorMap.keySet();
   }
 
+  /* @Override */
   public void removeConnector(String connectorName) {
     ConnectorCoordinator cc = connectorMap.remove(connectorName);
     if (cc != null) {
@@ -217,46 +235,58 @@ public class MockInstantiator implements Instantiator {
   }
 
   /**
-   * Returns an {@Link AuthenticationManager} that throws
-   * {@link UnsupportedOperationException} for all
-   * {@link AuthenticationManager#authenticate(AuthenticationIdentity)}
-   * calls.
+   * Returns an {@Link AuthenticationManager}.
    */
+  /* @Override */
   public AuthenticationManager getAuthenticationManager(String connectorName)
       throws ConnectorNotFoundException, InstantiatorException {
     return getConnectorCoordinator(connectorName).getAuthenticationManager();
   }
 
   /**
-   * Returns an {@Link AuthorizationManager} that
-   * {@link UnsupportedOperationException} for all
-   * {@link AuthorizationManager#authorizeDocids(Collection,
-   * AuthenticationIdentity)} calls.
+   * Returns an {@Link AuthorizationManager}.
    */
+  /* @Override */
   public AuthorizationManager getAuthorizationManager(String connectorName)
       throws ConnectorNotFoundException, InstantiatorException {
     return getConnectorCoordinator(connectorName).getAuthorizationManager();
   }
 
+  /** Returns a {@Link Retreiver}. */
+  /* @Override */
+  public Retriever getRetriever(String connectorName)
+      throws ConnectorNotFoundException, InstantiatorException {
+    return getConnectorCoordinator(connectorName).getRetriever();
+  }
+
+  /* @Override */
   public void startBatch(String connectorName)
       throws ConnectorNotFoundException {
     getConnectorCoordinator(connectorName).startBatch();
   }
 
+  /* @Override */
   public ConfigureResponse getConfigFormForConnector(String connectorName,
-      String connectorTypeName, Locale locale) {
-    throw new UnsupportedOperationException();
+      String connectorTypeName, Locale locale) throws ConnectorNotFoundException
+  {
+    Configuration config = getConnectorConfiguration(connectorName);
+    return new MockConnectorType(connectorTypeName)
+        .getPopulatedConfigForm((config == null) ? null : config.getMap(),
+                                locale);
   }
 
+  /* @Override */
   public Set<String> getConnectorNames() {
     return connectorMap.keySet();
   }
 
+  /* @Override */
   public String getConnectorTypeName(String connectorName)
       throws ConnectorNotFoundException {
     return getConnectorCoordinator(connectorName).getConnectorTypeName();
   }
 
+  /* @Override */
   public ConfigureResponse setConnectorConfiguration(String connectorName,
       Configuration configuration, Locale locale, boolean update)
       throws ConnectorNotFoundException, ConnectorExistsException,
@@ -271,16 +301,19 @@ public class MockInstantiator implements Instantiator {
     return cc.setConnectorConfiguration(null, configuration, locale, update);
   }
 
+  /* @Override */
   public Configuration getConnectorConfiguration(String connectorName)
       throws ConnectorNotFoundException {
     return getConnectorCoordinator(connectorName).getConnectorConfiguration();
   }
 
+  /* @Override */
   public void setConnectorSchedule(String connectorName,
       Schedule schedule) throws ConnectorNotFoundException {
     getConnectorCoordinator(connectorName).setConnectorSchedule(schedule);
   }
 
+  /* @Override */
   public Schedule getConnectorSchedule(String connectorName)
       throws ConnectorNotFoundException {
     return getConnectorCoordinator(connectorName).getConnectorSchedule();
@@ -294,6 +327,18 @@ public class MockInstantiator implements Instantiator {
   public String getConnectorState(String connectorName)
       throws ConnectorNotFoundException {
     return getConnectorCoordinator(connectorName).getConnectorState();
+  }
+
+  public void setGDataConfig() {
+    for (String name : getConnectorNames()) {
+      try {
+        getConnectorCoordinator(name).setGDataConfig();
+      } catch (ConnectorNotFoundException cnfe) {
+        // Shouldn't happen, but if it does, skip it.
+      } catch (InstantiatorException ie) {
+        LOGGER.log(Level.WARNING, "", ie);
+      }
+    }
   }
 
   private ConnectorCoordinator getConnectorCoordinator(String connectorName)

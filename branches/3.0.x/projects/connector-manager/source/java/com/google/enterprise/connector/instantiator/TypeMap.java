@@ -47,6 +47,8 @@ public class TypeMap {
   private final Map<String, TypeInfo> innerMap =
       new TreeMap<String, TypeInfo>();
 
+  private File typesDirectory = null;
+
   /**
    * Constructs an empty type map with the default connector type
    * pattern and base directory path.
@@ -76,8 +78,6 @@ public class TypeMap {
     this.connectorTypePattern = connectorTypePattern;
     this.baseDirPath = baseDirPath;
   }
-
-  private File typesDirectory = null;
 
   /**
    * Initializes this map and the supporting directories from the
@@ -121,6 +121,18 @@ public class TypeMap {
     }
   }
 
+  /** Adds a TypeInfo to the map. */
+  /* Used by tests to inject test types into the map. */
+  void addTypeInfo(TypeInfo typeInfo) {
+    String typeName = typeInfo.getConnectorTypeName();
+    innerMap.put(typeName, typeInfo);
+    if (typesDirectory != null) {
+      // TypeMap has already been initialized, so create typedir after the fact.
+      initializeTypeDirectory(typeName, typeInfo);
+    }
+    LOGGER.info("Added connector type: " + typeName);
+  }
+
   private void initializeBaseDirectories(String baseDirPath) {
     File baseDirectory = null;
     if (baseDirPath == null) {
@@ -146,27 +158,29 @@ public class TypeMap {
 
   private void initializeTypeDirectories() {
     for (Map.Entry<String, TypeInfo> entry : innerMap.entrySet()) {
-      String typeName = entry.getKey();
-      TypeInfo typeInfo = entry.getValue();
-      File connectorTypeDir = new File(typesDirectory, typeName);
-      if (!connectorTypeDir.exists()) {
-        if(!connectorTypeDir.mkdirs()) {
-          LOGGER.warning("Type " + typeName
-              + " has a valid definition but no type directory - skipping it");
-          innerMap.remove(typeName);
-          return;
-        }
-      }
-      if (!typesDirectory.isDirectory()) {
-        LOGGER.warning("Unexpected file " + connectorTypeDir.getPath()
-            + " blocks creation of instances directory for type " + typeName
-            + " - skipping it");
+      initializeTypeDirectory(entry.getKey(), entry.getValue());
+    }
+  }
+
+  private void initializeTypeDirectory(String typeName, TypeInfo typeInfo) {
+    File connectorTypeDir = new File(typesDirectory, typeName);
+    if (!connectorTypeDir.exists()) {
+      if (!connectorTypeDir.mkdirs()) {
+        LOGGER.warning("Type " + typeName
+            + " has a valid definition but no type directory - skipping it");
         innerMap.remove(typeName);
-      } else {
-        typeInfo.setConnectorTypeDir(connectorTypeDir);
-        LOGGER.info("Connector type: " + typeInfo.getConnectorTypeName()
-            + " has directory " + connectorTypeDir.getAbsolutePath());
+        return;
       }
+    }
+    if (!connectorTypeDir.isDirectory()) {
+      LOGGER.warning("Unexpected file " + connectorTypeDir.getPath()
+          + " blocks creation of instances directory for type " + typeName
+          + " - skipping it");
+        innerMap.remove(typeName);
+    } else {
+      typeInfo.setConnectorTypeDir(connectorTypeDir);
+      LOGGER.info("Connector type: " + typeName + " has directory "
+          + connectorTypeDir.getAbsolutePath());
     }
   }
 

@@ -14,6 +14,8 @@
 
 package com.google.enterprise.connector.pusher;
 
+import com.google.enterprise.connector.spi.SpiConstants.FeedType;
+
 /**
  * Interface for a data object to be sent to a {@link FeedConnection}.  The
  * implementation should contain methods to support a matching
@@ -28,7 +30,7 @@ public interface FeedData {
    *
    * @return an indication of the type of feed data encapsulated by this object.
    */
-  public String getFeedType();
+  public FeedType getFeedType();
 
   /**
    * Returns the named source for the feed data.

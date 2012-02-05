@@ -14,12 +14,18 @@
 
 package com.google.enterprise.connector.pusher;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.RepositoryDocumentException;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.SpiConstants;
+import com.google.enterprise.connector.spi.SpiConstants.AclAccess;
+import com.google.enterprise.connector.spi.SpiConstants.AclScope;
+import com.google.enterprise.connector.spi.SpiConstants.FeedType;
 import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.spi.XmlUtils;
 import com.google.enterprise.connector.spi.SpiConstants.ActionType;
@@ -33,6 +39,7 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -46,10 +53,19 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
       Logger.getLogger(XmlFeed.class.getName());
 
   private final String dataSource;
-  private final String feedType;
+  private final FeedType feedType;
   private final int maxFeedSize;
   private final Appendable feedLogBuilder;
   private final String feedId;
+
+  /**
+   * The prefix that will be used for contentUrl generation.
+   * The prefix should include protocol, host and port, web app,
+   * and servlet to point back at this Connector Manager instance.
+   * For example:
+   * {@code http://localhost:8080/connector-manager/getDocumentContent}
+   */
+  private final String contentUrlPrefix;
 
   private static UniqueIdGenerator uniqueIdGenerator = new UuidGenerator();
 
@@ -91,16 +107,20 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
   private static final String XML_NAME = "name";
   private static final String XML_ENCODING = "encoding";
 
-  // public static final String XML_FEED_FULL = "full";
-  public static final String XML_FEED_METADATA_AND_URL = "metadata-and-url";
-  public static final String XML_FEED_INCREMENTAL = "incremental";
   public static final String XML_BASE64BINARY = "base64binary";
   public static final String XML_BASE64COMPRESSED = "base64compressed";
 
   private static final String CONNECTOR_AUTHMETHOD = "httpbasic";
 
-  public XmlFeed(String dataSource, String feedType, int maxFeedSize,
-                 Appendable feedLogBuilder) throws IOException {
+  private static final String XML_ACL = "acl";
+  private static final String XML_TYPE = "inheritance-type";
+  private static final String XML_INHERIT_FROM = "inherit-from";
+  private static final String XML_PRINCIPAL = "principal";
+  private static final String XML_SCOPE = "scope";
+  private static final String XML_ACCESS = "access";
+  
+  public XmlFeed(String dataSource, FeedType feedType, int maxFeedSize,
+      Appendable feedLogBuilder, String contentUrlPrefix) throws IOException {
     super(maxFeedSize);
     this.maxFeedSize = maxFeedSize;
     this.dataSource = dataSource;
@@ -109,11 +129,12 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
     this.recordCount = 0;
     this.isClosed = false;
     this.feedId = uniqueIdGenerator.uniqueId();
+    this.contentUrlPrefix = contentUrlPrefix;
     String prefix = xmlFeedPrefix(dataSource, feedType);
     write(prefix.getBytes(XML_DEFAULT_ENCODING));
   }
 
-  // Package private for use by testing.
+  @VisibleForTesting
   static void setUniqueIdGenerator(UniqueIdGenerator idGenerator) {
     uniqueIdGenerator = idGenerator;
   }
@@ -178,9 +199,9 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
    */
 
   /**
-   * Return the feed type for all records in this Feed.
+   * Return the {@link FeedType} for all records in this Feed.
    */
-  public String getFeedType() {
+  public FeedType getFeedType() {
     return feedType;
   }
 
@@ -261,7 +282,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
    * @param feedType The type of feed.
    * @return XML feed header string.
    */
-  private static String xmlFeedPrefix(String dataSource, String feedType) {
+  private static String xmlFeedPrefix(String dataSource, FeedType feedType) {
     // Build prefix.
     StringBuffer prefix = new StringBuffer();
     prefix.append(XML_START).append('\n');
@@ -271,7 +292,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
     prefix.append(dataSource);
     prefix.append(XmlUtils.xmlWrapEnd(XML_DATASOURCE));
     prefix.append(XmlUtils.xmlWrapStart(XML_FEEDTYPE));
-    prefix.append(feedType);
+    prefix.append(feedType.toLegacyString());
     prefix.append(XmlUtils.xmlWrapEnd(XML_FEEDTYPE));
     prefix.append(XmlUtils.xmlWrapEnd(XML_HEADER));
     prefix.append(XmlUtils.xmlWrapStart(XML_GROUP)).append('\n');
@@ -293,29 +314,36 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
 
   /*
    * Generate the record tag for the xml data.
+   * 
+   * @throws IOException only from Appendable, and that can't really
+   *         happen when using StringBuilder. 
+   */
+  private void xmlWrapRecord(Document document, InputStream contentStream, 
+      String contentEncoding) throws RepositoryException, IOException {
+    if (feedType == FeedType.ACL) {
+      xmlWrapAclRecord(document);
+    } else {
+      xmlWrapDocumentRecord(document, contentStream, contentEncoding);
+    }
+  }
+  
+  /*
+   * Generate the record tag for the xml data.
    *
    * @throws IOException only from Appendable, and that can't really
    *         happen when using StringBuilder.
    */
-  private void xmlWrapRecord(Document document, InputStream contentStream,
+  private void xmlWrapDocumentRecord(Document document, InputStream contentStream,
       String contentEncoding) throws RepositoryException, IOException {
 
     boolean metadataAllowed = true;
-    boolean contentAllowed = (!XML_FEED_METADATA_AND_URL.equals(feedType) &&
+    boolean contentAllowed = (feedType == FeedType.CONTENT &&
                               contentStream != null);
 
     StringBuilder prefix = new StringBuilder();
     prefix.append("<").append(XML_RECORD);
 
-    String searchUrl = DocUtils.getOptionalString(document,
-        SpiConstants.PROPNAME_SEARCHURL);
-    if (searchUrl != null) {
-      validateSearchUrl(searchUrl);
-    } else {
-      // Fabricate a URL from the docid.
-      searchUrl = constructGoogleConnectorUrl(
-          DocUtils.getRequiredString(document, SpiConstants.PROPNAME_DOCID));
-    }
+    String searchUrl = getRecordUrl(document);
     XmlUtils.xmlAppendAttr(XML_URL, searchUrl, prefix);
 
     String displayUrl = DocUtils.getOptionalString(document,
@@ -425,6 +453,111 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
   }
 
   /**
+   * Constructs the record URL for the given doc id, feed type and search URL.
+   * 
+   * @throws RepositoryDocumentException if searchUrl is invalid.
+   */
+  private String getRecordUrl(Document document)
+      throws RepositoryException, RepositoryDocumentException {
+    String docId = DocUtils.getRequiredString(document,
+        SpiConstants.PROPNAME_DOCID);        
+    String recordUrl = DocUtils.getOptionalString(document,
+        SpiConstants.PROPNAME_SEARCHURL);    
+    if (recordUrl != null) {
+      validateSearchUrl(recordUrl);
+    } else if (feedType == FeedType.CONTENTURL) {
+      recordUrl = constructContentUrl(docId);
+    } else {
+      // Fabricate a URL from the docid.
+      recordUrl = constructGoogleConnectorUrl(docId);
+    }
+
+    return recordUrl;
+  }
+  
+  /*
+   * Generate the record tag for the ACL xml data.
+   */
+  private void xmlWrapAclRecord(Document acl)  
+      throws IOException, RepositoryException {
+    StringBuffer aclBuff = new StringBuffer();
+
+    String docId = DocUtils.getRequiredString(acl, 
+        SpiConstants.PROPNAME_DOCID);        
+    String searchUrl = DocUtils.getOptionalString(acl, 
+        SpiConstants.PROPNAME_SEARCHURL);
+    String inheritFrom = DocUtils.getOptionalString(acl, 
+        SpiConstants.PROPNAME_ACLINHERITFROM);
+    String inheritanceType = DocUtils.getOptionalString(acl, 
+        SpiConstants.PROPNAME_ACLINHERITANCETYPE);
+    
+    aclBuff.append("<").append(XML_ACL);
+    XmlUtils.xmlAppendAttr(XML_URL, getRecordUrl(acl), aclBuff);
+    if (!Strings.isNullOrEmpty(inheritanceType)) {
+      XmlUtils.xmlAppendAttr(XML_TYPE, inheritanceType, aclBuff);
+    }
+    
+    if (!Strings.isNullOrEmpty(inheritFrom)) {
+      XmlUtils.xmlAppendAttr(XML_INHERIT_FROM, inheritFrom, aclBuff);
+    }
+    aclBuff.append(">\n");
+
+    // add principal info
+    getPrincipalXml(acl, aclBuff);
+    XmlUtils.xmlAppendEndTag(XML_ACL, aclBuff);
+
+    write(aclBuff.toString().getBytes(XML_DEFAULT_ENCODING));
+  }
+  
+  /*
+   * Generate the ACL principal XML data.
+   */
+  private void getPrincipalXml(Document acl, StringBuffer buff)
+      throws IOException, RepositoryException {
+    Property property;
+    
+    property = acl.findProperty(SpiConstants.PROPNAME_ACLUSERS);
+    if (property != null) {
+      wrapAclPrincipal(buff, property, AclScope.USER, AclAccess.PERMIT);
+    }
+
+    property = acl.findProperty(SpiConstants.PROPNAME_ACLGROUPS);
+    if (property != null) {
+      wrapAclPrincipal(buff, property, AclScope.GROUP, AclAccess.PERMIT);
+    }
+
+    property = acl.findProperty(SpiConstants.PROPNAME_ACLDENYUSERS);
+    if (property != null) {
+      wrapAclPrincipal(buff, property, AclScope.USER, AclAccess.DENY);
+    }
+
+    property = acl.findProperty(SpiConstants.PROPNAME_ACLDENYGROUPS);
+    if (property != null) {
+      wrapAclPrincipal(buff, property, AclScope.GROUP, AclAccess.DENY);
+    }
+  }
+  
+  /*
+   * Wrap the ACL principal info as XML data.
+   */
+  private static void wrapAclPrincipal(StringBuffer buff, Property property,
+      AclScope scope, AclAccess access)
+      throws RepositoryException, IOException {
+    ValueImpl value;
+    while ((value = (ValueImpl) property.nextValue()) != null) {
+      String valString = value.toFeedXml();
+      if (!Strings.isNullOrEmpty(valString)) {
+        buff.append("<").append(XML_PRINCIPAL);
+        XmlUtils.xmlAppendAttr(XML_SCOPE, scope.toString(), buff);
+        XmlUtils.xmlAppendAttr(XML_ACCESS, access.toString(), buff);
+        buff.append(">");
+        XmlUtils.xmlAppendAttrValue(value.toFeedXml(), buff);
+        XmlUtils.xmlAppendEndTag(XML_PRINCIPAL, buff);
+      }
+    }
+  }  
+  
+  /**
    * Wrap the metadata and append it to the string buffer. Empty metadata
    * properties are not appended.
    *
@@ -526,8 +659,24 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
   private String constructGoogleConnectorUrl(String docid) {
     StringBuilder buf = new StringBuilder(ServletUtil.PROTOCOL);
     buf.append(dataSource);
-    buf.append(".localhost/doc?docid=");
+    buf.append(".localhost").append(ServletUtil.DOCID);
     buf.append(docid);
+    return buf.toString();
+  }
+
+  /**
+   * Form a Content URL.
+   *
+   * @param docid
+   * @return the contentUrl
+   */
+  private String constructContentUrl(String docid) {
+    Preconditions.checkState(!Strings.isNullOrEmpty(contentUrlPrefix),
+                             "contentUrlPrefix must not be null or empty");
+    StringBuilder buf = new StringBuilder(contentUrlPrefix);
+    ServletUtil.appendQueryParam(buf, ServletUtil.XMLTAG_CONNECTOR_NAME,
+                                 dataSource);
+    ServletUtil.appendQueryParam(buf, ServletUtil.QUERY_PARAM_DOCID, docid);
     return buf.toString();
   }
 

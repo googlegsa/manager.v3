@@ -64,6 +64,10 @@ public class SetSchedule extends ConnectorManagerServlet {
 
     String connectorName = XmlParseUtil.getFirstElementByTagName(
         root, ServletUtil.XMLTAG_CONNECTOR_NAME);
+    if (connectorName == null) {
+      status.setMessageId(ConnectorMessageCode.RESPONSE_NULL_CONNECTOR);
+      return status;
+    }
 
     NDC.append(connectorName);
 
@@ -78,10 +82,16 @@ public class SetSchedule extends ConnectorManagerServlet {
       }
     }
 
-    int load = Integer.parseInt(XmlParseUtil.getFirstElementByTagName(
-        root, ServletUtil.XMLTAG_LOAD));
+    String loadStr = XmlParseUtil.getFirstElementByTagName(root,
+        ServletUtil.XMLTAG_LOAD);
+    int load = (loadStr == null) ? 0 : Integer.parseInt(loadStr);
+
+    // TODO: Either commit to presence/absence of the disabled tag and
+    // support <disabled/> (which getFirstElementByTagName fails to do),
+    // or have the GSA provide true boolean value like Import/Export uses.
     boolean disabled = (XmlParseUtil.getFirstElementByTagName(root,
         ServletUtil.XMLTAG_DISABLED) != null);
+
     int retryDelayMillis = Schedule.defaultRetryDelayMillis();
     String delayStr = XmlParseUtil.getFirstElementByTagName(root,
         ServletUtil.XMLTAG_DELAY);

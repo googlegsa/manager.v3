@@ -17,7 +17,6 @@ package com.google.enterprise.connector.traversal;
 import com.google.enterprise.connector.instantiator.MockInstantiator;
 import com.google.enterprise.connector.instantiator.ThreadPool;
 import com.google.enterprise.connector.jcr.JcrTraversalManager;
-import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.mock.MockRepository;
 import com.google.enterprise.connector.mock.MockRepositoryEventList;
 import com.google.enterprise.connector.mock.jcr.MockJcrQueryManager;
@@ -25,21 +24,32 @@ import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.pusher.MockPusher;
 import com.google.enterprise.connector.pusher.Pusher;
 import com.google.enterprise.connector.pusher.PusherFactory;
+import com.google.enterprise.connector.pusher.PushException;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.DocumentList;
+import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.RepositoryException;
+import com.google.enterprise.connector.spi.RepositoryDocumentException;
+import com.google.enterprise.connector.spi.SkippedDocumentException;
 import com.google.enterprise.connector.spi.SpiConstants;
+import com.google.enterprise.connector.spi.TraversalContext;
+import com.google.enterprise.connector.spi.TraversalContextAware;
 import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
+import com.google.enterprise.connector.util.database.JdbcDatabase;
+import com.google.enterprise.connector.util.database.testing.TestJdbcDatabase;
+import com.google.enterprise.connector.util.database.testing.TestResourceClassLoader;
 import com.google.enterprise.connector.util.testing.AdjustableClock;
 import com.google.enterprise.connector.database.DocumentStore;
+import com.google.enterprise.connector.database.LocalDocumentStoreImpl;
 
 import junit.framework.TestCase;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Set;
 
 import javax.jcr.query.QueryManager;
 
@@ -47,11 +57,30 @@ import javax.jcr.query.QueryManager;
  * Tests for {@link com.google.enterprise.connector.traversal.QueryTraverser}.
  */
 public class QueryTraverserTest extends TestCase {
+  protected static final File RESOURCE_DIR = new File("source/resources/");
+
+  // Common objects used by many tests.
   AdjustableClock clock;
+  ThreadPool threadPool;
+  MockInstantiator instantiator;
+  DocumentStore documentStore;
+  ValidatingPusher pusher;
+  TraversalStateStore stateStore;
+  ProductionTraversalContext traversalContext;
+  String connectorName;
 
   @Override
   protected void setUp() throws Exception {
+    connectorName = getName();
     clock = new AdjustableClock();
+    threadPool = new ThreadPool(5, clock);
+    instantiator = new MockInstantiator(threadPool);
+    pusher = new ValidatingPusher();
+    traversalContext = new ProductionTraversalContext();
+    traversalContext.setTraversalTimeLimitSeconds(1);
+    stateStore = new RecordingTraversalStateStore();
+    documentStore = new LocalDocumentStoreImpl(new TestJdbcDatabase(),
+        connectorName, new TestResourceClassLoader(RESOURCE_DIR), clock);
   }
 
   /**
@@ -67,22 +96,18 @@ public class QueryTraverserTest extends TestCase {
     runTestBatches(5);
   }
 
-  private void runTestBatches(int batchSize) {
-    runTestBatches(batchSize, batchSize);
-  }
-
-  private void runTestBatches(int batchHint, int batchMax) {
-    ThreadPool threadPool = new ThreadPool(5, clock);
-    MockInstantiator instantiator = new MockInstantiator(threadPool);
+  private void runTestBatches(int batchHint) {
     try {
+      // Reset traversal state from previous tests.
+      stateStore.storeTraversalState(null);
+
       MockRepositoryEventList mrel =
         new MockRepositoryEventList("MockRepositoryEventLog1.txt");
-      String connectorName = "foo";
-      Traverser traverser = createTraverser(mrel, connectorName, instantiator);
+      Traverser traverser = createTraverser(mrel);
 
       System.out.println();
-      BatchSize batchSize = new BatchSize(batchHint, batchMax);
-      System.out.println("Running batch test batchsize " + batchSize);
+      BatchSize batchSize = new BatchSize(batchHint);
+      System.out.println("Running batch test batchsize " + batchHint);
 
       int totalDocsProcessed = 0;
       int batchNumber = 0;
@@ -116,16 +141,12 @@ public class QueryTraverserTest extends TestCase {
    * @param instantiator
    * @return a Traverser instance
    */
-  private Traverser createTraverser(MockRepositoryEventList mrel,
-      String connectorName, MockInstantiator instantiator) {
+  private Traverser createTraverser(MockRepositoryEventList mrel) {
     MockRepository r = new MockRepository(mrel);
     QueryManager qm = new MockJcrQueryManager(r.getStore());
     TraversalManager qtm = new JcrTraversalManager(qm);
-
     Traverser traverser = new QueryTraverser(new MockPusher(System.out), qtm,
-        instantiator.getTraversalStateStore(connectorName), connectorName,
-        Context.getInstance().getTraversalContext(), clock, null);
-
+        stateStore, connectorName, traversalContext, clock, documentStore);
     instantiator.setupTraverser(connectorName, traverser);
     return traverser;
   }
@@ -161,16 +182,12 @@ public class QueryTraverserTest extends TestCase {
     } catch (IOException e) {
       fail("Unable to initialize largefile.txt: " + e.toString());
     }
-
-    ThreadPool threadPool = new ThreadPool(5, clock);
-    MockInstantiator instantiator = new MockInstantiator(threadPool);
     try {
       MockRepositoryEventList mrel =
           new MockRepositoryEventList("MockRepositoryEventLogLargeFile.txt");
-      String connectorName = "foo";
-      Traverser traverser = createTraverser(mrel, connectorName, instantiator);
+      Traverser traverser = createTraverser(mrel);
       int docsProcessed = 0;
-      BatchSize batchSize = new BatchSize(1, 1);
+      BatchSize batchSize = new BatchSize(1);
       do {
         docsProcessed = traverser.runBatch(batchSize).getCountProcessed();
       } while (docsProcessed > 0);
@@ -179,61 +196,176 @@ public class QueryTraverserTest extends TestCase {
     }
   }
 
-  public void testTimeout() {
-    final String CONNECTOR_NAME = "fred_flinstone";
-    ValidatingPusher pusher = new ValidatingPusher(CONNECTOR_NAME);
+  private void checkResult(long documentCount, BatchResult result) {
+    assertEquals(documentCount, result.getCountProcessed());
+    assertEquals(Long.toString(documentCount), stateStore.getTraversalState());
+    assertEquals(documentCount, pusher.getPushCount());
+  }
+
+  public void testNullStateStore() {
     NeverEndingDocumentlistTraversalManager traversalManager =
         new NeverEndingDocumentlistTraversalManager(100);
-    TraversalStateStore stateStore = new RecordingTraversalStateStore();
-    ProductionTraversalContext context = new ProductionTraversalContext();
-    context.setTraversalTimeLimitSeconds(1);
-    QueryTraverser queryTraverser = new QueryTraverser(pusher, traversalManager,
-        stateStore, CONNECTOR_NAME, context, clock, null);
 
-    BatchResult result = queryTraverser.runBatch(new BatchSize(100, 100));
+    QueryTraverser queryTraverser = new QueryTraverser(pusher, traversalManager,
+        null, connectorName, traversalContext, clock, null);
+    BatchResult result = queryTraverser.runBatch(new BatchSize(100));
+    assertEquals(0, result.getCountProcessed());
+    assertEquals(TraversalDelayPolicy.ERROR, result.getDelayPolicy());
+  }
+
+  public void testTimeout() {
+    NeverEndingDocumentlistTraversalManager traversalManager =
+        new NeverEndingDocumentlistTraversalManager(100);
+    QueryTraverser queryTraverser = new QueryTraverser(pusher, traversalManager,
+        stateStore, connectorName, traversalContext, clock, null);
+
+    BatchResult result = queryTraverser.runBatch(new BatchSize(100));
     assertTrue(result.getCountProcessed() > 0);
-    assertEquals(traversalManager.getDocumentCount(),
-        result.getCountProcessed());
-    assertEquals(Long.toString(traversalManager.getDocumentCount()),
-        stateStore.getTraversalState());
-    assertEquals(traversalManager.getDocumentCount(), pusher.getPushCount());
+    checkResult(traversalManager.getDocumentCount(), result);
   }
 
   public void testBatchSize() {
-    final String CONNECTOR_NAME = "barney_rubble";
-    ValidatingPusher pusher = new ValidatingPusher(CONNECTOR_NAME);
-    NeverEndingDocumentlistTraversalManager traversalManager =
-        new NeverEndingDocumentlistTraversalManager(10);
-    TraversalStateStore stateStore = new RecordingTraversalStateStore();
-    ProductionTraversalContext context = new ProductionTraversalContext();
-    context.setTraversalTimeLimitSeconds(1);
+    LargeDocumentlistTraversalManager traversalManager =
+        new LargeDocumentlistTraversalManager(10);
     QueryTraverser queryTraverser = new QueryTraverser(pusher, traversalManager,
-        stateStore, CONNECTOR_NAME, context, clock, null);
+        stateStore, connectorName, traversalContext, clock, null);
 
-    BatchResult result = queryTraverser.runBatch(new BatchSize(10, 20));
+    BatchResult result = queryTraverser.runBatch(new BatchSize(10));
     assertTrue(result.getCountProcessed() > 10);
     assertTrue(result.getCountProcessed() <= 20);
+    checkResult(traversalManager.getDocumentCount(), result);
+  }
 
-    assertEquals(traversalManager.getDocumentCount(),
-        result.getCountProcessed());
-    assertEquals(Long.toString(traversalManager.getDocumentCount()),
-        stateStore.getTraversalState());
-    assertEquals(traversalManager.getDocumentCount(), pusher.getPushCount());
+  private void checkExceptionHandling(Exception exception, Where where,
+                                      long documentCount) {
+    ExceptionalTraversalManager traversalManager =
+        new ExceptionalTraversalManager(exception, where);
+    QueryTraverser queryTraverser = new QueryTraverser(pusher, traversalManager,
+        stateStore, connectorName, traversalContext, clock, documentStore);
+    BatchResult result = queryTraverser.runBatch(new BatchSize(10));
+    assertEquals(documentCount, result.getCountProcessed());
+  }
+
+  public void testBatchSizeException() {
+    checkExceptionHandling(new RepositoryException("BatchSizeException"),
+         Where.SET_BATCH_HINT, 2);
+  }
+
+  public void testStartTraversalRepositoryException() {
+    checkExceptionHandling(new RepositoryException("StartTraversalException"),
+         Where.START_TRAVERSAL, 0);
+  }
+
+  public void testStartTraversalRuntimeException() {
+    checkExceptionHandling(new RuntimeException("StartTraversalException"),
+         Where.START_TRAVERSAL, 0);
+  }
+
+  public void testResumeTraversalRepositoryException() {
+    // Create a checkpoint to force a resume traversal.
+    stateStore.storeTraversalState("2");
+    checkExceptionHandling(new RepositoryException("ResumeTraversalException"),
+         Where.RESUME_TRAVERSAL, 0);
+  }
+
+  public void testResumeTraversalRuntimeException() {
+    // Create a checkpoint to force a resume traversal.
+    stateStore.storeTraversalState("2");
+    checkExceptionHandling(new RuntimeException("ResumeTraversalException"),
+         Where.RESUME_TRAVERSAL, 0);
+  }
+
+  public void testFirstDocumentRepositoryException() {
+    checkExceptionHandling(new RepositoryException("FirstDocumentException"),
+         Where.FIRST_DOCUMENT, 0);
+  }
+
+  public void testFirstDocumentRepositoryDocumentException() {
+    checkExceptionHandling(
+         new RepositoryDocumentException("FirstDocumentRepositoryDocumentException"),
+         Where.FIRST_DOCUMENT, 1);
+  }
+
+  public void testFirstDocumentRuntimeException() {
+    checkExceptionHandling(new RuntimeException("FirstDocumentException"),
+         Where.FIRST_DOCUMENT, 0);
+  }
+
+  public void testNextDocumentRepositoryException() {
+    checkExceptionHandling(new RepositoryException("NextDocumentException"),
+         Where.NEXT_DOCUMENT, 0);
+  }
+
+  public void testNextDocumentRepositoryDocumentException() {
+    checkExceptionHandling(
+         new RepositoryDocumentException("NextDocumentRepositoryDocumentException"),
+         Where.NEXT_DOCUMENT, 1);
+  }
+
+  public void testNextDocumentRuntimeException() {
+    checkExceptionHandling(new RuntimeException("NextDocumentException"),
+         Where.NEXT_DOCUMENT, 1);
+  }
+
+  public void testCheckpointRepositoryException() {
+    checkExceptionHandling(new RepositoryException("CheckpointException"),
+         Where.CHECKPOINT, 0);
+  }
+
+  public void testCheckpointRuntimeException() {
+    checkExceptionHandling(new RuntimeException("CheckpointException"),
+         Where.CHECKPOINT, 0);
+  }
+
+  public void testDocidRepositoryException() {
+    checkExceptionHandling(
+         new RepositoryException("DocidRepositoryException"),
+         Where.DOCUMENT_DOCID, 0);
+  }
+
+  public void testDocidRuntimeException() {
+    checkExceptionHandling(
+         new IllegalArgumentException("DocidRuntimeException"),
+         Where.DOCUMENT_DOCID, 0);
+  }
+
+  public void testDocumentRepositoryException() {
+    checkExceptionHandling(
+         new RepositoryException("DocumentRepositoryException"),
+         Where.DOCUMENT_CONTENT, 0);
+  }
+
+  public void testRepositoryDocumentException() {
+    documentStore = null;
+    checkExceptionHandling(
+         new RepositoryDocumentException("RepositoryDocumentException"),
+         Where.DOCUMENT_CONTENT, 0);
+  }
+
+  public void testSkipDocumentException() {
+    checkExceptionHandling(
+         new SkippedDocumentException("SkippedDocumentException"),
+         Where.DOCUMENT_CONTENT, 0);
+  }
+
+  public void testDocumentRuntimeException() {
+    checkExceptionHandling(new RuntimeException("DocumentException"),
+         Where.DOCUMENT_CONTENT, 0);
   }
 
   /**
    * A {@link TraversalManager} for a {@link NeverEndingDocumentList}.
    */
   private class NeverEndingDocumentlistTraversalManager implements
-      TraversalManager {
+        TraversalManager, TraversalContextAware {
+    private final int docMillis;
     private long documentCount;
-    private final DocumentList documentList;
 
     public NeverEndingDocumentlistTraversalManager(int docMillis) {
-      this.documentList = new NeverEndingDocumentList(docMillis, this);
+      this.docMillis = docMillis;
     }
 
-    public DocumentList resumeTraversal(String checkPoint) {
+    public void setTraversalContext(TraversalContext traversalContext) {
       throw new UnsupportedOperationException();
     }
 
@@ -242,10 +374,16 @@ public class QueryTraverserTest extends TestCase {
     }
 
     public DocumentList startTraversal() {
-      return documentList;
+      return new NeverEndingDocumentList(this);
     }
 
+    public DocumentList resumeTraversal(String checkPoint) {
+      throw new UnsupportedOperationException();
+    }
+
+    // Return a new document every {@code docMillis} milliseconds.
     synchronized Document newDocument() {
+      clock.adjustTime(docMillis);
       String id = Long.toString(documentCount++);
       return ConnectorTestUtils.createSimpleDocument(id);
     }
@@ -256,16 +394,14 @@ public class QueryTraverserTest extends TestCase {
   }
 
   /**
-   * {@link DocumentList} that returns a new document every {@code docMillis}
-   * milliseconds until interrupted.
+   * {@link DocumentList} that never runs out of documents -
+   * returning new documents until interrupted.
    */
   private class NeverEndingDocumentList implements DocumentList {
     private final NeverEndingDocumentlistTraversalManager traversalManager;
-    private final int docMillis;
 
-    public NeverEndingDocumentList(int docMillis,
+    public NeverEndingDocumentList(
         NeverEndingDocumentlistTraversalManager traversalManager) {
-      this.docMillis = docMillis;
       this.traversalManager = traversalManager;
     }
 
@@ -279,8 +415,207 @@ public class QueryTraverserTest extends TestCase {
      * previously returned.
      */
     public Document nextDocument() throws RepositoryException {
-      clock.adjustTime(docMillis);
       return traversalManager.newDocument();
+    }
+  }
+
+  /**
+   * A {@link TraversalManager} for a {@link LargeDocumentList}.
+   */
+  private class LargeDocumentlistTraversalManager extends
+      NeverEndingDocumentlistTraversalManager {
+    private int batchHint;
+
+    public LargeDocumentlistTraversalManager(int docMillis) {
+      super(docMillis);
+    }
+
+    @Override
+    public void setBatchHint(int batchHint) {
+      this.batchHint = batchHint;
+    }
+
+    synchronized int getBatchHint() {
+      return batchHint;
+    }
+
+    @Override
+    public DocumentList startTraversal() {
+      return new LargeDocumentList(this);
+    }
+  }
+
+  /**
+   * {@link DocumentList} that returns twice the batchHint
+   * number of documents.
+   */
+  private class LargeDocumentList extends NeverEndingDocumentList {
+    private final LargeDocumentlistTraversalManager traversalManager;
+
+    public LargeDocumentList(
+          LargeDocumentlistTraversalManager traversalManager) {
+      super(traversalManager);
+      this.traversalManager = traversalManager;
+    }
+
+    @Override
+    public Document nextDocument() throws RepositoryException {
+      if (traversalManager.getDocumentCount() <
+          2 * traversalManager.getBatchHint()) {
+        return super.nextDocument();
+      } else {
+        return null;
+      }
+    }
+  }
+
+
+  /**
+   * Locations from where ExceptionalTraversalManager will throw
+   * its exceptions.
+   */
+  private static enum Where {
+      NONE,
+      SET_BATCH_HINT, START_TRAVERSAL, RESUME_TRAVERSAL, // TraversalManager
+      FIRST_DOCUMENT, NEXT_DOCUMENT, CHECKPOINT, // DocumentList
+      DOCUMENT_DOCID, DOCUMENT_CONTENT // Document
+  }
+
+  /** Throws either a RuntimeException or a RepostioryException. */
+  private  void throwException(Exception exception)
+      throws RepositoryException {
+    if (exception instanceof RepositoryDocumentException) {
+      pusher.skipDocument();
+      throw (RepositoryDocumentException) exception;
+    } else if (exception instanceof RepositoryException) {
+      throw (RepositoryException) exception;
+    } else if (exception instanceof RuntimeException) {
+      // RuntimeExceptions don't need to be declared.
+      throw (RuntimeException) exception;
+    }
+  }
+
+  /**
+   * A {@link TraversalManager} that throws configured Exceptions.
+   */
+  private class ExceptionalTraversalManager implements TraversalManager {
+    protected final Where where;
+    protected final Exception exception;
+
+    public ExceptionalTraversalManager(Exception exception, Where where) {
+      this.exception = exception;
+      this.where = where;
+    }
+
+    /* @Override */
+    public void setBatchHint(int batchHint) throws RepositoryException {
+      if (where == Where.SET_BATCH_HINT) {
+        throwException(exception);
+      }
+    }
+
+    /* @Override */
+    public DocumentList startTraversal() throws RepositoryException {
+      if (where == Where.START_TRAVERSAL) {
+        throwException(exception);
+      }
+      return new ExceptionalDocumentList(0, exception, where);
+    }
+
+    /* @Override */
+    public DocumentList resumeTraversal(String checkpoint)
+        throws RepositoryException {
+      if (where == Where.RESUME_TRAVERSAL) {
+        throwException(exception);
+      }
+      int docNum = Integer.parseInt(checkpoint);
+      if (docNum > 3) {
+        return null;  // Only return two batches.
+      }
+      return new ExceptionalDocumentList(docNum, exception, where);
+    }
+  }
+
+  /**
+   * A {@link DocumentList} that throws configured Exceptions.
+   */
+  private class ExceptionalDocumentList implements DocumentList {
+    protected final Where where;
+    protected final Exception exception;
+    protected final int startNum;
+    protected int docNum;
+
+    public ExceptionalDocumentList(int docNum, Exception exception,
+                                   Where where) {
+      this.startNum = docNum;
+      this.docNum = docNum;
+      this.exception = exception;
+      this.where = where;
+    }
+
+    /* @Override */
+    public Document nextDocument() throws RepositoryException {
+      // Return no more than two documents per batch.
+      if (docNum > startNum + 1) {
+        return null;
+      }
+      int doc = docNum++;
+      // This knows we are returning 2-document batches, so although
+      // docNum keeps going up, even numbered docs are the first
+      // in the batch, and odd numbered docs are the next.
+      switch (where) {
+        case FIRST_DOCUMENT:
+          if ((doc & 1) == 0) throwException(exception);
+          break;
+        case NEXT_DOCUMENT:
+          if ((doc & 1) == 1) throwException(exception);
+          break;
+      }
+      return new ExceptionalDocument(doc, exception, where);
+    }
+
+    /* @Override */
+    public String checkpoint() throws RepositoryException {
+      if (where == Where.CHECKPOINT) {
+        throwException(exception);
+      }
+      return String.valueOf(docNum);
+    }
+  }
+
+  /**
+   * A {@link Document} that throws configured Exceptions.
+   */
+  private class ExceptionalDocument implements Document {
+    protected final Where where;
+    protected final Exception exception;
+    protected final int docNum;
+    protected final Document doc;
+
+    public ExceptionalDocument(int docNum, Exception exception,
+                               Where where) {
+      this.exception = exception;
+      this.where = where;
+      this.docNum = docNum;
+      this.doc =
+          ConnectorTestUtils.createSimpleDocument(String.valueOf(docNum));
+    }
+
+    /* @Override */
+    public Set<String> getPropertyNames() throws RepositoryException {
+      return doc.getPropertyNames();
+    }
+
+    /* @Override */
+    public Property findProperty(String name) throws RepositoryException {
+      if (SpiConstants.PROPNAME_CONTENT.equals(name) &&
+          where == Where.DOCUMENT_CONTENT && (docNum & 1 ) == 0) {
+        throwException(exception);
+      } if (SpiConstants.PROPNAME_DOCID.equals(name) &&
+            where == Where.DOCUMENT_DOCID && (docNum & 1) == 1) {
+        throwException(exception);
+      }
+      return doc.findProperty(name);
     }
   }
 
@@ -289,12 +624,9 @@ public class QueryTraverserTest extends TestCase {
    * @see ValidatingPusher#take(Document, DocumentStore) for details.
    */
   private static class ValidatingPusher implements Pusher, PusherFactory {
-    private final String connectorName;
-    private volatile long pushCount;
-
-    ValidatingPusher(String connectorName) {
-      this.connectorName = connectorName;
-    }
+    private String connectorName = null;
+    private volatile long pushCount = 0;
+    private volatile long expectedId = 0;
 
     /**
      * Performs the following validations:
@@ -303,8 +635,13 @@ public class QueryTraverserTest extends TestCase {
      * {@link ValidatingPusher#ValidatingPusher(String)}.
      * </OL>
      */
+    /* @Override */
     public Pusher newPusher(String connectorName) {
-      assertEquals(this.connectorName, connectorName);
+      if (this.connectorName == null) {
+        this.connectorName = connectorName;
+      } else {
+        assertEquals(this.connectorName, connectorName);
+      }
       return this;
     }
 
@@ -316,27 +653,43 @@ public class QueryTraverserTest extends TestCase {
      * matches the number of documents pushed (formatted as a {@link String}).
      * </OL>
      */
-    public boolean take(Document document, DocumentStore ignored)
-        throws RepositoryException {
-      String expectId = Long.toString(pushCount);
+    /* @Override */
+    public synchronized boolean take(Document document, DocumentStore ignored)
+        throws RepositoryException, PushException {
       String gotId =
           Value.getSingleValueString(document, SpiConstants.PROPNAME_DOCID);
-      assertEquals(expectId, gotId);
-      pushCount++;
+      assertEquals(Long.toString(expectedId), gotId);
+      try {
+        Value.getSingleValue(document, SpiConstants.PROPNAME_CONTENT);
+        expectedId++;
+        pushCount++;
+      } catch (RepositoryDocumentException rde) {
+        expectedId++;
+        throw rde;
+      } catch (Throwable t) {
+        throw new PushException(t);
+      }
       return true;
     }
 
+    synchronized void skipDocument() {
+      expectedId++;
+    }
+
+    /* @Override */
     public void flush() {
     }
 
-    public void cancel() {
+    /* @Override */
+    public synchronized void cancel() {
       pushCount = 0;
+      expectedId = 0;
     }
 
     /**
      * Returns the number of documents that have been pushed.
      */
-    public long getPushCount() {
+    synchronized long getPushCount() {
       return pushCount;
     }
   }

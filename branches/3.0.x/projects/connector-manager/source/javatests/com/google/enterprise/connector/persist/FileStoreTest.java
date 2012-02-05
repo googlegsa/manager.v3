@@ -32,8 +32,8 @@ public class FileStoreTest extends PersistentStoreTestAbstract {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
-    assertTrue(baseDirectory.mkdirs());
+    ConnectorTestUtils.deleteAllFiles(baseDirectory);
+    assertTrue(ConnectorTestUtils.mkdirs(baseDirectory));
     typeMap = new TypeMap(TEST_DIR_NAME);
     typeMap.init();
     FileStore fileStore = new FileStore();
@@ -44,7 +44,7 @@ public class FileStoreTest extends PersistentStoreTestAbstract {
   @Override
   protected void tearDown() throws Exception {
     try {
-      assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
+      ConnectorTestUtils.deleteAllFiles(baseDirectory);
     } finally {
       super.tearDown();
     }
@@ -61,9 +61,7 @@ public class FileStoreTest extends PersistentStoreTestAbstract {
   protected File getConnectorDir(StoreContext context) {
     File typeDir = new File(typeMap.getTypesDirectory(), context.getTypeName());
     File connectorDir = new File(typeDir, context.getConnectorName());
-    if (!connectorDir.exists()) {
-      assertTrue(connectorDir.mkdirs());
-    }
+    assertTrue(ConnectorTestUtils.mkdirs(connectorDir));
     return connectorDir;
   }
 

@@ -97,6 +97,17 @@ public class ImportExportTest extends TestCase {
     coordinator.setConnectorState("checkpoint");
   }
 
+  // Test empty Connector Instance list.
+  public void testNoConnectors() throws Exception {
+    ImportExportConnectorList connectors =
+        fromXmlString("<ConnectorInstances></ConnectorInstances>");
+    assertNotNull(connectors);
+    assertTrue(connectors.isEmpty());
+    connectors = fromXmlString("<ConnectorInstances>\n</ConnectorInstances>\n");
+    assertNotNull(connectors);
+    assertTrue(connectors.isEmpty());
+  }
+
   // Tests the correct construction of List<ImportExportConnector> from
   // an existing installation.
   public final void testGetConnectors() throws Exception {

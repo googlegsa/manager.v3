@@ -130,4 +130,50 @@ public class Configuration {
            + SecurityUtils.getMaskedMap(configMap)
            + ", configXml = \"" + configXml + "\" }";
   }
+
+  /**
+   * Returns a hash code value for the object.
+   *
+   * @return a hash code value for this object
+   */
+  @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + ((typeName == null)? 0 : typeName.hashCode());
+    result = prime * result + ((configMap == null)? 0 : configMap.hashCode());
+    result = prime * result + ((configXml == null)? 0 : configXml.hashCode());
+    return result;
+  }
+
+  /**
+   * Indicates whether some other object is "equal to" this one.
+   *
+   * @return {@code true} if this object is the same as the {@code obj}
+   *         argument; {@code false} otherwise
+   */
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    }
+    if (obj == null) {
+      return false;
+    }
+    if (getClass() != obj.getClass()) {
+      return false;
+    }
+    Configuration other = (Configuration) obj;
+    return (compareObjs(typeName, other.typeName) &&
+            compareObjs(configMap, other.configMap) &&
+            compareObjs(configXml, other.configXml));
+  }
+
+  private static boolean compareObjs(Object obj1, Object obj2) {
+    if (obj1 == null) {
+      return (obj2 == null);
+    } else {
+      return obj1.equals(obj2);
+    }
+  }
 }

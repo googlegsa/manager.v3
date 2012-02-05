@@ -28,7 +28,6 @@ import com.google.enterprise.connector.spi.SkippedDocumentException;
 import com.google.enterprise.connector.spi.SimpleProperty;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.TraversalContext;
-import com.google.enterprise.connector.spi.TraversalContextAware;
 import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.util.Clock;
@@ -68,15 +67,6 @@ public class QueryTraverser implements Traverser {
     this.traversalContext = traversalContext;
     this.clock = clock;
     this.documentStore = documentStore;
-    if (queryTraversalManager instanceof TraversalContextAware) {
-      TraversalContextAware contextAware =
-          (TraversalContextAware)queryTraversalManager;
-      try {
-        contextAware.setTraversalContext(traversalContext);
-      } catch (Exception e) {
-        LOGGER.log(Level.WARNING, "Unable to set TraversalContext", e);
-      }
-    }
   }
 
   //@Override
@@ -161,14 +151,14 @@ public class QueryTraverser implements Traverser {
       // Get a Pusher for feeding the returned Documents.
       pusher = pusherFactory.newPusher(connectorName);
 
-      while (counter < batchSize.getMaximum()) {
+      while (true) {
         if (Thread.currentThread().isInterrupted() || isCancelled()) {
           LOGGER.fine("Traversal for connector " + connectorName
                       + " has been interrupted; breaking out of batch run.");
           break;
         }
         if (clock.getTimeMillis() >= timeoutTime) {
-          LOGGER.fine("Traversal for connector " + connectorName
+          LOGGER.fine("Traversal batch for connector " + connectorName
               + " is completing due to time limit.");
           break;
         }
@@ -179,6 +169,9 @@ public class QueryTraverser implements Traverser {
           LOGGER.finer("Pulling next document from connector " + connectorName);
           nextDocument = resultSet.nextDocument();
           if (nextDocument == null) {
+            LOGGER.finer("Traversal batch for connector " + connectorName
+                + " at end after processing " + counter + " documents.");
+
             break;
           } else {
             // Since there are a couple of places below that could throw
@@ -204,8 +197,9 @@ public class QueryTraverser implements Traverser {
               + connectorName + " to Pusher");
 
           if (!pusher.take(nextDocument, documentStore)) {
-            LOGGER.fine("Traversal for connector " + connectorName
-                + " is completing at the request of the Pusher.");
+            LOGGER.fine("Traversal batch for connector " + connectorName
+                + " is completing at the request of the Pusher,"
+                + " after processing " + counter + " documents.");
             break;
           }
 
@@ -336,7 +330,7 @@ public class QueryTraverser implements Traverser {
       LOGGER.log(Level.FINER, "Skipping document (" + docid
           + ") from connector " + connectorName + ": " + e.getMessage());
     }
-    if (documentStore != null) {
+    if (documentStore != null && document != null) {
       documentStore.storeDocument(new SkippedDocument(document, e));
     }
   }
