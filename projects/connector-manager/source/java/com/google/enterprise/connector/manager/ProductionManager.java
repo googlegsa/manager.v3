@@ -15,6 +15,8 @@
 package com.google.enterprise.connector.manager;
 
 import com.google.common.collect.Maps;
+import com.google.enterprise.connector.common.AlternateContentFilterInputStream;
+import com.google.enterprise.connector.common.BigEmptyDocumentFilterInputStream;
 import com.google.enterprise.connector.common.I18NUtil;
 import com.google.enterprise.connector.instantiator.Configuration;
 import com.google.enterprise.connector.instantiator.ExtendedConfigureResponse;
@@ -31,11 +33,16 @@ import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.AuthorizationResponse;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.ConnectorType;
+import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.RepositoryLoginException;
+import com.google.enterprise.connector.spi.Retriever;
+import com.google.enterprise.connector.util.EofFilterInputStream;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -100,9 +107,8 @@ public class ProductionManager implements Manager {
   }
 
   /* @Override */
-  public Set<String> authorizeDocids(String connectorName,
+  public Collection<AuthorizationResponse> authorizeDocids(String connectorName,
       List<String> docidList, AuthenticationIdentity identity) {
-    Set<String> result = new HashSet<String>();
     try {
       AuthorizationManager authzManager =
           instantiator.getAuthorizationManager(connectorName);
@@ -114,7 +120,7 @@ public class ProductionManager implements Manager {
         LOGGER.warning("Connector " + connectorName
             + " is being asked to authorize documents but has not implemented"
             + " the AuthorizationManager interface.");
-        return result;
+        return null;
       }
       if (LOGGER.isLoggable(Level.FINE)) {
         LOGGER.fine("AUTHORIZE: connector = " + connectorName + ", "
@@ -125,17 +131,15 @@ public class ProductionManager implements Manager {
       if (LOGGER.isLoggable(Level.FINE)) {
         LOGGER.fine("AUTHORIZED: connector = " + connectorName + ", "
                     + identity + ": authorized " + results.size()
-                    + " documents.");
+                    + " of " + docidList.size() + " documents.");
       }
-      for (AuthorizationResponse response : results) {
-        if (LOGGER.isLoggable(Level.FINEST)) {
+      if (LOGGER.isLoggable(Level.FINEST)) {
+        for (AuthorizationResponse response : results) {
           LOGGER.finest("AUTHORIZED " + response.getDocid() + ": "
                         + response.getStatus());
         }
-        if (response.isValid()) {
-          result.add(response.getDocid());
-        }
       }
+      return results;
     } catch (ConnectorNotFoundException e) {
       LOGGER.log(Level.WARNING, "Connector " + connectorName + " not found", e);
     } catch (RepositoryException e) {
@@ -145,7 +149,61 @@ public class ProductionManager implements Manager {
       LOGGER.log(Level.WARNING, "Authorization failed for connector "
                  + connectorName + ": " + identity, e);
     }
-    return result;
+    return null;
+  }
+
+  /* @Override */
+  public InputStream getDocumentContent(String connectorName, String docid)
+      throws ConnectorNotFoundException, InstantiatorException,
+             RepositoryException {
+    if (LOGGER.isLoggable(Level.FINER)) {
+      LOGGER.finer("RETRIEVER: Retrieving content from connector "
+                   + connectorName + " for document " + docid);
+    }
+    Retriever retriever = instantiator.getRetriever(connectorName);
+    if (retriever == null) {
+      // We are borked here.  This should not happen.
+      LOGGER.warning("GetDocumentContent request for connector " + connectorName
+                     + " that does not support the Retriever interface.");
+      return null;
+    }
+    InputStream in = retriever.getContent(docid);
+    if (in == null) {
+      LOGGER.finer("RETRIEVER: Document has no content.");
+    }
+    // The GSA can't handle meta-and-url feeds with no content, so we
+    // provide some minimal content of a single space, if none is available.
+    // We are only detecting empty content here, not large documents.
+    return
+        new AlternateContentFilterInputStream(
+            new BigEmptyDocumentFilterInputStream(
+                (in == null) ? in : new EofFilterInputStream(in),
+                Long.MAX_VALUE),
+            null);
+  }
+
+  /* @Override */
+  public Document getDocumentMetaData(String connectorName, String docid)
+      throws ConnectorNotFoundException, InstantiatorException,
+             RepositoryException {
+    if (LOGGER.isLoggable(Level.FINER)) {
+      LOGGER.finer("RETRIEVER: Retrieving metadata from connector "
+                   + connectorName + " for document " + docid);
+    }
+    Retriever retriever = instantiator.getRetriever(connectorName);
+    if (retriever == null) {
+      // We are borked here.  This should not happen.
+      LOGGER.warning("GetDocumentMetaData request for connector "
+                     + connectorName
+                     + " that does not support the Retriever interface.");
+      return null;
+    }
+    Document metaDoc = retriever.getMetaData(docid);
+    if (metaDoc == null) {
+      LOGGER.finer("RETRIEVER: Document has no metadata.");
+      // TODO: Create empty Document?
+    }
+    return metaDoc;
   }
 
   /* @Override */
@@ -190,28 +248,25 @@ public class ProductionManager implements Manager {
   }
 
   /* @Override */
-  public ConnectorStatus getConnectorStatus(String connectorName) {
-    String connectorTypeName = null;
-    try {
-      connectorTypeName = instantiator.getConnectorTypeName(connectorName);
-      Schedule schedule = instantiator.getConnectorSchedule(connectorName);
-      // TODO: resolve the third parameter - we need to give status a meaning
-      return new ConnectorStatus(connectorName, connectorTypeName, 0,
-          ((schedule == null) ? null : schedule.toString()));
-    } catch (ConnectorNotFoundException e) {
-      // TODO: this should become part of the signature - so we should just
-      // let this exception bubble up
-      LOGGER.log(Level.WARNING, "Connector type " + connectorTypeName
-          + " not found", e);
-      throw new IllegalArgumentException();
-    }
+  public ConnectorStatus getConnectorStatus(String connectorName)
+      throws ConnectorNotFoundException {
+    String connectorTypeName = instantiator.getConnectorTypeName(connectorName);
+    Schedule schedule = instantiator.getConnectorSchedule(connectorName);
+    // TODO: resolve the third parameter - we need to give status a meaning
+    return new ConnectorStatus(connectorName, connectorTypeName, 0,
+        ((schedule == null) ? null : schedule.toString()));
   }
 
   /* @Override */
   public List<ConnectorStatus> getConnectorStatuses() {
     List<ConnectorStatus> result = new ArrayList<ConnectorStatus>();
     for (String connectorName : instantiator.getConnectorNames()) {
-      result.add(getConnectorStatus(connectorName));
+      try {
+        result.add(getConnectorStatus(connectorName));
+      } catch (ConnectorNotFoundException e) {
+        // This is unlikely to happen, but skip this one anyway.
+        LOGGER.finest("Connector not found: " + connectorName);
+      }
     }
     return result;
   }

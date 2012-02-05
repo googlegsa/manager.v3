@@ -16,9 +16,11 @@ package com.google.enterprise.connector.servlet;
 
 import com.google.enterprise.connector.manager.ConnectorStatus;
 import com.google.enterprise.connector.manager.Manager;
+import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.scheduler.Schedule;
 
 import java.io.PrintWriter;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -54,14 +56,21 @@ public class GetConnectorStatus extends ConnectorManagerGetServlet {
   public static void handleDoGet(String connectorName, Manager manager,
       PrintWriter out) {
     ConnectorMessageCode status = new ConnectorMessageCode();
-    ConnectorStatus connectorStatus = manager.getConnectorStatus(connectorName);
-    if (connectorStatus == null) {
-      status =
-          new ConnectorMessageCode(
-              ConnectorMessageCode.RESPONSE_NULL_CONNECTOR_STATUS,
-              connectorName);
-      LOGGER
-          .warning("Connector manager returns no status for " + connectorName);
+    ConnectorStatus connectorStatus;
+    try {
+      connectorStatus = manager.getConnectorStatus(connectorName);
+      if (connectorStatus == null) {
+        status = new ConnectorMessageCode(
+            ConnectorMessageCode.RESPONSE_NULL_CONNECTOR_STATUS, connectorName);
+        LOGGER.warning("Connector manager returns no status for "
+                       + connectorName);
+      }
+    } catch (ConnectorNotFoundException e) {
+      connectorStatus = null;
+      status = new ConnectorMessageCode(
+        ConnectorMessageCode.EXCEPTION_CONNECTOR_NOT_FOUND, connectorName);
+      LOGGER.log(Level.WARNING, ServletUtil.LOG_EXCEPTION_CONNECTOR_NOT_FOUND,
+                 e);
     }
 
     ServletUtil.writeRootTag(out, false);

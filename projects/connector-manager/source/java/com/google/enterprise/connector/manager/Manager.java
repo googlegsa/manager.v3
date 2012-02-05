@@ -22,9 +22,14 @@ import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.persist.PersistentStoreException;
 import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
+import com.google.enterprise.connector.spi.AuthorizationResponse;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.ConnectorType;
+import com.google.enterprise.connector.spi.Document;
+import com.google.enterprise.connector.spi.RepositoryException;
 
+import java.io.InputStream;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -90,9 +95,12 @@ public interface Manager {
    * Returns the status of a particular connector.
    *
    * @param connectorName the name of the connector instance
+   * @throws ConnectorNotFoundException If the named connector is not known to
+   *         this manager.
    * @return Document containing XML configuration - DTD TBD.
    */
-  public ConnectorStatus getConnectorStatus(String connectorName);
+  public ConnectorStatus getConnectorStatus(String connectorName)
+      throws ConnectorNotFoundException;
 
   /**
    * Get initial configuration form snippet for a connector type.
@@ -181,10 +189,43 @@ public interface Manager {
    *        docid for each document
    * @param identity An AuthenticationIdentity object that encapsulates the
    *        user's identity
-   * @return A Set of String IDs indicating which documents the user can see.
+   * @return A {@code Collection} of {@link AuthorizationResponse} objects.
+   *         The collection of responses need not be in the same order as the
+   *         collection of docids. The returned collection of responses may
+   *         contain only those docids for which the user has positive access,
+   *         although inclusion of items with deny access is recommended.
+   *         A return value of {@code null} indicates that the documents could
+   *         not be authorized for some reason, and no access rights (positive
+   *         or negative) should be inferred.
    */
-  public Set<String> authorizeDocids(String connectorName,
+  public Collection<AuthorizationResponse> authorizeDocids(String connectorName,
       List<String> docidList, AuthenticationIdentity identity);
+
+  /**
+   * Return an {@code InputStream} that may be used to access content for the
+   * document identified by {@code docid}.
+   *
+   * @param connectorName
+   * @param docid the document identifier
+   * @return an InputStream for the document content, or {@code null} if
+   *         document content is not available.
+   */
+  public InputStream getDocumentContent(String connectorName, String docid)
+      throws ConnectorNotFoundException, InstantiatorException,
+             RepositoryException;
+
+  /**
+   * Return a {@link Document} that contains meta-data for the
+   * document identified by {@code docid}, but not the actual content.
+   *
+   * @param connectorName
+   * @param docid the document identifier
+   * @return a {@link Document} containing the document meta-data,
+   *         or {@code null} if document content is not available.
+   */
+  public Document getDocumentMetaData(String connectorName, String docid)
+      throws ConnectorNotFoundException, InstantiatorException,
+             RepositoryException;
 
   /**
    * Set schedule for a given Connector.
@@ -199,8 +240,8 @@ public interface Manager {
   public void setSchedule(String connectorName, String schedule)
       throws ConnectorNotFoundException, PersistentStoreException;
 
-  /*
-   * Remove a connector for a given Connector.
+  /**
+   * Remove the named connector.
    *
    * @param connectorName
    * @throws ConnectorNotFoundException If the named connector is not known to

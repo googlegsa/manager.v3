@@ -126,14 +126,15 @@ public class SyncingConnector implements Connector, ConnectorShutdownAware {
 
   private class SyncingConnectorSession implements Session {
    public AuthenticationManager getAuthenticationManager() {
-     throw new UnsupportedOperationException();
+     return null;
     }
 
     public AuthorizationManager getAuthorizationManager() {
-      throw new UnsupportedOperationException();
+     return null;
     }
 
     public TraversalManager getTraversalManager() {
+      tracker.incrementTraversalManagerCount();
       return new SyncingConnectorTraversalManager();
     }
   }
@@ -192,6 +193,7 @@ public class SyncingConnector implements Connector, ConnectorShutdownAware {
     private int deleteCount;
     private int shutdownCount;
     private int interruptedCount;
+    private int traversalManagerCount;
     private int startTraversalCount;
     private int resumeTraversalCount;
     private int nextDocId;
@@ -247,6 +249,14 @@ public class SyncingConnector implements Connector, ConnectorShutdownAware {
 
     public void incrementInterruptedCount() {
       interruptedCount++;
+    }
+
+    public synchronized int getTraversalManagerCount() {
+      return traversalManagerCount;
+    }
+
+    public synchronized void incrementTraversalManagerCount() {
+      traversalManagerCount++;
     }
 
     public synchronized int getStartTraversalCount() {

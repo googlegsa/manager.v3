@@ -48,8 +48,8 @@ public class SetManagerConfigTest extends TestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
-    assertTrue(baseDirectory.mkdirs());
+    ConnectorTestUtils.deleteAllFiles(baseDirectory);
+    assertTrue(ConnectorTestUtils.mkdirs(baseDirectory));
 
     // Create an original set of properties.
     Properties props = new Properties();
@@ -66,7 +66,7 @@ public class SetManagerConfigTest extends TestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
+    ConnectorTestUtils.deleteAllFiles(baseDirectory);
     super.tearDown();
   }
 

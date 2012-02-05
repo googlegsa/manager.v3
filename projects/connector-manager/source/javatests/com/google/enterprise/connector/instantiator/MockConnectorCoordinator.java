@@ -24,6 +24,7 @@ import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.Connector;
 import com.google.enterprise.connector.spi.ConnectorShutdownAware;
 import com.google.enterprise.connector.spi.RepositoryException;
+import com.google.enterprise.connector.spi.Retriever;
 import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.traversal.BatchResult;
 import com.google.enterprise.connector.traversal.BatchResultRecorder;
@@ -55,7 +56,7 @@ class MockConnectorCoordinator implements ConnectorCoordinator {
 
   private final StoreContext storeContext;
   private final ThreadPool threadPool;
-  private String typeName;
+  private final String typeName;
 
   // Batch context
   TaskHandle taskHandle;
@@ -65,6 +66,7 @@ class MockConnectorCoordinator implements ConnectorCoordinator {
       PersistentStore persistentStore, StoreContext storeContext,
       ThreadPool threadPool) {
     this.name = name;
+    this.typeName = name;
     this.interfaces = connectorInterfaces;
     this.traverser = traverser;
     this.hostLoadManager = new HostLoadManager(null, null, new SystemClock());
@@ -75,8 +77,10 @@ class MockConnectorCoordinator implements ConnectorCoordinator {
     this.threadPool = threadPool;
   }
 
-   private void cancelBatch() {
-     throw new UnsupportedOperationException();
+  private void cancelBatch() {
+    if (taskHandle != null && !taskHandle.isDone()) {
+      taskHandle.cancel();
+    }
   }
 
   public boolean exists() {
@@ -97,11 +101,16 @@ class MockConnectorCoordinator implements ConnectorCoordinator {
     return interfaces.getAuthorizationManager();
   }
 
-   public synchronized ConfigureResponse getConfigForm(Locale locale) {
+  /* @Override */
+  public Retriever getRetriever() throws InstantiatorException {
+    return interfaces.getRetriever();
+  }
+
+  public synchronized ConfigureResponse getConfigForm(Locale locale) {
     throw new UnsupportedOperationException();
   }
 
-   public synchronized Configuration getConnectorConfiguration() {
+  public synchronized Configuration getConnectorConfiguration() {
     return persistentStore.getConnectorConfiguration(storeContext);
   }
 
@@ -135,6 +144,10 @@ class MockConnectorCoordinator implements ConnectorCoordinator {
     return null;
   }
 
+  public void setGDataConfig() {
+    // Do nothing.
+  }
+
   public synchronized void setConnectorSchedule(Schedule schedule) {
     persistentStore.storeConnectorSchedule(storeContext, schedule);
     if (schedule != null) {
@@ -162,7 +175,7 @@ class MockConnectorCoordinator implements ConnectorCoordinator {
     taskHandle = null;
 
     BatchSize batchSize = hostLoadManager.determineBatchSize();
-    if (batchSize.getMaximum() == 0) {
+    if (batchSize.getHint() == 0) {
       return false;
     }
 

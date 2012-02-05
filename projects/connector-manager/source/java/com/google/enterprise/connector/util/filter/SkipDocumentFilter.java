@@ -30,6 +30,28 @@ import java.util.regex.PatternSyntaxException;
  * based upon the presence/abscence of a specific {@link Property},
  * or based upon a match on one of the {@link Value Values} of that
  * property.
+ * <p/>
+ * <b>Example {@code documentFilters.xml} Configurations:</b>
+ * <p/>
+ * The following example skips documents that have a {@code NoIndex Property}.
+ * <pre><code>
+   &lt;bean id="NoIndex"
+      class="com.google.enterprise.connector.util.filter.SkipDocumentFilter"&gt;
+     &lt;property name="propertyName" value="NoIndex"/&gt;
+     &lt;property name "skipOnMatch" value="true"/&gt;
+   &lt;/bean&gt;
+   </code></pre>
+ * The following example skips documnents whose {@code Classification Property}
+ * value is not {@code PUBLIC} or {@code DECLASSIFIED}.
+ * <pre><code>
+   &lt;!-- Filter out all but PUBLIC and DECLASSIFIED documents. --&gt;
+   &lt;bean id="Classified"
+      class="com.google.enterprise.connector.util.filter.SkipDocumentFilter"&gt;
+     &lt;property name="propertyName" value="Classification"/&gt;
+     &lt;property name="pattern" value="(PUBLIC)|(DECLASSIFIED)"/&gt;
+     &lt;property name "skipOnMatch" value="false"/&gt;
+   &lt;/bean&gt;
+   </code></pre>
  */
 public class SkipDocumentFilter extends AbstractDocumentFilter {
 
@@ -86,7 +108,8 @@ public class SkipDocumentFilter extends AbstractDocumentFilter {
    * If {@code true} skip the document on a match.
    * If {@code false} skip the document on a failed match.
    *
-   * @param overwrite the overwrite flag
+   * @param skipOnMatch If {@code true} skip the document on a match,
+   *        otherwise skip the document if the match fails.
    */
   public void setSkipOnMatch(boolean skipOnMatch) {
     this.skipOnMatch = skipOnMatch;

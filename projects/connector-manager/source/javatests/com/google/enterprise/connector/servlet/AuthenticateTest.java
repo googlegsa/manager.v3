@@ -14,10 +14,10 @@
 
 package com.google.enterprise.connector.servlet;
 
+import com.google.common.collect.ImmutableList;
 import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.manager.MockManager;
 
-import junit.framework.Assert;
 import junit.framework.TestCase;
 
 import java.io.PrintWriter;
@@ -54,6 +54,22 @@ public class AuthenticateTest extends TestCase {
       "    </Success>\n" +
       "  </AuthnResponse>\n" +
       "</CmResponse>\n";
+    doTest(xmlBody, expectedResult, null, "fooUser", "fooPassword", null);
+  }
+
+  public void testEmptyBody() {
+    String xmlBody = "";
+    String expectedResult = "<CmResponse>\n  <StatusId>"
+        + ConnectorMessageCode.ERROR_PARSING_XML_REQUEST
+        + "</StatusId>\n</CmResponse>\n";
+    doTest(xmlBody, expectedResult, null, "fooUser", "fooPassword", null);
+  }
+
+  public void testNoCredentials() {
+    String xmlBody = "<AuthnRequest>\n</AuthnRequest>";
+    String expectedResult = "<CmResponse>\n  <StatusId>"
+        + ConnectorMessageCode.RESPONSE_EMPTY_NODE
+        + "</StatusId>\n</CmResponse>\n";
     doTest(xmlBody, expectedResult, null, "fooUser", "fooPassword", null);
   }
 
@@ -270,7 +286,7 @@ public class AuthenticateTest extends TestCase {
       "</CmResponse>\n";
 
     doTest(xmlBody, expectedResult, "connector1", "fooUser", "fooPassword",
-           makeGroups());
+           makeGroups("staff", "wheel"));
   }
 
   private void doTestGroups(String xmlBody) {
@@ -291,14 +307,37 @@ public class AuthenticateTest extends TestCase {
       "</CmResponse>\n";
 
     doTest(xmlBody, expectedResult, null, "fooUser", "fooPassword",
-           makeGroups());
+           makeGroups("staff", "wheel"));
   }
 
-  private Collection<String> makeGroups() {
-    ArrayList<String> groups = new ArrayList<String>();
-    groups.add("staff");
-    groups.add("wheel");
-    return groups;
+  /** Tests unsafe XML characters in user and group names. */
+  public void testEvilUserAndGroupNames() {
+    String xmlBody =
+      "<AuthnRequest>\n" +
+      "  <Credentials>\n" +
+      "    <Username>foo&lt;bar&gt;baz&amp;</Username>\n" +
+      "    <Domain>connector1</Domain>\n" +
+      "  </Credentials>\n" +
+      "</AuthnRequest>";
+
+    String expectedResult =
+      "<CmResponse>\n" +
+      "  <AuthnResponse>\n" +
+      "    <Success ConnectorName=\"connector1\">\n" +
+      "      <Identity>foo&lt;bar>baz&amp;</Identity>\n" +
+      "      <Group>st&amp;ff</Group>\n" +
+      "      <Group>we&#39;ll</Group>\n" +
+      "    </Success>\n" +
+      "    <Failure ConnectorName=\"connector2\"/>\n" +
+      "  </AuthnResponse>\n" +
+      "</CmResponse>\n";
+
+    doTest(xmlBody, expectedResult, "connector1", "foo<bar>baz&", "fooPassword",
+           makeGroups("st&ff", "we'll"));
+  }
+
+  private Collection<String> makeGroups(String... groups) {
+    return ImmutableList.copyOf(groups);
   }
 
   private void doTest(String xmlBody, String expectedResult, String domain,
@@ -312,11 +351,11 @@ public class AuthenticateTest extends TestCase {
     PrintWriter out = new PrintWriter(writer);
     Authenticate.handleDoPost(xmlBody, manager, out);
     out.flush();
-    StringBuffer result = writer.getBuffer();
-    LOGGER.info("expected result:\n" + expectedResult);
-    LOGGER.info("actual result:\n" + result.toString());
-    Assert.assertEquals(StringUtils.normalizeNewlines(expectedResult),
-        StringUtils.normalizeNewlines(result.toString()));
+    String result = writer.toString();
     out.close();
+    LOGGER.info("expected result:\n" + expectedResult);
+    LOGGER.info("actual result:\n" + result);
+    assertEquals(StringUtils.normalizeNewlines(expectedResult),
+                 StringUtils.normalizeNewlines(result));
   }
 }

@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright 2006 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,6 +14,8 @@
 
 package com.google.enterprise.connector.common;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,6 +24,9 @@ import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 
 public class StringUtils {
+
+  @VisibleForTesting
+  static final int BUFFER_SIZE = 32768;
 
   private StringUtils() {
     // prevents instantiation
@@ -110,7 +115,7 @@ public class StringUtils {
    */
   public static String streamToStringAndThrow(InputStream is)
       throws IOException {
-    int bytesLen = 32768;
+    int bytesLen = BUFFER_SIZE;
     byte[] bytes = new byte[bytesLen];
 
     // Read in the bytes

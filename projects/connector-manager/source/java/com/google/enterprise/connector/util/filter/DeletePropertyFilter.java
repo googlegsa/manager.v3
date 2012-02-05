@@ -29,6 +29,23 @@ import java.util.Set;
  * {@link Property Properties} from the document.
  * The deleted properties are not fed to the GSA and do not
  * appear in the set of properties available from the document.
+ * <p/>
+ * <b>Example {@code documentFilters.xml} Configuration:</b>
+ * <p/>
+ * The following example filters out the {@code Department} and {@code Section}
+ * properties from the document.
+ * <pre><code>
+   &lt;!-- Remove Department and Section properties. --&gt;
+   &lt;bean id="DeleteDeptAndSect"
+      class="com.google.enterprise.connector.util.filter.DeletePropertyFilter"&gt;
+     &lt;property name="propertyNames"/&gt;
+       &lt;set&gt;
+         &lt;value&gt;Department&lt;/value&gt;
+         &lt;value&gt;Section&lt;/value&gt;
+       &lt;/set&gt;
+     &lt;/property&gt;
+   &lt;/bean&gt;
+   </code></pre>
  */
 public class DeletePropertyFilter extends AbstractDocumentFilter {
 

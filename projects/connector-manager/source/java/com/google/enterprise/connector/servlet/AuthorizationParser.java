@@ -52,14 +52,14 @@ public class AuthorizationParser {
       Logger.getLogger(AuthorizationParser.class.getName());
 
   private final String xmlBody;
-  private int status;
+  private ConnectorMessageCode status;
   private int numDocs;
   private final Map<AuthenticationIdentity, ConnectorQueries> parseMap;
 
   public AuthorizationParser(String xmlBody) {
     this.xmlBody = xmlBody;
     parseMap = new HashMap<AuthenticationIdentity, ConnectorQueries>();
-    status = ConnectorMessageCode.SUCCESS;
+    status = new ConnectorMessageCode();
     numDocs = 0;
     parse();
   }
@@ -89,7 +89,7 @@ public class AuthorizationParser {
         ServletUtil.XMLTAG_AUTHZ_QUERY);
 
     if (root == null) {
-      status = ConnectorMessageCode.ERROR_PARSING_XML_REQUEST;
+      setStatus(ConnectorMessageCode.ERROR_PARSING_XML_REQUEST);
       return;
     }
 
@@ -101,18 +101,19 @@ public class AuthorizationParser {
       return;
     }
 
-    status = ConnectorMessageCode.SUCCESS;
     numDocs = 0;
 
     for (int i = 0; i < queryList.getLength(); ++i) {
       Element queryItem = (Element) queryList.item(i);
       AuthenticationIdentity identity = parseIdentityGroup(queryItem);
-      if (status != ConnectorMessageCode.SUCCESS) {
-        return;
-      }
-      parseResourceGroup(identity, queryItem);
-      if (status != ConnectorMessageCode.SUCCESS) {
-        return;
+      // Only consider Resources for which there is an associated identity.
+      // A null Identity is considered an error on the part of the GSA.
+      // Skip all its resources and continue with the next ConnectorQuery item.
+      // Subsequently, this ConnectorQuery will not run and none of its
+      // QueryResources will be returned. The GSA will then consider them
+      // INDETERMINATE.
+      if (identity != null) {
+        parseResourceGroup(identity, queryItem);
       }
     }
 
@@ -135,6 +136,16 @@ public class AuthorizationParser {
     String password =
         XmlParseUtil.getFirstAttribute(queryItem, ServletUtil.XMLTAG_IDENTITY,
         ServletUtil.XMLTAG_PASSWORD_ATTRIBUTE);
+
+    if (username == null) {
+      LOGGER.warning("Null Identity");
+      // TODO: Is this the only way this can happen?
+      LOGGER.warning("Flexible Authorization may be misconfigured to use "
+          + "connector authorization with a credential group which has no "
+          + "authentication rules defined.");
+      setStatus(ConnectorMessageCode.RESPONSE_NULL_IDENTITY, "Null Identity");
+      return null;
+    }
 
     AuthenticationIdentity identity = findIdentity(username, password, domain);
     ConnectorQueries urlsByConnector = getConnectorQueriesForIdentity(identity);
@@ -161,7 +172,8 @@ public class AuthorizationParser {
     NodeList resourceList =
         queryItem.getElementsByTagName(ServletUtil.XMLTAG_RESOURCE);
     if (resourceList.getLength() == 0) {
-      status = ConnectorMessageCode.RESPONSE_NULL_RESOURCE;
+      LOGGER.warning("Null Resources");
+      setStatus(ConnectorMessageCode.RESPONSE_NULL_RESOURCE);
       return;
     }
 
@@ -172,8 +184,11 @@ public class AuthorizationParser {
       Element resourceItem = (Element) resourceList.item(i);
       AuthorizationResource resource = new AuthorizationResource(resourceItem);
       if (resource.getStatus() != ConnectorMessageCode.SUCCESS) {
-        status = resource.getStatus();
-        return;
+        setStatus(resource.getStatus());
+        // Skip this failed resource and continue with the next one.
+        // Since it was not added to the resources for this connector, it will
+        // not get auto-DENY in AuthorizationHandler.accumlateQueryResults.
+        // The GSA will then consider it INDETERMINATE.
       } else {
         // Create a mapping for this resource.
         QueryResources urlsByDocid =
@@ -192,9 +207,6 @@ public class AuthorizationParser {
   // Package-level visibility for testing.
   static boolean matchesIdentity(AuthenticationIdentity id, String username,
       String password, String domain) {
-    if (username == null && id.getUsername() != null) {
-      return false;
-    }
     if (!id.getUsername().equals(username)) {
       return false;
     }
@@ -235,7 +247,19 @@ public class AuthorizationParser {
     return numDocs;
   }
 
-  public int getStatus() {
+  public void setStatus(int messageId) {
+    setStatus(messageId, null);
+  }
+
+  public void setStatus(int messageId, String message) {
+    // Only override a SUCCESS status, not any previous error.
+    if (status.isSuccess()) {
+      status = new ConnectorMessageCode(messageId, message,
+                                        ConnectorMessageCode.EMPTY_PARAMS);
+    }
+  }
+
+  public ConnectorMessageCode getStatus() {
     return status;
   }
 

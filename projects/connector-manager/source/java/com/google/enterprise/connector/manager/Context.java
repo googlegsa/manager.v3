@@ -199,6 +199,23 @@ public class Context {
       + " For example:\n"
       + "   feed.document.size.limit=31457280\n"
       + "\n"
+      + " The 'feed.contenturl.prefix' property is used for contentUrl\n"
+      + " generation. The prefix should include protocol, host and port,\n"
+      + " web app, and servlet to point back at this Connector Manager\n"
+      + " instance.\n"
+      + " For example:\n"
+      + " http://localhost:8080/connector-manager/getDocumentContent\n"
+      + "\n"
+      + " The 'feed.contenturl.compression' property is used for content URL\n"
+      + " feed content retrieval.  If 'true', document content retrieved\n"
+      + " using the content URL will be gzip compressed (if the requesting\n"
+      + " client supports compression).  If 'false', content is returned\n"
+      + " uncompressed.  Compression may benefit architectures with slow\n"
+      + " network communications between the GSA and the Connector Manager\n"
+      + " (such as a WAN).  However, use of compression may cause excessive\n"
+      + " CPU load on both the GSA and the Connector Manager.\n"
+      + " The default value is 'false'.\n"
+      + "\n"
       + " The 'feed.backlog.*' properties are used to throttle back the\n"
       + " document feed if the GSA has fallen behind processing outstanding\n"
       + " feed items.  The Connector Manager periodically polls the GSA,\n"
@@ -254,8 +271,8 @@ public class Context {
       + " intervals or never are probably sufficient.  For clustered\n"
       + " deployments with a shared configuration store, 60 to 300 seconds\n"
       + " is probably sufficient.  The default configuration change\n"
-      + " detection interval is -1 (never).\n"
-      + " config.change.detect.interval=60\n"
+      + " detection interval is 15 minutes (900 seconds).\n"
+      + " config.change.detect.interval=900\n"
       + "\n"
       + "The 'jdbc.datasource.*' properties specify JDBC configuration\n"
       + "required to access external databases.  By default, the\n"
@@ -1030,6 +1047,8 @@ public class Context {
     gsaFeedHost = feederGateHost;
     isGsaFeedHostInitialized = true;
 
+    // TODO: The following should probably be done in ProductionManager.
+
     // Notify the GsaFeedConnection of new host and port.
     if (feeder != null) {
       try {
@@ -1042,6 +1061,11 @@ public class Context {
       } catch (MalformedURLException e) {
         throw new InstantiatorException("Invalid GSA Feed specification", e);
       }
+    }
+
+    // Notify GData aware Connectors.
+    if (instantiator != null) {
+      instantiator.setGDataConfig();
     }
   }
 

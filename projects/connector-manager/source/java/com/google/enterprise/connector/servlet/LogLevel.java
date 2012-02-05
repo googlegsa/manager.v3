@@ -192,7 +192,7 @@ public class LogLevel extends HttpServlet {
       // Return Status of the current logging level for the handler.
       ServletUtil.writeRootTag(out, false);
       ServletUtil.writeMessageCode(out, new ConnectorMessageCode());
-      String currentLevel = handler.getLogger().getLevel().getName();
+      String currentLevel = getLogLevel(handler.getLogger()).getName();
       ServletUtil.writeXMLElement(out, 1, ServletUtil.XMLTAG_LEVEL,
                                   currentLevel);
       ServletUtil.writeXMLElement(out, 1, ServletUtil.XMLTAG_INFO,
