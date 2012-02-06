@@ -114,10 +114,10 @@ public class ModifyPropertyFilter extends AbstractDocumentFilter {
 
   /** The names of the Properties to filter. */
   protected Set<String> propertyNames;
-  
+
   /** The names of the mimetypes to filter. */
   protected Set<String> mimeTypes;
-  
+
   /** The name of the encoding type used to convert binary data to string */
   protected String encoding = "UTF-8";
 
@@ -171,11 +171,11 @@ public class ModifyPropertyFilter extends AbstractDocumentFilter {
     Preconditions.checkNotNull(mimeTypes, "mimeTypes may not be null");
     this.mimeTypes = mimeTypes;
   }
-  
+
   /**
    * Sets the media types of the {@link Document} objects to modify.
    *
-   * @param mimeTypes the name of the media type to filter
+   * @param mimeType the name of the media type to filter
    * @throws NullPointerException if {@code mimeType} is {@code null}
    */
   public void setMimeType(String mimeType) {
@@ -228,7 +228,7 @@ public class ModifyPropertyFilter extends AbstractDocumentFilter {
   public void setOverwrite(boolean overwrite) {
     this.overwrite = overwrite;
   }
-  
+
   /**
    * Sets the the name of the character encoding type to be used.
    *
@@ -268,11 +268,11 @@ public class ModifyPropertyFilter extends AbstractDocumentFilter {
       String original = null;
       String modified = null;
       Value originalValue = null;
-      Value modifiedValue = null;      
+      Value modifiedValue = null;
       if (value instanceof BinaryValue) {
         Property prop = source.findProperty(SpiConstants.PROPNAME_MIMETYPE);
         if (prop == null){
-          // There is no mimetype property in the document. 
+          // There is no mimetype property in the document.
           return source.findProperty(name);
         }
         String mimeType = prop.nextValue().toString();
@@ -283,7 +283,7 @@ public class ModifyPropertyFilter extends AbstractDocumentFilter {
         if (mimeTypes == null) {
           mimeTypes = initDefaultMimeTypes();
         }
-        // TODO(kiran) should allow match top-level 
+        // TODO(kiran) should allow match top-level
         // (e.g. "text/xml" matches "text")
         if (!mimeTypes.contains(mimeType)) {
           return source.findProperty(name);
