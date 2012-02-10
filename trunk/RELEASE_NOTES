@@ -11,8 +11,8 @@ issues and work-arounds.
 Web Site: http://code.google.com/p/google-enterprise-connector-manager/
 
 
-Release 2.8.4, 23 January 2012
-==============================
+Release 2.8.4, 10 February 2012
+===============================
 
 Introduction
 ------------
@@ -21,6 +21,10 @@ the previous release. Users of the previous release are encouraged to upgrade.
 
 Summary of Changes
 ------------------
+  * Fix bug 5973714: Exceptions thrown while prefetching the Authorization
+    Manager on connector startup would leave the connector instance in an
+    inconsistent state.
+
   * Fix Issue 5723358 - Escape special characters in user and group names
     returned in an Authentication response.  User or group names that contained
     certain characters that have special meaning in XML syntax would cause
