@@ -936,6 +936,11 @@ class ConnectorCoordinatorImpl implements
       getAuthorizationManager();
     } catch (ConnectorNotFoundException cnfe) {
       // Not going to happen here, but even if it did, we don't care.
+    } catch (InstantiatorException ie) {
+      // Likely failed connector.login(). This attempt to cache AuthZMgr failed.
+      // However it is not important yet, so log it and continue on.
+      LOGGER.log(Level.WARNING,
+          "Failed to get AuthorizationManager for connector " + name, ie);
     }
 
     // The load value in a Schedule is docs/minute.
