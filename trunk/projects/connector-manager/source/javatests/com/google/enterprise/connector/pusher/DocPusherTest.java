@@ -20,6 +20,7 @@ import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.mock.MockRepository;
 import com.google.enterprise.connector.mock.MockRepositoryEventList;
 import com.google.enterprise.connector.mock.jcr.MockJcrQueryManager;
+import com.google.enterprise.connector.pusher.Pusher.PusherStatus;
 import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.DocumentList;
@@ -383,7 +384,7 @@ public class DocPusherTest extends TestCase {
 
     Document document = null;
     while ((document = documentList.nextDocument()) != null) {
-      dpusher.take(document, null);
+      assertEquals(PusherStatus.OK, dpusher.take(document, null));
     }
     dpusher.flush();
     String resultXML = feedConnection.getFeed();
@@ -460,7 +461,7 @@ public class DocPusherTest extends TestCase {
       Assert.assertFalse(i == expectedXml.length);
       DocPusher dpusher =
           new DocPusher(feedConnection, "junit", fsli, dfc, null);
-      dpusher.take(document, null);
+      assertEquals(PusherStatus.OK, dpusher.take(document, null));
       dpusher.flush();
       System.out.println("Test " + i + " assertions");
       String resultXML = feedConnection.getFeed();
@@ -1235,7 +1236,7 @@ public class DocPusherTest extends TestCase {
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
     DocPusher dpusher =
         new DocPusher(mockFeedConnection, "junit", fsli, dff, contentUrlPrefix);
-    dpusher.take(document, null);
+    assertEquals(PusherStatus.OK, dpusher.take(document, null));
     dpusher.flush();
     return mockFeedConnection.getFeed();
   }
@@ -1278,7 +1279,7 @@ public class DocPusherTest extends TestCase {
               + ", \"google:lastmodified\":\"Tue, 15 Nov 1994 12:45:26 GMT\""
               + "}\r\n" + "";
       document = JcrDocumentTest.makeDocumentFromJson(jsonIncremental);
-      dpusher.take(document, null);
+      assertEquals(PusherStatus.OK, dpusher.take(document, null));
       dpusher.flush();
       resultXML = mockFeedConnection.getFeed();
       assertFeedInLog(resultXML, TEST_LOG_FILE);
@@ -1292,7 +1293,7 @@ public class DocPusherTest extends TestCase {
               + ", \"google:lastmodified\":\"Tue, 15 Nov 1994 12:45:26 GMT\""
               + "}\r\n" + "";
       document = JcrDocumentTest.makeDocumentFromJson(jsonMetaAndUrl);
-      dpusher.take(document, null);
+      assertEquals(PusherStatus.OK, dpusher.take(document, null));
       dpusher.flush();
       resultXML = mockFeedConnection.getFeed();
       assertFeedInLog(resultXML, TEST_LOG_FILE);
@@ -1307,7 +1308,7 @@ public class DocPusherTest extends TestCase {
               + ",\"google:contenturl\":\"http://www.sometesturl.com/test\""
               + "}\r\n" + "";
       document = JcrDocumentTest.makeDocumentFromJson(jsonMsWord);
-      dpusher.take(document, null);
+      assertEquals(PusherStatus.OK, dpusher.take(document, null));
       dpusher.flush();
       resultXML = mockFeedConnection.getFeed();
       assertFeedInLog(resultXML, TEST_LOG_FILE);
@@ -1441,14 +1442,14 @@ public class DocPusherTest extends TestCase {
       MockFeedConnection mockFeedConnection = new MockFeedConnection();
       DocPusher dpusher =
           new DocPusher(mockFeedConnection, "junit", fsli, dfc, null);
-      dpusher.take(document, null);
+      assertEquals(PusherStatus.OK, dpusher.take(document, null));
       dpusher.flush();
       String resultXML = mockFeedConnection.getFeed();
       assertFeedTeed(resultXML, tffName);
 
       // Now send the feed again and compare with existing teed feed file.
       dpusher = new DocPusher(mockFeedConnection, "junit", fsli, dfc, null);
-      dpusher.take(document, null);
+      assertEquals(PusherStatus.OK, dpusher.take(document, null));
       dpusher.flush();
       String secondResultXML = mockFeedConnection.getFeed();
       assertFeedTeed(resultXML + secondResultXML, tffName);
@@ -2242,7 +2243,7 @@ public class DocPusherTest extends TestCase {
     limit.setMaxFeedSize(64 * 1024); // 64 KB
     DocPusher dpusher =
         new DocPusher(mockFeedConnection, "junit", limit, dfc, null);
-    dpusher.take(document, null);
+    assertEquals(PusherStatus.OK, dpusher.take(document, null));
     dpusher.flush();
     return mockFeedConnection.getFeed();
   }
@@ -2416,9 +2417,16 @@ public class DocPusherTest extends TestCase {
     DocPusher dpusher =
         new DocPusher(slowFeedConnection, "junit", limit, dfc, null);
     int count;
-    for (count = 0; dpusher.take(document, null) && count < 30; count++) ;
+    PusherStatus status = PusherStatus.OK;
+    for (count = 0; count < 30; count++) {
+      status = dpusher.take(document, null);
+      if (status != PusherStatus.OK)
+        break;
+    }
     assertTrue(count >= 10); // Min. 10 feeds must be waiting to be a backlog.
     assertTrue(count < 30);  // But we should have detected the backlog by now.
+    assertEquals(PusherStatus.LOCAL_FEED_BACKLOG, status);
+    assertEquals(PusherStatus.LOCAL_FEED_BACKLOG, dpusher.getPusherStatus());
     // dpusher.flush();      // Let the sleeping threads lie.
   }
 
@@ -2437,9 +2445,10 @@ public class DocPusherTest extends TestCase {
 
     DocPusher dpusher =
         new DocPusher(backlogFeedConnection, "junit", limit, dfc, null);
-    assertTrue(dpusher.take(document, null));
+    assertEquals(PusherStatus.OK, dpusher.take(document, null));
     backlogFeedConnection.setBacklogged(true);
-    assertFalse(dpusher.take(document, null));
+    assertEquals(PusherStatus.GSA_FEED_BACKLOG, dpusher.take(document, null));
+    assertEquals(PusherStatus.GSA_FEED_BACKLOG, dpusher.getPusherStatus());
     dpusher.flush();
   }
 
@@ -2461,7 +2470,7 @@ public class DocPusherTest extends TestCase {
     // OK to feed more (return true).
     DocPusher dpusher =
         new DocPusher(feedConnection, "junit", limit, dfc, null);
-    assertTrue(dpusher.take(document, null));
+    assertEquals(PusherStatus.OK, dpusher.take(document, null));
     dpusher.flush();
   }
 
@@ -2488,19 +2497,18 @@ public class DocPusherTest extends TestCase {
     config.put(SpiConstants.PROPNAME_CONTENT,
                new HugeInputStream(limit.maxDocumentSize() - 10));
     Document bigDocument = ConnectorTestUtils.createSimpleDocument(config);
-    boolean result = dpusher.take(bigDocument, null);
-    assertFalse(result);
+    assertEquals(PusherStatus.LOW_MEMORY, dpusher.take(bigDocument, null));
     dpusher.flush();
     assertFalse(feedConnection.isBacklogged());
   }
-  
+
   /**
    * Tests ACL document.
    */
   public void testSimpleAclDoc() throws Exception {
     Map<String, Object> props = getTestDocumentConfig();
 
-    props.put(SpiConstants.PROPNAME_FEEDTYPE, 
+    props.put(SpiConstants.PROPNAME_FEEDTYPE,
         SpiConstants.FeedType.ACL.toString());
     props.put(SpiConstants.PROPNAME_ACLINHERITANCETYPE,
         SpiConstants.AclInheritanceType.PARENT_OVERRIDES.toString());
@@ -2515,13 +2523,13 @@ public class DocPusherTest extends TestCase {
     String resultXML = feedDocument(document);
 
     assertStringContains("<acl url=\"googleconnector://junit.localhost/doc"
-        + "?docid=doc1\" inheritance-type=\"parent-overrides\"" + 
+        + "?docid=doc1\" inheritance-type=\"parent-overrides\"" +
         " inherit-from=\"parent-doc\">", resultXML);
     assertStringContains(
-        "<principal scope=\"USER\" access=\"PERMIT\">John Doe</principal>", 
+        "<principal scope=\"USER\" access=\"PERMIT\">John Doe</principal>",
         resultXML);
     assertStringContains(
-        "<principal scope=\"USER\" access=\"DENY\">Jason Wang</principal>", 
+        "<principal scope=\"USER\" access=\"DENY\">Jason Wang</principal>",
         resultXML);
     assertStringContains(
         "<principal scope=\"GROUP\" access=\"PERMIT\">Engineering</principal>",
