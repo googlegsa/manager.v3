@@ -25,6 +25,7 @@ import com.google.enterprise.connector.pusher.MockPusher;
 import com.google.enterprise.connector.pusher.Pusher;
 import com.google.enterprise.connector.pusher.PusherFactory;
 import com.google.enterprise.connector.pusher.PushException;
+import com.google.enterprise.connector.pusher.Pusher.PusherStatus;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.DocumentList;
 import com.google.enterprise.connector.spi.Property;
@@ -654,7 +655,7 @@ public class QueryTraverserTest extends TestCase {
      * </OL>
      */
     /* @Override */
-    public synchronized boolean take(Document document, DocumentStore ignored)
+    public synchronized PusherStatus take(Document document, DocumentStore ignored)
         throws RepositoryException, PushException {
       String gotId =
           Value.getSingleValueString(document, SpiConstants.PROPNAME_DOCID);
@@ -669,7 +670,7 @@ public class QueryTraverserTest extends TestCase {
       } catch (Throwable t) {
         throw new PushException(t);
       }
-      return true;
+      return PusherStatus.OK;
     }
 
     synchronized void skipDocument() {
@@ -684,6 +685,11 @@ public class QueryTraverserTest extends TestCase {
     public synchronized void cancel() {
       pushCount = 0;
       expectedId = 0;
+    }
+
+    /* @Override */
+    public PusherStatus getPusherStatus() {
+      return PusherStatus.OK;
     }
 
     /**

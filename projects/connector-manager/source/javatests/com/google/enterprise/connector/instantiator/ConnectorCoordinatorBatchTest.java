@@ -19,6 +19,7 @@ import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.pusher.Pusher;
 import com.google.enterprise.connector.pusher.PusherFactory;
+import com.google.enterprise.connector.pusher.Pusher.PusherStatus;
 import com.google.enterprise.connector.scheduler.LoadManager;
 import com.google.enterprise.connector.scheduler.LoadManagerFactory;
 import com.google.enterprise.connector.scheduler.Schedule;
@@ -471,9 +472,9 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
     }
 
     /* @Override */
-    public boolean take(Document document, DocumentStore ignored) {
+    public PusherStatus take(Document document, DocumentStore ignored) {
       pushedDocuments.add(new PushedDocument(document, connectorName));
-      return true;
+      return PusherStatus.OK;
     }
 
     /* @Override */
@@ -482,6 +483,11 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
 
     /* @Override */
     public void cancel() {
+    }
+
+    /* @Override */
+    public PusherStatus getPusherStatus() {
+      return PusherStatus.OK;
     }
 
     PushedDocument poll(long pollTimeLimitMillis) throws InterruptedException {

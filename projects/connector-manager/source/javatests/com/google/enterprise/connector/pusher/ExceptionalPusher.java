@@ -31,7 +31,7 @@ public class ExceptionalPusher extends MockPusher {
   /**
    * Locations from where ExceptionalPusher will throw its exceptions.
    */
-  public static enum Where { NONE, TAKE, FLUSH, CANCEL }
+  public static enum Where { NONE, TAKE, FLUSH, CANCEL, STATUS }
 
   public ExceptionalPusher(Exception exception, Where where) {
     this.exception = exception;
@@ -57,7 +57,7 @@ public class ExceptionalPusher extends MockPusher {
   }
 
   @Override
-  public boolean take(Document document, DocumentStore docStore)
+  public PusherStatus take(Document document, DocumentStore docStore)
       throws PushException, FeedException, RepositoryException {
     if (where == Where.TAKE) {
       throwException(exception);
@@ -80,5 +80,14 @@ public class ExceptionalPusher extends MockPusher {
       throw new RuntimeException("TestRuntimeException");
     }
     super.cancel();
+  }
+
+  @Override
+  public PusherStatus getPusherStatus()
+      throws PushException, FeedException, RepositoryException {
+    if (where == Where.STATUS) {
+      throwException(exception);
+    }
+    return super.getPusherStatus();
   }
 }
