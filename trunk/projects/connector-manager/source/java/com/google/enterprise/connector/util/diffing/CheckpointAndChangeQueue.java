@@ -184,7 +184,7 @@ public class CheckpointAndChangeQueue {
    *  because nanosecond times can go "back in time" between JVM restarts.
    *  Updated recovery files' names contain a wall clock millis timestamp 
    *  followed by an underscore followed by a nanotimestamp, eg.
-   *  recovery.1173956_10220010065599398 .
+   *  recovery.702522216012_10220010065599398 .
    */
   static class RecoveryFile extends File {
     final static long NO_TIME_AVAIL = -1;
