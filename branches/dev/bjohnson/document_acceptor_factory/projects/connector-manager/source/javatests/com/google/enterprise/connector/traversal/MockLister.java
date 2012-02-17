@@ -17,6 +17,7 @@ package com.google.enterprise.connector.traversal;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.DocumentAcceptor;
 import com.google.enterprise.connector.spi.DocumentAcceptorException;
+import com.google.enterprise.connector.spi.DocumentAcceptorFactory;
 import com.google.enterprise.connector.spi.Lister;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.SpiConstants;
@@ -56,9 +57,8 @@ public class MockLister implements Lister {
   }
 
   /* @Override */
-  public void setDocumentAcceptor(DocumentAcceptor documentAcceptor)
-        throws RepositoryException {
-    this.documentAcceptor = documentAcceptor;
+  public void setDocumentAcceptorFactory(DocumentAcceptorFactory factory) {
+    this.documentAcceptor = factory.newDocumentAcceptor();
   }
 
   /**
