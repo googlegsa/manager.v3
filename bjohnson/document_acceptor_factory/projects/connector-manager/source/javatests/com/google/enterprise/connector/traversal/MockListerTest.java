@@ -18,6 +18,7 @@ import com.google.enterprise.connector.pusher.DocumentAcceptorImpl;
 import com.google.enterprise.connector.pusher.MockPusher;
 import com.google.enterprise.connector.spi.DocumentAcceptor;
 import com.google.enterprise.connector.spi.DocumentAcceptorException;
+import com.google.enterprise.connector.spi.DocumentAcceptorFactory;
 import com.google.enterprise.connector.spi.Lister;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.TraversalContext;
@@ -50,7 +51,12 @@ public class MockListerTest extends TestCase {
   private MockLister getLister(long maxDocs, long delayMillis)
       throws Exception {
     MockLister lister = new MockLister(maxDocs, delayMillis);
-    lister.setDocumentAcceptor(documentAcceptor);
+    lister.setDocumentAcceptorFactory(new DocumentAcceptorFactory() {
+        /* @Override */
+        public DocumentAcceptor newDocumentAcceptor() {
+          return documentAcceptor;
+        }
+      });
     lister.start();
     return lister;
   }

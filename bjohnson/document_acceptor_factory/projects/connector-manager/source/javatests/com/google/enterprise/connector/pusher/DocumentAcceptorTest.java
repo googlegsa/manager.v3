@@ -21,6 +21,7 @@ import com.google.enterprise.connector.pusher.Pusher.PusherStatus;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.DocumentAcceptor;
 import com.google.enterprise.connector.spi.DocumentAcceptorException;
+import com.google.enterprise.connector.spi.DocumentAcceptorFactory;
 import com.google.enterprise.connector.spi.Lister;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.TraversalContext;
@@ -42,12 +43,15 @@ public class DocumentAcceptorTest extends TestCase {
 
   /** Test feeding a limited number of docs. */
   public void testFeedDocs() throws Exception {
-    String connectorName = getName();
-    MockPusher pusher = new MockPusher();
-    DocumentAcceptorImpl documentAcceptor =
-        new DocumentAcceptorImpl(connectorName, pusher, null);
-    MockLister lister = new MockLister(10, 0);
-    lister.setDocumentAcceptor(documentAcceptor);
+    final String connectorName = getName();
+    final MockPusher pusher = new MockPusher();
+    final MockLister lister = new MockLister(10, 0);
+    lister.setDocumentAcceptorFactory(new DocumentAcceptorFactory() {
+        /* @Override */
+        public DocumentAcceptor newDocumentAcceptor() {
+          return new DocumentAcceptorImpl(connectorName, pusher, null);
+        }
+      });
 
     // With no inter-document delay, MockLister feeds all documents
     // from its start() method, then returns when done.

@@ -47,8 +47,7 @@ public class DocumentAcceptorImpl implements DocumentAcceptor {
   private int retryCount = 10;
 
   public DocumentAcceptorImpl(String connectorName,
-      PusherFactory pusherFactory, DocumentStore documentStore)
-      throws DocumentAcceptorException, RepositoryException {
+      PusherFactory pusherFactory, DocumentStore documentStore) {
     this.connectorName = connectorName;
     this.pusherFactory = pusherFactory;
     this.documentStore = documentStore;
@@ -70,6 +69,7 @@ public class DocumentAcceptorImpl implements DocumentAcceptor {
    * @throws DocumentAcceptorException if a transient error occurs in the
    *         DocumentAcceptor
    */
+  /* @Override */
   public synchronized void take(Document document)
       throws DocumentAcceptorException, RepositoryException {
     try {
@@ -138,6 +138,7 @@ public class DocumentAcceptorImpl implements DocumentAcceptor {
    * @throws DocumentAcceptorException if a transient error occurs in the
    *         DocumentAcceptor
    */
+  /* @Override */
   public synchronized void flush()
       throws DocumentAcceptorException, RepositoryException {
     try {
@@ -162,6 +163,7 @@ public class DocumentAcceptorImpl implements DocumentAcceptor {
    * documents submitted to this DocumentAcceptor may have already been
    * sent on to the GSA.
    */
+  /* @Override */
   public synchronized void cancel() {
     if (pusher != null) {
       pusher.cancel();

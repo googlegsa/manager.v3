@@ -39,6 +39,8 @@ import com.google.enterprise.connector.spi.ConnectorPersistentStore;
 import com.google.enterprise.connector.spi.ConnectorPersistentStoreAware;
 import com.google.enterprise.connector.spi.ConnectorShutdownAware;
 import com.google.enterprise.connector.spi.ConnectorType;
+import com.google.enterprise.connector.spi.DocumentAcceptor;
+import com.google.enterprise.connector.spi.DocumentAcceptorFactory;
 import com.google.enterprise.connector.spi.Lister;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.Retriever;
@@ -333,6 +335,12 @@ class ConnectorCoordinatorImpl implements
       lister = getConnectorInterfaces().getLister();
       setTraversalContext(lister);
       setTraversalSchedule(lister, getSchedule());
+      lister.setDocumentAcceptorFactory(new DocumentAcceptorFactory() {
+          /* @Override */
+          public DocumentAcceptor newDocumentAcceptor() {
+            return new DocumentAcceptorImpl(name, pusherFactory, documentStore);
+          }
+        });
     }
     return lister;
   }
@@ -344,8 +352,6 @@ class ConnectorCoordinatorImpl implements
         Lister lister = getLister();
         if (lister != null) {
           LOGGER.fine("Starting Lister for connector " + name);
-          lister.setDocumentAcceptor(new DocumentAcceptorImpl(
-              name, pusherFactory, documentStore));
           listerHandle = threadPool.submit(new CancelableLister(name, lister));
         }
       } catch (ConnectorNotFoundException e) {

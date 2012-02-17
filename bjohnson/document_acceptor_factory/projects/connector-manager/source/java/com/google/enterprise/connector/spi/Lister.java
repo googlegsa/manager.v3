@@ -24,20 +24,18 @@ import com.google.enterprise.connector.spi.RepositoryException;
  * Listers may also choose to implement the
  * {@link com.google.enterprise.connector.spi.TraversalContextAware TraversalContextAware}
  * and/or
- * {@link  com.google.enterprise.connector.spi.TraversalScheduleAware TraversalScheduleAware}
+ * {@link com.google.enterprise.connector.spi.TraversalScheduleAware TraversalScheduleAware}
  * interfaces.
  */
 public interface Lister {
   /**
-   * Supplies the {@link DocumentAcceptor} that the {@link Lister} may use
-   * to supply {@link Document Documents} to the feed.
+   * Supplies the {@link DocumentAcceptorFactory} that the {@link Lister} may use
+   * to obtain a {@link DocumentAcceptor}.  The {@code DocumentAcceptor} may then
+   * be used to supply {@link Document Documents} to the feed.
    *
-   * @param documentAcceptor a DocumentAcceptor
+   * @param factory a DocumentAcceptorFactory
    */
-  // XXX: Giving the Listor a DocumentAcceptorFactory would allow it to
-  // generate several feeds concurrently in multiple threads.
-  public void setDocumentAcceptor(DocumentAcceptor documentAcceptor)
-      throws RepositoryException;
+  public void setDocumentAcceptorFactory(DocumentAcceptorFactory factory);
 
   /**
    * Starts the {@link Lister}.  It may commence sending documents to the
