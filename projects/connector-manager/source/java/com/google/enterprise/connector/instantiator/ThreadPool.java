@@ -16,6 +16,7 @@ package com.google.enterprise.connector.instantiator;
 
 import com.google.enterprise.connector.util.Clock;
 
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
@@ -347,12 +348,14 @@ public class ThreadPool {
        Future<?> future = completionService.take();
        try {
          future.get();
+       } catch (CancellationException e) {
+         LOGGER.info("Batch terminated due to cancellation.");
        } catch (ExecutionException e) {
          Throwable cause = e.getCause();
          // TODO(strellis): Should we call cancelable.cancel() if we get an
          // exception?
          if (cause instanceof InterruptedException) {
-           LOGGER.log(Level.INFO, "Batch termiated due to an interrupt.",
+           LOGGER.log(Level.INFO, "Batch terminated due to an interrupt.",
                       cause);
          } else {
            LOGGER.log(Level.SEVERE, "Batch failed with unhandled exception: ",
