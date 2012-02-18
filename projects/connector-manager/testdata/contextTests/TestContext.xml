@@ -6,6 +6,11 @@
      import this one, then add your customizations.
 -->
 <beans>
+
+  <bean id="ApplicationContextProperties" class="java.lang.String">
+    <constructor-arg value="/testdata/mocktestdata/applicationContext.properties"/>
+  </bean>
+
   <bean id="PusherFactory"
         class="com.google.enterprise.connector.pusher.MockPusher">
   </bean>
