@@ -77,6 +77,8 @@ Summary of Changes
 
   * Various improvements in diagnostic logging.
 
+  * Fix Issue 5676083 - Fix logic bug in diffing where recovery-files'
+    age comparison was broken.
 
 Release 2.8.2, 10 October 2011
 ==============================
