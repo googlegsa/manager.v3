@@ -138,7 +138,7 @@ public class SetScheduleTest extends TestCase {
                    schedule.getRetryDelayMillis());
     }
     assertEquals(((timeIntervals == null)? "" : timeIntervals),
-                 schedule.getTimeIntervalsAsString());
+                 schedule.getTimeIntervals());
   }
 
   private String makeXmlBody(String connectorName, boolean isDisabled,
