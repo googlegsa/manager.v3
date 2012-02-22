@@ -662,6 +662,14 @@ public class SpiConstants {
         put(PROPNAME_PERSISTED_CUSTOMDATA_2, "custom2").
         build();
   }
+  
+  /**
+   * Name of the default user profile collection. 
+   * 
+   * @since 3.0
+   */
+  public static final String DEFAULT_USERPROFILE_COLLECTION = 
+      "_google_social_userprofile_collection";
 
   /**
    * Enum for the list of possible inheritance types.
