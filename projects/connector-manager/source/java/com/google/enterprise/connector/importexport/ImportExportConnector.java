@@ -339,8 +339,7 @@ public class ImportExportConnector {
        ServletUtil.writeXMLElement(out, indent + 1, ServletUtil.XMLTAG_DELAY,
            Integer.toString(schedule.getRetryDelayMillis()));
        ServletUtil.writeXMLElement(out, indent + 1,
-           ServletUtil.XMLTAG_TIME_INTERVALS,
-           schedule.getTimeIntervalsAsString());
+           ServletUtil.XMLTAG_TIME_INTERVALS, schedule.getTimeIntervals());
        ServletUtil.writeXMLTag(out, indent,
            ServletUtil.XMLTAG_CONNECTOR_SCHEDULES, true);
     }
