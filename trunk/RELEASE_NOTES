@@ -77,8 +77,18 @@ Summary of Changes
 
   * Various improvements in diagnostic logging.
 
-  * Fix Issue 5676083 - Fix logic bug in diffing where recovery-files'
-    age comparison was broken.
+  * Fix Issue 5028655, 6019938 - Fix logic bug in diffing where recovery-files'
+    age comparison was broken.  This could lead to the connector resending the
+    same files again after Tomcat was restarted.
+
+Version Compatibility
+=====================
+The diffing library has a change effecting diffing connectors (File System,
+LDAP, and Database).  The method for assigning file name extensions to
+recovery files has changed. This change causes no issues migrating forward to
+this release, but reverting to an earlier release after running 2.8.4 requires
+diffing connectors to be reset.
+
 
 Release 2.8.2, 10 October 2011
 ==============================
