@@ -11,7 +11,7 @@ issues and work-arounds.
 Web Site: http://code.google.com/p/google-enterprise-connector-manager/
 
 
-Release 2.8.4, 10 February 2012
+Release 2.8.4, 23 February 2012
 ===============================
 
 Introduction
@@ -77,9 +77,12 @@ Summary of Changes
 
   * Various improvements in diagnostic logging.
 
-  * Fix Issue 5028655, 6019938 - Fix logic bug in diffing where recovery-files'
-    age comparison was broken.  This could lead to the connector resending the
-    same files again after Tomcat was restarted.
+  * Fix Issues 233, 5028655, 6019938 - Fix logic bug in diffing where
+    recovery-files' age comparison was broken.  This could lead to the
+    connector resending the same files again after Tomcat was restarted.
+
+  * Fix Issue 231 - A small memory leak in ThreadPool would leak
+    QueryTraversers (and all the objects they held).
 
 Version Compatibility
 =====================
