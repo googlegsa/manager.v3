@@ -178,18 +178,47 @@ public class CheckpointAndChangeQueue {
     }
   }
 
-  /** A File that has some of the recovery logic. */
-  private class RecoveryFile extends File {
+  /** A File that has some of the recovery logic. 
+   *  Original recovery files' names contained a single nanosecond timestamp,
+   *  eg.  recovery.10220010065599398 .  These turned out to be flawed
+   *  because nanosecond times can go "back in time" between JVM restarts.
+   *  Updated recovery files' names contain a wall clock millis timestamp 
+   *  followed by an underscore followed by a nanotimestamp, eg.
+   *  recovery.702522216012_10220010065599398 .
+   */
+  static class RecoveryFile extends File {
+    final static long NO_TIME_AVAIL = -1;
+    long milliTimestamp = NO_TIME_AVAIL;
     long nanoTimestamp;
 
-    String parseOutTimeString() throws IOException {
+    long parseTime(String s) throws IOException {
+      try {
+        return Long.parseLong(s);
+      } catch(NumberFormatException e) {
+        throw new LoggingIoException("Invalid recovery filename: "
+            + getAbsolutePath());
+      }
+    }
+
+    void parseOutTimes() throws IOException {
       try {
         String basename = getName();
-        if (basename.startsWith(RECOVERY_FILE_PREFIX)) {
-          return basename.substring(RECOVERY_FILE_PREFIX.length());
-        } else {
+        if (!basename.startsWith(RECOVERY_FILE_PREFIX)) {
           throw new LoggingIoException("Invalid recovery filename: "
               + getAbsolutePath());
+        } else {
+          String extension = basename.substring(RECOVERY_FILE_PREFIX.length());
+          if (!extension.contains("_")) {  // Original name format.
+            nanoTimestamp = parseTime(extension);
+          } else {  // Updated name format.
+            String timeParts[] = extension.split("_");
+            if (2 != timeParts.length) {
+              throw new LoggingIoException("Invalid recovery filename: "
+                  + getAbsolutePath());
+            }
+            milliTimestamp = parseTime(timeParts[0]);
+            nanoTimestamp = parseTime(timeParts[1]);
+          }
         }
       } catch(IndexOutOfBoundsException e) {
         throw new LoggingIoException("Invalid recovery filename: "
@@ -197,27 +226,37 @@ public class CheckpointAndChangeQueue {
       }
     }
 
-    long getTimestamp() throws IOException {
-      try {
-        return Long.parseLong(parseOutTimeString());
-      } catch(NumberFormatException e) {
-        throw new LoggingIoException("Invalid recovery filename: "
-            + getAbsolutePath());
-      }
-    }
-
-    RecoveryFile() throws IOException {
-      super(persistDir, RECOVERY_FILE_PREFIX + System.nanoTime());
-      nanoTimestamp = getTimestamp();
+    RecoveryFile(File persistanceDir) throws IOException {
+      super(persistanceDir, RECOVERY_FILE_PREFIX + System.currentTimeMillis()
+          + "_" + System.nanoTime());
+      parseOutTimes();
     }
 
     RecoveryFile(String absolutePath) throws IOException {
       super(absolutePath);
-      nanoTimestamp =  getTimestamp();
+      parseOutTimes();
     }
 
     boolean isOlder(RecoveryFile other) {
-      return this.nanoTimestamp < other.nanoTimestamp;
+      boolean weHaveMillis = milliTimestamp != NO_TIME_AVAIL;
+      boolean otherHasMillis = other.milliTimestamp != NO_TIME_AVAIL;
+      boolean bothHaveMillis = weHaveMillis && otherHasMillis;
+      boolean neitherHasMillis = (!weHaveMillis) && (!otherHasMillis);
+      if (bothHaveMillis) {
+        if (this.milliTimestamp < other.milliTimestamp) {
+          return true;
+        } else if (this.milliTimestamp > other.milliTimestamp) {
+          return false;
+        } else {
+          return this.nanoTimestamp < other.nanoTimestamp;
+        }
+      } else if (neitherHasMillis) {
+        return this.nanoTimestamp < other.nanoTimestamp;
+      } else if (weHaveMillis) {  // and other doesn't; we are newer.
+        return false;
+      } else {  // other has millis; other is newer.
+        return true;
+      }
     }
 
     /** A delete method that logs failures. */
@@ -259,7 +298,7 @@ public class CheckpointAndChangeQueue {
 
   private void writeRecoveryState() throws IOException {
     // TODO(pjo): Move this method into RecoveryFile.
-    File recoveryFile = new RecoveryFile();
+    File recoveryFile = new RecoveryFile(persistDir);
     FileOutputStream outStream = new FileOutputStream(recoveryFile);
     Writer writer = new OutputStreamWriter(outStream, Charsets.UTF_8);
     try {
