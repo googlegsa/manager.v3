@@ -81,7 +81,7 @@ Summary of Changes
     recovery-files' age comparison was broken.  This could lead to the
     connector resending the same files again after Tomcat was restarted.
 
-  * Fix Issue 231 - A small memory leak in ThreadPool would leak
+  * Fix Issue 232 - A small memory leak in ThreadPool would leak
     QueryTraversers (and all the objects they held).
 
 Version Compatibility
