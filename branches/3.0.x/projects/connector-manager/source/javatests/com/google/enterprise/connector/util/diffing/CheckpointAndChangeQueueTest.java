@@ -714,4 +714,42 @@ public class CheckpointAndChangeQueueTest extends TestCase {
     // That is start(checkpoint) loads the persisted monitor state.
     assertEquals(monPoints, q.getMonitorRestartPoints());
   }
+
+  public void testCompareRecoveryFilesWithoutMillis() throws IOException {
+    CheckpointAndChangeQueue.RecoveryFile rfA
+        = new CheckpointAndChangeQueue.RecoveryFile("recovery.123");
+    CheckpointAndChangeQueue.RecoveryFile rfB 
+        = new CheckpointAndChangeQueue.RecoveryFile("recovery.231");
+    CheckpointAndChangeQueue.RecoveryFile rfC 
+        = new CheckpointAndChangeQueue.RecoveryFile("recovery.312");
+    assertTrue(rfA.isOlder(rfB));
+    assertTrue(rfB.isOlder(rfC));
+    assertFalse(rfC.isOlder(rfA));
+  }
+
+  public void testCompareRecoveryFilesWithMillis() throws IOException {
+    CheckpointAndChangeQueue.RecoveryFile rfA
+        = new CheckpointAndChangeQueue.RecoveryFile("recovery.123_50");
+    CheckpointAndChangeQueue.RecoveryFile rfB 
+        = new CheckpointAndChangeQueue.RecoveryFile("recovery.231_20");
+    CheckpointAndChangeQueue.RecoveryFile rfC 
+        = new CheckpointAndChangeQueue.RecoveryFile("recovery.123_60");
+    assertTrue(rfA.isOlder(rfB));
+    assertFalse(rfB.isOlder(rfC));
+    assertFalse(rfC.isOlder(rfA));
+    assertTrue(rfA.isOlder(rfC));
+  }
+
+  public void testCompareRecoveryFilesXorMillis() throws IOException {
+    CheckpointAndChangeQueue.RecoveryFile rfA
+        = new CheckpointAndChangeQueue.RecoveryFile("recovery.123_50");
+    CheckpointAndChangeQueue.RecoveryFile rfB 
+        = new CheckpointAndChangeQueue.RecoveryFile("recovery.231_20");
+    CheckpointAndChangeQueue.RecoveryFile rfC 
+        = new CheckpointAndChangeQueue.RecoveryFile("recovery.321");
+    assertTrue(rfC.isOlder(rfA));
+    assertTrue(rfC.isOlder(rfB));
+    assertFalse(rfA.isOlder(rfC));
+    assertFalse(rfB.isOlder(rfC));
+  }
 }

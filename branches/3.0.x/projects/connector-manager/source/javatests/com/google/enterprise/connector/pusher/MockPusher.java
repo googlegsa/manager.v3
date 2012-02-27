@@ -30,7 +30,7 @@ import java.io.PrintStream;
 
 public class MockPusher implements Pusher, PusherFactory {
 
-  private boolean isShutdown = false;
+  private PusherStatus status = PusherStatus.OK;
   private int totalDocs = 0;
   private PrintStream printStream;
 
@@ -45,16 +45,18 @@ public class MockPusher implements Pusher, PusherFactory {
   /* @Override */
   public Pusher newPusher(String connectorName) {
     totalDocs = 0;
-    isShutdown = false;
+    if (status == PusherStatus.DISABLED) {
+      status = PusherStatus.OK;
+    }
     return this;
   }
 
   /* @Override */
-  public boolean take(Document document, DocumentStore ignored)
+  public PusherStatus take(Document document, DocumentStore ignored)
       throws PushException, FeedException, RepositoryException {
     // Mirror behaviour of DocPusher.
-    if (isShutdown) {
-      throw new IllegalStateException("Pusher is shut down");
+    if (status == PusherStatus.DISABLED) {
+      return PusherStatus.DISABLED;
     }
 
     printStream.println("<document>");
@@ -81,19 +83,32 @@ public class MockPusher implements Pusher, PusherFactory {
 
     printStream.println("</document>");
     totalDocs++;
-    return true;
+    return status;
   }
 
   /* @Override */
   public void flush() throws PushException, FeedException, RepositoryException {
     printStream.flush();
-    isShutdown = true;
+    status = PusherStatus.DISABLED;
   }
 
   /* @Override */
   public void cancel() {
     totalDocs = 0;
-    isShutdown = true;
+    status = PusherStatus.DISABLED;
+  }
+
+  /**
+   * @return the current PusherStatus
+   */
+  /* @Override */
+  public PusherStatus getPusherStatus()
+      throws PushException, FeedException, RepositoryException {
+    return status;
+  }
+
+  public void setPusherStatus(PusherStatus status) {
+    this.status = status;
   }
 
   private void processProperty(String name, Property property)
@@ -142,9 +157,5 @@ public class MockPusher implements Pusher, PusherFactory {
 
   public int getTotalDocs() {
     return totalDocs;
-  }
-
-  public boolean isShutdown() {
-    return isShutdown;
   }
 }

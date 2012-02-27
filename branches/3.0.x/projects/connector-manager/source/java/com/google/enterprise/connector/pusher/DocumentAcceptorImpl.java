@@ -15,6 +15,7 @@
 package com.google.enterprise.connector.pusher;
 
 import com.google.enterprise.connector.database.DocumentStore;
+import com.google.enterprise.connector.pusher.Pusher.PusherStatus;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.DocumentAcceptor;
 import com.google.enterprise.connector.spi.DocumentAcceptorException;
@@ -40,12 +41,24 @@ public class DocumentAcceptorImpl implements DocumentAcceptor {
 
   private Pusher pusher;
 
+  // Sleep milliseconds when waiting for Pusher to resume OK status.
+  private long shortSleep = 30 * 1000L;
+  private long longSleep = 5 * 60 * 1000L;
+  private int retryCount = 10;
+
   public DocumentAcceptorImpl(String connectorName,
       PusherFactory pusherFactory, DocumentStore documentStore)
       throws DocumentAcceptorException, RepositoryException {
     this.connectorName = connectorName;
     this.pusherFactory = pusherFactory;
     this.documentStore = documentStore;
+  }
+
+  /* Used by tests to shorten sleep times. */
+  void setSleepIntervals(long shortSleep, long longSleep, int retryCount) {
+    this.shortSleep = shortSleep;
+    this.longSleep = longSleep;
+    this.retryCount = retryCount;
   }
 
   /**
@@ -60,7 +73,9 @@ public class DocumentAcceptorImpl implements DocumentAcceptor {
   public synchronized void take(Document document)
       throws DocumentAcceptorException, RepositoryException {
     try {
-      pusher.take(document, documentStore);
+      if (pusher.take(document, documentStore) != PusherStatus.OK) {
+        waitForOkStatus();
+      }
     } catch (NullPointerException e) {
       // Ugly, but avoids checking for null Pusher on every call to take.
       if (pusher == null) {
@@ -84,6 +99,31 @@ public class DocumentAcceptorImpl implements DocumentAcceptor {
     } catch (RepositoryException e) {
       LOGGER.log(Level.WARNING, "DocumentAcceptor failed to take document", e);
       throw e;
+    } catch (InterruptedException e) {
+      // Woke from sleep. Just return.
+    }
+  }
+
+  /**
+   * Wait for the PusherStatus to clear. But don't wait forever.
+   */
+  private void waitForOkStatus() throws PushException,
+      FeedException, RepositoryException, InterruptedException {
+    for (int retries = 0; retries < retryCount; retries++) {
+      switch (pusher.getPusherStatus()) {
+        case OK:
+          return;
+        case DISABLED:
+          // This is not likely, but trigger getting a new Pusher.
+          throw new NullPointerException();
+        case LOW_MEMORY:
+        case LOCAL_FEED_BACKLOG:
+          Thread.sleep(shortSleep);
+          break;
+        case GSA_FEED_BACKLOG:
+          Thread.sleep(longSleep);
+          break;
+      }
     }
   }
 
