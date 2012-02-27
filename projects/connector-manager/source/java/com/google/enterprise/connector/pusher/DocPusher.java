@@ -207,10 +207,11 @@ public class DocPusher implements Pusher {
    * @throws RepositoryDocumentException if fatal Document problem
    * @throws RepositoryException if transient Repository problem
    */
-  public boolean take(Document document, DocumentStore documentStore)
+  /* @Override */
+  public PusherStatus take(Document document, DocumentStore documentStore)
       throws PushException, FeedException, RepositoryException {
     if (feedSender.isShutdown()) {
-      throw new IllegalStateException("Pusher is shut down");
+      return PusherStatus.DISABLED;
     }
     checkSubmissions();
 
@@ -275,22 +276,11 @@ public class DocPusher implements Pusher {
               + xmlFeed.size() + " bytes. Closing feed and sending to GSA.");
         }
         submitFeed();
-
-        // If we are running low on memory, don't start another feed -
-        // tell the Traverser to finish this batch.
-        if (lowMemory()) {
-          return false;
-        }
-
-        // If the number of feeds waiting to be sent has backed up,
-        // tell the Traverser to finish this batch.
-        if ((checkSubmissions() > 10) || feedConnection.isBacklogged()) {
-          return false;
-        }
+        return getPusherStatus();
       }
 
       // Indicate that this Pusher may accept more documents.
-      return true;
+      return PusherStatus.OK;
 
     } catch (OutOfMemoryError me) {
       xmlFeed.reset(resetPoint);
@@ -337,6 +327,7 @@ public class DocPusher implements Pusher {
    * @throws FeedException if transient Feed problem
    * @throws RepositoryException
    */
+  /* @Override */
   public void flush() throws PushException, FeedException, RepositoryException {
     checkSubmissions();
     if (!feedSender.isShutdown()) {
@@ -361,6 +352,7 @@ public class DocPusher implements Pusher {
   /**
    * Cancels any feed being constructed.  Any accumulated feed data is lost.
    */
+  /* @Override */
   public void cancel() {
     // Discard any feed under construction.
     if (xmlFeed != null) {
@@ -372,6 +364,32 @@ public class DocPusher implements Pusher {
     }
     // Cancel any feeds under asynchronous submission.
     feedSender.shutdownNow();
+  }
+
+  /* @Override */
+  public PusherStatus getPusherStatus()
+      throws PushException, FeedException, RepositoryException {
+    // Is Pusher shutdown?
+    if (feedSender.isShutdown()) {
+      return PusherStatus.DISABLED;
+    }
+
+    // If we are running low on memory, don't start another feed -
+    // tell the Traverser to finish this batch.
+    if (lowMemory()) {
+      return PusherStatus.LOW_MEMORY;
+    }
+
+    // If the number of feeds waiting to be sent has backed up,
+    // tell the Traverser to finish this batch.
+    if (checkSubmissions() > 10) {
+      return PusherStatus.LOCAL_FEED_BACKLOG;
+    } else if (feedConnection.isBacklogged()) {
+      return PusherStatus.GSA_FEED_BACKLOG;
+    }
+
+    // Indicate that this Pusher may accept more documents.
+    return PusherStatus.OK;
   }
 
   /**

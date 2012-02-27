@@ -19,6 +19,7 @@ import com.google.enterprise.connector.pusher.FeedException;
 import com.google.enterprise.connector.pusher.PushException;
 import com.google.enterprise.connector.pusher.Pusher;
 import com.google.enterprise.connector.pusher.PusherFactory;
+import com.google.enterprise.connector.pusher.Pusher.PusherStatus;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.DocumentList;
 import com.google.enterprise.connector.spi.Property;
@@ -196,7 +197,7 @@ public class QueryTraverser implements Traverser {
           LOGGER.finer("Sending document (" + docid + ") from connector "
               + connectorName + " to Pusher");
 
-          if (!pusher.take(nextDocument, documentStore)) {
+          if (pusher.take(nextDocument, documentStore) != PusherStatus.OK) {
             LOGGER.fine("Traversal batch for connector " + connectorName
                 + " is completing at the request of the Pusher,"
                 + " after processing " + counter + " documents.");

@@ -17,6 +17,7 @@ package com.google.enterprise.connector.pusher;
 import com.google.enterprise.connector.database.DocumentStore;
 import com.google.enterprise.connector.pusher.ExceptionalPusher;
 import com.google.enterprise.connector.pusher.ExceptionalPusher.Where;
+import com.google.enterprise.connector.pusher.Pusher.PusherStatus;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.DocumentAcceptor;
 import com.google.enterprise.connector.spi.DocumentAcceptorException;
@@ -25,6 +26,7 @@ import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.TraversalContext;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
 import com.google.enterprise.connector.traversal.MockLister;
+import com.google.enterprise.connector.util.SystemClock;
 
 import junit.framework.TestCase;
 
@@ -66,19 +68,87 @@ public class DocumentAcceptorTest extends TestCase {
     documentAcceptor.take(ConnectorTestUtils.createSimpleDocument("bar"));
 
     // Flush the feed.  This shuts down the Pusher.
+    assertEquals(PusherStatus.OK, pusher.getPusherStatus());
     documentAcceptor.flush();
     assertEquals(2, pusher.getTotalDocs());
-    assertTrue(pusher.isShutdown());
+    assertEquals(PusherStatus.DISABLED, pusher.getPusherStatus());
 
     // Feed another document. Should get a new Pusher.
     documentAcceptor.take(ConnectorTestUtils.createSimpleDocument("baz"));
     assertEquals(1, pusher.getTotalDocs());
-    assertFalse(pusher.isShutdown());
+    assertEquals(PusherStatus.OK, pusher.getPusherStatus());
 
     // Cancel that feed, without flushing.
     documentAcceptor.cancel();
     assertEquals(0, pusher.getTotalDocs());
-    assertTrue(pusher.isShutdown());
+    assertEquals(PusherStatus.DISABLED, pusher.getPusherStatus());
+  }
+
+  /**
+   * Test that if Pusher appears to be backlogged transmitting feeds,
+   * (feeds backed up on this end of the FeedConnection), the DocumentAcceptor
+   * waits a short period of time for the backlog to clear.
+   */
+  public void testProximalFeedBacklog() throws Exception {
+    testPusherStatus(PusherStatus.LOCAL_FEED_BACKLOG, 500L, 2000L, 1, 500L);
+    testPusherStatus(PusherStatus.LOCAL_FEED_BACKLOG, 500L, 2000L, 2, 2 * 500L);
+  }
+
+  /**
+   * Test that if GSA appears to be backlogged processing feeds, the
+   * DocumentAcceptor waits a longer period of time for the backlog to clear.
+   */
+  public void testDistalFeedBacklog() throws Exception {
+    testPusherStatus(PusherStatus.GSA_FEED_BACKLOG, 250L, 750L, 1, 750L);
+    testPusherStatus(PusherStatus.GSA_FEED_BACKLOG, 250L, 750L, 2, 2 * 750L);
+  }
+
+  /**
+   * Test that if runtime environment seems to be running low on memory, the
+   * DocumentAcceptor waits a short period of time for the low memory condition
+   * to clear.
+   */
+  public void testLowMemory() throws Exception {
+    testPusherStatus(PusherStatus.LOW_MEMORY, 500L, 2000L, 1, 500L);
+    testPusherStatus(PusherStatus.LOW_MEMORY, 500L, 2000L, 2, 2 * 500L);
+  }
+
+  private void testPusherStatus(PusherStatus status, long shortSleep,
+      long longSleep, int retries, long expectedDelay) throws Exception {
+    SystemClock clock = new SystemClock();
+    String connectorName = getName();
+    Document document = ConnectorTestUtils.createSimpleDocument("foo");
+    MockPusher pusher = new MockPusher();
+    DocumentAcceptorImpl documentAcceptor =
+        new DocumentAcceptorImpl(connectorName, pusher, null);
+    documentAcceptor.setSleepIntervals(shortSleep, longSleep, retries);
+
+    // Initial document feed should go unimpeded.
+    long startTime = clock.getTimeMillis();
+    documentAcceptor.take(document);
+    long stopTime = clock.getTimeMillis();
+    assertEquals(1, pusher.getTotalDocs());
+    assertEquals(PusherStatus.OK, pusher.getPusherStatus());
+    assertTrue("Delay too long " + (stopTime - startTime),
+               shortSleep > (stopTime - startTime));
+
+    // If pusher returns not-ready status, documentAcceptor should sleep.
+    pusher.setPusherStatus(status);
+    startTime = clock.getTimeMillis();
+    documentAcceptor.take(document);
+    stopTime = clock.getTimeMillis();
+    assertEquals(2, pusher.getTotalDocs());
+    assertTrue("Delay " + (stopTime - startTime),
+               expectedDelay <= (stopTime - startTime));
+
+    // Once the Pusher is OK, there should be no delays.
+    pusher.setPusherStatus(PusherStatus.OK);
+    startTime = clock.getTimeMillis();
+    documentAcceptor.take(document);
+    stopTime = clock.getTimeMillis();
+    assertEquals(3, pusher.getTotalDocs());
+    assertTrue("Delay " + (stopTime - startTime),
+               shortSleep > (stopTime - startTime));
   }
 
   /** Test PushException in take(). */

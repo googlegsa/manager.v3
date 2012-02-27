@@ -30,7 +30,6 @@ import com.google.enterprise.connector.pusher.PusherFactory;
 import com.google.enterprise.connector.scheduler.LoadManager;
 import com.google.enterprise.connector.scheduler.LoadManagerFactory;
 import com.google.enterprise.connector.scheduler.Schedule;
-import com.google.enterprise.connector.scheduler.ScheduleTimeInterval;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.ConfigureResponse;
@@ -447,7 +446,7 @@ class ConnectorCoordinatorImpl implements
       Schedule schedule = getInstanceInfo().getConnectorSchedule();
       if (schedule != null && schedule.isDisabled() &&
             schedule.getRetryDelayMillis() == -1 &&
-            !schedule.getTimeIntervals().isEmpty()) {
+            schedule.nextScheduledInterval() != -1) {
           schedule.setDisabled(false);
           getInstanceInfo().setConnectorSchedule(schedule);
       }
@@ -1096,6 +1095,11 @@ class ConnectorCoordinatorImpl implements
       getAuthorizationManager();
     } catch (ConnectorNotFoundException cnfe) {
       // Not going to happen here, but even if it did, we don't care.
+    } catch (InstantiatorException ie) {
+      // Likely failed connector.login(). This attempt to cache AuthZMgr failed.
+      // However it is not important yet, so log it and continue on.
+      LOGGER.log(Level.WARNING,
+          "Failed to get AuthorizationManager for connector " + name, ie);
     }
 
     // The load value in a Schedule is docs/minute.
