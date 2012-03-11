@@ -15,11 +15,13 @@
 package com.google.enterprise.connector.common;
 
 import com.google.enterprise.connector.pusher.XmlFeed;
+import com.google.enterprise.connector.spi.XmlUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -42,7 +44,62 @@ public class AlternateContentFilterInputStream extends FilterInputStream {
   private static final Logger LOGGER =
       Logger.getLogger(AlternateContentFilterInputStream.class.getName());
 
-  private static final byte[] SPACE_CHAR = { 0x20 };  // UTF-8 space
+  private static final String SPACE = " ";
+
+  /**
+   * Construct the alternate content data for a feed item.  If the feed item
+   * has null or empty content, or if the feed item has excessively large
+   * content, substitute this data which will insure that the feed item gets
+   * indexed by the GSA. The alternate content consists of the item's title,
+   * or a single space, if it lacks a title.
+   *
+   * @param title from the feed item
+   * @param mimeType MIME type of the feed item
+   * @return an InputStream containing the alternate content
+   */
+  public static InputStream getAlternateContent(String title, String mimeType) {
+    if (title != null && title.trim().length() == 0) {
+      title = null;
+    }
+
+    String content;
+    if ("application/pdf".equalsIgnoreCase(mimeType)) {
+      // Alternate content for PDF must still be a PDF,
+      // or the GSA drops the document with a "Conversion Error".
+      content = PdfUtil.titledEmptyPdf(title);
+    } else if (title != null) {
+      // If the feed item supplied a title property, we build an
+      // HTML5 fragment containing that title.  This provides better
+      // looking search result entries.
+      content = titledEmptyHtml(title);
+    } else {
+      // If no title is available, supply a single space as the content.
+      content = SPACE;
+    }
+
+    try {
+      return new ByteArrayInputStream(content.getBytes("UTF-8"));
+    } catch (UnsupportedEncodingException uee) {
+      // Will not happen with UTF-8.
+      throw new AssertionError(uee);
+    }
+  }
+
+  /** Builds an HTML5 document with just a title, no body. */
+  private static String titledEmptyHtml(String title) {
+    StringBuilder buf = new StringBuilder();
+    try {
+      buf.append("<!DOCTYPE html><html><head><meta charset=\"utf-8\"/>");
+      buf.append("<title>");
+      XmlUtils.xmlAppendAttrValue(title, buf);
+      buf.append("</title></html>");
+    } catch (IOException e) {
+      // Should not happen with StringBuilder.
+      throw new AssertionError(e);
+    }
+    return buf.toString();
+  }
+
   private boolean useAlternate;
   private InputStream alternate;
   private final XmlFeed feed;
@@ -74,7 +131,7 @@ public class AlternateContentFilterInputStream extends FilterInputStream {
     super(in);
     if (alternate == null) {
       // Use the default Alternate content: a single space.
-      alternate = getDefaultAlternateContent();
+      alternate = getAlternateContent(null, null);
     }
     this.useAlternate = (in == null);
     this.alternate = alternate;
@@ -82,13 +139,6 @@ public class AlternateContentFilterInputStream extends FilterInputStream {
     this.resetPoint = (feed == null) ? 0 : -1;
   }
 
-  /**
-   * @return and InputStream to the default alternate content -
-   *         a single space character.
-   */
-  public static InputStream getDefaultAlternateContent() {
-    return new ByteArrayInputStream(SPACE_CHAR);
-  }
 
   // Reset the feed to its position when we started reading this stream,
   // and start reading from the alternate input.
