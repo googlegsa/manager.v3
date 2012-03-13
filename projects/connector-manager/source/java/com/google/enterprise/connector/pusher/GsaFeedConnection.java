@@ -81,6 +81,9 @@ public class GsaFeedConnection implements FeedConnection {
   // XmlFeed DTD URL
   private URL dtdUrl = null;
 
+  // XmlFeed DTD
+  private String feedDtd = null;
+
   // BacklogCount URL
   private URL backlogUrl = null;
 
@@ -319,35 +322,27 @@ public class GsaFeedConnection implements FeedConnection {
   /* @Override */
   public synchronized String getContentEncodings() {
     if (contentEncodings == null) {
-      try {
-        String dtd = doGet(dtdUrl, "Feed DTD");
-        if (Strings.isNullOrEmpty(dtd)) {
-          // Failed to get a DTD. Assume the GSA only supports base64 encoded.
-          contentEncodings = "base64binary";
-        } else {
-          // TODO: Extract the supported content encodings from the DTD.
-          // As of GSA 6.2, returning a DTD at all also means compression
-          // is supported.
-          contentEncodings = "base64binary,base64compressed";
-        }
-      } catch (FeedException e) {
-        if (gotFeedError) {
-          LOGGER.finest("Failed to read Feed DTD: " + e.getMessage());
-        } else {
-          LOGGER.log(Level.WARNING, "Failed to read Feed DTD. ", e);
-        }
-        return "base64binary";  // Assume only base64 encoded support for now.
-      } catch (UnsupportedOperationException e) {
-        // This older GSA does not support getdtd, so assume the GSA only
-        // supports base64 encoded.
-        LOGGER.fine("Unsupported GSA version lacks get Feed DTD support.");
+      String dtd = getFeedDtd();
+      if (dtd == null) {
+        // Failed to get a DTD. Assume the GSA only supports base64 encoded.
         contentEncodings = "base64binary";
+      } else {
+        // TODO: Extract the supported content encodings from the DTD.
+        // As of GSA 6.2, returning a DTD at all also means compression
+        // is supported.
+        contentEncodings = "base64binary,base64compressed";
       }
       if (LOGGER.isLoggable(Level.FINE)) {
         LOGGER.fine("GSA supports Content Encodings: " + contentEncodings);
       }
     }
     return contentEncodings;
+  }
+
+  /* @Override */
+  public synchronized boolean supportsAcls() {
+    String dtd = getFeedDtd();
+    return (dtd == null) ? false : dtd.contains("<!ELEMENT acl ");
   }
 
   /* @Override */
@@ -415,6 +410,28 @@ public class GsaFeedConnection implements FeedConnection {
       // Got a non-integer backlog count - probably an error message.
       throw new FeedException(response);
     }
+  }
+
+  /**
+   * @return the GSA's Feed DTD, or null if unavailable.
+   */
+  private String getFeedDtd() {
+    if (feedDtd == null) {
+      try {
+        feedDtd = Strings.emptyToNull(doGet(dtdUrl, "Feed DTD"));
+      } catch (FeedException e) {
+        if (gotFeedError) {
+          LOGGER.finest("Failed to read Feed DTD: " + e.getMessage());
+        } else {
+          LOGGER.log(Level.WARNING, "Failed to read Feed DTD. ", e);
+        }
+      } catch (UnsupportedOperationException e) {
+        // This older GSA does not support getdtd, so assume the GSA only
+        // supports base64 encoded.
+        LOGGER.fine("Unsupported GSA version lacks get Feed DTD support.");
+      }
+    }
+    return feedDtd;
   }
 
   /**

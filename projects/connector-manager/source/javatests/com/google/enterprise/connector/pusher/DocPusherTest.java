@@ -2623,36 +2623,22 @@ public class DocPusherTest extends TestCase {
   /**
    * A FeedConnection that throws FeedException when fed.
    */
-  private static class BadFeedConnection1 implements FeedConnection {
-    public String sendData(FeedData feedData)
-        throws FeedException {
+  private static class BadFeedConnection1 extends MockFeedConnection {
+    @Override
+    public String sendData(FeedData feedData) throws FeedException {
       throw new FeedException("Anorexic FeedConnection");
-    }
-    public boolean isBacklogged() {
-      return false;
-    }
-    public String getContentEncodings() {
-      return "base64binary";
     }
   }
 
   /**
-   * A FeedConnection that returns a bad response.
+   * A FeedConnection that returns a bad response when fed.
    */
   private static class BadFeedConnection2 extends MockFeedConnection {
     @Override
     public String sendData(FeedData feedData)
-        throws RepositoryException {
+        throws FeedException, RepositoryException {
       super.sendData(feedData);
       return "Bulimic FeedConnection";
-    }
-    @Override
-    public boolean isBacklogged() {
-      return false;
-    }
-    @Override
-    public String getContentEncodings() {
-      return "base64binary";
     }
   }
 
@@ -2664,7 +2650,7 @@ public class DocPusherTest extends TestCase {
     static long doneTime = clock.getTimeMillis() + 5000;
     @Override
     public String sendData(FeedData feedData)
-        throws RepositoryException {
+        throws FeedException, RepositoryException {
       try {
         while (clock.getTimeMillis() < doneTime) {
           Thread.sleep(250);
@@ -2673,14 +2659,6 @@ public class DocPusherTest extends TestCase {
         // Stop waiting.
       }
       return super.sendData(feedData);
-    }
-    @Override
-    public boolean isBacklogged() {
-      return false;
-    }
-    @Override
-    public String getContentEncodings() {
-      return "base64binary";
     }
   }
 
