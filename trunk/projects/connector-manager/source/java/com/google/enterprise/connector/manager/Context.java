@@ -24,6 +24,7 @@ import com.google.enterprise.connector.instantiator.SpringInstantiator;
 import com.google.enterprise.connector.instantiator.ThreadPool;
 import com.google.enterprise.connector.pusher.GsaFeedConnection;
 import com.google.enterprise.connector.scheduler.TraversalScheduler;
+import com.google.enterprise.connector.spi.SimpleTraversalContext;
 import com.google.enterprise.connector.spi.TraversalContext;
 import com.google.enterprise.connector.traversal.ProductionTraversalContext;
 import com.google.enterprise.connector.util.database.JdbcDatabase;
@@ -743,6 +744,15 @@ public class Context {
           + " bean in context, using default.");
       traversalContext = new ProductionTraversalContext();
     }
+    // Lazily initialize supportsAcls, since it requires communicating with
+    // the GSA.
+    if (traversalContext instanceof SimpleTraversalContext) {
+      GsaFeedConnection feeder = getGsaFeedConnection();
+      if (feeder != null) {
+        ((SimpleTraversalContext) traversalContext).setSupportsAcls(
+            feeder.supportsAcls());
+      }
+    }
     return traversalContext;
   }
 
@@ -951,20 +961,20 @@ public class Context {
       String feederGateHost, int feederGatePort, int feederGateSecurePort)
       throws InstantiatorException {
     initApplicationContext();
+    setConnectorManagerConfig(feederGateProtocol, feederGateHost,
+        feederGatePort, feederGateSecurePort, getGsaFeedConnection());
+  }
 
-    GsaFeedConnection feeder;
+  private GsaFeedConnection getGsaFeedConnection() {
     try {
-      feeder = (GsaFeedConnection)
+      return (GsaFeedConnection)
         applicationContext.getBean("FeedConnection", GsaFeedConnection.class);
     } catch (BeansException be) {
       // The configured FeedConnection isn't a GSA, so it doesn't care
       // about the GSA host and port.
       LOGGER.config("The FeedConnection is not to a GSA: " + be.getMessage());
-      feeder = null;
+      return null;
     }
-
-    setConnectorManagerConfig(feederGateProtocol, feederGateHost,
-        feederGatePort, feederGateSecurePort, feeder);
   }
 
   @VisibleForTesting
