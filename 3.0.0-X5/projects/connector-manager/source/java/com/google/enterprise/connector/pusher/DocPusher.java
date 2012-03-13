@@ -263,7 +263,13 @@ public class DocPusher implements Pusher {
 
       // Add this document to the feed.
       contentStream = getContentStream(document, feedType);
-      Document feedDocument = new FeedDocument(document, xmlFeed.getFeedId());
+
+      /**
+       * TODO: Restore when tracking documents by feed.
+       Document feedDocument = new FeedDocument(document, xmlFeed.getFeedId());
+       */
+      Document feedDocument = document;
+
       xmlFeed.addRecord(feedDocument, contentStream, contentEncoding);
       if (documentStore != null) {
         documentStore.storeDocument(feedDocument);
@@ -693,6 +699,9 @@ public class DocPusher implements Pusher {
    * {@code SpiConstants.PROPNAME_FEEDID} property to the set of
    * properties.
    */
+  /**
+   * TODO: Restore when tracking documents by feed.
+   *
   private class FeedDocument implements Document {
     private String feedId;
     private Document document;
@@ -702,7 +711,7 @@ public class DocPusher implements Pusher {
       this.feedId = feedId;
     }
 
-    /* @Override */
+    @Override
     public Property findProperty(String name) throws RepositoryException {
       if (SpiConstants.PROPNAME_FEEDID.equals(name)) {
         return new SimpleProperty(Value.getStringValue(feedId));
@@ -711,7 +720,7 @@ public class DocPusher implements Pusher {
       }
     }
 
-    /* @Override */
+    @Override
     public Set<String> getPropertyNames() throws RepositoryException {
       return new ImmutableSet.Builder<String>()
              .add(SpiConstants.PROPNAME_FEEDID)
@@ -719,4 +728,5 @@ public class DocPusher implements Pusher {
              .build();
     }
   }
+  */
 }
