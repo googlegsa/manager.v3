@@ -225,7 +225,7 @@ however the content itself will not be fed.  The default value is
 feed.document.size.limit=31457280
 }}}
 
-===feed.backlog.floor, feed.back.log.ceiling, feed.backlog.interval===
+===feed.backlog.floor, feed.backlog.ceiling, feed.backlog.interval===
 The Feed Backlog properties are used to throttle back the
 document feed if the Search Appliance has fallen behind processing
 outstanding feed items.  The Connector Manager periodically polls the Search Appliance,
