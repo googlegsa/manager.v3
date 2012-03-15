@@ -68,7 +68,7 @@ public final class SocialCollectionHandler {
         client = new GsaClient(gsahostAddr, port, user, password);
       } catch (AuthenticationException eauth) {
         LOGGER.severe("Could not authenticate with the GSA as administrator."
-            + "Please check the credentials");
+            + " Please check the credentials");
         throw new RepositoryException(eauth);
       }
       GsaEntry collection = null;
@@ -173,9 +173,8 @@ public final class SocialCollectionHandler {
   public static void initializeSocialCollection(String gsaHost, int gsaPort,
       String gsaAdmin, String gsaAdminPassword, String collectionName)
       throws RepositoryException {
-    if ((collectionName == null) || (collectionName.equals(""))) {
-      collectionName = SpiConstants.DEFAULT_USERPROFILE_COLLECTION;
-    } else if (!(validateCollectionName(collectionName))) {
+    collectionName = getCollectionName(collectionName);
+    if (!(validateCollectionName(collectionName))) {
       throw new RepositoryException("Invalid collection name");
     }
 
@@ -184,6 +183,13 @@ public final class SocialCollectionHandler {
         gsaAdminPassword);
   }
 
+  /**
+   * Gets regular expression defining the scope of collection to hold user 
+   * profiles. User profiles are fed as content feed.
+   * 
+   * @param collectionName name of collection to contain the user profiles
+   * @return regular expression matching docids for profiles
+   */
   private static String getSocialRegexp(String collectionName) {
     return "regexp:googleconnector:.*\\\\?docid="
         + getDocIdPrefix(getCollectionName(collectionName)) + ".*";
