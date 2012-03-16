@@ -42,8 +42,6 @@ import com.google.enterprise.connector.util.filter.DocumentFilterChain;
 import com.google.enterprise.connector.util.filter.DocumentFilterFactory;
 import com.google.enterprise.connector.util.filter.ModifyPropertyFilter;
 
-
-import junit.framework.Assert;
 import junit.framework.TestCase;
 
 import org.xml.sax.SAXParseException;
@@ -388,9 +386,9 @@ public class DocPusherTest extends TestCase {
     }
     dpusher.flush();
     String resultXML = feedConnection.getFeed();
-    Assert.assertEquals(expectedXml, resultXML);
+    assertEquals(expectedXml, resultXML);
     gsaActualResponse = dpusher.getGsaResponse();
-    Assert.assertEquals(gsaExpectedResponse, gsaActualResponse);
+    assertEquals(gsaExpectedResponse, gsaActualResponse);
   }
 
   /**
@@ -459,7 +457,7 @@ public class DocPusherTest extends TestCase {
     Document document = null;
     while ((document = documentList.nextDocument()) != null) {
       System.out.println("Test " + i + " output");
-      Assert.assertFalse(i == expectedXml.length);
+      assertFalse(i == expectedXml.length);
       DocPusher dpusher =
           new DocPusher(feedConnection, "junit", fsli, dfc, null);
       assertEquals(PusherStatus.OK, dpusher.take(document, null));
@@ -467,8 +465,8 @@ public class DocPusherTest extends TestCase {
       System.out.println("Test " + i + " assertions");
       String resultXML = feedConnection.getFeed();
       gsaActualResponse = dpusher.getGsaResponse();
-      Assert.assertEquals(expectedXml[i], resultXML);
-      Assert.assertEquals(gsaExpectedResponse, gsaActualResponse);
+      assertEquals(expectedXml[i], resultXML);
+      assertEquals(gsaExpectedResponse, gsaActualResponse);
       System.out.println("Test " + i + " done\n");
       ++i;
     }
@@ -630,7 +628,7 @@ public class DocPusherTest extends TestCase {
         + "}\r\n" + "";
     String resultXML = feedJsonEvent(json1);
 
-    assertStringNotContains("googleconnector://", resultXML);
+    assertStringNotContains(ServletUtil.PROTOCOL, resultXML);
     assertStringContains("url=\"http://www.sometesturl.com/docid\"", resultXML);
     assertStringContains("displayurl=\"http://www.sometesturl.com/test\"",
         resultXML);
@@ -664,7 +662,7 @@ public class DocPusherTest extends TestCase {
     // Web feed with searchurl.
     String resultXML = feedJsonEvent(json1);
 
-    assertStringNotContains("googleconnector://", resultXML);
+    assertStringNotContains(ServletUtil.PROTOCOL, resultXML);
     assertStringContains("url=\"http://www.sometesturl.com/docid\"", resultXML);
     assertStringContains("displayurl=\"http://www.sometesturl.com/test\"",
         resultXML);
@@ -674,7 +672,7 @@ public class DocPusherTest extends TestCase {
     // Content feed with searchurl.
     resultXML = feedJsonEvent(json2);
 
-    assertStringNotContains("googleconnector://", resultXML);
+    assertStringNotContains(ServletUtil.PROTOCOL, resultXML);
     assertStringContains("url=\"http://www.sometesturl.com/docid\"", resultXML);
     assertStringContains("displayurl=\"http://www.sometesturl.com/test\"",
         resultXML);
@@ -684,7 +682,7 @@ public class DocPusherTest extends TestCase {
     // ContentURL feed with searchurl.
     resultXML = feedJsonEvent(json3);
 
-    assertStringNotContains("googleconnector://", resultXML);
+    assertStringNotContains(ServletUtil.PROTOCOL, resultXML);
     assertStringContains("url=\"http://www.sometesturl.com/docid\"", resultXML);
     assertStringContains("displayurl=\"http://www.sometesturl.com/test\"",
         resultXML);
@@ -1482,12 +1480,12 @@ public class DocPusherTest extends TestCase {
   }
 
   public static void assertStringContains(String expected, String actual) {
-    Assert.assertTrue("Expected:\n" + expected + "\nDid not appear in\n"
+    assertTrue("Expected:\n" + expected + "\nDid not appear in\n"
         + actual, actual.indexOf(expected) > 0);
   }
 
   public static void assertStringNotContains(String expected, String actual) {
-    Assert.assertTrue("Expected:\n" + expected + "\nDid appear in\n" + actual,
+    assertTrue("Expected:\n" + expected + "\nDid appear in\n" + actual,
         actual.indexOf(expected) == -1);
   }
 
@@ -2580,28 +2578,86 @@ public class DocPusherTest extends TestCase {
   }
 
   /**
-   * Tests ACL document.
+   * Tests ACL document with inherit-from URL.
    */
-  public void testSimpleAclDoc() throws Exception {
-    Map<String, Object> props = getTestDocumentConfig();
+  public void testAclInheritFromUrl() throws Exception {
+    String parentUrl = "http://foo/parent-doc";
+    Map<String, Object> props = getTestAclDocumentConfig();
+    props.put(SpiConstants.PROPNAME_ACLINHERITFROM, parentUrl);
+    testAclInheritFrom(props, parentUrl);
+    testDocumentAclInheritFrom(props, parentUrl);
+  }
 
-    props.put(SpiConstants.PROPNAME_FEEDTYPE,
-        SpiConstants.FeedType.ACL.toString());
+  /**
+   * Tests ACL document with inherit-from docid and FeedType.
+   */
+  public void testAclInheritFromDocidAndFeedType() throws Exception {
+    String parentId = "parent-doc";
+    Map<String, Object> props = getTestAclDocumentConfig();
+    props.put(SpiConstants.PROPNAME_ACLINHERITFROM_DOCID, parentId);
+    props.put(SpiConstants.PROPNAME_ACLINHERITFROM_FEEDTYPE,
+              SpiConstants.FeedType.CONTENTURL.toString());
+    String parentUrl = contentUrlPrefix + "?"
+        + ServletUtil.XMLTAG_CONNECTOR_NAME + "=junit&amp;"
+        + ServletUtil.QUERY_PARAM_DOCID + "=" + parentId;
+    testAclInheritFrom(props, parentUrl);
+    testDocumentAclInheritFrom(props, parentUrl);
+  }
+
+  /**
+   * Tests ACL document with inherit-from docid.
+   */
+  public void testAclInheritFromDocid() throws Exception {
+    String parentId = "parent-doc";
+    Map<String, Object> props = getTestAclDocumentConfig();
+    props.put(SpiConstants.PROPNAME_ACLINHERITFROM_DOCID, parentId);
+    String parentUrl = ServletUtil.PROTOCOL + "junit.localhost"
+        + ServletUtil.DOCID + parentId;
+    testAclInheritFrom(props, parentUrl);
+    testDocumentAclInheritFrom(props, parentUrl);
+  }
+
+  /**
+   * Tests ACL document with inherit-from URL overrides
+   * inherit-from docid.
+   */
+  public void testAclInheritFromUrlAndDocid() throws Exception {
+    String parentUrl = "http://foo/parent-doc";
+    String parentId = "step-parent-doc";
+    Map<String, Object> props = getTestAclDocumentConfig();
+    props.put(SpiConstants.PROPNAME_ACLINHERITFROM, parentUrl);
+    props.put(SpiConstants.PROPNAME_ACLINHERITFROM_DOCID, parentId);
+    testAclInheritFrom(props, parentUrl);
+    testDocumentAclInheritFrom(props, parentUrl);
+  }
+
+  /** Returns a document config with some ACL properties. */
+  private Map<String, Object> getTestAclDocumentConfig() {
+    Map<String, Object> props = getTestDocumentConfig();
     props.put(SpiConstants.PROPNAME_ACLINHERITANCETYPE,
         SpiConstants.AclInheritanceType.PARENT_OVERRIDES.toString());
-    props.put(SpiConstants.PROPNAME_ACLINHERITFROM, "parent-doc");
     props.put(SpiConstants.PROPNAME_ACLUSERS, "John Doe");
     props.put(SpiConstants.PROPNAME_ACLUSERS, "John Doe");
     props.put(SpiConstants.PROPNAME_ACLDENYUSERS, "Jason Wang");
     props.put(SpiConstants.PROPNAME_ACLGROUPS, "Engineering");
+    return props;
+  }
+
+  /**
+   * Tests ACL inheritance for ACL documents.
+   */
+  private void testAclInheritFrom(Map<String, Object> props,
+      String expectedParentUrl) throws Exception {
+    props.put(SpiConstants.PROPNAME_FEEDTYPE,
+        SpiConstants.FeedType.ACL.toString());
 
     Document document = ConnectorTestUtils.createSimpleDocument(props);
-
     String resultXML = feedDocument(document);
 
-    assertStringContains("<acl url=\"googleconnector://junit.localhost/doc"
-        + "?docid=doc1\" inheritance-type=\"parent-overrides\"" +
-        " inherit-from=\"parent-doc\">", resultXML);
+    assertStringContains("<acl url=\"" + ServletUtil.PROTOCOL
+        + "junit.localhost" + ServletUtil.DOCID
+        + "doc1\" inheritance-type=\"parent-overrides\" inherit-from=\""
+        + expectedParentUrl + "\">", resultXML);
     assertStringContains(
         "<principal scope=\"USER\" access=\"PERMIT\">John Doe</principal>",
         resultXML);
@@ -2612,6 +2668,44 @@ public class DocPusherTest extends TestCase {
         "<principal scope=\"GROUP\" access=\"PERMIT\">Engineering</principal>",
         resultXML);
   }
+
+  /**
+   * Tests ACL inheritance for regular documents that include ACLs.
+   * The ACL data shows up as regular google:acl* meta-data elements.
+   */
+  private void testDocumentAclInheritFrom(Map<String, Object> props,
+      String expectedParentUrl) throws Exception {
+    props.put(SpiConstants.PROPNAME_FEEDTYPE,
+        SpiConstants.FeedType.CONTENT.toString());
+
+    Document document = ConnectorTestUtils.createSimpleDocument(props);
+    String resultXML = feedDocument(document);
+
+    // This should be a regular feed record, not an acl record.
+    assertStringContains("<record url=\"" + ServletUtil.PROTOCOL
+        + "junit.localhost" + ServletUtil.DOCID + "doc1\"", resultXML);
+    assertStringNotContains("<acl url=\"" + ServletUtil.PROTOCOL, resultXML);
+
+    assertStringNotContains(SpiConstants.PROPNAME_ACLINHERITFROM_DOCID,
+                            resultXML);
+    assertStringNotContains(SpiConstants.PROPNAME_ACLINHERITFROM_FEEDTYPE,
+                            resultXML);
+
+    assertStringContains("<meta name=\"google:aclinheritfrom\" content=\""
+        + expectedParentUrl + "\"/>", resultXML);
+    assertStringContains(
+        "<meta name=\"google:aclinheritancetype\" content=\"parent-overrides\"/>",
+        resultXML);
+    assertStringContains(
+        "<meta name=\"google:acldenyusers\" content=\"Jason Wang\"/>",
+        resultXML);
+    assertStringContains(
+        "<meta name=\"google:aclusers\" content=\"John Doe\"/>",
+        resultXML);
+    assertStringContains(
+        "<meta name=\"google:aclgroups\" content=\"Engineering\"/>",
+        resultXML);
+ }
 
   private static class MockIdGenerator implements UniqueIdGenerator {
     // Return a predictable non-unique ID to ease expected output comparisons.

@@ -110,18 +110,81 @@ public class SecureDocumentTest extends TestCase {
    * Tests setting the ACL inheritance, and setting the first property
    * on a secure document created without any.
    */
-  public void testSetInheritFrom() throws RepositoryException {
+  public void testSetInheritFromUrl() throws RepositoryException {
     // Use a Document to test the modifying a SecureDocument with no
-    // local properties (i.e., make sure the empty properties are
-    // mutable).
+    // local properties (i.e., make sure the empty properties are mutable).
     Document baseDoc = new SimpleDocument(properties);
     SecureDocument doc = SecureDocument.createDocumentWithAcl(baseDoc);
 
     assertNull(doc.findProperty(SpiConstants.PROPNAME_ACLINHERITFROM));
+    assertNull(doc.findProperty(SpiConstants.PROPNAME_ACLINHERITFROM_DOCID));
     doc.setInheritFrom("something");
 
     assertPropertyEquals("something",
         doc.findProperty(SpiConstants.PROPNAME_ACLINHERITFROM));
+    assertNull(doc.findProperty(SpiConstants.PROPNAME_ACLINHERITFROM_DOCID));
+
+    // Test a property from the document.
+    assertPropertyEquals(getName(),
+        doc.findProperty(SpiConstants.PROPNAME_DOCID));
+  }
+
+  /**
+   * Tests setting the ACL inheritance, and setting the first property
+   * on a secure document created without any.
+   */
+  public void testSetInheritFromDocid() throws RepositoryException {
+    // Use a Document to test the modifying a SecureDocument with no
+    // local properties (i.e., make sure the empty properties are mutable).
+    Document baseDoc = new SimpleDocument(properties);
+    SecureDocument doc = SecureDocument.createDocumentWithAcl(baseDoc);
+
+    assertNull(doc.findProperty(SpiConstants.PROPNAME_ACLINHERITFROM_DOCID));
+    assertNull(doc.findProperty(SpiConstants.PROPNAME_ACLINHERITFROM));
+    doc.setInheritFrom("something", FeedType.CONTENTURL);
+
+    assertPropertyEquals("something",
+        doc.findProperty(SpiConstants.PROPNAME_ACLINHERITFROM_DOCID));
+    assertPropertyEquals(FeedType.CONTENTURL.toString(),
+        doc.findProperty(SpiConstants.PROPNAME_ACLINHERITFROM_FEEDTYPE));
+
+    assertNull(doc.findProperty(SpiConstants.PROPNAME_ACLINHERITFROM));
+
+    // Test a property from the document.
+    assertPropertyEquals(getName(),
+        doc.findProperty(SpiConstants.PROPNAME_DOCID));
+  }
+
+  /**
+   * Tests setting the ACL inheritance two different ways.  Each should
+   * override the other.
+   */
+  public void testSetInheritFromUrlAndDocid() throws RepositoryException {
+    // Use a Document to test the modifying a SecureDocument with no
+    // local properties (i.e., make sure the empty properties are mutable).
+    Document baseDoc = new SimpleDocument(properties);
+    SecureDocument doc = SecureDocument.createDocumentWithAcl(baseDoc);
+
+    assertNull(doc.findProperty(SpiConstants.PROPNAME_ACLINHERITFROM));
+    assertNull(doc.findProperty(SpiConstants.PROPNAME_ACLINHERITFROM_DOCID));
+    doc.setInheritFrom("something");
+
+    assertPropertyEquals("something",
+        doc.findProperty(SpiConstants.PROPNAME_ACLINHERITFROM));
+    assertNull(doc.findProperty(SpiConstants.PROPNAME_ACLINHERITFROM_DOCID));
+
+    doc.setInheritFrom("somedocid", FeedType.CONTENTURL);
+    assertPropertyEquals("somedocid",
+        doc.findProperty(SpiConstants.PROPNAME_ACLINHERITFROM_DOCID));
+    assertPropertyEquals(FeedType.CONTENTURL.toString(),
+        doc.findProperty(SpiConstants.PROPNAME_ACLINHERITFROM_FEEDTYPE));
+    assertNull(doc.findProperty(SpiConstants.PROPNAME_ACLINHERITFROM));
+
+    doc.setInheritFrom("something");
+    assertPropertyEquals("something",
+        doc.findProperty(SpiConstants.PROPNAME_ACLINHERITFROM));
+    assertNull(doc.findProperty(SpiConstants.PROPNAME_ACLINHERITFROM_DOCID));
+    assertNull(doc.findProperty(SpiConstants.PROPNAME_ACLINHERITFROM_FEEDTYPE));
 
     // Test a property from the document.
     assertPropertyEquals(getName(),

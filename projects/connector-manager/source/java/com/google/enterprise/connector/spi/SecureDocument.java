@@ -173,13 +173,48 @@ public class SecureDocument implements Document {
   }
 
   /**
-   * Sets the inherited ACL.
+   * Sets the URL for an inherited ACL.
+   * <p/>
+   * Only one of {@link #setInheritFrom(String url)} or
+   * {@link #setInheritFrom(String docid, FeedType feedType)}
+   * should be called.  If both are called the {@code inherit-from}
+   * {@code docid} and {@code feedType} will be ignored in favor
+   * of the {@code inherit-from url}.
    *
    * @param url the URL of the parent ACL
    * @see SpiConstants#PROPNAME_ACLINHERITFROM
    */
   public void setInheritFrom(String url) {
     properties.put(SpiConstants.PROPNAME_ACLINHERITFROM, getValueList(url));
+    // Obscure these properties, in case they are specified in the delegate.
+    properties.put(SpiConstants.PROPNAME_ACLINHERITFROM_DOCID, null);
+    properties.put(SpiConstants.PROPNAME_ACLINHERITFROM_FEEDTYPE, null);
+  }
+
+  /**
+   * Sets the components needed to construct the inherit-from URL of an ACL
+   * that was fed using FeedType.CONTENT, FeedType.CONTENTURL, or FeedType.ACL.
+   * <p/>
+   * Only one of {@link #setInheritFrom(String url)} or
+   * {@link #setInheritFrom(String docid, FeedType feedType)}
+   * should be called.  If both are called the {@code inherit-from}
+   * {@code docid} and {@code feedType} will be ignored in favor
+   * of the {@code inherit-from url}.
+   *
+   * @param docid the docid of the parent ACL document
+   * @param feedType the FeedType of the parent ACL document, or {@code null}
+   *        if this document's FeedType should be used.
+   * @see SpiConstants#PROPNAME_ACLINHERITFROM
+   */
+  public void setInheritFrom(String docid, FeedType feedType) {
+    properties.put(SpiConstants.PROPNAME_ACLINHERITFROM_DOCID,
+                   getValueList(docid));
+    if (feedType != null) {
+      properties.put(SpiConstants.PROPNAME_ACLINHERITFROM_FEEDTYPE,
+                     getValueList(feedType.toString()));
+    }
+    // Obscure this property, in case it is specified in the delegate.
+    properties.put(SpiConstants.PROPNAME_ACLINHERITFROM, null);
   }
 
   /**
