@@ -267,26 +267,64 @@ public class SpiConstants {
   public static final String PROPNAME_ACLDENYUSERS = "google:acldenyusers";
 
   /**
-   * Identifies a single-valued InheritanceType property. This value is 
-   * used to identify the ACL inheritance when no specific ACL principal is 
+   * Identifies a single-valued InheritanceType property. This value is
+   * used to identify the ACL inheritance when no specific ACL principal is
    * specified.
    * <p/>
    * Value: google:aclinheritancetype
-   * 
+   *
    * @since 3.0
    */
-  public static final String PROPNAME_ACLINHERITANCETYPE = 
+  public static final String PROPNAME_ACLINHERITANCETYPE =
       "google:aclinheritancetype";
 
   /**
-   * Identifies a single-valued String property. This value is 
-   * used to identify the document ID from which the ACL is inherited from.
+   * Identifies a single-valued String property. This value is
+   * used to identify the document URL from which the ACL is inherited from.
+   * <p/>
+   * This property takes precedence over values specified by
+   * {@link #PROPNAME_ACLINHERITFROM_DOCID} and
+   * {@link #PROPNAME_ACLINHERITFROM_FEEDTYPE}.
    * <p/>
    * Value: google:aclinheritfrom
-   * 
+   *
    * @since 3.0
    */
   public static final String PROPNAME_ACLINHERITFROM = "google:aclinheritfrom";
+
+  /**
+   * Identifies a single-valued String property. This value is used to identify
+   * the document ID from which the ACL is inherited from.
+   * <p/>
+   * If the document from which the ACL is inherited from was fed using a
+   * different {@link FeedType} than this document, then
+   * {@link #PROPNAME_ACLINHERITFROM_FEEDTYPE} should also be specified.
+   * <p/>
+   * This property is ignored if {@link #PROPNAME_ACLINHERITFROM} is also
+   * specified.
+   * <p/>
+   * Value: google:aclinheritfrom:docid
+   *
+   * @since 3.0
+   */
+  public static final String PROPNAME_ACLINHERITFROM_DOCID =
+      "google:aclinheritfrom:docid";
+
+  /**
+   * Identifies a single-valued String property. This value is used to identify
+   * the {@link FeedType} of document from which the ACL is inherited from.
+   * If unspecified, the {@code FeedType} of the inheriting ACL is used.
+   * <p/>
+   * This property should be specified in conjunction with
+   * {@link #PROPNAME_ACLINHERITFROM_DOCID}, and will be ignored if
+   * {@link #PROPNAME_ACLINHERITFROM} is also specified.
+   * <p/>
+   * Value: google:aclinheritfrom:feedtype
+   *
+   * @since 3.0
+   */
+  public static final String PROPNAME_ACLINHERITFROM_FEEDTYPE =
+      "google:aclinheritfrom:feedtype";
 
   /**
    * Prefix added to the front of the group ACL Scope ID when creating a group
@@ -403,13 +441,26 @@ public class SpiConstants {
     CONTENT, WEB, CONTENTURL, ACL;
 
     /**
+     * @return The enum matching the given {@code tag}, or
+     *         {@code null} if a match is not found.
+     */
+    public static FeedType findFeedType(String tag) {
+      try {
+        return Enum.valueOf(FeedType.class, tag.toUpperCase());
+      } catch (IllegalArgumentException e) {
+        // Not found, return null.
+        return null;
+      }
+    }
+
+    /**
      * @param other a FeedType
      * @return {@code true} if the other FeedType may exist in the same
      *         feed file as this FeedType
      * @since 3.0
      */
     public boolean isCompatible(FeedType other) {
-      return (this == other || this == ACL 
+      return (this == other || this == ACL
           || (this != CONTENT && other != CONTENT));
     }
 
@@ -662,13 +713,13 @@ public class SpiConstants {
         put(PROPNAME_PERSISTED_CUSTOMDATA_2, "custom2").
         build();
   }
-  
+
   /**
-   * Name of the default user profile collection. 
-   * 
+   * Name of the default user profile collection.
+   *
    * @since 3.0
    */
-  public static final String DEFAULT_USERPROFILE_COLLECTION = 
+  public static final String DEFAULT_USERPROFILE_COLLECTION =
       "_google_social_userprofile_collection";
 
   /**
@@ -677,7 +728,7 @@ public class SpiConstants {
    * @since 3.0
    */
   public enum AclInheritanceType {
-    PARENT_OVERRIDES("parent-overrides"), CHILD_OVERRIDES("child-overrides"), 
+    PARENT_OVERRIDES("parent-overrides"), CHILD_OVERRIDES("child-overrides"),
     AND_BOTH_PERMIT("and-both-permit");
 
     private final String tag;

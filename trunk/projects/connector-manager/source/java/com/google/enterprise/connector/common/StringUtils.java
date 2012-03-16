@@ -183,6 +183,5 @@ public class StringUtils {
       // Not going to happen with UTF-8.
       throw new AssertionError(e);
     }
-    return null;
   }
 }
