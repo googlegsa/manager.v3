@@ -292,6 +292,26 @@ public class XmlParseUtil {
   }
 
   /**
+   * Get text data of an optional XML {@code org.w3c.dom.Element} of given name.
+   * <p/>
+   * Note that this differs from {@link #getFirstElementByTagName} in how it
+   * handles missing elements vs. empty elements. Specifically, if the named
+   * element does not exist, this returns {@code null}.  However, if the named
+   * element does exist, but is empty (<tag></tag> or <tag/>), this returns
+   * the empty string.  In both cases {@code getFirstElementByTagName} would
+   * return {@code null}.
+   *
+   * @param elem the parent XML Element
+   * @param name the name of the child text Element
+   * @return text data of the named child element.
+   *         Returns {@code null} if the named element does not exist.
+   *         Returns the empty string if the named element exists, but is empty.
+   */
+  public static String getOptionalElementByTagName(Element elem, String name) {
+    return getElementByTagName(elem, name, "");
+  }
+
+  /**
    * Get text data of first XML {@code org.w3c.dom.Element} of given name.
    *
    * @param elem the parent XML Element
@@ -299,6 +319,19 @@ public class XmlParseUtil {
    * @return text data of named child Element
    */
   public static String getFirstElementByTagName(Element elem, String name) {
+    return getElementByTagName(elem, name, null);
+  }
+
+  /**
+   * Get text data of first XML {@code org.w3c.dom.Element} of given name.
+   *
+   * @param elem the parent XML Element
+   * @param name the name of the child text Element
+   * @param emptyValue value to return if element exists, but is empty
+   * @return text data of named child Element
+   */
+  private static String getElementByTagName(Element elem, String name,
+                                           String emptyValue) {
     NodeList nodeList = elem.getElementsByTagName(name);
     if (nodeList.getLength() == 0) {
       return null;
@@ -307,7 +340,7 @@ public class XmlParseUtil {
     NodeList children = nodeList.item(0).getChildNodes();
     if (children.getLength() == 0 ||
         children.item(0).getNodeType() != Node.TEXT_NODE) {
-      return null;
+      return emptyValue;
     }
     return children.item(0).getNodeValue();
   }
