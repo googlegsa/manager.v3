@@ -34,7 +34,7 @@ Inside the `google-enterprise-connector-manager` directory, you will find the fo
       * {{{third-party/}}}
         * {{{cobertura/}}}
         * {{{prod/}}}
-        * {{{test/}}}
+        * {{{tests/}}}
     * {{{test-connectorA/}}}
     * {{{test-connectorB/}}}
 
@@ -51,7 +51,7 @@ You generally will not need to build these and they are not built from the defau
 
 == Copy the JCR Jar to the Right Place ==
 
-*IMPORTANT*: Copy the jcr-1.0.jar to {{{google-enterprise-connector-manager/projects/connector-manager/third-party/test/}}}.
+*IMPORTANT*: Copy the jcr-1.0.jar to {{{google-enterprise-connector-manager/projects/connector-manager/third-party/tests/}}}.
 
 == Verify that the Connector Manager Builds ==
 
