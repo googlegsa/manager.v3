@@ -117,12 +117,7 @@ public class GetDocumentContent extends HttpServlet {
   @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
-    // Make sure this requester is OK
-    if (!RemoteAddressFilter.getInstance()
-          .allowed(RemoteAddressFilter.Access.BLACK, req.getRemoteAddr())) {
-      res.sendError(HttpServletResponse.SC_FORBIDDEN);
-      return;
-    }
+    // The servlet relies on proper security to be handled by a filter.
 
     String connectorName = req.getParameter(ServletUtil.XMLTAG_CONNECTOR_NAME);
     NDC.pushAppend("Retrieve " + connectorName);
