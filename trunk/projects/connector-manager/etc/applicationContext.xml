@@ -50,8 +50,12 @@
         <!-- The default content URL prefix. -->
         <prop key="feed.contenturl.prefix"></prop>
 
-        <!-- The default content URL prefix. -->
-        <prop key="feed.contenturl.compression">false</prop>
+        <!-- The default content URL compression. -->
+        <prop key="retriever.compression">false</prop>
+
+        <prop key="retriever.useClientCertificateSecurity">false</prop>
+        <prop key="retriever.allowedHosts"></prop>
+
 
         <!-- Feed logging configuration.
              TODO: [Issue 163] These should be moved to logging.properties.
@@ -162,7 +166,7 @@
               value="com.google.enterprise.connector.servlet.GetDocumentContent.setUseCompression"/>
     <property name="arguments">
       <list>
-        <value>${feed.contenturl.compression}</value>
+        <value>${retriever.compression}</value>
       </list>
     </property>
   </bean>
