@@ -449,6 +449,7 @@ public class DocPusherTest extends TestCase {
 
     DocumentList documentList = qtm.startTraversal();
 
+    System.out.println("\nTest Case: " + getName());
     int i = 0;
     Document document = null;
     while ((document = documentList.nextDocument()) != null) {
@@ -462,9 +463,10 @@ public class DocPusherTest extends TestCase {
       gsaActualResponse = dpusher.getGsaResponse();
       Assert.assertEquals(expectedXml[i], resultXML);
       Assert.assertEquals(gsaExpectedResponse, gsaActualResponse);
-      System.out.println("Test " + i + " done");
+      System.out.println("Test " + i + " done\n");
       ++i;
     }
+    System.out.println("==================================");
   }
 
   /**
@@ -2086,6 +2088,40 @@ public class DocPusherTest extends TestCase {
   }
 
   /**
+   * Base64 encoding of:
+   * <!DOCTYPE html><html><head><meta charset="utf-8"/><title>title</title></html>
+   */
+  private static String HTML_TITLE_ONLY_BASE64 =
+      "PCFET0NUWVBFIGh0bWw+PGh0bWw+PGhlYWQ+PG1ldGEgY2hhcnNl"
+      + "dD0idXRmLTgiLz48dGl0bGU+dGl0bGU8L3RpdGxlPjwvaHRtbD4=";
+
+  /**
+   * Base64 encoding of a tiny, empty PDF document with a Title property.
+   */
+  private static String PDF_TITLE_ONLY_BASE64 =
+      "JVBERi0xLjEKMSAwIG9iago8PC9UeXBlIC9DYXRhbG9nCi9QYWdlcyAyIDAgUgo+PgplbmR"
+      + "vYmoKMiAwIG9iago8PC9UeXBlIC9QYWdlcwovS2lkcyBbMyAwIFJdCi9Db3VudCAxCj4+"
+      + "CmVuZG9iagozIDAgb2JqCjw8L1R5cGUgL1BhZ2UKL1BhcmVudCAyIDAgUgovTWVkaWFCb"
+      + "3ggWzAgMCA3MiA3Ml0KPj4KZW5kb2JqCjQgMCBvYmoKPDwvVGl0bGUgPEZFRkYwMDc0MD"
+      + "A2OTAwNzQwMDZDMDA2NT4KPj4KZW5kb2JqCnhyZWYKMCA1CjAwMDAwMDAwMDAgNjU1MzU"
+      + "gZg0KMDAwMDAwMDAwOSAwMDAwMCBuDQowMDAwMDAwMDU3IDAwMDAwIG4NCjAwMDAwMDAx"
+      + "MTMgMDAwMDAgbg0KMDAwMDAwMDE4MSAwMDAwMCBuDQp0cmFpbGVyCjw8L1NpemUgNQovU"
+      + "m9vdCAxIDAgUgovSW5mbyA0IDAgUgo+PgpzdGFydHhyZWYKMjM1CiUlRU9GCg==";
+
+  /**
+   * Base64 encoding of a tiny, empty PDF document with no Title property.
+   */
+  private static String PDF_NO_TITLE_BASE64 =
+      "JVBERi0xLjEKMSAwIG9iago8PC9UeXBlIC9DYXRhbG9nCi9QYWdlcyAyIDAgUgo+PgplbmR"
+      + "vYmoKMiAwIG9iago8PC9UeXBlIC9QYWdlcwovS2lkcyBbMyAwIFJdCi9Db3VudCAxCj4+"
+      + "CmVuZG9iagozIDAgb2JqCjw8L1R5cGUgL1BhZ2UKL1BhcmVudCAyIDAgUgovTWVkaWFCb"
+      + "3ggWzAgMCA3MiA3Ml0KPj4KZW5kb2JqCjQgMCBvYmoKPDwKPj4KZW5kb2JqCnhyZWYKMC"
+      + "A1CjAwMDAwMDAwMDAgNjU1MzUgZg0KMDAwMDAwMDAwOSAwMDAwMCBuDQowMDAwMDAwMDU"
+      + "3IDAwMDAwIG4NCjAwMDAwMDAxMTMgMDAwMDAgbg0KMDAwMDAwMDE4MSAwMDAwMCBuDQp0"
+      + "cmFpbGVyCjw8L1NpemUgNQovUm9vdCAxIDAgUgovSW5mbyA0IDAgUgo+PgpzdGFydHhyZ"
+      + "WYKMjAyCiUlRU9GCg==";
+
+  /**
    * Test that suppling empty content will force alternate content.
    * The Content is handled specially in DocPusher.take().
    * The GSA requires some content.  If the Document provides no content,
@@ -2101,9 +2137,51 @@ public class DocPusherTest extends TestCase {
     // Content is optional, and may be missing.  Missing content is replaced
     // with the default content, the title.
     String resultXML = feedDocument(doc);
+    System.out.println("\nTest Case: " + getName() + " output:\n" + resultXML);
     assertStringContains("<content encoding=\"base64binary\">", resultXML);
-    assertStringContains("PGh0bWw+PHRpdGxlPnRpdGxlPC90aXRsZT48L2h0bWw+",
-                         resultXML);
+    assertStringContains(HTML_TITLE_ONLY_BASE64, resultXML);
+  }
+
+  /**
+   * Test that suppling empty content will force alternate PDF content.
+   * Alternate content for PDF must still be a PDF, or the GSA drops the
+   * document with a "Conversion Error".  If the google:title property
+   * is present, create an empty PDF document with a Title entry in the
+   * Document Information Dictionary.
+   */
+  public void testPdfTitleContent() throws Exception {
+    Map<String, Object> config = getTestDocumentConfig();
+    config.put(SpiConstants.PROPNAME_CONTENT, "");
+    config.put(SpiConstants.PROPNAME_TITLE, "title");
+    config.put(SpiConstants.PROPNAME_MIMETYPE, "application/pdf");
+    Document doc = ConnectorTestUtils.createSimpleDocument(config);
+
+    // Content is optional, and may be missing.  Missing content is replaced
+    // with the default content, the title.
+    String resultXML = feedDocument(doc);
+    System.out.println("\nTest Case: " + getName() + " output:\n" + resultXML);
+    assertStringContains("<content encoding=\"base64binary\">", resultXML);
+    assertStringContains(PDF_TITLE_ONLY_BASE64, resultXML);
+  }
+
+  /**
+   * Test that suppling empty content will force alternate PDF content.
+   * Alternate content for PDF must still be a PDF, or the GSA drops the
+   * document with a "Conversion Error".  If there is no google:title property
+   * property, create an empty PDF document.
+   */
+  public void testPdfEmptyContent() throws Exception {
+    Map<String, Object> config = getTestDocumentConfig();
+    config.put(SpiConstants.PROPNAME_CONTENT, "");
+    config.put(SpiConstants.PROPNAME_MIMETYPE, "application/pdf");
+    Document doc = ConnectorTestUtils.createSimpleDocument(config);
+
+    // Content is optional, and may be missing.  Missing content is replaced
+    // with the default content, the title.
+    String resultXML = feedDocument(doc);
+    System.out.println("\nTest Case: " + getName() + " output:\n" + resultXML);
+    assertStringContains("<content encoding=\"base64binary\">", resultXML);
+    assertStringContains(PDF_NO_TITLE_BASE64, resultXML);
   }
 
   /**
@@ -2144,8 +2222,7 @@ public class DocPusherTest extends TestCase {
     // with the default content, the title.
     String resultXML = feedHugeDocument(doc);
     assertStringContains("<content encoding=\"base64binary\">", resultXML);
-    assertStringContains("PGh0bWw+PHRpdGxlPnRpdGxlPC90aXRsZT48L2h0bWw+",
-                         resultXML);
+    assertStringContains(HTML_TITLE_ONLY_BASE64, resultXML);
   }
 
   /**
