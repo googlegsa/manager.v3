@@ -10,6 +10,30 @@ issues and work-arounds.
 
 Web Site: http://code.google.com/p/google-enterprise-connector-manager/
 
+Release 2.8.6, 26 March 2012
+============================
+
+Introduction
+------------
+This is a patch release that fixes a few small problems discovered in the
+the previous release. Users of the previous release are encouraged to upgrade.
+
+Summary of Changes
+------------------
+  * Fix Issue 5599305 - Retry Connector startup if instantiation fails.
+    The FileSystem Connector fails Connector bean instantiation if the file
+    share is off-line.  The other connectors that use the Diffing package
+    (LDAP and Database) can suffer similar failures.  This fix allows a
+    failed Connector instantiation to be retried after a period, in hopes
+    that any transient errors may have been corrected.
+
+  * Handle PDF documents that are zero-length or too long more gracefully.
+    Rather than skip the document entirely, feed a stub document with just
+    the document's title, if available.
+
+  * Differentiate between no password and empty-string password in the
+    user authentication servlet.
+
 
 Release 2.8.4, 23 February 2012
 ===============================
