@@ -30,13 +30,6 @@ Summary of Changes
     certain characters that have special meaning in XML syntax would cause
     failures reading the Authentication response.
 
-  * Fix Issue 5599305 - Retry Connector startup if instantiation fails.
-    The FileSystem Connector fails Connector bean instantiation if the file
-    share is off-line.  The other connectors that use the Diffing package
-    (LDAP and Database) can suffer similar failures.  This fix allows a
-    failed Connector instantiation to be retried after a period, in hopes
-    that any transient errors may have been corrected.
-
   * Fix Issues 5370948 and 5481676 - Better recovery from FeedExceptions.
     If submitting a feed to the GSA fails for some reason, the Connector
     Manager retrys the feed after 15 minutes.  But first, the Connector
