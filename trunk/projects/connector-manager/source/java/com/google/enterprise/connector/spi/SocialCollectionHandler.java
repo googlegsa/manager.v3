@@ -230,7 +230,7 @@ public final class SocialCollectionHandler {
    * @param collectionName name of collection
    * @return true if valid
    */
-  private static boolean validateCollectionName(String collectionName) {
+  public static boolean validateCollectionName(String collectionName) {
     for (char c : collectionName.toCharArray()) {
       if (!(((c >= 'a') && (c <= 'z')) || ((c >= 'A') && (c <= 'Z'))
           || ((c >= '0') && (c <= '9')) || (c == '_') || (c == '-')))
