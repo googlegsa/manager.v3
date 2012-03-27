@@ -234,7 +234,8 @@ public class AuthenticateTest extends TestCase {
       "  </Credentials>\n" +
       "</AuthnRequest>";
 
-    doTestGroups(xmlBody);
+    // An empty password should fail Authentication.
+    doTestFailedAuthentication(xmlBody);
   }
 
   public void testAuthenticateWithGroups() {
@@ -327,7 +328,7 @@ public class AuthenticateTest extends TestCase {
 
   private void doTest(String xmlBody, String expectedResult, String domain,
       String username, String password, Collection<String> groups) {
-    LOGGER.info("==================================");
+    LOGGER.info("============== " + getName() + " ====================");
     LOGGER.info("xmlBody:\n" + xmlBody);
     MockManager manager = MockManager.getInstance();
     manager.setShouldVerifyIdentity(true);
