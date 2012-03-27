@@ -15,8 +15,6 @@
 package com.google.enterprise.connector.manager;
 
 import com.google.common.collect.Maps;
-import com.google.enterprise.connector.common.AlternateContentFilterInputStream;
-import com.google.enterprise.connector.common.BigEmptyDocumentFilterInputStream;
 import com.google.enterprise.connector.common.I18NUtil;
 import com.google.enterprise.connector.instantiator.Configuration;
 import com.google.enterprise.connector.instantiator.ExtendedConfigureResponse;
@@ -33,13 +31,9 @@ import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.AuthorizationResponse;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.ConnectorType;
-import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.RepositoryLoginException;
-import com.google.enterprise.connector.spi.Retriever;
-import com.google.enterprise.connector.util.EofFilterInputStream;
 
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -80,28 +74,19 @@ public class ProductionManager implements Manager {
       // Some connectors don't implement the AuthenticationManager interface so
       // we need to check.
       if (authnManager != null) {
-        if (LOGGER.isLoggable(Level.FINE)) {
-          LOGGER.fine("AUTHENTICATE: connector = " + connectorName + ", "
-                      + identity);
-        }
-        AuthenticationResponse response = authnManager.authenticate(identity);
-        if (LOGGER.isLoggable(Level.FINE)) {
-          LOGGER.fine("AUTHENTICATED: connector = " + connectorName + ", "
-                      + identity + ": " + response);
-        }
-        return response;
+        return authnManager.authenticate(identity);
       }
     } catch (ConnectorNotFoundException e) {
-      LOGGER.log(Level.WARNING, "Connector " + connectorName + " not found", e);
+      LOGGER.log(Level.WARNING, "Connector " + connectorName + " Not Found: ",
+          e);
+    } catch (InstantiatorException e) {
+      LOGGER.log(Level.WARNING, "Instantiator: ", e);
     } catch (RepositoryLoginException e) {
-      LOGGER.log(Level.WARNING, "Authentication failed for connector "
-                 + connectorName + ": " + identity , e);
+      LOGGER.log(Level.WARNING, "Login: ", e);
     } catch (RepositoryException e) {
-      LOGGER.log(Level.WARNING, "Authentication failed for connector "
-                 + connectorName + ": " + identity, e);
+      LOGGER.log(Level.WARNING, "Repository: ", e);
     } catch (Exception e) {
-      LOGGER.log(Level.WARNING, "Authentication failed for connector "
-                 + connectorName + ": " + identity, e);
+      LOGGER.log(Level.WARNING, "Exception: ", e);
     }
     return new AuthenticationResponse(false, null);
   }
@@ -117,14 +102,10 @@ public class ProductionManager implements Manager {
         // content in such a way that it is being asked to authorize access to
         // that content and yet it doesn't implement the AuthorizationManager
         // interface.  Log the situation and return the empty result.
-        LOGGER.warning("Connector " + connectorName
+        LOGGER.warning("Connector:" + connectorName
             + " is being asked to authorize documents but has not implemented"
             + " the AuthorizationManager interface.");
         return null;
-      }
-      if (LOGGER.isLoggable(Level.FINE)) {
-        LOGGER.fine("AUTHORIZE: connector = " + connectorName + ", "
-                    + identity + ":  docids = " + docidList);
       }
       Collection<AuthorizationResponse> results =
           authzManager.authorizeDocids(docidList, identity);
@@ -141,69 +122,16 @@ public class ProductionManager implements Manager {
       }
       return results;
     } catch (ConnectorNotFoundException e) {
-      LOGGER.log(Level.WARNING, "Connector " + connectorName + " not found", e);
+      LOGGER.log(Level.WARNING, "Connector " + connectorName + " Not Found: ",
+          e);
+    } catch (InstantiatorException e) {
+      LOGGER.log(Level.WARNING, "Instantiator: ", e);
     } catch (RepositoryException e) {
-      LOGGER.log(Level.WARNING, "Authorization failed for connector "
-                 + connectorName + ": " + identity, e);
+      LOGGER.log(Level.WARNING, "Repository: ", e);
     } catch (Exception e) {
-      LOGGER.log(Level.WARNING, "Authorization failed for connector "
-                 + connectorName + ": " + identity, e);
+      LOGGER.log(Level.WARNING, "Exception: ", e);
     }
     return null;
-  }
-
-  /* @Override */
-  public InputStream getDocumentContent(String connectorName, String docid)
-      throws ConnectorNotFoundException, InstantiatorException,
-             RepositoryException {
-    if (LOGGER.isLoggable(Level.FINER)) {
-      LOGGER.finer("RETRIEVER: Retrieving content from connector "
-                   + connectorName + " for document " + docid);
-    }
-    Retriever retriever = instantiator.getRetriever(connectorName);
-    if (retriever == null) {
-      // We are borked here.  This should not happen.
-      LOGGER.warning("GetDocumentContent request for connector " + connectorName
-                     + " that does not support the Retriever interface.");
-      return null;
-    }
-    InputStream in = retriever.getContent(docid);
-    if (in == null) {
-      LOGGER.finer("RETRIEVER: Document has no content.");
-    }
-    // The GSA can't handle meta-and-url feeds with no content, so we
-    // provide some minimal content of a single space, if none is available.
-    // We are only detecting empty content here, not large documents.
-    return
-        new AlternateContentFilterInputStream(
-            new BigEmptyDocumentFilterInputStream(
-                (in == null) ? in : new EofFilterInputStream(in),
-                Long.MAX_VALUE),
-            null);
-  }
-
-  /* @Override */
-  public Document getDocumentMetaData(String connectorName, String docid)
-      throws ConnectorNotFoundException, InstantiatorException,
-             RepositoryException {
-    if (LOGGER.isLoggable(Level.FINER)) {
-      LOGGER.finer("RETRIEVER: Retrieving metadata from connector "
-                   + connectorName + " for document " + docid);
-    }
-    Retriever retriever = instantiator.getRetriever(connectorName);
-    if (retriever == null) {
-      // We are borked here.  This should not happen.
-      LOGGER.warning("GetDocumentMetaData request for connector "
-                     + connectorName
-                     + " that does not support the Retriever interface.");
-      return null;
-    }
-    Document metaDoc = retriever.getMetaData(docid);
-    if (metaDoc == null) {
-      LOGGER.finer("RETRIEVER: Document has no metadata.");
-      // TODO: Create empty Document?
-    }
-    return metaDoc;
   }
 
   /* @Override */
@@ -213,10 +141,6 @@ public class ProductionManager implements Manager {
     ConnectorType connectorType =
         instantiator.getConnectorType(connectorTypeName);
     Locale locale = I18NUtil.getLocaleFromStandardLocaleString(language);
-    if (LOGGER.isLoggable(Level.CONFIG)) {
-      LOGGER.config("GET CONFIG FORM: Fetching configuration form for connector"
-                  + " type " + connectorTypeName + ", locale = " + locale);
-    }
     ConfigureResponse response;
     try {
       response = connectorType.getConfigForm(locale);
@@ -226,7 +150,7 @@ public class ProductionManager implements Manager {
 
     // Include the connectorInstance.xml in the response.
     if (response != null) {
-      response = new ExtendedConfigureResponse(response,
+      return new ExtendedConfigureResponse(response,
           instantiator.getConnectorInstancePrototype(connectorTypeName));
     }
     return response;
@@ -238,12 +162,9 @@ public class ProductionManager implements Manager {
       throws ConnectorNotFoundException, InstantiatorException {
     String connectorTypeName = instantiator.getConnectorTypeName(connectorName);
     Locale locale = I18NUtil.getLocaleFromStandardLocaleString(language);
-    if (LOGGER.isLoggable(Level.CONFIG)) {
-      LOGGER.config("GET CONFIG FORM: Fetching configuration form for "
-                    + "connector " + connectorName + ", locale = " + locale);
-    }
-    ConfigureResponse response = instantiator.getConfigFormForConnector(
-         connectorName, connectorTypeName, locale);
+    ConfigureResponse response =
+        instantiator.getConfigFormForConnector(connectorName,
+            connectorTypeName, locale);
     return response;
   }
 

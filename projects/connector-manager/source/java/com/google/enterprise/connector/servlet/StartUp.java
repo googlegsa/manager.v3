@@ -26,53 +26,31 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.servlet.ServletContext;
-import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletContextListener;
 import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.web.context.support.XmlWebApplicationContext;
 
 /**
  * The main purpose of this servlet is to have its "init" method called when the
- * container starts up. This is by done by means of the web.xml file.
+ * container starts up. This is by done by means of the web.xml file. But I also
+ * gave it a get and post that do the same thing.
+ *
  */
-public class StartUp implements ServletContextListener {
+public class StartUp extends HttpServlet {
   private static final Logger LOGGER =
       Logger.getLogger(StartUp.class.getName());
 
   @Override
-  public void contextInitialized(ServletContextEvent sce) {
+  public void init() throws ServletException {
     NDC.push("Init");
     try {
       LOGGER.info("init");
-      ServletContext servletContext = sce.getServletContext();
-      doStartup(servletContext);
-    } catch (ServletException ex) {
-      throw new RuntimeException(ex);
-    } finally {
-      LOGGER.info("init done.");
-      NDC.remove();
-    }
-  }
-
-  @Override
-  public void contextDestroyed(ServletContextEvent sce) {
-    NDC.push("Shutdown");
-    try {
-      LOGGER.info("destroy");
-      Context.getInstance().shutdown(true);
-    } finally {
-      LOGGER.info("destroy done.");
-      NDC.remove();
-    }
-  }
-
-  private void doStartup(ServletContext servletContext)
-      throws ServletException {
-    try {
+      ServletContext servletContext = this.getServletContext();
       doConnectorManagerStartup(servletContext);
+      LOGGER.info("init done");
     } catch (IOException ioe) {
       LOGGER.log(Level.SEVERE, "Connector Manager Startup failed: ", ioe);
       Context.getInstance().setInitFailureCause(ioe);
@@ -85,7 +63,40 @@ public class StartUp implements ServletContextListener {
       LOGGER.log(Level.SEVERE, "Connector Manager Startup failed: ", e);
       Context.getInstance().setInitFailureCause(e);
       throw e;
+    } finally {
+      NDC.remove();
     }
+  }
+
+  @Override
+  public void destroy() {
+    NDC.push("Shutdown");
+    try {
+      LOGGER.info("destroy");
+      Context.getInstance().shutdown(true);
+    } finally {
+      NDC.remove();
+    }
+  }
+
+  @Override
+  protected void doGet(HttpServletRequest req, HttpServletResponse res)
+      throws IOException {
+    doPost(req, res);
+  }
+
+  @Override
+  protected void doPost(HttpServletRequest req, HttpServletResponse res)
+      throws IOException {
+    ServletContext servletContext = this.getServletContext();
+    doConnectorManagerStartup(servletContext);
+    res.setContentType(ServletUtil.MIMETYPE_HTML);
+    PrintWriter out = res.getWriter();
+    out.println("<HTML><HEAD><TITLE>Connector Manager Started</TITLE></HEAD>"
+        + "<BODY>Connector manager has been successfully started.</BODY>"
+        + "</HTML>");
+    out.close();
+    LOGGER.info("Connector Manager started.");
   }
 
   private void doConnectorManagerStartup(ServletContext servletContext)
@@ -124,7 +135,6 @@ public class StartUp implements ServletContextListener {
     Context context = Context.getInstance();
     context.setServletContext(ac, servletContext.getRealPath("/WEB-INF"));
     context.start();
-    LOGGER.info("Connector Manager started.");
   }
 
   /**

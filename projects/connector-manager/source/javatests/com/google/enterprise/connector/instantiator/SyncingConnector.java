@@ -58,20 +58,13 @@ public class SyncingConnector implements Connector, ConnectorShutdownAware {
    * Milliseconds a traversal will block polling traversalResults for a
    * {@link DocumentList} before giving up.
    */
-  private static long pollTimeOutMillis = 5000;
-
-  /**
-   * Sets the Poll timeout in milliseconds.
-   */
-  static synchronized void setPollTimeout(long millis) {
-    pollTimeOutMillis = millis;
-  }
+  public static final int POLL_TIME_LIMIT_MILLIS = 5000;
 
   /**
    * Gets the Poll timeout in milliseconds.
    */
-  static synchronized long getPollTimeout() {
-    return pollTimeOutMillis;
+  private static long getPollTimeout() {
+    return POLL_TIME_LIMIT_MILLIS;
   }
 
   /**
@@ -126,11 +119,11 @@ public class SyncingConnector implements Connector, ConnectorShutdownAware {
 
   private class SyncingConnectorSession implements Session {
    public AuthenticationManager getAuthenticationManager() {
-     return null;
+     throw new UnsupportedOperationException();
     }
 
     public AuthorizationManager getAuthorizationManager() {
-     return null;
+      throw new UnsupportedOperationException();
     }
 
     public TraversalManager getTraversalManager() {

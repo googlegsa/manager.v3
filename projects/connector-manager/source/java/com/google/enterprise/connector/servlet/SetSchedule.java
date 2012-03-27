@@ -41,9 +41,10 @@ public class SetSchedule extends ConnectorManagerServlet {
   @Override
   protected void processDoPost(
       String xmlBody, Manager manager, PrintWriter out) {
-    NDC.append("Config");
+    NDC.push("Config");
     ConnectorMessageCode status = handleDoPost(xmlBody, manager);
     ServletUtil.writeResponse(out, status);
+    NDC.pop();
   }
 
   /**
@@ -64,12 +65,8 @@ public class SetSchedule extends ConnectorManagerServlet {
 
     String connectorName = XmlParseUtil.getFirstElementByTagName(
         root, ServletUtil.XMLTAG_CONNECTOR_NAME);
-    if (connectorName == null) {
-      status.setMessageId(ConnectorMessageCode.RESPONSE_NULL_CONNECTOR);
-      return status;
-    }
 
-    NDC.append(connectorName);
+    NDC.pushAppend(connectorName);
 
     // TODO: Remove this when the GSA enforces lowercase connector names.
     // Until then, this hack tries to determine if we are setting the
@@ -82,16 +79,10 @@ public class SetSchedule extends ConnectorManagerServlet {
       }
     }
 
-    String loadStr = XmlParseUtil.getFirstElementByTagName(root,
-        ServletUtil.XMLTAG_LOAD);
-    int load = (loadStr == null) ? 0 : Integer.parseInt(loadStr);
-
-    // TODO: Either commit to presence/absence of the disabled tag and
-    // support <disabled/> (which getFirstElementByTagName fails to do),
-    // or have the GSA provide true boolean value like Import/Export uses.
+    int load = Integer.parseInt(XmlParseUtil.getFirstElementByTagName(
+        root, ServletUtil.XMLTAG_LOAD));
     boolean disabled = (XmlParseUtil.getFirstElementByTagName(root,
         ServletUtil.XMLTAG_DISABLED) != null);
-
     int retryDelayMillis = Schedule.defaultRetryDelayMillis();
     String delayStr = XmlParseUtil.getFirstElementByTagName(root,
         ServletUtil.XMLTAG_DELAY);
@@ -115,6 +106,7 @@ public class SetSchedule extends ConnectorManagerServlet {
       LOGGER.log(Level.WARNING, ServletUtil.LOG_EXCEPTION_PERSISTENT_STORE, e);
     }
 
+    NDC.pop();
     return status;
   }
 }

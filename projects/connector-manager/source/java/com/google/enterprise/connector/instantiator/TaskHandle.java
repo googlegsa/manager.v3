@@ -1,4 +1,4 @@
-// Copyright 2009 Google Inc.
+// Copyright (C) 2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,14 +17,14 @@ package com.google.enterprise.connector.instantiator;
 import java.util.concurrent.Future;
 
 /**
- * Handle for the management of a {@link Cancelable} primary task.
+ * Handle for the management of a {@link TimedCancelable} primary task.
  */
 public class TaskHandle {
   /**
-   * The primary {@link Cancelable} that is run by this task to
+   * The primary {@link TimedCancelable} that is run by this task to
    * perform some useful work.
    */
-  final Cancelable cancelable;
+  final TimedCancelable cancelable;
 
   /*
    * The {@link future} for the primary task.
@@ -39,11 +39,11 @@ public class TaskHandle {
   /**
    * Create a TaskHandle.
    *
-   * @param cancelable {@link Cancelable} for the primary task.
+   * @param cancelable {@link TimedCancelable} for the primary task.
    * @param taskFuture {@link Future} for the primary task.
    * @param startTime startTime for the primary task.
    */
-  TaskHandle(Cancelable cancelable, Future<?> taskFuture, long startTime) {
+  TaskHandle(TimedCancelable cancelable, Future<?> taskFuture, long startTime) {
     this.cancelable = cancelable;
     this.taskFuture = taskFuture;
     this.startTime = startTime;

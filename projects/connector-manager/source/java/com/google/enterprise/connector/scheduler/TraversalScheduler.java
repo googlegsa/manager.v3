@@ -37,12 +37,6 @@ import java.util.logging.Logger;
  * The implementation must handle the situation that a Connector
  * Instance is running.
  */
-/* TODO (bmj): This should be removed and its functionality moved to
- * ConnectorCoordinator.  Connectors should be in charge of their own
- * scheduling.  In particular, the ConnectorCoordinator could leverage
- * Schedule.nextScheduledInterval(), sleeping when unscheduled rather
- * than checking all schedules once per second.
- */
 public class TraversalScheduler implements Runnable {
   public static final String SCHEDULER_CURRENT_TIME = "/Scheduler/currentTime";
 

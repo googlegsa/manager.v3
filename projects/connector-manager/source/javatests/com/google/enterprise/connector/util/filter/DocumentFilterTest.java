@@ -24,6 +24,7 @@ import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.spiimpl.BinaryValue;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -54,7 +55,7 @@ public class DocumentFilterTest extends TestCase {
   protected Document createDocument() {
     return new SimpleDocument(createProperties());
   }
-
+  
   protected Document createDocument(boolean includeMimetype){
     return new SimpleDocument(createProperties(includeMimetype));
   }
@@ -111,7 +112,7 @@ public class DocumentFilterTest extends TestCase {
         Value value = prop.nextValue();
         assertNotNull(value);
         if (value instanceof BinaryValue) {
-          assertEquals(getStringFromBinaryValue(expectedValue),
+          assertEquals(getStringFromBinaryValue(expectedValue), 
               getStringFromBinaryValue(value));
         } else {
           assertEquals(expectedValue.toString(), value.toString());
@@ -120,9 +121,9 @@ public class DocumentFilterTest extends TestCase {
       assertNull(prop.nextValue());
     }
   }
-
-  protected static String getStringFromBinaryValue(Value value)
-      throws Exception {
+  
+  protected static String getStringFromBinaryValue(Value value) 
+      throws IOException {
     InputStream in = ((BinaryValue) value).getInputStream();
     return new String(ByteStreams.toByteArray(in));
   }

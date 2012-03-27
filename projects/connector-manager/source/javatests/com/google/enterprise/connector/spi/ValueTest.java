@@ -14,18 +14,11 @@
 
 package com.google.enterprise.connector.spi;
 
-import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.manager.Context;
-import com.google.enterprise.connector.spiimpl.BinaryValue;
-import com.google.enterprise.connector.util.InputStreamFactory;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.text.ParseException;
 import java.util.Calendar;
 import java.util.Date;
@@ -254,54 +247,5 @@ public class ValueTest extends TestCase {
     context.setStandaloneContext(applicationContext, null);
 
     assertEquals(expectedId, Value.getFeedTimeZone());
-  }
-
-  private static final String CONTENTS = "Test Content";
-  private static final byte[] CONTENTS_BYTES = StringUtils.getBytes(CONTENTS);
-
-  /** Tests BinaryValue constructors - byte array. */
-  public void testBinaryValueByteArray() throws Exception {
-    testBinaryValue(Value.getBinaryValue(CONTENTS_BYTES));
-  }
-
-  /** Tests BinaryValue constructors - InputStream. */
-  public void testBinaryValueInputStream() throws Exception {
-    testBinaryValue(Value.getBinaryValue(
-        new ByteArrayInputStream(CONTENTS_BYTES)));
-  }
-
-  /** Tests BinaryValue constructors - InputStreamFactory. */
-  public void testBinaryValueInputStreamFactory() throws Exception {
-    testBinaryValue(Value.getBinaryValue(
-        new InputStreamFactory() {
-          public InputStream getInputStream() {
-            return new ByteArrayInputStream(CONTENTS_BYTES);
-          }
-        }));
-  }
-
-  /** Tests BinaryValue constructors - InputStreamFactory. */
-  public void testBinaryValueInputStreamFactoryError() throws Exception {
-    BinaryValue value = (BinaryValue) Value.getBinaryValue(
-        new InputStreamFactory() {
-          public InputStream getInputStream() throws IOException {
-            throw new IOException("Test Exception");
-          }
-        });
-
-    try {
-      value.getInputStream();
-      fail("Expected RepositoryDocumentException, but got none.");
-    } catch (RepositoryDocumentException expected) {
-      // Expected.
-    }
-  }
-
-  /** Tests reading a BinaryValue. */
-  public void testBinaryValue(Value value) throws Exception {
-    assertTrue(value instanceof BinaryValue);
-    InputStream is = ((BinaryValue) value).getInputStream();
-    assertNotNull(is);
-    assertEquals(CONTENTS, StringUtils.streamToStringAndThrow(is));
   }
 }

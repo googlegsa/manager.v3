@@ -20,9 +20,6 @@ import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.AuthorizationResponse;
 import com.google.enterprise.connector.spi.Connector;
-import com.google.enterprise.connector.spi.ConnectorPersistentStore;
-import com.google.enterprise.connector.spi.ConnectorPersistentStoreAware;
-import com.google.enterprise.connector.spi.ConnectorShutdownAware;
 import com.google.enterprise.connector.spi.DocumentList;
 import com.google.enterprise.connector.spi.Session;
 import com.google.enterprise.connector.spi.SimpleDocument;
@@ -39,15 +36,11 @@ import java.util.List;
  * Simple test connector that can be used with <code>SimpleConnectorType</code>
  * to test storage of some specific properties.
  */
-public class SimpleTestConnector implements Connector, ConnectorShutdownAware,
-                                            ConnectorPersistentStoreAware {
+public class SimpleTestConnector implements Connector {
   private String color;
   private String repositoryFileName;
   private String username;
   private String workDirName;
-  private boolean isShutdown = false;
-  private boolean isDeleted = false;
-  private ConnectorPersistentStore databaseAccess;
 
   public String getColor() {
     return color;
@@ -79,30 +72,6 @@ public class SimpleTestConnector implements Connector, ConnectorShutdownAware,
 
   public void setWorkDirName(String workDirName) {
     this.workDirName = workDirName;
-  }
-
-  public void shutdown() {
-    this.isShutdown = true;
-  }
-
-  public boolean isShutdown() {
-    return isShutdown;
-  }
-
-  public void delete() {
-    this.isDeleted = true;
-  }
-
-  public boolean isDeleted() {
-    return isDeleted;
-  }
-
-  public void setDatabaseAccess(ConnectorPersistentStore databaseAccess) {
-    this.databaseAccess = databaseAccess;
-  }
-
-  public ConnectorPersistentStore getDatabaseAccess() {
-    return databaseAccess;
   }
 
   public Session login() {

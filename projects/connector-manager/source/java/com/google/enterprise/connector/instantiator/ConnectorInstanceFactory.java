@@ -15,16 +15,12 @@
 package com.google.enterprise.connector.instantiator;
 
 import com.google.common.base.Preconditions;
-import com.google.enterprise.connector.database.ConnectorPersistentStoreFactory;
-import com.google.enterprise.connector.database.FakeDataSource;
 import com.google.enterprise.connector.spi.Connector;
 import com.google.enterprise.connector.spi.ConnectorFactory;
-import com.google.enterprise.connector.spi.ConnectorPersistentStoreAware;
 import com.google.enterprise.connector.spi.ConnectorShutdownAware;
 import com.google.enterprise.connector.spi.ConnectorType;
 import com.google.enterprise.connector.spi.RepositoryException;
 
-import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -51,8 +47,7 @@ class ConnectorInstanceFactory implements ConnectorFactory {
 
   final String connectorName;
   final TypeInfo typeInfo;
-  final Configuration originalConfig;
-  final ConnectorPersistentStoreFactory connectorPersistentStoreFactory;
+  final Configuration origConfig;
   final List<Connector> connectors;
 
   /**
@@ -62,20 +57,15 @@ class ConnectorInstanceFactory implements ConnectorFactory {
    * @param connectorName the name of this connector instance.
    * @param typeInfo the connector type.
    * @param config the configuration provided to {@code validateConfig}.
-   * @param cpsFactory a {@link ConnectorPersistentStoreFactory}.
    */
   public ConnectorInstanceFactory(String connectorName, TypeInfo typeInfo,
-      Configuration config, ConnectorPersistentStoreFactory cpsFactory) {
-    Preconditions.checkNotNull(connectorName, "connectorName must not be null");
-    Preconditions.checkNotNull(typeInfo, "typeInfo must not be null");
-    Preconditions.checkNotNull(config, "configuration must not be null");
+      Configuration config) {
     Preconditions.checkArgument((typeInfo.getConnectorTypeName()
                                  .equals(config.getTypeName())),
                                 "TypeInfo must match Configuration type");
     this.connectorName = connectorName;
     this.typeInfo = typeInfo;
-    this.originalConfig = config;
-    this.connectorPersistentStoreFactory = cpsFactory;
+    this.origConfig = config;
     this.connectors = new LinkedList<Connector>();
   }
 
@@ -90,32 +80,15 @@ class ConnectorInstanceFactory implements ConnectorFactory {
   public Connector makeConnector(Map<String, String> config)
       throws RepositoryException {
     try {
-      Configuration configuration = new Configuration(config, originalConfig);
-      if (LOGGER.isLoggable(Level.CONFIG)) {
-        LOGGER.config("ConnectorFactory makes connector with configuration: "
-                      + configuration);
-      }
       Connector connector = InstanceInfo.makeConnectorWithSpring(
-          connectorName, typeInfo, configuration);
-      LOGGER.config("Constructed connector " + connector);
+          connectorName, typeInfo, new Configuration(config, origConfig));
       synchronized (this) {
         connectors.add(connector);
-      }
-      if ((connectorPersistentStoreFactory != null) &&
-          (connector instanceof ConnectorPersistentStoreAware)) {
-        connectorPersistentStoreFactory.newConnectorPersistentStore(
-            connectorName, typeInfo.getConnectorTypeName(), null);
-        // Don't actually call connector.setDatabaseAccess(), since we
-        // don't want the transient connector to attempt to write to it.
-        // But configuration/connection errors should throw SQLException.
       }
       return connector;
     } catch (InstantiatorException e) {
       throw new
           RepositoryException("ConnectorFactory failed to make connector.", e);
-    } catch (SQLException e) {
-      throw new RepositoryException("Failed to configure database access for "
-          + "connector.", e);
     }
   }
 
@@ -126,7 +99,6 @@ class ConnectorInstanceFactory implements ConnectorFactory {
     for (Connector connector : connectors) {
       if (connector instanceof ConnectorShutdownAware) {
         try {
-          LOGGER.config("Shutdown connector " + connector);
           ((ConnectorShutdownAware) connector).shutdown();
         } catch (Exception e) {
           LOGGER.log(Level.WARNING, "Failed to shutdown connector "

@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.
+// Copyright (C) 2006-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,7 +14,6 @@
 
 package com.google.enterprise.connector.instantiator;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.enterprise.connector.spi.ConnectorType;
 
 import org.springframework.beans.factory.xml.XmlBeanFactory;
@@ -83,8 +82,7 @@ public class TypeInfo {
     this.connectorTypeDir = connectorTypeDir;
   }
 
-  /* @VisibleForTesting */
-  TypeInfo(String connectorTypeName, ConnectorType connectorType,
+  private TypeInfo(String connectorTypeName, ConnectorType connectorType,
       Resource connectorInstancePrototype, Resource connectorDefaultPrototype) {
     this.connectorTypeName = connectorTypeName;
     this.connectorType = connectorType;
@@ -147,8 +145,6 @@ public class TypeInfo {
 
     // Remember the name of the first one found, and instantiate it.
     connectorTypeName = beanList[0];
-    LOGGER.fine("Constructing connector of type " + connectorTypeName
-                + " from resource " + r.getDescription());
     try {
       connectorType = (ConnectorType) factory.getBean(connectorTypeName);
     } catch (Exception e) {

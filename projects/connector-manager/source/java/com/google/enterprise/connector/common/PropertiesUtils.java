@@ -260,9 +260,7 @@ public class PropertiesUtils {
    */
   public static Properties copy(Properties sourceProperties) {
     Properties props = new Properties();
-    if (sourceProperties != null) {
-      props.putAll(sourceProperties);
-    }
+    props.putAll(sourceProperties);
     return props;
   }
 

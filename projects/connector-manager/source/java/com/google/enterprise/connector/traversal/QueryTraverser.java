@@ -19,7 +19,6 @@ import com.google.enterprise.connector.pusher.FeedException;
 import com.google.enterprise.connector.pusher.PushException;
 import com.google.enterprise.connector.pusher.Pusher;
 import com.google.enterprise.connector.pusher.PusherFactory;
-import com.google.enterprise.connector.pusher.Pusher.PusherStatus;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.DocumentList;
 import com.google.enterprise.connector.spi.Property;
@@ -29,6 +28,7 @@ import com.google.enterprise.connector.spi.SkippedDocumentException;
 import com.google.enterprise.connector.spi.SimpleProperty;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.TraversalContext;
+import com.google.enterprise.connector.spi.TraversalContextAware;
 import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.util.Clock;
@@ -68,6 +68,15 @@ public class QueryTraverser implements Traverser {
     this.traversalContext = traversalContext;
     this.clock = clock;
     this.documentStore = documentStore;
+    if (queryTraversalManager instanceof TraversalContextAware) {
+      TraversalContextAware contextAware =
+          (TraversalContextAware)queryTraversalManager;
+      try {
+        contextAware.setTraversalContext(traversalContext);
+      } catch (Exception e) {
+        LOGGER.log(Level.WARNING, "Unable to set TraversalContext", e);
+      }
+    }
   }
 
   //@Override
@@ -111,16 +120,14 @@ public class QueryTraverser implements Traverser {
       // We get here if the store for the connector is disabled.
       // That happens if the connector was deleted while we were asleep.
       // Our connector seems to have been deleted.  Don't process a batch.
-      LOGGER.fine("Halting traversal for connector " + connectorName
-                  + ": " + ise.getMessage());
+      LOGGER.finer("Halting traversal..." + ise.getMessage());
       return new BatchResult(TraversalDelayPolicy.ERROR);
     }
 
     DocumentList resultSet = null;
     if (connectorState == null) {
       try {
-        LOGGER.fine("START TRAVERSAL: Starting traversal for connector "
-                    + connectorName);
+        LOGGER.finer("Starting traversal...");
         resultSet = queryTraversalManager.startTraversal();
       } catch (Exception e) {
         LOGGER.log(Level.WARNING, "startTraversal threw exception: ", e);
@@ -128,8 +135,7 @@ public class QueryTraverser implements Traverser {
       }
     } else {
       try {
-        LOGGER.fine("RESUME TRAVERSAL: Resuming traversal for connector "
-            + connectorName + " from checkpoint " + connectorState);
+        LOGGER.finer("Resuming traversal...");
         resultSet = queryTraversalManager.resumeTraversal(connectorState);
       } catch (Exception e) {
         LOGGER.log(Level.WARNING, "resumeTraversal threw exception: ", e);
@@ -140,8 +146,7 @@ public class QueryTraverser implements Traverser {
     // If the traversal returns null, that means that the repository has
     // no new content to traverse.
     if (resultSet == null) {
-      LOGGER.fine("Result set from connector " + connectorName
-                  + " is NULL, no documents returned for traversal.");
+      LOGGER.finer("Result set is NULL, no documents returned for traversal.");
       return new BatchResult(TraversalDelayPolicy.POLL, 0);
     }
 
@@ -152,10 +157,10 @@ public class QueryTraverser implements Traverser {
       // Get a Pusher for feeding the returned Documents.
       pusher = pusherFactory.newPusher(connectorName);
 
-      while (true) {
+      while (counter < batchSize.getMaximum()) {
         if (Thread.currentThread().isInterrupted() || isCancelled()) {
           LOGGER.fine("Traversal for connector " + connectorName
-                      + " has been interrupted; breaking out of batch run.");
+                      + " has been interrupted...breaking out of batch run.");
           break;
         }
         if (clock.getTimeMillis() >= timeoutTime) {
@@ -187,17 +192,17 @@ public class QueryTraverser implements Traverser {
               docid = Value.getSingleValueString(nextDocument,
                                                  SpiConstants.PROPNAME_DOCID);
             } catch (IllegalArgumentException e1) {
-                LOGGER.finer("Unable to get document id for document ("
-                             + nextDocument + "): " + e1.getMessage());
+                LOGGER.fine("Unable to get document id for document ("
+                            + nextDocument + "): " + e1.getMessage());
             } catch (RepositoryException e1) {
-                LOGGER.finer("Unable to get document id for document ("
-                             + nextDocument + "): " + e1.getMessage());
+                LOGGER.fine("Unable to get document id for document ("
+                            + nextDocument + "): " + e1.getMessage());
             }
           }
           LOGGER.finer("Sending document (" + docid + ") from connector "
               + connectorName + " to Pusher");
 
-          if (pusher.take(nextDocument, documentStore) != PusherStatus.OK) {
+          if (!pusher.take(nextDocument, documentStore)) {
             LOGGER.fine("Traversal batch for connector " + connectorName
                 + " is completing at the request of the Pusher,"
                 + " after processing " + counter + " documents.");
@@ -293,8 +298,7 @@ public class QueryTraverser implements Traverser {
 
   private String checkpointAndSave(DocumentList pm) {
     String connectorState = null;
-    LOGGER.fine("CHECKPOINT: Generating checkpoint for connector "
-                + connectorName);
+    LOGGER.finest("Checkpointing for connector " + connectorName + " ...");
     try {
       connectorState = pm.checkpoint();
     } catch (RepositoryException re) {
@@ -314,14 +318,14 @@ public class QueryTraverser implements Traverser {
         } else {
           throw new IllegalStateException("null TraversalStateStore");
         }
-        LOGGER.fine("CHECKPOINT: " + connectorState);
+        LOGGER.finest("...checkpoint " + connectorState + " created.");
       }
       return connectorState;
     } catch (IllegalStateException ise) {
       // We get here if the store for the connector is disabled.
       // That happens if the connector was deleted while we were working.
       // Our connector seems to have been deleted.  Don't save a checkpoint.
-      LOGGER.fine("Checkpoint discarded: " + connectorState);
+      LOGGER.finest("...checkpoint " + connectorState + " discarded.");
     }
     return null;
   }
@@ -331,7 +335,7 @@ public class QueryTraverser implements Traverser {
       LOGGER.log(Level.FINER, "Skipping document (" + docid
           + ") from connector " + connectorName + ": " + e.getMessage());
     }
-    if (documentStore != null && document != null) {
+    if (documentStore != null) {
       documentStore.storeDocument(new SkippedDocument(document, e));
     }
   }

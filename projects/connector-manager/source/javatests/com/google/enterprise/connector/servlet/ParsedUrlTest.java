@@ -19,7 +19,7 @@ import junit.framework.TestCase;
 
 public class ParsedUrlTest extends TestCase {
 
-  public void testParsedGoogleConnectorUrl() {
+  public void testParsedUrl() {
     doParsedUrlTest("googleconnector://connector1.localhost/doc?docid=foo1",
         "connector1", "foo1", ConnectorMessageCode.SUCCESS);
     doParsedUrlTest("googleconnector://connector2.localhost/doc?docid=foo2",
@@ -38,39 +38,6 @@ public class ParsedUrlTest extends TestCase {
         "connector1", "foo1", ConnectorMessageCode.SUCCESS);
     doParsedUrlTest("googleconnector://Connector3.localhost/doc?DOCID=foo1",
         "Connector3", "foo1", ConnectorMessageCode.SUCCESS);
-  }
-
-  public void testParsedRetrieverUrl() {
-    doParsedUrlTest("http://localhost:8080/connector-manager/getDocumentContent"
-                    +"?connectorname=connector1&docid=foo1",
-                    "connector1", "foo1", ConnectorMessageCode.SUCCESS);
-    doParsedUrlTest("http://localhost:8080/connector-manager/getDocumentContent"
-                    + "?connectorname=connector2&docid=foo2",
-                    "connector2", "foo2", ConnectorMessageCode.SUCCESS);
-    doParsedUrlTest("http://localhost:8080/connector-manager/getDocumentContent"
-                    + "?ConnectorName=connector3&docId=foo3",
-                    "connector3", "foo3", ConnectorMessageCode.SUCCESS);
-    doParsedUrlTest("http://localhost:8080/connector-manager/getDocumentContent"
-                    + "?connectorname=co%6E%6eector%31&docid=foo1",
-                    "connector1", "foo1", ConnectorMessageCode.SUCCESS);
-    doParsedUrlTest("http://localhost:8080/connector-manager/getDocumentContent"
-                    + "?connectorname=connector1&docid=%66oo%31",
-                    "connector1", "foo1", ConnectorMessageCode.SUCCESS);
-  }
-
-  public void testBadUrls() {
-    doParsedUrlTest("http://localhost/foo/bar/index.html",
-        null, null, ConnectorMessageCode.RESPONSE_NULL_CONNECTOR);
-    doParsedUrlTest("googleconnector://.localhost/doc?DOCID=foo1",
-        "", "foo1", ConnectorMessageCode.RESPONSE_NULL_CONNECTOR);
-    doParsedUrlTest("googleconnector://connector1.localhost/doc?docid=",
-        "connector1", "", ConnectorMessageCode.RESPONSE_NULL_DOCID);
-    doParsedUrlTest("http://localhost:8080/connector-manager/getDocumentContent"
-        + "?connectorname=&docid=foo1",
-        "", "foo1", ConnectorMessageCode.RESPONSE_NULL_CONNECTOR);
-    doParsedUrlTest("http://localhost:8080/connector-manager/getDocumentContent"
-        + "?connectorname=connector1&docid=",
-        "connector1", "", ConnectorMessageCode.RESPONSE_NULL_DOCID);
   }
 
   private void doParsedUrlTest(String url, String expectedName,

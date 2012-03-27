@@ -174,11 +174,11 @@ public class DatabaseResourceBundleManager {
   DatabasePropertyResourceBundle loadBundle(String bundleName,
       DatabasePropertyResourceBundle parent, ClassLoader classLoader)  {
     String resourceName = bundleName.replace('.', '/') + ".properties";
-    LOGGER.fine("Looking for SQL ResourceBundle " + resourceName);
+    LOGGER.fine("Looking for SQL ResourceBundle " + resourceName + " ...");
     try {
       URL url = classLoader.getResource(resourceName);
       if (url != null) {
-        LOGGER.fine("Loading SQL ResourceBundle " + url);
+        LOGGER.config("Loading SQL ResourceBundle " + url);
         return new DatabasePropertyResourceBundle(url, parent);
       }
     } catch (IOException e) {

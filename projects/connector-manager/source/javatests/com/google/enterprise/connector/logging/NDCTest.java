@@ -111,31 +111,6 @@ public class NDCTest extends TestCase {
     assertTrue(NDC.getDepth() == 0);
   }
 
-  /** Test append usage. */
-  public void testAppend() {
-    NDC.clear();
-
-    NDC.append(message1);
-    assertEquals("", NDC.peek());
-    assertTrue(NDC.getDepth() == 0);
-
-    NDC.push(message1);
-    assertEquals(message1, NDC.peek());
-    assertTrue(NDC.getDepth() == 1);
-
-    NDC.append(message2);
-    assertEquals(message1 + " " + message2, NDC.peek());
-    assertTrue(NDC.getDepth() == 1);
-
-    NDC.append(message3);
-    assertEquals(message1 + " " + message2 + " " + message3, NDC.peek());
-    assertTrue(NDC.getDepth() == 1);
-
-    String value = NDC.pop();
-    assertEquals(message1 + " " + message2 + " " + message3, value);
-    assertEquals("", NDC.peek());
-    assertTrue(NDC.getDepth() == 0);
-  }
 
   /** Test more pops than pushes. */
   public void testExtraPop() {
@@ -165,7 +140,7 @@ public class NDCTest extends TestCase {
     Thread t = new OtherThread("NDCChildThread");
     t.start();
     try {
-      Thread.sleep(50);
+      Thread.sleep(500);
     } catch (InterruptedException e) {}
     assertEquals(message1, NDC.peek());
     assertTrue(NDC.getDepth() == 1);
@@ -197,7 +172,7 @@ public class NDCTest extends TestCase {
       assertTrue(NDC.getDepth() == 1);
 
       try {
-        Thread.sleep(75);
+        Thread.sleep(750);
       } catch (InterruptedException e) {}
       assertEquals(message2, NDC.peek());
       assertTrue(NDC.getDepth() == 1);

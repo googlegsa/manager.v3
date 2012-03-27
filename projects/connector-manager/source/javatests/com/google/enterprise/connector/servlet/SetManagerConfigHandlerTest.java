@@ -17,6 +17,7 @@ package com.google.enterprise.connector.servlet;
 import com.google.common.base.Strings;
 import com.google.enterprise.connector.manager.MockManager;
 
+import junit.framework.Assert;
 import junit.framework.TestCase;
 
 import java.util.logging.Logger;
@@ -28,18 +29,10 @@ public class SetManagerConfigHandlerTest extends TestCase {
   private static final Logger LOGGER =
     Logger.getLogger(SetManagerConfigHandlerTest.class.getName());
 
-  private MockManager manager;
+  private final MockManager manager = MockManager.getInstance();
 
   protected void setUp() {
-    manager = MockManager.getInstance();
     manager.setLocked(false);
-  }
-
-  /** Test invalid configure xml element. */
-  public void testInvalidRequest() throws Exception {
-    SetManagerConfigHandler hdl = new SetManagerConfigHandler( manager, "");
-    assertEquals(ConnectorMessageCode.ERROR_PARSING_XML_REQUEST,
-                 hdl.getStatus().getMessageId());
   }
 
   public void testBasic() {

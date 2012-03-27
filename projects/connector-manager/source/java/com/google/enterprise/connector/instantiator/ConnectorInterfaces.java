@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.
+// Copyright (C) 2006-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,24 +17,16 @@ package com.google.enterprise.connector.instantiator;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.Connector;
-import com.google.enterprise.connector.spi.Lister;
-import com.google.enterprise.connector.spi.ListerAware;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.RepositoryLoginException;
-import com.google.enterprise.connector.spi.Retriever;
-import com.google.enterprise.connector.spi.RetrieverAware;
 import com.google.enterprise.connector.spi.Session;
 import com.google.enterprise.connector.spi.TraversalManager;
-
-import java.util.logging.Logger;
 
 /**
  * Access to the AuthenticationManager, AuthorizationManager, and
  * TraversalManagager for a Connector instance.
  */
 public class ConnectorInterfaces {
-  private static final Logger LOGGER =
-      Logger.getLogger(ConnectorInterfaces.class.getName());
 
   private final String connectorName;
   private final Connector connector;
@@ -43,10 +35,6 @@ public class ConnectorInterfaces {
   private TraversalManager traversalManager;
   private AuthenticationManager authenticationManager;
   private AuthorizationManager authorizationManager;
-  private Retriever retriever;
-  private boolean gotRetriever = false;
-  private Lister lister;
-  private boolean gotLister = false;
 
   ConnectorInterfaces(String connectorName, Connector connector) {
     this.connectorName = connectorName;
@@ -76,7 +64,6 @@ public class ConnectorInterfaces {
       Session s = getSession();
       try {
         authenticationManager = s.getAuthenticationManager();
-        LOGGER.fine("Got AuthenticationManager " + authenticationManager);
       } catch (RepositoryException e) {
         // TODO(ziff): think about how this could be re-tried
         throw new InstantiatorException(e);
@@ -96,7 +83,6 @@ public class ConnectorInterfaces {
       Session s = getSession();
       try {
         authorizationManager = s.getAuthorizationManager();
-        LOGGER.fine("Got AuthorizationManager " + authorizationManager);
       } catch (RepositoryException e) {
         // TODO(ziff): think about how this could be re-tried
         throw new InstantiatorException(e);
@@ -105,64 +91,6 @@ public class ConnectorInterfaces {
       }
     }
     return authorizationManager;
-  }
-
-  /**
-   * Return a {@link Lister} that may be used to feed documents to the GSA.
-   * If the connector does not support the {@link Lister} interface,
-   * {@code null} is returned.
-   *
-   * @return a {@link Lister}, or {@code null} if none is available
-   * @throws InstantiatorException if unable to instantiate the requested
-   *         {@link Lister}
-   */
-  Lister getLister() throws InstantiatorException {
-    if (!gotLister) {
-      Session s = getSession();
-      gotLister = true;
-      lister = null;
-      if (s instanceof ListerAware) {
-        try {
-          lister = ((ListerAware) s).getLister();
-          LOGGER.fine("Got Lister " + lister);
-        } catch (RepositoryException e) {
-          // TODO(ziff): think about how this could be re-tried
-          throw new InstantiatorException(e);
-        } catch (Exception e) {
-          throw new InstantiatorException(e);
-        }
-      }
-    }
-    return lister;
-  }
-
-  /**
-   * Return a {@link Retriever} that may be used to access content for the
-   * document identified by a document ID.  If the connector does not support
-   * the {@link Retriever} interface, {@code null} is returned.
-   *
-   * @return a {@link Retriever}, or {@code null} if none is available
-   * @throws InstantiatorException if unable to instantiate the requested
-   *         {@link Retriever}
-   */
-  Retriever getRetriever() throws InstantiatorException {
-    if (!gotRetriever) {
-      Session s = getSession();
-      gotRetriever = true;
-      retriever = null;
-      if (s instanceof RetrieverAware) {
-        try {
-          retriever = ((RetrieverAware) s).getRetriever();
-          LOGGER.fine("Got Retriever " + retriever);
-        } catch (RepositoryException e) {
-          // TODO(ziff): think about how this could be re-tried
-          throw new InstantiatorException(e);
-        } catch (Exception e) {
-          throw new InstantiatorException(e);
-        }
-      }
-    }
-    return retriever;
   }
 
   /**
@@ -190,7 +118,6 @@ public class ConnectorInterfaces {
       Session s = getSession();
       try {
         traversalManager = s.getTraversalManager();
-        LOGGER.fine("Got TraversalManager " + traversalManager);
       } catch (RepositoryException ie) {
         throw new InstantiatorException(ie);
       } catch (Exception e) {
@@ -203,9 +130,7 @@ public class ConnectorInterfaces {
   private Session getSession() throws InstantiatorException {
     Session s = null;
     try {
-      LOGGER.fine("LOGIN: Getting Session from connector " + connectorName);
       s = connector.login();
-      LOGGER.fine("Got Session " + s);
     } catch (RepositoryLoginException e) {
       // this is un-recoverable
       throw new InstantiatorException(e);
@@ -218,4 +143,5 @@ public class ConnectorInterfaces {
     }
     return s;
   }
+
 }
