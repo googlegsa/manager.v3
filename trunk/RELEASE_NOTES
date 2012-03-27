@@ -28,6 +28,12 @@ Summary of Changes
     failed Connector instantiation to be retried after a period, in hopes
     that any transient errors may have been corrected.
 
+  * Handle PDF documents that are zero-length or too long more gracefully.
+    Rather than skip the document entirely, feed a stub document with just
+    the document's title, if available.
+
+  * Differentiate between no password and empty-string password in the
+    user authentication servlet.
 
 
 Release 2.8.4, 23 February 2012
