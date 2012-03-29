@@ -119,6 +119,14 @@ public class GetDocumentContent extends HttpServlet {
       throws IOException {
     // The servlet relies on proper security to be handled by a filter.
 
+    if ("SecMgr".equals(req.getHeader("User-Agent"))) {
+      // Assume that the SecMgr is performing a "HEAD" request to check authz.
+      // We don't support this, so we always issue deny.
+      LOGGER.finest("RETRIEVER: SecMgr request denied");
+      res.sendError(HttpServletResponse.SC_FORBIDDEN);
+      return;
+    }
+
     String connectorName = req.getParameter(ServletUtil.XMLTAG_CONNECTOR_NAME);
     NDC.pushAppend("Retrieve " + connectorName);
     Manager manager = Context.getInstance().getManager();
