@@ -16,7 +16,7 @@ Before applying an update you should have the following available to you.
   * A binary distribution of a Connector Manager patch release, available on the [http://code.google.com/p/google-enterprise-connector-manager/downloads/list Downloads page].
   * Familiarity with the command line environment of the deployment computer (cmd.exe on Windows or a shell environment on Unix/Linux).
 
-*Note:* These instructions use environment variable syntax as an allusion. These environment variables may not exist in your environment.  You may choose to define the appropriately, or you must substitute the actual paths when entering the commands.
+*Note:* These instructions use environment variable syntax as an allusion. These environment variables may not exist in your environment.  You may choose to define them appropriately, or you must substitute the actual paths when entering the commands.
 
 == Upgrading a Connector Manager deployed on Windows ==
 
