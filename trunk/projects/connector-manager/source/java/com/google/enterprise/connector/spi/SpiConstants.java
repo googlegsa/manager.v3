@@ -749,7 +749,18 @@ public class SpiConstants {
    * @since 3.0
    */
   public enum AclScope {
-    USER, GROUP
+    USER("user"), GROUP("group");
+
+    private final String tag;
+
+    private AclScope(String tag) {
+      this.tag = tag;
+    }
+
+    @Override
+    public String toString() {
+      return tag;
+    }
   }
 
   /**
@@ -758,6 +769,17 @@ public class SpiConstants {
    * @since 3.0
    */
   public enum AclAccess {
-    PERMIT, DENY
+    PERMIT("permit"), DENY("deny");
+
+    private final String tag;
+
+    private AclAccess(String tag) {
+      this.tag = tag;
+    }
+
+    @Override
+    public String toString() {
+      return tag;
+    }
   }
 }
