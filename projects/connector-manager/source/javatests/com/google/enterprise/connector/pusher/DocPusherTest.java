@@ -2659,13 +2659,13 @@ public class DocPusherTest extends TestCase {
         + "doc1\" inheritance-type=\"parent-overrides\" inherit-from=\""
         + expectedParentUrl + "\">", resultXML);
     assertStringContains(
-        "<principal scope=\"USER\" access=\"PERMIT\">John Doe</principal>",
+        "<principal scope=\"user\" access=\"permit\">John Doe</principal>",
         resultXML);
     assertStringContains(
-        "<principal scope=\"USER\" access=\"DENY\">Jason Wang</principal>",
+        "<principal scope=\"user\" access=\"deny\">Jason Wang</principal>",
         resultXML);
     assertStringContains(
-        "<principal scope=\"GROUP\" access=\"PERMIT\">Engineering</principal>",
+        "<principal scope=\"group\" access=\"permit\">Engineering</principal>",
         resultXML);
   }
 
