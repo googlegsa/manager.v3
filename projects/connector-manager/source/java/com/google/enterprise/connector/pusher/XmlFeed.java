@@ -346,7 +346,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
     StringBuilder prefix = new StringBuilder();
     prefix.append("<").append(XML_RECORD);
 
-    String searchUrl = getRecordUrl(document);
+    String searchUrl = getRecordUrl(document, true);
     XmlUtils.xmlAppendAttr(XML_URL, searchUrl, prefix);
 
     String displayUrl = DocUtils.getOptionalString(document,
@@ -456,24 +456,37 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
   }
 
   /**
+   * Constructs the URL for the given doc id, feed type and URL.
+   *
+   * @throws RepositoryDocumentException if searchUrl is invalid.
+   */
+  private String getOrConstructUrl(Document document, String urlProperty,
+      String docidProperty, FeedType feedType, boolean validateUrl)
+      throws RepositoryException, RepositoryDocumentException {
+    String recordUrl = DocUtils.getOptionalString(document, urlProperty);
+    if (recordUrl != null) {
+      if (validateUrl) {
+        validateUrl(recordUrl, urlProperty);
+      }
+    } else {
+      String docId = DocUtils.getOptionalString(document, docidProperty);
+      if (docId != null) {
+        // Fabricate a URL from the docid and feedType.
+        recordUrl = constructUrl(docId, feedType);
+      }
+    }
+    return recordUrl;
+  }
+
+  /**
    * Constructs the record URL for the given doc id, feed type and search URL.
    *
    * @throws RepositoryDocumentException if searchUrl is invalid.
    */
-  private String getRecordUrl(Document document)
+  private String getRecordUrl(Document document, boolean validateUrl)
       throws RepositoryException, RepositoryDocumentException {
-    String docId = DocUtils.getRequiredString(document,
-        SpiConstants.PROPNAME_DOCID);
-    String recordUrl = DocUtils.getOptionalString(document,
-        SpiConstants.PROPNAME_SEARCHURL);
-    if (recordUrl != null) {
-      validateUrl(recordUrl, "search");
-    } else {
-      // Fabricate a URL from the docid and feedType.
-      recordUrl = constructUrl(docId, feedType);
-    }
-
-    return recordUrl;
+    return getOrConstructUrl(document, SpiConstants.PROPNAME_SEARCHURL,
+        SpiConstants.PROPNAME_DOCID, feedType, validateUrl);
   }
 
   /**
@@ -483,19 +496,9 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
    */
   private String getInheritFromUrl(Document document)
       throws RepositoryException, RepositoryDocumentException {
-    String recordUrl = DocUtils.getOptionalString(document,
-        SpiConstants.PROPNAME_ACLINHERITFROM);
-    if (recordUrl != null) {
-      validateUrl(recordUrl, "inherit-from");
-    } else {
-      String docId = DocUtils.getOptionalString(document,
-         SpiConstants.PROPNAME_ACLINHERITFROM_DOCID);
-      if (docId != null) {
-        // Fabricate a URL from the docid and feedType
-        recordUrl = constructUrl(docId, getInheritFromFeedType(document));
-      }
-    }
-    return recordUrl;
+    return getOrConstructUrl(document, SpiConstants.PROPNAME_ACLINHERITFROM,
+        SpiConstants.PROPNAME_ACLINHERITFROM_DOCID,
+        getInheritFromFeedType(document), false);
   }
 
   /**
@@ -524,17 +527,12 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
   private void xmlWrapAclRecord(Document acl)
       throws IOException, RepositoryException {
     StringBuffer aclBuff = new StringBuffer();
-
-    String docId = DocUtils.getRequiredString(acl,
-        SpiConstants.PROPNAME_DOCID);
-    String searchUrl = DocUtils.getOptionalString(acl,
-        SpiConstants.PROPNAME_SEARCHURL);
     String inheritFrom = getInheritFromUrl(acl);
     String inheritanceType = DocUtils.getOptionalString(acl,
         SpiConstants.PROPNAME_ACLINHERITANCETYPE);
 
     aclBuff.append("<").append(XML_ACL);
-    XmlUtils.xmlAppendAttr(XML_URL, getRecordUrl(acl), aclBuff);
+    XmlUtils.xmlAppendAttr(XML_URL, getRecordUrl(acl, false), aclBuff);
     if (!Strings.isNullOrEmpty(inheritanceType)) {
       XmlUtils.xmlAppendAttr(XML_TYPE, inheritanceType, aclBuff);
     }
