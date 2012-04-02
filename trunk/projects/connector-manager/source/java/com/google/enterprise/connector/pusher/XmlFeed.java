@@ -549,6 +549,15 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
     XmlUtils.xmlAppendEndTag(XML_ACL, aclBuff);
 
     write(aclBuff.toString().getBytes(XML_DEFAULT_ENCODING));
+
+    if (feedLogBuilder != null) {
+      try {
+        feedLogBuilder.append(aclBuff);
+      } catch (IOException e) {
+        // This won't happen with StringBuffer or StringBuilder.
+        LOGGER.log(Level.WARNING, "Exception while constructing feed log:", e);
+      }
+    }
   }
 
   /*
