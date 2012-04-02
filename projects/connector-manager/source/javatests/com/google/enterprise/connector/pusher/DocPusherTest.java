@@ -27,6 +27,7 @@ import com.google.enterprise.connector.spi.DocumentList;
 import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.RepositoryDocumentException;
 import com.google.enterprise.connector.spi.RepositoryException;
+import com.google.enterprise.connector.spi.SecureDocument;
 import com.google.enterprise.connector.spi.SkippedDocumentException;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.TraversalManager;
@@ -1254,7 +1255,8 @@ public class DocPusherTest extends TestCase {
     }
   }
 
-  public void testFeedLogging() throws Exception {
+  /** Tests that feeding the given document logs it to the feed log. */
+  private void testFeedLogging(Document document) throws Exception {
     deleteOldFile(TEST_LOG_FILE);
     FileHandler fh = null;
     try {
@@ -1269,48 +1271,9 @@ public class DocPusherTest extends TestCase {
       MockFeedConnection mockFeedConnection = new MockFeedConnection();
       DocPusher dpusher =
           new DocPusher(mockFeedConnection, "junit", fsli, dfc, null);
-      Document document;
-      String resultXML;
-
-      // Test incremental feed with content.
-      final String jsonIncremental =
-          "{\"timestamp\":\"10\",\"docid\":\"doc1\""
-              + ",\"content\":\"now is the time\""
-              + ", \"google:lastmodified\":\"Tue, 15 Nov 1994 12:45:26 GMT\""
-              + "}\r\n" + "";
-      document = JcrDocumentTest.makeDocumentFromJson(jsonIncremental);
       assertEquals(PusherStatus.OK, dpusher.take(document, null));
       dpusher.flush();
-      resultXML = mockFeedConnection.getFeed();
-      assertFeedInLog(resultXML, TEST_LOG_FILE);
-
-      // Test metadata-url feed with content.
-      dpusher = new DocPusher(mockFeedConnection, "junit", fsli, dfc, null);
-      final String jsonMetaAndUrl =
-          "{\"timestamp\":\"10\",\"docid\":\"doc2\""
-              + ",\"content\":\"now is the time\""
-              + ",\"google:searchurl\":\"http://www.sometesturl.com/test\""
-              + ", \"google:lastmodified\":\"Tue, 15 Nov 1994 12:45:26 GMT\""
-              + "}\r\n" + "";
-      document = JcrDocumentTest.makeDocumentFromJson(jsonMetaAndUrl);
-      assertEquals(PusherStatus.OK, dpusher.take(document, null));
-      dpusher.flush();
-      resultXML = mockFeedConnection.getFeed();
-      assertFeedInLog(resultXML, TEST_LOG_FILE);
-
-      // Test MSWord Document.
-      dpusher = new DocPusher(mockFeedConnection, "junit", fsli, dfc, null);
-      final String jsonMsWord =
-          "{\"timestamp\":\"10\",\"docid\":\"msword\""
-              + ",\"google:mimetype\":\"application/msword\""
-              + ",\"contentfile\":\"testdata/mocktestdata/test.doc\""
-              + ",\"author\":\"ziff\""
-              + ",\"google:contenturl\":\"http://www.sometesturl.com/test\""
-              + "}\r\n" + "";
-      document = JcrDocumentTest.makeDocumentFromJson(jsonMsWord);
-      assertEquals(PusherStatus.OK, dpusher.take(document, null));
-      dpusher.flush();
-      resultXML = mockFeedConnection.getFeed();
+      String resultXML = mockFeedConnection.getFeed();
       assertFeedInLog(resultXML, TEST_LOG_FILE);
     } finally {
       if (fh != null) {
@@ -1318,6 +1281,46 @@ public class DocPusherTest extends TestCase {
       }
       deleteOldFile(TEST_LOG_FILE);
     }
+  }
+
+  /** Tests feed logging with a document created from a JSON string. */ 
+  private void testFeedLogging(String jsonDocument) throws Exception {
+    testFeedLogging(JcrDocumentTest.makeDocumentFromJson(jsonDocument));
+  }
+
+  public void testFeedLoggingContentFeed() throws Exception {
+    final String jsonIncremental =
+        "{\"timestamp\":\"10\",\"docid\":\"doc1\""
+        + ",\"content\":\"now is the time\""
+        + ", \"google:lastmodified\":\"Tue, 15 Nov 1994 12:45:26 GMT\""
+        + "}\r\n" + "";
+    testFeedLogging(jsonIncremental);
+  }
+
+  /** Tests a metadata-and-URL feed with content. */
+  public void testFeedLoggingMetadataAndUrlFeed() throws Exception {
+    final String jsonMetaAndUrl =
+        "{\"timestamp\":\"10\",\"docid\":\"doc2\""
+        + ",\"content\":\"now is the time\""
+        + ",\"google:searchurl\":\"http://www.sometesturl.com/test\""
+        + ", \"google:lastmodified\":\"Tue, 15 Nov 1994 12:45:26 GMT\""
+        + "}\r\n" + "";
+    testFeedLogging(jsonMetaAndUrl);
+  }
+
+  public void testFeedLoggingWordDocument() throws Exception {
+    final String jsonMsWord =
+        "{\"timestamp\":\"10\",\"docid\":\"msword\""
+        + ",\"google:mimetype\":\"application/msword\""
+        + ",\"contentfile\":\"testdata/mocktestdata/test.doc\""
+        + ",\"author\":\"ziff\""
+        + ",\"google:contenturl\":\"http://www.sometesturl.com/test\""
+        + "}\r\n" + "";
+    testFeedLogging(jsonMsWord);
+  }
+
+  public void testFeedLoggingAcl() throws Exception {
+    testFeedLogging(SecureDocument.createAcl("acl1", null));
   }
 
   // The feed log doesn't contain the xml feed headers and footers.
