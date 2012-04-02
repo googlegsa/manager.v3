@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.servlet;
 
+import com.google.common.base.Objects;
 import com.google.enterprise.connector.manager.Context;
 
 import java.io.IOException;
@@ -64,13 +65,25 @@ public class HostnameSecurity implements Filter {
   private static Logger LOGGER
       = Logger.getLogger(HostnameSecurity.class.getName());
 
-  private Set<String> allowedAccessCommonNames = new HashSet<String>();
-  private Set<InetAddress> allowedAccessAddresses = new HashSet<InetAddress>();
+  private FilterConfig filterConfig;
+  private Set<String> allowedAccessCommonNames;
+  private Set<InetAddress> allowedAccessAddresses;
   private boolean useClientCertificateSecurity;
+
+  private String gsaHostInUse;
 
   @Override
   public void init(FilterConfig config) {
     LOGGER.fine("init");
+    this.filterConfig = config;
+    loadConnectorConfig(filterConfig);
+    LOGGER.info("init done.");
+  }
+
+  private void loadConnectorConfig(FilterConfig config) {
+    allowedAccessCommonNames = new HashSet<String>();
+    allowedAccessAddresses = new HashSet<InetAddress>();
+
     Properties props = Context.getInstance().getConnectorManagerProperties();
     String useClientCertificateSecurityConfigName
         = config.getInitParameter("useClientCertificateSecurityConfigName");
@@ -86,6 +99,7 @@ public class HostnameSecurity implements Filter {
     }
 
     String gsaFeedHost = props.getProperty(Context.GSA_FEED_HOST_PROPERTY_KEY);
+    gsaHostInUse = gsaFeedHost;
     if (gsaFeedHost != null) {
       allowedAccessCommonNames.add(gsaFeedHost.toLowerCase(Locale.ENGLISH));
     }
@@ -119,7 +133,6 @@ public class HostnameSecurity implements Filter {
     LOGGER.log(Level.CONFIG,
                "When not using client certificates, IPs that are permitted in "
                + "{0}: {1}", new Object[] {filterName, allowedAccessAddresses});
-    LOGGER.info("init done.");
   }
 
   @Override
@@ -137,6 +150,13 @@ public class HostnameSecurity implements Filter {
   }
 
   protected boolean isAllowed(ServletRequest request) {
+    String currentGsaHost = Context.getInstance().getGsaFeedHost();
+    if (!Objects.equal(gsaHostInUse, currentGsaHost)) {
+      // The GSA hostname has changed. Update the allowedAccess sets.
+      LOGGER.info("GSA hostname changed; reloading config.");
+      loadConnectorConfig(filterConfig);
+    }
+
     if (!useClientCertificateSecurity) {
       InetAddress addr;
       try {
