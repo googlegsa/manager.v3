@@ -433,12 +433,25 @@ public class SpiConstants {
   public static final String PROPNAME_PAGERANK = "google:pagerank";
 
   /**
+   * Identifies a single-valued {@link #DocumentType} property that,
+   * if present, will be used to determine the object type for this
+   * document.
+   * <p/>
+   * If this property is not set, the document type will be {@code RECORD}.
+   * <p/>
+   * Value: google:documenttype
+   *
+   * @since 3.0
+   */
+  public static final String PROPNAME_DOCUMENTTYPE = "google:documenttype";
+
+  /**
    * Enum for the list of possible feed types.
    *
    * @since 2.4.2
    */
   public enum FeedType {
-    CONTENT, WEB, CONTENTURL, ACL;
+    CONTENT, WEB, CONTENTURL;
 
     /**
      * @return The enum matching the given {@code tag}, or
@@ -460,8 +473,7 @@ public class SpiConstants {
      * @since 3.0
      */
     public boolean isCompatible(FeedType other) {
-      return (this == other || this == ACL
-          || (this != CONTENT && other != CONTENT));
+      return (this == other || (this != CONTENT && other != CONTENT));
     }
 
     /**
@@ -470,6 +482,30 @@ public class SpiConstants {
      */
     public String toLegacyString() {
       return (this == CONTENT) ? "incremental" : "metadata-and-url";
+    }
+  }
+
+  /**
+   * Enum for the list of possible document types. A {@code RECORD} is
+   * an ordinary document, which may also have ACL properties. An
+   * {@code ACL} is a stand-alone ACL with no document properties.
+   *
+   * @since 3.0
+   */
+  public enum DocumentType {
+    RECORD, ACL;
+
+    /**
+     * @return The enum matching the given {@code tag}, or
+     *         {@code null} if a match is not found.
+     */
+    public static DocumentType findDocumentType(String tag) {
+      try {
+        return Enum.valueOf(DocumentType.class, tag.toUpperCase());
+      } catch (IllegalArgumentException e) {
+        // Not found, return null.
+        return null;
+      }
     }
   }
 

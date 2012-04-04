@@ -26,6 +26,7 @@ import com.google.enterprise.connector.spi.SimpleProperty;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.SpiConstants.AclAccess;
 import com.google.enterprise.connector.spi.SpiConstants.AclScope;
+import com.google.enterprise.connector.spi.SpiConstants.DocumentType;
 import com.google.enterprise.connector.spi.SpiConstants.FeedType;
 import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.spi.XmlUtils;
@@ -76,13 +77,18 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
   private static Set<String> propertySkipSet;
 
   static {
+    // TODO: What about action, contenturl, displayurl, ispublic,
+    // securitytoken, searchurl? Should we have an explicit opt-in
+    // list of google: properties instead an opt-out list?
     propertySkipSet = new HashSet<String>();
-    propertySkipSet.add(SpiConstants.PROPNAME_CONTENT);
-    propertySkipSet.add(SpiConstants.PROPNAME_DOCID);
-    propertySkipSet.add(SpiConstants.PROPNAME_LOCK);
-    propertySkipSet.add(SpiConstants.PROPNAME_PAGERANK);
     propertySkipSet.add(SpiConstants.PROPNAME_ACLINHERITFROM_DOCID);
     propertySkipSet.add(SpiConstants.PROPNAME_ACLINHERITFROM_FEEDTYPE);
+    propertySkipSet.add(SpiConstants.PROPNAME_CONTENT);
+    propertySkipSet.add(SpiConstants.PROPNAME_DOCID);
+    propertySkipSet.add(SpiConstants.PROPNAME_DOCUMENTTYPE);
+    propertySkipSet.add(SpiConstants.PROPNAME_FEEDTYPE);
+    propertySkipSet.add(SpiConstants.PROPNAME_LOCK);
+    propertySkipSet.add(SpiConstants.PROPNAME_PAGERANK);
   }
 
   // Strings for XML tags.
@@ -323,7 +329,10 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
    */
   private void xmlWrapRecord(Document document, InputStream contentStream,
       String contentEncoding) throws RepositoryException, IOException {
-    if (feedType == FeedType.ACL) {
+    String docType = DocUtils.getOptionalString(document,
+        SpiConstants.PROPNAME_DOCUMENTTYPE);
+    if (docType != null
+        && DocumentType.findDocumentType(docType) == DocumentType.ACL) {
       xmlWrapAclRecord(document);
     } else {
       xmlWrapDocumentRecord(document, contentStream, contentEncoding);
@@ -346,7 +355,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
     StringBuilder prefix = new StringBuilder();
     prefix.append("<").append(XML_RECORD);
 
-    String searchUrl = getRecordUrl(document, true);
+    String searchUrl = getRecordUrl(document, DocumentType.RECORD);
     XmlUtils.xmlAppendAttr(XML_URL, searchUrl, prefix);
 
     String displayUrl = DocUtils.getOptionalString(document,
@@ -461,11 +470,11 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
    * @throws RepositoryDocumentException if searchUrl is invalid.
    */
   private String getOrConstructUrl(Document document, String urlProperty,
-      String docidProperty, FeedType feedType, boolean validateUrl)
+      String docidProperty, FeedType feedType, DocumentType documentType)
       throws RepositoryException, RepositoryDocumentException {
     String recordUrl = DocUtils.getOptionalString(document, urlProperty);
     if (recordUrl != null) {
-      if (validateUrl) {
+      if (documentType != DocumentType.ACL) {
         validateUrl(recordUrl, urlProperty);
       }
     } else {
@@ -483,10 +492,10 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
    *
    * @throws RepositoryDocumentException if searchUrl is invalid.
    */
-  private String getRecordUrl(Document document, boolean validateUrl)
+  private String getRecordUrl(Document document, DocumentType documentType)
       throws RepositoryException, RepositoryDocumentException {
     return getOrConstructUrl(document, SpiConstants.PROPNAME_SEARCHURL,
-        SpiConstants.PROPNAME_DOCID, feedType, validateUrl);
+        SpiConstants.PROPNAME_DOCID, feedType, documentType);
   }
 
   /**
@@ -498,7 +507,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
       throws RepositoryException, RepositoryDocumentException {
     return getOrConstructUrl(document, SpiConstants.PROPNAME_ACLINHERITFROM,
         SpiConstants.PROPNAME_ACLINHERITFROM_DOCID,
-        getInheritFromFeedType(document), false);
+        getInheritFromFeedType(document), DocumentType.ACL);
   }
 
   /**
@@ -532,7 +541,8 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
         SpiConstants.PROPNAME_ACLINHERITANCETYPE);
 
     aclBuff.append("<").append(XML_ACL);
-    XmlUtils.xmlAppendAttr(XML_URL, getRecordUrl(acl, false), aclBuff);
+    XmlUtils.xmlAppendAttr(XML_URL, getRecordUrl(acl, DocumentType.ACL),
+        aclBuff);
     if (!Strings.isNullOrEmpty(inheritanceType)) {
       XmlUtils.xmlAppendAttr(XML_TYPE, inheritanceType, aclBuff);
     }
@@ -716,10 +726,15 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
    * feed type.
    */
   private String constructUrl(String docid, FeedType feedType) {
-    if (feedType == FeedType.CONTENTURL) {
-      return constructContentUrl(docid);
-    } else {  // FeedType.CONTENT or FeedType.ACL.
-      return constructGoogleConnectorUrl(docid);
+    switch (feedType) {
+      case CONTENTURL:
+        return constructContentUrl(docid);
+      case CONTENT:
+        return constructGoogleConnectorUrl(docid);
+      case WEB:
+        return docid;
+      default:
+        throw new AssertionError(feedType);
     }
   }
 
