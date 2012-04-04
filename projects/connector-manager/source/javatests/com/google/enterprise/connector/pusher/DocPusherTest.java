@@ -712,8 +712,8 @@ public class DocPusherTest extends TestCase {
     // Web feed without searchurl.
     resultXML = feedJsonEvent(json2);
 
-    assertStringContains("url=\"" + ServletUtil.PROTOCOL + "junit.localhost"
-        + ServletUtil.DOCID + "doc1\"", resultXML);
+    assertStringNotContains(ServletUtil.PROTOCOL, resultXML);
+    assertStringContains("url=\"http://www.sometesturl.com/test\"", resultXML);
     assertStringContains("displayurl=\"http://www.sometesturl.com/test\"",
         resultXML);
     assertStringContains("<feedtype>metadata-and-url</feedtype>", resultXML);
@@ -2639,8 +2639,13 @@ public class DocPusherTest extends TestCase {
    */
   private void testAclInheritFrom(Map<String, Object> props,
       String expectedParentUrl) throws Exception {
+    // Copy the properties so we can make internal changes.
+    props = new HashMap<String, Object>(props);
+
+    props.put(SpiConstants.PROPNAME_DOCUMENTTYPE,
+        SpiConstants.DocumentType.ACL.toString());
     props.put(SpiConstants.PROPNAME_FEEDTYPE,
-        SpiConstants.FeedType.ACL.toString());
+        SpiConstants.FeedType.CONTENT.toString());
 
     Document document = ConnectorTestUtils.createSimpleDocument(props);
     String resultXML = feedDocument(document);
@@ -2666,6 +2671,9 @@ public class DocPusherTest extends TestCase {
    */
   private void testDocumentAclInheritFrom(Map<String, Object> props,
       String expectedParentUrl) throws Exception {
+    // Copy the properties so we can make internal changes.
+    props = new HashMap<String, Object>(props);
+
     props.put(SpiConstants.PROPNAME_FEEDTYPE,
         SpiConstants.FeedType.CONTENT.toString());
 

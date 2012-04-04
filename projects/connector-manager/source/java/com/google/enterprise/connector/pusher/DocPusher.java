@@ -229,6 +229,7 @@ public class DocPusher implements Pusher {
     // All feeds in a feed file must be of the same type.
     // If the feed would change type, send the feed off to the GSA
     // and start a new one.
+    // TODO: Fix this check to allow ACLs in any type feed.
     if (xmlFeed != null && !feedType.isCompatible(xmlFeed.getFeedType())) {
       if (LOGGER.isLoggable(Level.FINE)) {
         LOGGER.fine("A new feedType, " + feedType + ", requires a new feed for "

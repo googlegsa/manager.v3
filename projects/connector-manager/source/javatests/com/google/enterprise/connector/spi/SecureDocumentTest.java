@@ -18,6 +18,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.enterprise.connector.spi.SpiConstants.AclAccess;
 import com.google.enterprise.connector.spi.SpiConstants.AclInheritanceType;
 import com.google.enterprise.connector.spi.SpiConstants.AclScope;
+import com.google.enterprise.connector.spi.SpiConstants.DocumentType;
 import com.google.enterprise.connector.spi.SpiConstants.FeedType;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
 
@@ -66,20 +67,20 @@ public class SecureDocumentTest extends TestCase {
     SecureDocument doc = SecureDocument.createAcl(getName(), null);
 
     Set<String> expectedNames = ImmutableSet.of(SpiConstants.PROPNAME_DOCID,
-        SpiConstants.PROPNAME_FEEDTYPE);
+        SpiConstants.PROPNAME_DOCUMENTTYPE);
     assertEquals(expectedNames, doc.getPropertyNames());
     assertPropertyEquals(getName(),
         doc.findProperty(SpiConstants.PROPNAME_DOCID));
-    assertPropertyEquals(FeedType.ACL.toString(),
-        doc.findProperty(SpiConstants.PROPNAME_FEEDTYPE));
+    assertPropertyEquals(DocumentType.ACL.toString(),
+        doc.findProperty(SpiConstants.PROPNAME_DOCUMENTTYPE));
   }
 
   /** Tests an ACL with default properties. */
   public void testCreateAclFromProperties() throws RepositoryException {
     SecureDocument doc = SecureDocument.createAcl(properties);
 
-    assertPropertyEquals(FeedType.ACL.toString(),
-        doc.findProperty(SpiConstants.PROPNAME_FEEDTYPE));
+    assertPropertyEquals(DocumentType.ACL.toString(),
+        doc.findProperty(SpiConstants.PROPNAME_DOCUMENTTYPE));
     assertPropertyEquals(expectedContent,
         doc.findProperty(SpiConstants.PROPNAME_CONTENT));
   }
