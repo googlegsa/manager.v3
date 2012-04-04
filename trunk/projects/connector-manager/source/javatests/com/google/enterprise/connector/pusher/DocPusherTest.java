@@ -112,7 +112,6 @@ public class DocPusherTest extends TestCase {
         + " mimetype=\"text/html\""
         + " last-modified=\"Tue, 15 Nov 1994 12:45:26 GMT\">\n"
         + "<metadata>\n"
-        + "<meta name=\"google:feedid\" content=\"test\"/>\n"
         + "<meta name=\"google:lastmodified\" content=\"Tue, 15 Nov 1994 12:45:26 GMT\"/>\n"
         + "<meta name=\"google:searchurl\" content=\"http://www.sometesturl.com/test\"/>\n"
         + "<meta name=\"jcr:lastModified\" content=\"1970-01-01\"/>\n"
@@ -135,7 +134,6 @@ public class DocPusherTest extends TestCase {
         + " mimetype=\"text/html\""
         + " last-modified=\"Tue, 15 Nov 1994 12:45:26 GMT\">\n"
         + "<metadata>\n"
-        + "<meta name=\"google:feedid\" content=\"test\"/>\n"
         + "<meta name=\"google:lastmodified\" content=\"Tue, 15 Nov 1994 12:45:26 GMT\"/>\n"
         + "<meta name=\"google:searchurl\" content=\"http://www.sometesturl.com/test\"/>\n"
         + "<meta name=\"jcr:lastModified\" content=\"1970-01-01\"/>\n"
@@ -157,7 +155,6 @@ public class DocPusherTest extends TestCase {
         + " mimetype=\"text/html\""
         + " last-modified=\"Tue, 15 Nov 1994 12:45:26 GMT\">\n"
         + "<metadata>\n"
-        + "<meta name=\"google:feedid\" content=\"test\"/>\n"
         + "<meta name=\"google:lastmodified\" content=\"Tue, 15 Nov 1994 12:45:26 GMT\"/>\n"
         + "<meta name=\"google:searchurl\" content=\"smb://localhost/share/test\"/>\n"
         + "<meta name=\"jcr:lastModified\" content=\"1970-01-01\"/>\n"
@@ -182,7 +179,6 @@ public class DocPusherTest extends TestCase {
         + SpiConstants.DEFAULT_MIMETYPE
         + "\" last-modified=\"Tue, 15 Nov 1994 12:45:26 GMT\">\n"
         + "<metadata>\n"
-        + "<meta name=\"google:feedid\" content=\"test\"/>\n"
         + "<meta name=\"google:lastmodified\" content=\"Tue, 15 Nov 1994 12:45:26 GMT\"/>\n"
         + "<meta name=\"jcr:lastModified\" content=\"1970-01-01\"/>\n"
         + "</metadata>\n" + "<content encoding=\"base64binary\">\n"
@@ -207,7 +203,6 @@ public class DocPusherTest extends TestCase {
         + SpiConstants.DEFAULT_MIMETYPE
         + "\" last-modified=\"Tue, 15 Nov 1994 12:45:26 GMT\">\n"
         + "<metadata>\n"
-        + "<meta name=\"google:feedid\" content=\"test\"/>\n"
         + "<meta name=\"contentfile\" content=\"testdata/mocktestdata/i18n.html\"/>\n"
         + "<meta name=\"google:lastmodified\" content=\"Tue, 15 Nov 1994 12:45:26 GMT\"/>\n"
         + "<meta name=\"google:mimetype\" content=\"text/html\"/>\n"
@@ -238,7 +233,6 @@ public class DocPusherTest extends TestCase {
         + "\" last-modified=\"Thu, 01 Jan 1970 00:00:00 GMT\""
         + " authmethod=\"httpbasic\">\n"
         + "<metadata>\n"
-        + "<meta name=\"google:feedid\" content=\"test\"/>\n"
         + "<meta name=\"google:aclusers\" content=\"joe\"/>\n"
         + "<meta name=\"google:aclusers\" content=\"mary\"/>\n"
         + "<meta name=\"google:aclusers\" content=\"fred\"/>\n"
@@ -262,7 +256,6 @@ public class DocPusherTest extends TestCase {
         + SpiConstants.DEFAULT_MIMETYPE
         + "\" last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\">\n"
         + "<metadata>\n"
-        + "<meta name=\"google:feedid\" content=\"test\"/>\n"
         + "<meta name=\"google:aclusers\" content=\"joe\"/>\n"
         + "<meta name=\"google:aclusers\" content=\"mary\"/>\n"
         + "<meta name=\"google:ispublic\" content=\"true\"/>\n"
@@ -284,7 +277,6 @@ public class DocPusherTest extends TestCase {
         + SpiConstants.DEFAULT_MIMETYPE
         + "\" last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\">\n"
         + "<metadata>\n"
-        + "<meta name=\"google:feedid\" content=\"test\"/>\n"
         + "<meta name=\"google:aclusers\" content=\"joe\"/>\n"
         + "<meta name=\"google:aclusers\" content=\"mary\"/>\n"
         + "<meta name=\"google:ispublic\" content=\"public\"/>\n"
@@ -313,7 +305,6 @@ public class DocPusherTest extends TestCase {
         + "\" last-modified=\"Thu, 01 Jan 1970 00:00:00 GMT\""
         + " authmethod=\"httpbasic\">\n"
         + "<metadata>\n"
-        + "<meta name=\"google:feedid\" content=\"test\"/>\n"
         + "<meta name=\"google:aclusers\" content=\"joe\"/>\n"
         + "<meta name=\"google:aclusers\" content=\"mary\"/>\n"
         + "<meta name=\"google:aclusers\" content=\"fred\"/>\n"
@@ -336,7 +327,6 @@ public class DocPusherTest extends TestCase {
         + SpiConstants.DEFAULT_MIMETYPE
         + "\" last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\">\n"
         + "<metadata>\n"
-        + "<meta name=\"google:feedid\" content=\"test\"/>\n"
         + "<meta name=\"google:aclusers\" content=\"joe\"/>\n"
         + "<meta name=\"google:aclusers\" content=\"mary\"/>\n"
         + "<meta name=\"google:ispublic\" content=\"true\"/>\n"
@@ -355,7 +345,6 @@ public class DocPusherTest extends TestCase {
         + SpiConstants.DEFAULT_MIMETYPE
         + "\" last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\">\n"
         + "<metadata>\n"
-        + "<meta name=\"google:feedid\" content=\"test\"/>\n"
         + "<meta name=\"google:aclusers\" content=\"joe\"/>\n"
         + "<meta name=\"google:aclusers\" content=\"mary\"/>\n"
         + "<meta name=\"google:ispublic\" content=\"true\"/>\n"
@@ -410,7 +399,6 @@ public class DocPusherTest extends TestCase {
         + "\""
         + " last-modified=\"Tue, 15 Nov 1994 12:45:26 GMT\">\n"
         + "<metadata>\n"
-        + "<meta name=\"google:feedid\" content=\"test\"/>\n"
         + "<meta name=\"contentfile\" content=\"testdata/mocktestdata/i18n.html\"/>\n"
         + "<meta name=\"google:lastmodified\" content=\"Tue, 15 Nov 1994 12:45:26 GMT\"/>\n"
         + "<meta name=\"google:mimetype\" content=\"text/html\"/>\n"
@@ -1283,7 +1271,7 @@ public class DocPusherTest extends TestCase {
     }
   }
 
-  /** Tests feed logging with a document created from a JSON string. */ 
+  /** Tests feed logging with a document created from a JSON string. */
   private void testFeedLogging(String jsonDocument) throws Exception {
     testFeedLogging(JcrDocumentTest.makeDocumentFromJson(jsonDocument));
   }

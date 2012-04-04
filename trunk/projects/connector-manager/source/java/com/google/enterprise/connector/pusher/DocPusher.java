@@ -262,10 +262,9 @@ public class DocPusher implements Pusher {
 
       // Add this document to the feed.
       contentStream = getContentStream(document, feedType);
-      Document feedDocument = new FeedDocument(document, xmlFeed.getFeedId());
-      xmlFeed.addRecord(feedDocument, contentStream, contentEncoding);
+      xmlFeed.addRecord(document, contentStream, contentEncoding);
       if (documentStore != null) {
-        documentStore.storeDocument(feedDocument);
+        documentStore.storeDocument(document);
       }
 
       // If the feed is full, send it off to the GSA.
@@ -655,37 +654,5 @@ public class DocPusher implements Pusher {
     } else {
       return new Base64FilterInputStream(content, wrapLines);
      }
-  }
-
-  /**
-   * Wraps the supplied {@link Document}, adding a
-   * {@code SpiConstants.PROPNAME_FEEDID} property to the set of
-   * properties.
-   */
-  private class FeedDocument implements Document {
-    private String feedId;
-    private Document document;
-
-    FeedDocument(Document document, String feedId) {
-      this.document = document;
-      this.feedId = feedId;
-    }
-
-    /* @Override */
-    public Property findProperty(String name) throws RepositoryException {
-      if (SpiConstants.PROPNAME_FEEDID.equals(name)) {
-        return new SimpleProperty(Value.getStringValue(feedId));
-      } else {
-        return document.findProperty(name);
-      }
-    }
-
-    /* @Override */
-    public Set<String> getPropertyNames() throws RepositoryException {
-      return new ImmutableSet.Builder<String>()
-             .add(SpiConstants.PROPNAME_FEEDID)
-             .addAll(document.getPropertyNames())
-             .build();
-    }
   }
 }
