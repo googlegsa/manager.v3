@@ -43,6 +43,7 @@ import java.net.URL;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -636,6 +637,10 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
     if ((propertyNames == null) || propertyNames.isEmpty()) {
       LOGGER.log(Level.WARNING, "Property names set is empty");
     } else {
+      // Sort property names so that metadata is written in a canonical form.
+      // The GSA's metadata change detection logic depends on the metadata to be
+      // in the same order each time in order to prevent reindexing.
+      propertyNames = new TreeSet<String>(propertyNames);
       for (String name : propertyNames) {
         Property property = null;
         // Possibly manufacture an ACLINHERITFROM property from
