@@ -14,7 +14,6 @@
 
 package com.google.enterprise.connector.servlet;
 
-import com.google.common.base.Strings;
 import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.manager.Context;
@@ -89,12 +88,14 @@ public abstract class ConnectorManagerServlet extends HttpServlet {
     res.setContentType(ServletUtil.MIMETYPE_XML);
     res.setCharacterEncoding("UTF-8");
     PrintWriter out = res.getWriter();
-    NDC.push(NDC.peek());
     try {
-      // I encountered a null reader if no content or body.
-      String xmlBody =
-          (reader == null) ? null : StringUtils.readAllToString(reader);
-      if (Strings.isNullOrEmpty(xmlBody)) {
+      Enumeration<?> headerNames = req.getHeaderNames();
+      while (headerNames.hasMoreElements()) {
+        String name = (String) headerNames.nextElement();
+        LOGGER.log(Level.INFO, "HEADER " + name + ": " + req.getHeader(name));
+      }
+      String xmlBody = StringUtils.readAllToString(reader);
+      if (xmlBody == null || xmlBody.length() < 1) {
         ServletUtil.writeResponse(
             out, ConnectorMessageCode.RESPONSE_EMPTY_REQUEST);
         LOGGER.log(Level.WARNING, ServletUtil.LOG_RESPONSE_EMPTY_REQUEST);
@@ -106,7 +107,7 @@ public abstract class ConnectorManagerServlet extends HttpServlet {
 
     } finally {
       out.close();
-      NDC.pop();
+      NDC.clear();
     }
   }
 }

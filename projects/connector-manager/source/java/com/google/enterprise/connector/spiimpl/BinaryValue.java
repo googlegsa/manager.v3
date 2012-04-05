@@ -14,22 +14,14 @@
 
 package com.google.enterprise.connector.spiimpl;
 
-import com.google.enterprise.connector.spi.RepositoryDocumentException;
 import com.google.enterprise.connector.util.EofFilterInputStream;
-import com.google.enterprise.connector.util.InputStreamFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.io.IOException;
 
 public class BinaryValue extends ValueImpl {
 
-  InputStreamFactory factory;
   InputStream binaryValue;
-
-  public BinaryValue(InputStreamFactory inputStreamFactory) {
-    this.factory = inputStreamFactory;
-  }
 
   public BinaryValue(InputStream inputStream) {
     this.binaryValue = new EofFilterInputStream(inputStream);
@@ -46,23 +38,11 @@ public class BinaryValue extends ValueImpl {
 
   @Override
   public String toString() {
-    if (factory != null) {
-      return factory.toString();
-    } else {
-      return binaryValue.toString();
-    }
+    return binaryValue.toString();
   }
 
-  public InputStream getInputStream() throws RepositoryDocumentException {
-    if (factory != null) {
-      try {
-        return new EofFilterInputStream(factory.getInputStream());
-      } catch (IOException e) {
-        throw new RepositoryDocumentException("Failed to get InputStream", e);
-      }
-    } else {
-      return binaryValue;
-    }
+  public InputStream getInputStream() {
+    return binaryValue;
   }
 
   @Override

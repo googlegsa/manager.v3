@@ -14,20 +14,17 @@
 
 package com.google.enterprise.connector.servlet;
 
-import com.google.common.base.Strings;
 import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.manager.ConnectorStatus;
 import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.connector.spi.SimpleAuthenticationIdentity;
-import com.google.enterprise.connector.spi.XmlUtils;
 import com.google.enterprise.connector.util.XmlParseUtil;
 
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.HashSet;
 import java.util.Set;
@@ -45,8 +42,9 @@ public class Authenticate extends ConnectorManagerServlet {
   @Override
   protected void processDoPost(
       String xmlBody, Manager manager, PrintWriter out) {
-    NDC.append("AuthN");
+    NDC.push("AuthN");
     handleDoPost(xmlBody, manager, out);
+    NDC.pop();
   }
 
   /**
@@ -94,13 +92,12 @@ public class Authenticate extends ConnectorManagerServlet {
 
     String username = XmlParseUtil.getFirstElementByTagName(
       (Element) credList.item(0), ServletUtil.XMLTAG_AUTHN_USERNAME);
+    NDC.pushAppend(username);
+
+    String password = XmlParseUtil.getFirstElementByTagName(
+        (Element) credList.item(0), ServletUtil.XMLTAG_AUTHN_PASSWORD);
     String domain = XmlParseUtil.getFirstElementByTagName(
         (Element) credList.item(0), ServletUtil.XMLTAG_AUTHN_DOMAIN);
-    NDC.append(Strings.isNullOrEmpty(domain) ? username
-               : (domain + "/" + username));
-
-    String password = XmlParseUtil.getOptionalElementByTagName(
-        (Element) credList.item(0), ServletUtil.XMLTAG_AUTHN_PASSWORD);
     for (ConnectorStatus connector : manager.getConnectorStatuses()) {
       String connectorName = connector.getName();
       if (requestedConnectors != null &&
@@ -118,19 +115,12 @@ public class Authenticate extends ConnectorManagerServlet {
               out, 2, ServletUtil.XMLTAG_SUCCESS,
               ServletUtil.XMLTAG_CONNECTOR_NAME + "=\"" + connectorName + "\"",
               false);
-          // TODO: Either fix ServletUtil XML code to XML escape attr values and
-          // element text bodies, or add the ability to append attributes to
-          // XmlUtils.appendStartTag().
-          out.append(ServletUtil.indentStr(3));
-          XmlUtils.xmlAppendStartTag(ServletUtil.XMLTAG_IDENTITY, out);
-          XmlUtils.xmlAppendAttrValue(username, out);
-          XmlUtils.xmlAppendEndTag(ServletUtil.XMLTAG_IDENTITY, out);
+          ServletUtil.writeXMLElement(
+              out, 3, ServletUtil.XMLTAG_IDENTITY, username);
           if (response.getGroups() != null) {
             for (String group : response.getGroups()) {
-              out.append(ServletUtil.indentStr(3));
-              XmlUtils.xmlAppendStartTag(ServletUtil.XMLTAG_GROUP, out);
-              XmlUtils.xmlAppendAttrValue(group, out);
-              XmlUtils.xmlAppendEndTag(ServletUtil.XMLTAG_GROUP, out);
+              ServletUtil.writeXMLElement(
+                  out, 3, ServletUtil.XMLTAG_GROUP, group);
             }
           }
           ServletUtil.writeXMLTag(out, 2, ServletUtil.XMLTAG_SUCCESS, true);
@@ -140,14 +130,13 @@ public class Authenticate extends ConnectorManagerServlet {
               ServletUtil.XMLTAG_CONNECTOR_NAME + "=\"" + connectorName + "\"",
               true);
         }
-      } catch (IOException e) {
-        LOGGER.log(Level.WARNING, "Error writing Authentication Response", e);
       } finally {
         NDC.pop();
       }
     }
     ServletUtil.writeXMLTag(out, 1, ServletUtil.XMLTAG_AUTHN_RESPONSE, true);
     ServletUtil.writeRootTag(out, true);
+    NDC.pop();
     return;
   }
 }

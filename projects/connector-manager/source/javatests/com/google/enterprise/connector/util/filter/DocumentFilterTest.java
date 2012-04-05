@@ -16,15 +16,11 @@ package com.google.enterprise.connector.util.filter;
 
 import junit.framework.TestCase;
 
-import com.google.common.io.ByteStreams;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.SimpleDocument;
-import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.Value;
-import com.google.enterprise.connector.spiimpl.BinaryValue;
 
-import java.io.InputStream;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -48,31 +44,14 @@ public class DocumentFilterTest extends TestCase {
   protected static final String EXTRA_STRING = "lazy dog's back";
   protected static final String PATTERN = "[_\\.]+";
   protected static final String SPACE = " ";
-  protected static final String MIMEVALUE = "text/plain;utf-8";
 
   /** Creates a source Document. */
-  protected Document createDocument() {
+  protected static Document createDocument() {
     return new SimpleDocument(createProperties());
   }
 
-  protected Document createDocument(boolean includeMimetype){
-    return new SimpleDocument(createProperties(includeMimetype));
-  }
-
-  /** Default createProperties which adds mimetype to the doc. */
-  protected Map<String, List<Value>> createProperties() {
-    return createProperties(true);
-  }
-
-  /** Creates the filter without adding mimetype property. */
-  protected Map<String, List<Value>> createProperties(boolean includeMimetype) {
+  protected static Map<String, List<Value>> createProperties() {
     Map<String, List<Value>> props = new HashMap<String, List<Value>>();
-    if (includeMimetype) {
-      // Avoid valueList, which is overridden for binary values in subclasses.
-      LinkedList<Value> list = new LinkedList<Value>();
-      list.add(Value.getStringValue(MIMEVALUE));
-      props.put(SpiConstants.PROPNAME_MIMETYPE, list);
-    }
     props.put(PROP1, valueList(TEST_STRING));
     props.put(PROP2, valueList(CLEAN_STRING));
     props.put(PROP3, valueList(TEST_STRING, EXTRA_STRING));
@@ -83,7 +62,7 @@ public class DocumentFilterTest extends TestCase {
     return props;
   }
 
-  protected List<Value> valueList(String... values) {
+  protected static List<Value> valueList(String... values) {
     LinkedList<Value> list = new LinkedList<Value>();
     for (String value : values) {
       list.add(Value.getStringValue(value));
@@ -92,43 +71,23 @@ public class DocumentFilterTest extends TestCase {
   }
 
   /** Checks that the Document Properties match the expected Properties. */
-  protected void checkDocument(Document document,
+  protected static void checkDocument(Document document,
       Map<String, List<Value>> expectedProps) throws Exception {
     assertEquals(expectedProps.keySet(), document.getPropertyNames());
-    checkDocumentProperties(document, expectedProps);
-  }
-
-  /**
-   * Checks that the Document Properties match the expected Properties,
-   * which may be a subset of the full document properties.
-   */
-  protected void checkDocumentProperties(Document document,
-      Map<String, List<Value>> expectedProps) throws Exception {
     for (Map.Entry<String, List<Value>> entry : expectedProps.entrySet()) {
       Property prop = document.findProperty(entry.getKey());
       assertNotNull(prop);
       for (Value expectedValue : entry.getValue()) {
         Value value = prop.nextValue();
         assertNotNull(value);
-        if (value instanceof BinaryValue) {
-          assertEquals(getStringFromBinaryValue(expectedValue),
-              getStringFromBinaryValue(value));
-        } else {
-          assertEquals(expectedValue.toString(), value.toString());
-        }
+        assertEquals(expectedValue.toString(), value.toString());
       }
       assertNull(prop.nextValue());
     }
   }
 
-  protected static String getStringFromBinaryValue(Value value)
-      throws Exception {
-    InputStream in = ((BinaryValue) value).getInputStream();
-    return new String(ByteStreams.toByteArray(in));
-  }
-
   /** Check IllegalStateException if the Filter was not properly initialized. */
-  protected void checkIllegalState(DocumentFilterFactory factory)
+  protected static void checkIllegalState(DocumentFilterFactory factory)
       throws Exception {
     Document filter = factory.newDocumentFilter(createDocument());
 
@@ -139,18 +98,6 @@ public class DocumentFilterTest extends TestCase {
       // Expected.
     }
 
-    try {
-      filter.findProperty(PROP1);
-      fail("IllegalStateException expected");
-    } catch (IllegalStateException expected) {
-      // Expected.
-    }
-  }
-
-  /** Check IllegalStateException if the Filter was not properly initialized. */
-  protected void checkIllegalStateFindProperty(
-      DocumentFilterFactory factory) throws Exception {
-    Document filter = factory.newDocumentFilter(createDocument());
     try {
       filter.findProperty(PROP1);
       fail("IllegalStateException expected");

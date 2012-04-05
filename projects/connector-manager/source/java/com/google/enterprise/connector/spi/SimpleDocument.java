@@ -27,8 +27,8 @@ public class SimpleDocument implements Document {
   private final Map<String, List<Value>> properties;
 
   /**
-   * Constructs a {@code SimpleDocument} whose metadata consists
-   * of the supplied {@code Map} of properties, associating
+   * Constucts a {@code SimpleDocument} whose metadata consists
+   * of the supplied {@code Map} of {@code properties}, associating
    * property names with their {@link Value Values}.
    *
    * @param properties a {@code Map} of document metadata

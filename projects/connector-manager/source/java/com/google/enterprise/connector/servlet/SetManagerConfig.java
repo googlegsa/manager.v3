@@ -29,8 +29,9 @@ public class SetManagerConfig extends ConnectorManagerServlet {
   @Override
   protected void processDoPost(
       String xmlBody, Manager manager, PrintWriter out) {
-    NDC.append("Config Manager");
+    NDC.push("Config Manager");
     SetManagerConfigHandler hdl = new SetManagerConfigHandler(manager, xmlBody);
     ServletUtil.writeResponse(out, hdl.getStatus());
+    NDC.pop();
   }
 }

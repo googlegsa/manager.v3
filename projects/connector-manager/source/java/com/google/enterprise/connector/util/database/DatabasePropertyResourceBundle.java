@@ -24,7 +24,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 import java.util.Properties;
-import java.util.logging.Logger;
 
 /**
  * Supplies SQL language syntax variations for the various database
@@ -71,9 +70,6 @@ import java.util.logging.Logger;
  * @since 2.8
  */
 public class DatabasePropertyResourceBundle implements DatabaseResourceBundle {
-  private static final Logger LOGGER =
-      Logger.getLogger(DatabaseResourceBundle.class.getName());
-
   private final EProperties properties;
   private DatabasePropertyResourceBundle parent = null;
 
@@ -151,9 +147,7 @@ public class DatabasePropertyResourceBundle implements DatabaseResourceBundle {
   /* @Override */
   public String getString(String key) {
     Preconditions.checkNotNull(key);
-    String value = properties.findProperty(key);
-    LOGGER.finest("Get database resource: " + key + " = " + value);
-    return value;
+    return properties.findProperty(key);
   }
 
   private static final String[] EMPTY_STRING_ARRAY = new String[0];
@@ -173,13 +167,10 @@ public class DatabasePropertyResourceBundle implements DatabaseResourceBundle {
     Object value = properties.findValue(key);
     if (value != null) {
       if (value instanceof String) {
-        LOGGER.finest("Get database resource: " + key + " = " + value);
         return new String[] { (String) value };
       }
       if (value instanceof List) {
-        String[] values = ((List<String>) value).toArray(EMPTY_STRING_ARRAY);
-        LOGGER.finest("Get database resource: " + key + " = " + values);
-        return values;
+        return ((List<String>) value).toArray(EMPTY_STRING_ARRAY);
       }
     }
     return null;

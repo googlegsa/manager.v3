@@ -39,7 +39,7 @@ public class CancelableBatchTest extends TestCase {
 
   private void runBatch(final int expectCount, final int batchHint,
       final TraversalDelayPolicy expectDelayPolicy) throws Exception {
-    BatchSize batchSize = new BatchSize(batchHint);
+    BatchSize batchSize = new BatchSize(batchHint, batchHint);
     BatchResult expectResult = new BatchResult(expectDelayPolicy, expectCount);
     MockTraverser traverser = new MockTraverser(batchSize, expectResult);
     MockBatchResultRecorder recorder = new MockBatchResultRecorder();

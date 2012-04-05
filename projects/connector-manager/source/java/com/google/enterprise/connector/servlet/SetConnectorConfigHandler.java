@@ -87,7 +87,7 @@ public class SetConnectorConfigHandler {
       // Unfortunately, we cannot do this for existing connectors.
       connectorName = connectorName.toLowerCase();
     }
-    NDC.append(connectorName);
+    NDC.pushAppend(connectorName);
 
     language = XmlParseUtil.getFirstElementByTagName(
         root, ServletUtil.QUERY_PARAM_LANG);
@@ -153,6 +153,7 @@ public class SetConnectorConfigHandler {
       status.setMessageId(ConnectorMessageCode.EXCEPTION_THROWABLE);
       LOGGER.log(Level.WARNING, "", t);
     }
+    NDC.pop();
   }
 
   ConnectorMessageCode getStatus() {

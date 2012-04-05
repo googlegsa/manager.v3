@@ -39,12 +39,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
 /**
- * Queue of {@code CheckpointAndChange} objects to be processed by the
+ * Queue of {@link CheckpointAndChange} objects to be processed by the
  * {@link DiffingConnectorTraversalManager}. Objects are added to the queue from
  * a {@link ChangeSource} and assigned a {@link DiffingConnectorCheckpoint}.
  * The client accesses objects by calling {@link #resume(String)}.
  * To facilitate retry of processing for objects in the queue
- * {@code CheckpointAndChange} objects remain until the client
+ * {@link CheckpointAndChange} objects remain until the client
  * indicates they have completed processing by calling {@link #resume(String)}
  * with the object's checkpoint or a later object's checkpoint.
  *
@@ -140,7 +140,7 @@ public class CheckpointAndChangeQueue {
     }
   }
 
-  /** Keeps checkpoint information for all known Monitors. */
+  /** Keeps checkpoint information for all known FileSystemMonitors. */
   private static class MonitorRestartState {
     /* Maps monitor's name onto its restart MonitorCheckpoint. */
     HashMap<String, MonitorCheckpoint> points;
@@ -178,47 +178,18 @@ public class CheckpointAndChangeQueue {
     }
   }
 
-  /** A File that has some of the recovery logic. 
-   *  Original recovery files' names contained a single nanosecond timestamp,
-   *  eg.  recovery.10220010065599398 .  These turned out to be flawed
-   *  because nanosecond times can go "back in time" between JVM restarts.
-   *  Updated recovery files' names contain a wall clock millis timestamp 
-   *  followed by an underscore followed by a nanotimestamp, eg.
-   *  recovery.702522216012_10220010065599398 .
-   */
-  static class RecoveryFile extends File {
-    final static long NO_TIME_AVAIL = -1;
-    long milliTimestamp = NO_TIME_AVAIL;
+  /** A File that has some of the recovery logic. */
+  private class RecoveryFile extends File {
     long nanoTimestamp;
 
-    long parseTime(String s) throws IOException {
-      try {
-        return Long.parseLong(s);
-      } catch(NumberFormatException e) {
-        throw new LoggingIoException("Invalid recovery filename: "
-            + getAbsolutePath());
-      }
-    }
-
-    void parseOutTimes() throws IOException {
+    String parseOutTimeString() throws IOException {
       try {
         String basename = getName();
-        if (!basename.startsWith(RECOVERY_FILE_PREFIX)) {
+        if (basename.startsWith(RECOVERY_FILE_PREFIX)) {
+          return basename.substring(RECOVERY_FILE_PREFIX.length());
+        } else {
           throw new LoggingIoException("Invalid recovery filename: "
               + getAbsolutePath());
-        } else {
-          String extension = basename.substring(RECOVERY_FILE_PREFIX.length());
-          if (!extension.contains("_")) {  // Original name format.
-            nanoTimestamp = parseTime(extension);
-          } else {  // Updated name format.
-            String timeParts[] = extension.split("_");
-            if (2 != timeParts.length) {
-              throw new LoggingIoException("Invalid recovery filename: "
-                  + getAbsolutePath());
-            }
-            milliTimestamp = parseTime(timeParts[0]);
-            nanoTimestamp = parseTime(timeParts[1]);
-          }
         }
       } catch(IndexOutOfBoundsException e) {
         throw new LoggingIoException("Invalid recovery filename: "
@@ -226,37 +197,27 @@ public class CheckpointAndChangeQueue {
       }
     }
 
-    RecoveryFile(File persistanceDir) throws IOException {
-      super(persistanceDir, RECOVERY_FILE_PREFIX + System.currentTimeMillis()
-          + "_" + System.nanoTime());
-      parseOutTimes();
+    long getTimestamp() throws IOException {
+      try {
+        return Long.parseLong(parseOutTimeString());
+      } catch(NumberFormatException e) {
+        throw new LoggingIoException("Invalid recovery filename: "
+            + getAbsolutePath());
+      }
+    }
+
+    RecoveryFile() throws IOException {
+      super(persistDir, RECOVERY_FILE_PREFIX + System.nanoTime());
+      nanoTimestamp = getTimestamp();
     }
 
     RecoveryFile(String absolutePath) throws IOException {
       super(absolutePath);
-      parseOutTimes();
+      nanoTimestamp =  getTimestamp();
     }
 
     boolean isOlder(RecoveryFile other) {
-      boolean weHaveMillis = milliTimestamp != NO_TIME_AVAIL;
-      boolean otherHasMillis = other.milliTimestamp != NO_TIME_AVAIL;
-      boolean bothHaveMillis = weHaveMillis && otherHasMillis;
-      boolean neitherHasMillis = (!weHaveMillis) && (!otherHasMillis);
-      if (bothHaveMillis) {
-        if (this.milliTimestamp < other.milliTimestamp) {
-          return true;
-        } else if (this.milliTimestamp > other.milliTimestamp) {
-          return false;
-        } else {
-          return this.nanoTimestamp < other.nanoTimestamp;
-        }
-      } else if (neitherHasMillis) {
-        return this.nanoTimestamp < other.nanoTimestamp;
-      } else if (weHaveMillis) {  // and other doesn't; we are newer.
-        return false;
-      } else {  // other has millis; other is newer.
-        return true;
-      }
+      return this.nanoTimestamp < other.nanoTimestamp;
     }
 
     /** A delete method that logs failures. */
@@ -298,7 +259,7 @@ public class CheckpointAndChangeQueue {
 
   private void writeRecoveryState() throws IOException {
     // TODO(pjo): Move this method into RecoveryFile.
-    File recoveryFile = new RecoveryFile(persistDir);
+    File recoveryFile = new RecoveryFile();
     FileOutputStream outStream = new FileOutputStream(recoveryFile);
     Writer writer = new OutputStreamWriter(outStream, Charsets.UTF_8);
     try {
@@ -346,7 +307,7 @@ public class CheckpointAndChangeQueue {
   /**
    * Initialize to start processing from after the passed in checkpoint
    * or from the beginning if the passed in checkpoint is null.  Part of
-   * making DocumentSnapshotRepositoryMonitorManager go from "cold" to "warm".
+   * making FileSystemMonitorManager go from "cold" to "warm".
    */
   public synchronized void start(String checkpointString) throws IOException {
     LOG.info("Starting CheckpointAndChangeQueue from " + checkpointString);

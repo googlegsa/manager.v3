@@ -54,7 +54,9 @@ public class MonitorCheckpoint {
   /**
    * Reconstructs {@link DocumentSnapshotRepositoryMonitor} checkpoint from
    * a JSON object.
-   * @see #getJson
+   * <p/>
+   * See {@link #getJson()}
+   *
    * @param json a JSON encoded {@link DocumentSnapshotRepositoryMonitor}
    */
   public MonitorCheckpoint(JSONObject json) throws JSONException {

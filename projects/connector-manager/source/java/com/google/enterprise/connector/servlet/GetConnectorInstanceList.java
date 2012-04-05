@@ -33,6 +33,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+
 /**
  * Admin servlet to get a list of connector types.
  */
@@ -72,13 +73,13 @@ public class GetConnectorInstanceList extends HttpServlet {
 
     res.setContentType(ServletUtil.MIMETYPE_XML);
     PrintWriter out = res.getWriter();
-    NDC.pushAppend("Config");
+    NDC.push("Config Manager");
     try {
       Manager manager = Context.getInstance().getManager();
       handleDoPost(manager, out);
     } finally {
       out.close();
-      NDC.pop();
+      NDC.clear();
     }
   }
 

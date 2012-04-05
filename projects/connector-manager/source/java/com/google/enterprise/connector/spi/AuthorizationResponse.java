@@ -106,11 +106,6 @@ public class AuthorizationResponse implements Comparable {
     return status;
   }
 
-  @Override
-  public String toString() {
-    return "{ status = " + status + ", docid = " + docid + " }";
-  }
-
   /**
    * Returns a hash code value for the object.
    *

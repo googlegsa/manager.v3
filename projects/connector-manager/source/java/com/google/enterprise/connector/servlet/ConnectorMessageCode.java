@@ -39,7 +39,6 @@ public class ConnectorMessageCode {
   public static final int RESPONSE_NULL_RESOURCE = 5221;
   public static final int RESPONSE_NULL_DOCID = 5222;
   public static final int INVALID_CONNECTOR_CONFIG = 5223;
-  public static final int RESPONSE_NULL_IDENTITY = 5224;
 
   public static final int ERROR_PARSING_XML_REQUEST = 5300;
   public static final int EXCEPTION_CONNECTOR_MANAGER = 5301;
@@ -81,93 +80,60 @@ public class ConnectorMessageCode {
   // Specific success message codes - 5500-5599
   public static final int FIRST_SUCCESS_MESSAGE_CODE = 5500;
   public static final int SUCCESS_RESTART_TRAVERSAL = 5500;
-  public static final int REQUESTOR_IS_NOT_FEED_HOST = 5501;
   public static final int LAST_SUCCESS_MESSAGE_CODE = 5599;
 
-  /** A code with no message in the translation bundle, for testing. */
-  public static final int UNDEFINED_CODE = 5996;
   public static final int UNSUPPORTED_CALL = 5997;
   public static final int UNSUPPORTED_MESSAGE_CODE = 5998;
   public static final int WRONG_MESSAGE_CODE = 5999;
   public static final int LAST_CONNECTOR_MESSAGE_CODE = 6000;
-
-  public static final Object[] EMPTY_PARAMS = new Object[0];
-
-  /**
-   * Performs a copy of the given array. To mimic a deep copy and
-   * isolate the copy from changes to the original, we call
-   * {@code toString} on each entry.
-   *
-   * @param params an array of message parameters; may be {@code null}
-   * @return an independent non-null copy of the array; an empty array
-   *     if the argument was {@code null}
-   */
-  private static Object[] copyOf(Object[] params) {
-    if (params == null || params.length == 0) {
-      return EMPTY_PARAMS;
-    } else {
-      Object[] copy = new Object[params.length];
-      for (int i = 0; i < params.length; i++) {
-        copy[i] = params[i].toString();
-      }
-      return copy;
-    }
-  }
 
   private int messageId;
   private String message;
   private Object[] params;
 
   public ConnectorMessageCode() {
-    this(SUCCESS);
+    this.messageId = SUCCESS;
+    this.message = null;
+    this.params = new Object[]{};
   }
 
   public ConnectorMessageCode(int messageId) {
-    set(messageId, null, EMPTY_PARAMS);
+    this.messageId = messageId;
+    this.message = null;
+    this.params = new Object[]{};
   }
 
   public ConnectorMessageCode(int messageId, Object[] params) {
-    set(messageId, null, copyOf(params));
+    this.messageId = messageId;
+    this.message = null;
+    this.params = params;
   }
 
   public ConnectorMessageCode(int messageId, String param) {
-    set(messageId, null, new Object[] { param });
+    this.messageId = messageId;
+    this.message = null;
+    String params[] = {param};
+    this.params = params;
   }
 
   public ConnectorMessageCode(
       int messageId, String message, Object[] params) {
-    set(messageId, message, copyOf(params));
-  }
-
-  /**
-   * Helper method to assign all of the fields. This method assumes
-   * that parameter checking has been done.
-   */
-  private void set(int messageId, String message, Object[] params) {
     this.messageId = messageId;
     this.message = message;
     this.params = params;
   }
 
   public boolean isSuccess() {
-    return isSuccess(messageId);
+    return (messageId == SUCCESS);
   }
-
-  public static boolean isSuccess(int messageId) {
-    return (messageId == SUCCESS || isSuccessMessage(messageId));
-  }
-
+  
   public boolean isSuccessMessage() {
-    return isSuccessMessage(messageId);
-  }
-
-  public static boolean isSuccessMessage(int messageId) {
     return (messageId >= FIRST_SUCCESS_MESSAGE_CODE &&
             messageId <= LAST_SUCCESS_MESSAGE_CODE);
   }
 
   public boolean hasMessage() {
-    return (messageId != SUCCESS && message != null && message.length() > 1);
+    return (!isSuccess() && message != null && message.length() > 1);
   }
 
   public int getMessageId() {
@@ -178,7 +144,7 @@ public class ConnectorMessageCode {
     this.messageId = messageId;
     if (messageId == SUCCESS) {
       this.message = null;
-      this.params = EMPTY_PARAMS;
+      this.params = null;
     }
   }
 
@@ -187,7 +153,7 @@ public class ConnectorMessageCode {
   }
 
   public void setParams(Object[] params) {
-    this.params = copyOf(params);
+    this.params = params;
   }
 
   public String getMessage() {

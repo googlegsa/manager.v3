@@ -25,7 +25,6 @@ import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.ConnectorType;
-import com.google.enterprise.connector.spi.Retriever;
 
 import org.springframework.core.io.Resource;
 
@@ -189,12 +188,6 @@ public class SpringInstantiator implements Instantiator {
   }
 
   /* @Override */
-  public Retriever getRetriever(String connectorName)
-      throws ConnectorNotFoundException, InstantiatorException {
-    return getConnectorCoordinator(connectorName).getRetriever();
-  }
-
-  /* @Override */
   public ConfigureResponse getConfigFormForConnector(String connectorName,
       String connectorTypeName, Locale locale)
       throws ConnectorNotFoundException, InstantiatorException {
@@ -276,18 +269,5 @@ public class SpringInstantiator implements Instantiator {
   public Schedule getConnectorSchedule(String connectorName)
       throws ConnectorNotFoundException {
     return getConnectorCoordinator(connectorName).getConnectorSchedule();
-  }
-
-  /* @Override */
-  public void setGDataConfig() {
-    for (String name : getConnectorNames()) {
-      try {
-        getConnectorCoordinator(name).setGDataConfig();
-      } catch (ConnectorNotFoundException cnfe) {
-        // Shouldn't happen, but if it does, skip it.
-      } catch (InstantiatorException ie) {
-        LOGGER.log(Level.WARNING, "", ie);
-      }
-    }
   }
 }

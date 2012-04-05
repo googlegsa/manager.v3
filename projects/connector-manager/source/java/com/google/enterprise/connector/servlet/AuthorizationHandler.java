@@ -46,7 +46,7 @@ public class AuthorizationHandler {
   String xmlBody;
   Manager manager;
   PrintWriter out;
-  ConnectorMessageCode status;
+  int status;
 
   Map<AuthorizationResource, AuthorizationResponse.Status> results;
 
@@ -74,13 +74,12 @@ public class AuthorizationHandler {
    * Writes an answer for each resource from the request.
    */
   public void handleDoPost() {
-    NDC.pushAppend("AuthZ");
+    NDC.push("AuthZ");
     try {
       AuthorizationParser authorizationParser =
           new AuthorizationParser(xmlBody);
       status = authorizationParser.getStatus();
-      if (status.getMessageId() ==
-          ConnectorMessageCode.ERROR_PARSING_XML_REQUEST) {
+      if (status == ConnectorMessageCode.ERROR_PARSING_XML_REQUEST) {
         ServletUtil.writeResponse(out,status);
         return;
       }
@@ -98,7 +97,7 @@ public class AuthorizationHandler {
       generateEachResultXml();
       ServletUtil.writeXMLTag(out, 1, ServletUtil.XMLTAG_AUTHZ_RESPONSE, true);
     }
-    ServletUtil.writeMessageCode(out, status);
+    ServletUtil.writeStatusId(out, status);
     ServletUtil.writeRootTag(out, true);
   }
 

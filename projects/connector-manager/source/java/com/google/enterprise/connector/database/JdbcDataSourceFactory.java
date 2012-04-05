@@ -14,9 +14,15 @@
 
 package com.google.enterprise.connector.database;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 
+import java.io.PrintWriter;
+import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import java.sql.Connection;
+import java.sql.SQLException;
 import javax.sql.DataSource;
 
 /**
@@ -27,6 +33,7 @@ import javax.sql.DataSource;
 public class JdbcDataSourceFactory {
   private static final Logger LOGGER =
       Logger.getLogger(JdbcDataSourceFactory.class.getName());
+
 
   /**
    * This factory method makes an attempt to conditionally create a
@@ -50,8 +57,8 @@ public class JdbcDataSourceFactory {
     // then consider the DataSource to be unconfigured.  Create a stub
     // in its place.
     if (Strings.isNullOrEmpty(propertyValue)) {
-      LOGGER.fine(description + " JDBC DataSource has not been configured."
-                  + " Creating a disabled stub in its place.");
+      LOGGER.config(description + " JDBC DataSource has not been configured."
+                    + " Creating a disabled stub in its place.");
       return new FakeDataSource(description);
     }
 
@@ -61,17 +68,93 @@ public class JdbcDataSourceFactory {
     try {
       clazz = Class.forName(className);
     } catch (ClassNotFoundException cnfe) {
-      LOGGER.warning(description + " JDBC DataSource implementation not found."
-                     + " Creating a disabled stub in its place.");
+      LOGGER.config(description + " JDBC DataSource implementation not found."
+                    + " Creating a disabled stub in its place.");
       return new FakeDataSource(description);
     } catch (NoClassDefFoundError ncdfe) {
-      LOGGER.warning(description + " JDBC DataSource implementation not found."
-                     + " Creating a disabled stub in its place.");
+      LOGGER.config(description + " JDBC DataSource implementation not found."
+                    + " Creating a disabled stub in its place.");
       return new FakeDataSource(description);
     }
 
-    DataSource dataSource = (DataSource) clazz.newInstance();
-    LOGGER.config(description + " JDBC DataSource created: " + dataSource);
-    return dataSource;
+    return (DataSource) clazz.newInstance();
+  }
+
+  /**
+   * This is a {@link DataSource} implementation, as Spring does not allow
+   * factory methods to return {@code null} instances.  This implementation
+   * does nothing, but is sufficient to trigger the
+   * {@link com.google.enterprise.connector.persist.JdbcStore} built on
+   * top of it to consider itself disabled.
+   */
+  @VisibleForTesting
+  static class FakeDataSource implements DataSource {
+    private final String description;
+
+    FakeDataSource(String description) {
+      this.description = description;
+    }
+
+    private String message() {
+      return description + " JDBC DataSource has not been configured.";
+    }
+
+    public String getDescription() {
+      return "Disabled stub for " + description + " JDBC DataSource.";
+    }
+
+    /* Setter injectors for the benefit of Spring */
+    public void setURL(String ignored) {
+      // Do nothing.
+    }
+
+    public void setUser(String ignored) {
+      // Do nothing.
+    }
+
+    public void setPassword(String ignored) {
+      // Do nothing.
+    }
+
+    /* @Override */
+    public Connection getConnection() throws SQLException {
+      throw new SQLException(message());
+    }
+
+    /* @Override */
+    public Connection getConnection(String username, String password)
+        throws SQLException {
+      throw new SQLException(message());
+    }
+
+    /* @Override */
+    public void setLoginTimeout(int seconds) throws SQLException {
+      throw new SQLException(message());
+    }
+
+    /* @Override */
+    public int getLoginTimeout() throws SQLException {
+      throw new SQLException(message());
+    }
+
+    /* @Override */
+    public void setLogWriter(PrintWriter out) throws SQLException {
+      throw new SQLException(message());
+    }
+
+    /* @Override */
+    public PrintWriter getLogWriter() throws SQLException {
+      throw new SQLException(message());
+    }
+
+    /* @Override */
+    public boolean isWrapperFor(Class<?> iface) {
+      return false;
+    }
+
+    /* @Override */
+    public <T> T unwrap(Class<T> iface) throws SQLException {
+      throw new SQLException(message());
+    }
   }
 }

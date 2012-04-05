@@ -71,13 +71,13 @@ public class GetConnectorList extends HttpServlet {
 
     res.setContentType(ServletUtil.MIMETYPE_XML);
     PrintWriter out = res.getWriter();
-    NDC.pushAppend("Config");
+    NDC.push("Config");
     try {
       Manager manager = Context.getInstance().getManager();
       handleDoPost(manager, out);
     } finally {
       out.close();
-      NDC.pop();
+      NDC.clear();
     }
   }
 

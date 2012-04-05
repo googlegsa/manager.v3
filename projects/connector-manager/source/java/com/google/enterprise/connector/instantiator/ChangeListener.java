@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright (C) 2010 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,12 +20,11 @@ import com.google.enterprise.connector.scheduler.Schedule;
  * Accepts change notifications from a {@link ChangeDetector}.
  */
 interface ChangeListener {
-  void connectorAdded(String instanceName, Configuration configuration)
-      throws InstantiatorException;
+  void connectorAdded(String instanceName, Configuration configuration);
   void connectorRemoved(String instanceName);
 
   void connectorCheckpointChanged(String instanceName, String checkpoint);
   void connectorConfigurationChanged(String instanceName,
-      Configuration configuration) throws InstantiatorException;
+      Configuration configuration);
   void connectorScheduleChanged(String instanceName, Schedule schedule);
 }

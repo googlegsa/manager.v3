@@ -21,7 +21,6 @@ import com.google.enterprise.connector.scheduler.Schedule;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.ConfigureResponse;
-import com.google.enterprise.connector.spi.Retriever;
 import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.traversal.Traverser;
 
@@ -116,20 +115,6 @@ public interface ConnectorCoordinator {
    */
   @VisibleForTesting
   public TraversalManager getTraversalManager()
-      throws ConnectorNotFoundException, InstantiatorException;
-
-  /**
-   * Return a {@link Retriever} that may be used to access content for the
-   * document identified by {@code docid}.  If the connector does not support
-   * the {@link Retriever} interface, {@code null} is returned.
-   *
-   * @return a {@link Retriever}, or {@code null} if none is available
-   * @throws ConnectorNotFoundException if this {@link ConnectorCoordinator}
-   *         does not exist.
-   * @throws InstantiatorException if unable to instantiate the requested
-   *         {@link Retriever}
-   */
-  public Retriever getRetriever()
       throws ConnectorNotFoundException, InstantiatorException;
 
   /**
@@ -248,12 +233,6 @@ public interface ConnectorCoordinator {
    */
   public Configuration getConnectorConfiguration()
       throws ConnectorNotFoundException;
-
-  /**
-   * Sets {@code GData} configuration for GData aware Connectors.
-   */
-  public void setGDataConfig()
-      throws ConnectorNotFoundException, InstantiatorException;
 
   /**
    * Starts running a batch for this {@link ConnectorCoordinator} if a batch is

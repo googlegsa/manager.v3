@@ -33,21 +33,28 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 /**
- * A Test Connector that provides
+ * Test Connector that provides
  * <OL>
  * <LI> Synchronization between a test and the {@link TraversalManager} so the
  * test can coordinate test actions such as cancel during the running of a
- * batch.</LI>
- * <LI> Tracking of traversal related events for test validation purposes.</LI>
+ * batch.
+ * <LI> Tracking of traversal related events for test validation purposes.
  * </OL>
  * This implementation supports repeated instantiation by Spring. Currently
  * tests interact with the {@link TraversalManager} through static singleton
  * Objects. Hence concurrent management of multiple active
  * {@link TraversalManager} instances is not well supported.
  */
-public class SyncingConnector implements Connector, ConnectorShutdownAware {
+public class SyncingConnector implements Connector,
+    ConnectorShutdownAware {
   private static final Logger LOGGER =
       Logger.getLogger(SyncingConnector.class.getName());
+
+  /**
+   * Milliseconds a traversal will block polling traversalResults for a
+   * {@link DocumentList} before giving up.
+   */
+  public static final int POLL_TIME_LIMIT_MILLIS = 5000;
 
   private volatile static Tracker tracker = new Tracker();
 
@@ -55,32 +62,12 @@ public class SyncingConnector implements Connector, ConnectorShutdownAware {
     new ArrayBlockingQueue<DocumentList>(100);
 
   /**
-   * Milliseconds a traversal will block polling traversalResults for a
-   * {@link DocumentList} before giving up.
-   */
-  private static long pollTimeOutMillis = 5000;
-
-  /**
-   * Sets the Poll timeout in milliseconds.
-   */
-  static synchronized void setPollTimeout(long millis) {
-    pollTimeOutMillis = millis;
-  }
-
-  /**
-   * Gets the Poll timeout in milliseconds.
-   */
-  static synchronized long getPollTimeout() {
-    return pollTimeOutMillis;
-  }
-
-  /**
    * Creates a single document {@link DocumentList} and queues it for the
    * {@link TraversalManager} to return on an upcoming
    * {@link TraversalManager#startTraversal()} or
    * {@link TraversalManager#resumeTraversal(String)} call. Note these calls
-   * block until a {@link DocumentList} has been queued or the
-   * {@code timeOutMillis} milliseconds have elapsed.
+   * block until a {@link DocumentList} has been queued or the {@link
+   * SyncingConnector#POLL_TIME_LIMIT_MILLIS} milliseconds have elapsed.
    *
    * @return A {@link List} with the queued document.
    */
@@ -101,7 +88,6 @@ public class SyncingConnector implements Connector, ConnectorShutdownAware {
   public SyncingConnector() {
   }
 
-  /* @Override */
   public Session login() {
     tracker.incrementLoginCount();
     return new SyncingConnectorSession();
@@ -126,15 +112,14 @@ public class SyncingConnector implements Connector, ConnectorShutdownAware {
 
   private class SyncingConnectorSession implements Session {
    public AuthenticationManager getAuthenticationManager() {
-     return null;
+     throw new UnsupportedOperationException();
     }
 
     public AuthorizationManager getAuthorizationManager() {
-     return null;
+      throw new UnsupportedOperationException();
     }
 
     public TraversalManager getTraversalManager() {
-      tracker.incrementTraversalManagerCount();
       return new SyncingConnectorTraversalManager();
     }
   }
@@ -159,7 +144,7 @@ public class SyncingConnector implements Connector, ConnectorShutdownAware {
 
     private DocumentList poll() {
       try {
-        DocumentList result = traversalResults.poll(getPollTimeout(),
+        DocumentList result = traversalResults.poll(POLL_TIME_LIMIT_MILLIS,
             TimeUnit.MILLISECONDS);
         if(result == null) {
           LOGGER.warning("poll returned null document.");
@@ -193,7 +178,6 @@ public class SyncingConnector implements Connector, ConnectorShutdownAware {
     private int deleteCount;
     private int shutdownCount;
     private int interruptedCount;
-    private int traversalManagerCount;
     private int startTraversalCount;
     private int resumeTraversalCount;
     private int nextDocId;
@@ -202,18 +186,16 @@ public class SyncingConnector implements Connector, ConnectorShutdownAware {
       traversingQueue.add(new Object());
     }
 
-    public final void blockUntilTraversing()
-        throws InterruptedException {
-      traversingQueue.poll(getPollTimeout(), TimeUnit.MILLISECONDS);
+    public final void blockUntilTraversing() throws InterruptedException {
+      traversingQueue.poll(POLL_TIME_LIMIT_MILLIS, TimeUnit.MILLISECONDS);
     }
 
     public final void traversingInterrupted() {
       traversingInterrupted.add(new Object());
     }
 
-    public void blockUntilTraversingInterrupted()
-        throws InterruptedException {
-      if (null == traversingInterrupted.poll(getPollTimeout(),
+    public void blockUntilTraversingInterrupted() throws InterruptedException {
+      if(null == traversingInterrupted.poll(POLL_TIME_LIMIT_MILLIS,
           TimeUnit.MILLISECONDS)) {
         throw new InterruptedException("poll timed out");
       }
@@ -249,14 +231,6 @@ public class SyncingConnector implements Connector, ConnectorShutdownAware {
 
     public void incrementInterruptedCount() {
       interruptedCount++;
-    }
-
-    public synchronized int getTraversalManagerCount() {
-      return traversalManagerCount;
-    }
-
-    public synchronized void incrementTraversalManagerCount() {
-      traversalManagerCount++;
     }
 
     public synchronized int getStartTraversalCount() {

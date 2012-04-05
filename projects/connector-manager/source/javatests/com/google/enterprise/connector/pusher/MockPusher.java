@@ -28,10 +28,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 
+
 public class MockPusher implements Pusher, PusherFactory {
 
-  private PusherStatus status = PusherStatus.OK;
-  private int totalDocs = 0;
+  private int totalDocs;
   private PrintStream printStream;
 
   public MockPusher() {
@@ -39,26 +39,16 @@ public class MockPusher implements Pusher, PusherFactory {
   }
 
   public MockPusher(PrintStream ps) {
+    totalDocs = 0;
     printStream = ps;
   }
 
-  /* @Override */
   public Pusher newPusher(String connectorName) {
-    totalDocs = 0;
-    if (status == PusherStatus.DISABLED) {
-      status = PusherStatus.OK;
-    }
     return this;
   }
 
-  /* @Override */
-  public PusherStatus take(Document document, DocumentStore ignored)
-      throws PushException, FeedException, RepositoryException {
-    // Mirror behaviour of DocPusher.
-    if (status == PusherStatus.DISABLED) {
-      return PusherStatus.DISABLED;
-    }
-
+  public boolean take(Document document, DocumentStore ignored)
+      throws RepositoryException {
     printStream.println("<document>");
 
     // first take care of some special attributes
@@ -83,32 +73,15 @@ public class MockPusher implements Pusher, PusherFactory {
 
     printStream.println("</document>");
     totalDocs++;
-    return status;
+    return true;
   }
 
-  /* @Override */
-  public void flush() throws PushException, FeedException, RepositoryException {
+  public void flush() {
     printStream.flush();
-    status = PusherStatus.DISABLED;
   }
 
-  /* @Override */
   public void cancel() {
     totalDocs = 0;
-    status = PusherStatus.DISABLED;
-  }
-
-  /**
-   * @return the current PusherStatus
-   */
-  /* @Override */
-  public PusherStatus getPusherStatus()
-      throws PushException, FeedException, RepositoryException {
-    return status;
-  }
-
-  public void setPusherStatus(PusherStatus status) {
-    this.status = status;
   }
 
   private void processProperty(String name, Property property)

@@ -19,9 +19,7 @@ import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.manager.MockManager;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
 
-import org.springframework.mock.web.MockHttpServletRequest;
-import org.springframework.mock.web.MockHttpServletResponse;
-
+import junit.framework.Assert;
 import junit.framework.TestCase;
 
 import java.io.PrintWriter;
@@ -33,25 +31,8 @@ import java.util.logging.Logger;
  * Tests GetConnectorList servlet class.
  */
 public class GetConnectorListTest extends TestCase {
-  private static final Logger LOGGER =
-      Logger.getLogger(GetConnectorListTest.class.getName());
-
-  /**
-   * Test method for
-   * {@link GetConnectorList#doGet(HttpServletRequest, HttpServletResponse)}.
-   */
-  public void testDoGet() throws Exception {
-    MockHttpServletRequest req = new MockHttpServletRequest("GET",
-        "/connector-manager/getConnectorList");
-    MockHttpServletResponse res = new MockHttpServletResponse();
-    new GetConnectorList().doGet(req, res);
-    String expectedResult =
-        "<CmResponse>\n"
-        + "  <StatusId>" + ConnectorMessageCode.RESPONSE_NULL_CONNECTOR_TYPE
-        + "</StatusId>\n"
-        + "</CmResponse>\n";
-    checkResponse(new StringBuffer(res.getContentAsString()), expectedResult);
-  }
+  private static final Logger LOGGER = Logger
+    .getLogger(GetConnectorListTest.class.getName());
 
   /**
    * Test method for
@@ -60,7 +41,7 @@ public class GetConnectorListTest extends TestCase {
    * java.io.PrintWriter)}
    * where connectorTypes = null.
    */
-  public void testNoConnectorTypes() {
+  public void testHandleDoGet1() {
     Manager manager = new MockManager() {
         @Override
         public Set<String> getConnectorTypeNames() { return null; }
@@ -80,7 +61,7 @@ public class GetConnectorListTest extends TestCase {
    * java.io.PrintWriter)}
    * where connectorTypes = {"Documentum", "Filenet", "Sharepoint"}.
    */
-  public void testMultipleConnectorTypes() {
+  public void testHandleDoGet2() {
     String expectedResult =
         "<CmResponse>\n"
         + "  <StatusId>0</StatusId>\n"
@@ -99,15 +80,11 @@ public class GetConnectorListTest extends TestCase {
     GetConnectorList.handleDoPost(manager, out);
     out.flush();
     StringBuffer result = writer.getBuffer();
-    out.close();
-    checkResponse(result, expectedResult);
-  }
-
-  private void checkResponse(StringBuffer result, String expectedResult) {
     ConnectorTestUtils.removeManagerVersion(result);
     LOGGER.info(result.toString());
     LOGGER.info(expectedResult);
-    assertEquals(StringUtils.normalizeNewlines(expectedResult),
-                 StringUtils.normalizeNewlines(result.toString()));
+    Assert.assertEquals(StringUtils.normalizeNewlines(expectedResult),
+        StringUtils.normalizeNewlines(result.toString()));
+    out.close();
   }
 }

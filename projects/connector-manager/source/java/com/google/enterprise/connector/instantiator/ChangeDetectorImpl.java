@@ -66,15 +66,11 @@ class ChangeDetectorImpl implements ChangeDetector {
       SortedSet<StoreContext> persistentInstances =
           new TreeSet<StoreContext>(persistentInventory.keySet());
 
-      // Compare the last known (inMemory) inventory with the new inventory
-      // from the persistent store. Notify ChangeListeners of any differences.
-      // Save in memory, the new inventory of unchanged items and successfully
-      // applied changes.
-      inMemoryInventory = compareInventoriesAndNotifyListeners(
-          inMemoryInstances.iterator(), persistentInstances.iterator(),
-          persistentInventory);
-      inMemoryInstances = persistentInstances;
+      compareInventories(inMemoryInstances.iterator(),
+          persistentInstances.iterator(), persistentInventory);
 
+      inMemoryInstances = persistentInstances;
+      inMemoryInventory = persistentInventory;
     } finally {
       NDC.pop();
     }
@@ -98,21 +94,10 @@ class ChangeDetectorImpl implements ChangeDetector {
    * @param mi the sorted keys to the in-memory instances
    * @param pi the sorted keys to the persistent instances
    * @param persistentInventory the persistent object stamps
-   * @return a new inventory of stamps, derived from the
-   *         persistentInventory, but reflecting instantiation failures.
    */
-  private ImmutableMap<StoreContext, ConnectorStamps>
-        compareInventoriesAndNotifyListeners(
-        Iterator<StoreContext> mi, Iterator<StoreContext> pi,
+  private void compareInventories(Iterator<StoreContext> mi,
+        Iterator<StoreContext> pi,
         ImmutableMap<StoreContext, ConnectorStamps> persistentInventory) {
-    // This map will accumulate items for the new in-memory inventory.
-    // Generally, this map will end up being identical to the
-    // persistentInventory. However, failed connector instantiations
-    // may cause changes to be dropped from this map, so that they may
-    // be retried next time around.
-    ImmutableMap.Builder<StoreContext, ConnectorStamps> mapBuilder =
-        new ImmutableMap.Builder<StoreContext, ConnectorStamps>();
-
     StoreContext m = getNext(mi);
     StoreContext p = getNext(pi);
     while (m != null && p != null) {
@@ -121,30 +106,16 @@ class ChangeDetectorImpl implements ChangeDetector {
       NDC.pushAppend((diff < 0 ? m : p).getConnectorName());
       try {
         if (diff == 0) {
-          // Compare the inMemory vs inPStore ConnectorStamps for a
-          // connector instance. Notify ChangeListeners for items whose
-          // Stamps have changed.
-          ConnectorStamps stamps = compareInstancesAndNotifyListeners(
-             m, p, inMemoryInventory.get(m), persistentInventory.get(p));
-
-          // Remember the new ConnetorStamps for our new inMemory inventory.
-          mapBuilder.put(p, stamps);
-
-          // Advance to the next connector instance.
+          compareInstances(m, p, inMemoryInventory.get(m),
+              persistentInventory.get(p));
           m = getNext(mi);
           p = getNext(pi);
         } else if (diff < 0) {
           listener.connectorRemoved(m.getConnectorName());
           m = getNext(mi);
         } else { // diff > 0
-          try {
-            listener.connectorAdded(p.getConnectorName(),
-                store.getConnectorConfiguration(p));
-            mapBuilder.put(p, persistentInventory.get(p));
-          } catch (InstantiatorException e) {
-            // Forget about this one and retry on the next time around.
-            pi.remove();
-          }
+          listener.connectorAdded(p.getConnectorName(),
+              store.getConnectorConfiguration(p));
           p = getNext(pi);
         }
       } finally {
@@ -165,63 +136,42 @@ class ChangeDetectorImpl implements ChangeDetector {
       try {
         listener.connectorAdded(p.getConnectorName(),
             store.getConnectorConfiguration(p));
-        mapBuilder.put(p, persistentInventory.get(p));
-      } catch (InstantiatorException e) {
-        // Forget about this one and retry on the next time around.
-        pi.remove();
       } finally {
         NDC.pop();
       }
       p = getNext(pi);
     }
-    return mapBuilder.build();
   }
 
   /**
-   * Compares the version stamps for the given instance.  Notify ChangeListeners
-   * of any differences.
+   * Compares the version stamps for the given instance.
    *
    * @param m the key for the in-memory instance
    * @param p the key for the persistent instance
    * @param ms the stamps for the in-memory instance
    * @param ps the stamps for the persistent instance
-   * @return possibly modified stamps for the persistent instance
    */
   // TODO: When StoreContext becomes String, we only need one key
   // parameter because we will have m.equals(p). NOTE: This may be
   // false now, if the connector type has changed.
-  private ConnectorStamps compareInstancesAndNotifyListeners(
-      StoreContext m, StoreContext p, ConnectorStamps ms, ConnectorStamps ps) {
-
+  private void compareInstances(StoreContext m, StoreContext p,
+      ConnectorStamps ms, ConnectorStamps ps) {
     if (compareStamps(ms.getCheckpointStamp(),
         ps.getCheckpointStamp()) != 0) {
       listener.connectorCheckpointChanged(p.getConnectorName(),
           store.getConnectorState(p));
     }
 
+    if (compareStamps(ms.getConfigurationStamp(),
+        ps.getConfigurationStamp()) != 0) {
+      listener.connectorConfigurationChanged(p.getConnectorName(),
+          store.getConnectorConfiguration(p));
+    }
+
     if (compareStamps(ms.getScheduleStamp(), ps.getScheduleStamp()) != 0) {
       listener.connectorScheduleChanged(p.getConnectorName(),
           store.getConnectorSchedule(p));
     }
-
-    // Save configuration for last, because it may fail.
-    if (compareStamps(ms.getConfigurationStamp(),
-        ps.getConfigurationStamp()) != 0) {
-      try {
-        listener.connectorConfigurationChanged(p.getConnectorName(),
-            store.getConnectorConfiguration(p));
-      } catch (InstantiatorException e) {
-        // Instantiation of the connector failed. Remember a null configuration
-        // stamp so we will try the new configuration again next time through.
-        // This is an attempt to handle connectors that fail instantiation
-        // due to transient causes (such as a server off-line).
-        return new ConnectorStamps(ps.getCheckpointStamp(),
-            null, ps.getScheduleStamp());
-      }
-    }
-
-    // Return the original stamps.
-    return ps;
   }
 
   /**

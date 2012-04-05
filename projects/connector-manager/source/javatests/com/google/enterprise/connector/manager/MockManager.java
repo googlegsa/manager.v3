@@ -28,12 +28,7 @@ import com.google.enterprise.connector.spi.AuthorizationResponse;
 import com.google.enterprise.connector.spi.AuthorizationResponse.Status;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.ConnectorType;
-import com.google.enterprise.connector.spi.Document;
-import com.google.enterprise.connector.spi.SpiConstants;
-import com.google.enterprise.connector.test.ConnectorTestUtils;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -180,6 +175,7 @@ public class MockManager implements Manager {
     if (CONNECTOR3.equals(connectorName)) {
       if (permit) {
         for (String docid : docidList) {
+          LOGGER.info("Docid: " + docid + "  permit: " + permit);//DEBUGGING
           if (permit) {
             results.add(new AuthorizationResponse(permit, docid));
           }
@@ -188,40 +184,6 @@ public class MockManager implements Manager {
       }
     }
     return results;
-  }
-
-  /* @Override */
-  public InputStream getDocumentContent(String connectorName, String docid)
-      throws ConnectorNotFoundException {
-    if (CONNECTOR1.equals(connectorName)) {
-      return new ByteArrayInputStream(docid.getBytes());
-    }
-    if (CONNECTOR2.equals(connectorName)) {
-      return null;  // no content
-    }
-    throw new ConnectorNotFoundException("Connector not found: "
-                                         + connectorName);
-  }
-
-  /* @Override */
-  public Document getDocumentMetaData(String connectorName, String docid)
-      throws ConnectorNotFoundException {
-    if (CONNECTOR1.equals(connectorName)) {
-      Map<String, Object> props =
-          ConnectorTestUtils.createSimpleDocumentBasicProperties(docid);
-      props.remove(SpiConstants.PROPNAME_CONTENT);
-      return ConnectorTestUtils.createSimpleDocument(props);
-    }
-    if (CONNECTOR2.equals(connectorName)) {
-      Map<String, Object> props =
-          ConnectorTestUtils.createSimpleDocumentBasicProperties(docid);
-      props.remove(SpiConstants.PROPNAME_CONTENT);
-      props.remove(SpiConstants.PROPNAME_LASTMODIFIED);
-      props.remove(SpiConstants.PROPNAME_MIMETYPE);
-      return ConnectorTestUtils.createSimpleDocument(props);
-    }
-    throw new ConnectorNotFoundException("Connector not found: "
-                                         + connectorName);
   }
 
   /* @Override */
@@ -276,8 +238,7 @@ public class MockManager implements Manager {
   }
 
   /* @Override */
-  public ConnectorStatus getConnectorStatus(String connectorName)
-      throws ConnectorNotFoundException {
+  public ConnectorStatus getConnectorStatus(String connectorName) {
     String name = connectorName;
     String type = "Documentum";
     int status = 0;
@@ -288,20 +249,15 @@ public class MockManager implements Manager {
   /* @Override */
   public List<ConnectorStatus> getConnectorStatuses() {
     List<ConnectorStatus> statuses = new ArrayList<ConnectorStatus>();
-    try {
-      statuses.add(getConnectorStatus(CONNECTOR1));
-      statuses.add(getConnectorStatus(CONNECTOR2));
-    } catch (ConnectorNotFoundException ignored) {
-      // Ignored.
-    }
+    statuses.add(getConnectorStatus(CONNECTOR1));
+    statuses.add(getConnectorStatus(CONNECTOR2));
     return statuses;
   }
 
   /* @Override */
   public ConfigureResponse setConnectorConfiguration(String connectorName,
-      Configuration configuration, String language, boolean update)
-      throws ConnectorNotFoundException, ConnectorExistsException,
-             PersistentStoreException, InstantiatorException {
+        Configuration configuration, String language, boolean update)
+        throws InstantiatorException {
     LOGGER.info("setConnectorConfig() connectorName: " + connectorName);
     LOGGER.info("setConnectorConfig() update: " + update);
     LOGGER.info("configData: ");
@@ -318,13 +274,13 @@ public class MockManager implements Manager {
     return null;
   }
 
+  final Properties managerConfig = new Properties();
+
   /* @Override */
   public Configuration getConnectorConfiguration(String connectorName)
       throws ConnectorNotFoundException {
     return new Configuration("Mock", new HashMap<String, String>(), null);
   }
-
-  final Properties managerConfig = new Properties();
 
   /* @Override */
   public Properties getConnectorManagerConfig() {
@@ -337,7 +293,7 @@ public class MockManager implements Manager {
     if (!Strings.isNullOrEmpty(feederGateProtocol)) {
       managerConfig.put(Context.GSA_FEED_PROTOCOL_PROPERTY_KEY,
           feederGateProtocol);
-  }
+    }
     if (!Strings.isNullOrEmpty(feederGateHost)) {
       managerConfig.put(Context.GSA_FEED_HOST_PROPERTY_KEY,
           feederGateHost);
@@ -353,8 +309,7 @@ public class MockManager implements Manager {
   }
 
   /* @Override */
-  public void setSchedule(String connectorName, String schedule)
-      throws ConnectorNotFoundException, PersistentStoreException {
+  public void setSchedule(String connectorName, String schedule) {
     // do nothing
   }
 
@@ -368,8 +323,7 @@ public class MockManager implements Manager {
   }
 
   /* @Override */
-  public void restartConnectorTraversal(String connectorName)
-      throws ConnectorNotFoundException, InstantiatorException {
+  public void restartConnectorTraversal(String connectorName) {
     // do nothing;
   }
 
