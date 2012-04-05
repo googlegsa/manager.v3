@@ -15,6 +15,7 @@
 package com.google.enterprise.connector.spiimpl;
 
 import com.google.enterprise.connector.spi.Value;
+import com.google.enterprise.connector.util.InputStreamFactory;
 
 import java.io.InputStream;
 import java.util.Calendar;
@@ -23,6 +24,10 @@ public abstract class ValueImpl extends Value {
 
   public static Value getStringValue(String s) {
     return new StringValue(s);
+  }
+
+  public static Value getBinaryValue(InputStreamFactory factory) {
+    return new BinaryValue(factory);
   }
 
   public static Value getBinaryValue(InputStream is) {

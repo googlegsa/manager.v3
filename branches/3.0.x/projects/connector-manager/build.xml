@@ -292,7 +292,8 @@
     <pathelement path="${java.class.path}" />
   </path>
 
-  <target name="run_tests" depends="jar-tests,test_connector_jars">
+  <target name="run_tests" depends="jar-tests,test_connector_jars"
+          description="Run tests">
     <antcall target="_run_tests">
       <param name="test.classpath" value="tests.classpath" />
     </antcall>

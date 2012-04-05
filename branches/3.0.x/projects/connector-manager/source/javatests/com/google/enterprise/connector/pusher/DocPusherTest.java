@@ -27,6 +27,7 @@ import com.google.enterprise.connector.spi.DocumentList;
 import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.RepositoryDocumentException;
 import com.google.enterprise.connector.spi.RepositoryException;
+import com.google.enterprise.connector.spi.SecureDocument;
 import com.google.enterprise.connector.spi.SkippedDocumentException;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.TraversalManager;
@@ -42,8 +43,6 @@ import com.google.enterprise.connector.util.filter.DocumentFilterChain;
 import com.google.enterprise.connector.util.filter.DocumentFilterFactory;
 import com.google.enterprise.connector.util.filter.ModifyPropertyFilter;
 
-
-import junit.framework.Assert;
 import junit.framework.TestCase;
 
 import org.xml.sax.SAXParseException;
@@ -113,7 +112,6 @@ public class DocPusherTest extends TestCase {
         + " mimetype=\"text/html\""
         + " last-modified=\"Tue, 15 Nov 1994 12:45:26 GMT\">\n"
         + "<metadata>\n"
-        + "<meta name=\"google:feedid\" content=\"test\"/>\n"
         + "<meta name=\"google:lastmodified\" content=\"Tue, 15 Nov 1994 12:45:26 GMT\"/>\n"
         + "<meta name=\"google:searchurl\" content=\"http://www.sometesturl.com/test\"/>\n"
         + "<meta name=\"jcr:lastModified\" content=\"1970-01-01\"/>\n"
@@ -136,7 +134,6 @@ public class DocPusherTest extends TestCase {
         + " mimetype=\"text/html\""
         + " last-modified=\"Tue, 15 Nov 1994 12:45:26 GMT\">\n"
         + "<metadata>\n"
-        + "<meta name=\"google:feedid\" content=\"test\"/>\n"
         + "<meta name=\"google:lastmodified\" content=\"Tue, 15 Nov 1994 12:45:26 GMT\"/>\n"
         + "<meta name=\"google:searchurl\" content=\"http://www.sometesturl.com/test\"/>\n"
         + "<meta name=\"jcr:lastModified\" content=\"1970-01-01\"/>\n"
@@ -158,7 +155,6 @@ public class DocPusherTest extends TestCase {
         + " mimetype=\"text/html\""
         + " last-modified=\"Tue, 15 Nov 1994 12:45:26 GMT\">\n"
         + "<metadata>\n"
-        + "<meta name=\"google:feedid\" content=\"test\"/>\n"
         + "<meta name=\"google:lastmodified\" content=\"Tue, 15 Nov 1994 12:45:26 GMT\"/>\n"
         + "<meta name=\"google:searchurl\" content=\"smb://localhost/share/test\"/>\n"
         + "<meta name=\"jcr:lastModified\" content=\"1970-01-01\"/>\n"
@@ -183,7 +179,6 @@ public class DocPusherTest extends TestCase {
         + SpiConstants.DEFAULT_MIMETYPE
         + "\" last-modified=\"Tue, 15 Nov 1994 12:45:26 GMT\">\n"
         + "<metadata>\n"
-        + "<meta name=\"google:feedid\" content=\"test\"/>\n"
         + "<meta name=\"google:lastmodified\" content=\"Tue, 15 Nov 1994 12:45:26 GMT\"/>\n"
         + "<meta name=\"jcr:lastModified\" content=\"1970-01-01\"/>\n"
         + "</metadata>\n" + "<content encoding=\"base64binary\">\n"
@@ -208,7 +203,6 @@ public class DocPusherTest extends TestCase {
         + SpiConstants.DEFAULT_MIMETYPE
         + "\" last-modified=\"Tue, 15 Nov 1994 12:45:26 GMT\">\n"
         + "<metadata>\n"
-        + "<meta name=\"google:feedid\" content=\"test\"/>\n"
         + "<meta name=\"contentfile\" content=\"testdata/mocktestdata/i18n.html\"/>\n"
         + "<meta name=\"google:lastmodified\" content=\"Tue, 15 Nov 1994 12:45:26 GMT\"/>\n"
         + "<meta name=\"google:mimetype\" content=\"text/html\"/>\n"
@@ -239,7 +233,6 @@ public class DocPusherTest extends TestCase {
         + "\" last-modified=\"Thu, 01 Jan 1970 00:00:00 GMT\""
         + " authmethod=\"httpbasic\">\n"
         + "<metadata>\n"
-        + "<meta name=\"google:feedid\" content=\"test\"/>\n"
         + "<meta name=\"google:aclusers\" content=\"joe\"/>\n"
         + "<meta name=\"google:aclusers\" content=\"mary\"/>\n"
         + "<meta name=\"google:aclusers\" content=\"fred\"/>\n"
@@ -263,7 +256,6 @@ public class DocPusherTest extends TestCase {
         + SpiConstants.DEFAULT_MIMETYPE
         + "\" last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\">\n"
         + "<metadata>\n"
-        + "<meta name=\"google:feedid\" content=\"test\"/>\n"
         + "<meta name=\"google:aclusers\" content=\"joe\"/>\n"
         + "<meta name=\"google:aclusers\" content=\"mary\"/>\n"
         + "<meta name=\"google:ispublic\" content=\"true\"/>\n"
@@ -285,7 +277,6 @@ public class DocPusherTest extends TestCase {
         + SpiConstants.DEFAULT_MIMETYPE
         + "\" last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\">\n"
         + "<metadata>\n"
-        + "<meta name=\"google:feedid\" content=\"test\"/>\n"
         + "<meta name=\"google:aclusers\" content=\"joe\"/>\n"
         + "<meta name=\"google:aclusers\" content=\"mary\"/>\n"
         + "<meta name=\"google:ispublic\" content=\"public\"/>\n"
@@ -314,7 +305,6 @@ public class DocPusherTest extends TestCase {
         + "\" last-modified=\"Thu, 01 Jan 1970 00:00:00 GMT\""
         + " authmethod=\"httpbasic\">\n"
         + "<metadata>\n"
-        + "<meta name=\"google:feedid\" content=\"test\"/>\n"
         + "<meta name=\"google:aclusers\" content=\"joe\"/>\n"
         + "<meta name=\"google:aclusers\" content=\"mary\"/>\n"
         + "<meta name=\"google:aclusers\" content=\"fred\"/>\n"
@@ -337,7 +327,6 @@ public class DocPusherTest extends TestCase {
         + SpiConstants.DEFAULT_MIMETYPE
         + "\" last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\">\n"
         + "<metadata>\n"
-        + "<meta name=\"google:feedid\" content=\"test\"/>\n"
         + "<meta name=\"google:aclusers\" content=\"joe\"/>\n"
         + "<meta name=\"google:aclusers\" content=\"mary\"/>\n"
         + "<meta name=\"google:ispublic\" content=\"true\"/>\n"
@@ -356,7 +345,6 @@ public class DocPusherTest extends TestCase {
         + SpiConstants.DEFAULT_MIMETYPE
         + "\" last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\">\n"
         + "<metadata>\n"
-        + "<meta name=\"google:feedid\" content=\"test\"/>\n"
         + "<meta name=\"google:aclusers\" content=\"joe\"/>\n"
         + "<meta name=\"google:aclusers\" content=\"mary\"/>\n"
         + "<meta name=\"google:ispublic\" content=\"true\"/>\n"
@@ -388,9 +376,9 @@ public class DocPusherTest extends TestCase {
     }
     dpusher.flush();
     String resultXML = feedConnection.getFeed();
-    Assert.assertEquals(expectedXml, resultXML);
+    assertEquals(expectedXml, resultXML);
     gsaActualResponse = dpusher.getGsaResponse();
-    Assert.assertEquals(gsaExpectedResponse, gsaActualResponse);
+    assertEquals(gsaExpectedResponse, gsaActualResponse);
   }
 
   /**
@@ -411,7 +399,6 @@ public class DocPusherTest extends TestCase {
         + "\""
         + " last-modified=\"Tue, 15 Nov 1994 12:45:26 GMT\">\n"
         + "<metadata>\n"
-        + "<meta name=\"google:feedid\" content=\"test\"/>\n"
         + "<meta name=\"contentfile\" content=\"testdata/mocktestdata/i18n.html\"/>\n"
         + "<meta name=\"google:lastmodified\" content=\"Tue, 15 Nov 1994 12:45:26 GMT\"/>\n"
         + "<meta name=\"google:mimetype\" content=\"text/html\"/>\n"
@@ -454,11 +441,12 @@ public class DocPusherTest extends TestCase {
 
     DocumentList documentList = qtm.startTraversal();
 
+    System.out.println("\nTest Case: " + getName());
     int i = 0;
     Document document = null;
     while ((document = documentList.nextDocument()) != null) {
       System.out.println("Test " + i + " output");
-      Assert.assertFalse(i == expectedXml.length);
+      assertFalse(i == expectedXml.length);
       DocPusher dpusher =
           new DocPusher(feedConnection, "junit", fsli, dfc, null);
       assertEquals(PusherStatus.OK, dpusher.take(document, null));
@@ -466,11 +454,12 @@ public class DocPusherTest extends TestCase {
       System.out.println("Test " + i + " assertions");
       String resultXML = feedConnection.getFeed();
       gsaActualResponse = dpusher.getGsaResponse();
-      Assert.assertEquals(expectedXml[i], resultXML);
-      Assert.assertEquals(gsaExpectedResponse, gsaActualResponse);
-      System.out.println("Test " + i + " done");
+      assertEquals(expectedXml[i], resultXML);
+      assertEquals(gsaExpectedResponse, gsaActualResponse);
+      System.out.println("Test " + i + " done\n");
       ++i;
     }
+    System.out.println("==================================");
   }
 
   /**
@@ -628,7 +617,7 @@ public class DocPusherTest extends TestCase {
         + "}\r\n" + "";
     String resultXML = feedJsonEvent(json1);
 
-    assertStringNotContains("googleconnector://", resultXML);
+    assertStringNotContains(ServletUtil.PROTOCOL, resultXML);
     assertStringContains("url=\"http://www.sometesturl.com/docid\"", resultXML);
     assertStringContains("displayurl=\"http://www.sometesturl.com/test\"",
         resultXML);
@@ -662,7 +651,7 @@ public class DocPusherTest extends TestCase {
     // Web feed with searchurl.
     String resultXML = feedJsonEvent(json1);
 
-    assertStringNotContains("googleconnector://", resultXML);
+    assertStringNotContains(ServletUtil.PROTOCOL, resultXML);
     assertStringContains("url=\"http://www.sometesturl.com/docid\"", resultXML);
     assertStringContains("displayurl=\"http://www.sometesturl.com/test\"",
         resultXML);
@@ -672,7 +661,7 @@ public class DocPusherTest extends TestCase {
     // Content feed with searchurl.
     resultXML = feedJsonEvent(json2);
 
-    assertStringNotContains("googleconnector://", resultXML);
+    assertStringNotContains(ServletUtil.PROTOCOL, resultXML);
     assertStringContains("url=\"http://www.sometesturl.com/docid\"", resultXML);
     assertStringContains("displayurl=\"http://www.sometesturl.com/test\"",
         resultXML);
@@ -682,7 +671,7 @@ public class DocPusherTest extends TestCase {
     // ContentURL feed with searchurl.
     resultXML = feedJsonEvent(json3);
 
-    assertStringNotContains("googleconnector://", resultXML);
+    assertStringNotContains(ServletUtil.PROTOCOL, resultXML);
     assertStringContains("url=\"http://www.sometesturl.com/docid\"", resultXML);
     assertStringContains("displayurl=\"http://www.sometesturl.com/test\"",
         resultXML);
@@ -723,8 +712,8 @@ public class DocPusherTest extends TestCase {
     // Web feed without searchurl.
     resultXML = feedJsonEvent(json2);
 
-    assertStringContains("url=\"" + ServletUtil.PROTOCOL + "junit.localhost"
-        + ServletUtil.DOCID + "doc1\"", resultXML);
+    assertStringNotContains(ServletUtil.PROTOCOL, resultXML);
+    assertStringContains("url=\"http://www.sometesturl.com/test\"", resultXML);
     assertStringContains("displayurl=\"http://www.sometesturl.com/test\"",
         resultXML);
     assertStringContains("<feedtype>metadata-and-url</feedtype>", resultXML);
@@ -1254,7 +1243,8 @@ public class DocPusherTest extends TestCase {
     }
   }
 
-  public void testFeedLogging() throws Exception {
+  /** Tests that feeding the given document logs it to the feed log. */
+  private void testFeedLogging(Document document) throws Exception {
     deleteOldFile(TEST_LOG_FILE);
     FileHandler fh = null;
     try {
@@ -1269,48 +1259,9 @@ public class DocPusherTest extends TestCase {
       MockFeedConnection mockFeedConnection = new MockFeedConnection();
       DocPusher dpusher =
           new DocPusher(mockFeedConnection, "junit", fsli, dfc, null);
-      Document document;
-      String resultXML;
-
-      // Test incremental feed with content.
-      final String jsonIncremental =
-          "{\"timestamp\":\"10\",\"docid\":\"doc1\""
-              + ",\"content\":\"now is the time\""
-              + ", \"google:lastmodified\":\"Tue, 15 Nov 1994 12:45:26 GMT\""
-              + "}\r\n" + "";
-      document = JcrDocumentTest.makeDocumentFromJson(jsonIncremental);
       assertEquals(PusherStatus.OK, dpusher.take(document, null));
       dpusher.flush();
-      resultXML = mockFeedConnection.getFeed();
-      assertFeedInLog(resultXML, TEST_LOG_FILE);
-
-      // Test metadata-url feed with content.
-      dpusher = new DocPusher(mockFeedConnection, "junit", fsli, dfc, null);
-      final String jsonMetaAndUrl =
-          "{\"timestamp\":\"10\",\"docid\":\"doc2\""
-              + ",\"content\":\"now is the time\""
-              + ",\"google:searchurl\":\"http://www.sometesturl.com/test\""
-              + ", \"google:lastmodified\":\"Tue, 15 Nov 1994 12:45:26 GMT\""
-              + "}\r\n" + "";
-      document = JcrDocumentTest.makeDocumentFromJson(jsonMetaAndUrl);
-      assertEquals(PusherStatus.OK, dpusher.take(document, null));
-      dpusher.flush();
-      resultXML = mockFeedConnection.getFeed();
-      assertFeedInLog(resultXML, TEST_LOG_FILE);
-
-      // Test MSWord Document.
-      dpusher = new DocPusher(mockFeedConnection, "junit", fsli, dfc, null);
-      final String jsonMsWord =
-          "{\"timestamp\":\"10\",\"docid\":\"msword\""
-              + ",\"google:mimetype\":\"application/msword\""
-              + ",\"contentfile\":\"testdata/mocktestdata/test.doc\""
-              + ",\"author\":\"ziff\""
-              + ",\"google:contenturl\":\"http://www.sometesturl.com/test\""
-              + "}\r\n" + "";
-      document = JcrDocumentTest.makeDocumentFromJson(jsonMsWord);
-      assertEquals(PusherStatus.OK, dpusher.take(document, null));
-      dpusher.flush();
-      resultXML = mockFeedConnection.getFeed();
+      String resultXML = mockFeedConnection.getFeed();
       assertFeedInLog(resultXML, TEST_LOG_FILE);
     } finally {
       if (fh != null) {
@@ -1318,6 +1269,46 @@ public class DocPusherTest extends TestCase {
       }
       deleteOldFile(TEST_LOG_FILE);
     }
+  }
+
+  /** Tests feed logging with a document created from a JSON string. */
+  private void testFeedLogging(String jsonDocument) throws Exception {
+    testFeedLogging(JcrDocumentTest.makeDocumentFromJson(jsonDocument));
+  }
+
+  public void testFeedLoggingContentFeed() throws Exception {
+    final String jsonIncremental =
+        "{\"timestamp\":\"10\",\"docid\":\"doc1\""
+        + ",\"content\":\"now is the time\""
+        + ", \"google:lastmodified\":\"Tue, 15 Nov 1994 12:45:26 GMT\""
+        + "}\r\n" + "";
+    testFeedLogging(jsonIncremental);
+  }
+
+  /** Tests a metadata-and-URL feed with content. */
+  public void testFeedLoggingMetadataAndUrlFeed() throws Exception {
+    final String jsonMetaAndUrl =
+        "{\"timestamp\":\"10\",\"docid\":\"doc2\""
+        + ",\"content\":\"now is the time\""
+        + ",\"google:searchurl\":\"http://www.sometesturl.com/test\""
+        + ", \"google:lastmodified\":\"Tue, 15 Nov 1994 12:45:26 GMT\""
+        + "}\r\n" + "";
+    testFeedLogging(jsonMetaAndUrl);
+  }
+
+  public void testFeedLoggingWordDocument() throws Exception {
+    final String jsonMsWord =
+        "{\"timestamp\":\"10\",\"docid\":\"msword\""
+        + ",\"google:mimetype\":\"application/msword\""
+        + ",\"contentfile\":\"testdata/mocktestdata/test.doc\""
+        + ",\"author\":\"ziff\""
+        + ",\"google:contenturl\":\"http://www.sometesturl.com/test\""
+        + "}\r\n" + "";
+    testFeedLogging(jsonMsWord);
+  }
+
+  public void testFeedLoggingAcl() throws Exception {
+    testFeedLogging(SecureDocument.createAcl("acl1", null));
   }
 
   // The feed log doesn't contain the xml feed headers and footers.
@@ -1480,12 +1471,12 @@ public class DocPusherTest extends TestCase {
   }
 
   public static void assertStringContains(String expected, String actual) {
-    Assert.assertTrue("Expected:\n" + expected + "\nDid not appear in\n"
+    assertTrue("Expected:\n" + expected + "\nDid not appear in\n"
         + actual, actual.indexOf(expected) > 0);
   }
 
   public static void assertStringNotContains(String expected, String actual) {
-    Assert.assertTrue("Expected:\n" + expected + "\nDid appear in\n" + actual,
+    assertTrue("Expected:\n" + expected + "\nDid appear in\n" + actual,
         actual.indexOf(expected) == -1);
   }
 
@@ -2168,6 +2159,40 @@ public class DocPusherTest extends TestCase {
   }
 
   /**
+   * Base64 encoding of:
+   * <!DOCTYPE html><html><head><meta charset="utf-8"/><title>title</title></html>
+   */
+  private static String HTML_TITLE_ONLY_BASE64 =
+      "PCFET0NUWVBFIGh0bWw+PGh0bWw+PGhlYWQ+PG1ldGEgY2hhcnNl"
+      + "dD0idXRmLTgiLz48dGl0bGU+dGl0bGU8L3RpdGxlPjwvaHRtbD4=";
+
+  /**
+   * Base64 encoding of a tiny, empty PDF document with a Title property.
+   */
+  private static String PDF_TITLE_ONLY_BASE64 =
+      "JVBERi0xLjEKMSAwIG9iago8PC9UeXBlIC9DYXRhbG9nCi9QYWdlcyAyIDAgUgo+PgplbmR"
+      + "vYmoKMiAwIG9iago8PC9UeXBlIC9QYWdlcwovS2lkcyBbMyAwIFJdCi9Db3VudCAxCj4+"
+      + "CmVuZG9iagozIDAgb2JqCjw8L1R5cGUgL1BhZ2UKL1BhcmVudCAyIDAgUgovTWVkaWFCb"
+      + "3ggWzAgMCA3MiA3Ml0KPj4KZW5kb2JqCjQgMCBvYmoKPDwvVGl0bGUgPEZFRkYwMDc0MD"
+      + "A2OTAwNzQwMDZDMDA2NT4KPj4KZW5kb2JqCnhyZWYKMCA1CjAwMDAwMDAwMDAgNjU1MzU"
+      + "gZg0KMDAwMDAwMDAwOSAwMDAwMCBuDQowMDAwMDAwMDU3IDAwMDAwIG4NCjAwMDAwMDAx"
+      + "MTMgMDAwMDAgbg0KMDAwMDAwMDE4MSAwMDAwMCBuDQp0cmFpbGVyCjw8L1NpemUgNQovU"
+      + "m9vdCAxIDAgUgovSW5mbyA0IDAgUgo+PgpzdGFydHhyZWYKMjM1CiUlRU9GCg==";
+
+  /**
+   * Base64 encoding of a tiny, empty PDF document with no Title property.
+   */
+  private static String PDF_NO_TITLE_BASE64 =
+      "JVBERi0xLjEKMSAwIG9iago8PC9UeXBlIC9DYXRhbG9nCi9QYWdlcyAyIDAgUgo+PgplbmR"
+      + "vYmoKMiAwIG9iago8PC9UeXBlIC9QYWdlcwovS2lkcyBbMyAwIFJdCi9Db3VudCAxCj4+"
+      + "CmVuZG9iagozIDAgb2JqCjw8L1R5cGUgL1BhZ2UKL1BhcmVudCAyIDAgUgovTWVkaWFCb"
+      + "3ggWzAgMCA3MiA3Ml0KPj4KZW5kb2JqCjQgMCBvYmoKPDwKPj4KZW5kb2JqCnhyZWYKMC"
+      + "A1CjAwMDAwMDAwMDAgNjU1MzUgZg0KMDAwMDAwMDAwOSAwMDAwMCBuDQowMDAwMDAwMDU"
+      + "3IDAwMDAwIG4NCjAwMDAwMDAxMTMgMDAwMDAgbg0KMDAwMDAwMDE4MSAwMDAwMCBuDQp0"
+      + "cmFpbGVyCjw8L1NpemUgNQovUm9vdCAxIDAgUgovSW5mbyA0IDAgUgo+PgpzdGFydHhyZ"
+      + "WYKMjAyCiUlRU9GCg==";
+
+  /**
    * Test that suppling empty content will force alternate content.
    * The Content is handled specially in DocPusher.take().
    * The GSA requires some content.  If the Document provides no content,
@@ -2183,9 +2208,51 @@ public class DocPusherTest extends TestCase {
     // Content is optional, and may be missing.  Missing content is replaced
     // with the default content, the title.
     String resultXML = feedDocument(doc);
+    System.out.println("\nTest Case: " + getName() + " output:\n" + resultXML);
     assertStringContains("<content encoding=\"base64binary\">", resultXML);
-    assertStringContains("PGh0bWw+PHRpdGxlPnRpdGxlPC90aXRsZT48L2h0bWw+",
-                         resultXML);
+    assertStringContains(HTML_TITLE_ONLY_BASE64, resultXML);
+  }
+
+  /**
+   * Test that suppling empty content will force alternate PDF content.
+   * Alternate content for PDF must still be a PDF, or the GSA drops the
+   * document with a "Conversion Error".  If the google:title property
+   * is present, create an empty PDF document with a Title entry in the
+   * Document Information Dictionary.
+   */
+  public void testPdfTitleContent() throws Exception {
+    Map<String, Object> config = getTestDocumentConfig();
+    config.put(SpiConstants.PROPNAME_CONTENT, "");
+    config.put(SpiConstants.PROPNAME_TITLE, "title");
+    config.put(SpiConstants.PROPNAME_MIMETYPE, "application/pdf");
+    Document doc = ConnectorTestUtils.createSimpleDocument(config);
+
+    // Content is optional, and may be missing.  Missing content is replaced
+    // with the default content, the title.
+    String resultXML = feedDocument(doc);
+    System.out.println("\nTest Case: " + getName() + " output:\n" + resultXML);
+    assertStringContains("<content encoding=\"base64binary\">", resultXML);
+    assertStringContains(PDF_TITLE_ONLY_BASE64, resultXML);
+  }
+
+  /**
+   * Test that suppling empty content will force alternate PDF content.
+   * Alternate content for PDF must still be a PDF, or the GSA drops the
+   * document with a "Conversion Error".  If there is no google:title property
+   * property, create an empty PDF document.
+   */
+  public void testPdfEmptyContent() throws Exception {
+    Map<String, Object> config = getTestDocumentConfig();
+    config.put(SpiConstants.PROPNAME_CONTENT, "");
+    config.put(SpiConstants.PROPNAME_MIMETYPE, "application/pdf");
+    Document doc = ConnectorTestUtils.createSimpleDocument(config);
+
+    // Content is optional, and may be missing.  Missing content is replaced
+    // with the default content, the title.
+    String resultXML = feedDocument(doc);
+    System.out.println("\nTest Case: " + getName() + " output:\n" + resultXML);
+    assertStringContains("<content encoding=\"base64binary\">", resultXML);
+    assertStringContains(PDF_NO_TITLE_BASE64, resultXML);
   }
 
   /**
@@ -2226,8 +2293,7 @@ public class DocPusherTest extends TestCase {
     // with the default content, the title.
     String resultXML = feedHugeDocument(doc);
     assertStringContains("<content encoding=\"base64binary\">", resultXML);
-    assertStringContains("PGh0bWw+PHRpdGxlPnRpdGxlPC90aXRsZT48L2h0bWw+",
-                         resultXML);
+    assertStringContains(HTML_TITLE_ONLY_BASE64, resultXML);
   }
 
   /**
@@ -2503,38 +2569,142 @@ public class DocPusherTest extends TestCase {
   }
 
   /**
-   * Tests ACL document.
+   * Tests ACL document with inherit-from URL.
    */
-  public void testSimpleAclDoc() throws Exception {
-    Map<String, Object> props = getTestDocumentConfig();
+  public void testAclInheritFromUrl() throws Exception {
+    String parentUrl = "http://foo/parent-doc";
+    Map<String, Object> props = getTestAclDocumentConfig();
+    props.put(SpiConstants.PROPNAME_ACLINHERITFROM, parentUrl);
+    testAclInheritFrom(props, parentUrl);
+    testDocumentAclInheritFrom(props, parentUrl);
+  }
 
-    props.put(SpiConstants.PROPNAME_FEEDTYPE,
-        SpiConstants.FeedType.ACL.toString());
+  /**
+   * Tests ACL document with inherit-from docid and FeedType.
+   */
+  public void testAclInheritFromDocidAndFeedType() throws Exception {
+    String parentId = "parent-doc";
+    Map<String, Object> props = getTestAclDocumentConfig();
+    props.put(SpiConstants.PROPNAME_ACLINHERITFROM_DOCID, parentId);
+    props.put(SpiConstants.PROPNAME_ACLINHERITFROM_FEEDTYPE,
+              SpiConstants.FeedType.CONTENTURL.toString());
+    String parentUrl = contentUrlPrefix + "?"
+        + ServletUtil.XMLTAG_CONNECTOR_NAME + "=junit&amp;"
+        + ServletUtil.QUERY_PARAM_DOCID + "=" + parentId;
+    testAclInheritFrom(props, parentUrl);
+    testDocumentAclInheritFrom(props, parentUrl);
+  }
+
+  /**
+   * Tests ACL document with inherit-from docid.
+   */
+  public void testAclInheritFromDocid() throws Exception {
+    String parentId = "parent-doc";
+    Map<String, Object> props = getTestAclDocumentConfig();
+    props.put(SpiConstants.PROPNAME_ACLINHERITFROM_DOCID, parentId);
+    String parentUrl = ServletUtil.PROTOCOL + "junit.localhost"
+        + ServletUtil.DOCID + parentId;
+    testAclInheritFrom(props, parentUrl);
+    testDocumentAclInheritFrom(props, parentUrl);
+  }
+
+  /**
+   * Tests ACL document with inherit-from URL overrides
+   * inherit-from docid.
+   */
+  public void testAclInheritFromUrlAndDocid() throws Exception {
+    String parentUrl = "http://foo/parent-doc";
+    String parentId = "step-parent-doc";
+    Map<String, Object> props = getTestAclDocumentConfig();
+    props.put(SpiConstants.PROPNAME_ACLINHERITFROM, parentUrl);
+    props.put(SpiConstants.PROPNAME_ACLINHERITFROM_DOCID, parentId);
+    testAclInheritFrom(props, parentUrl);
+    testDocumentAclInheritFrom(props, parentUrl);
+  }
+
+  /** Returns a document config with some ACL properties. */
+  private Map<String, Object> getTestAclDocumentConfig() {
+    Map<String, Object> props = getTestDocumentConfig();
     props.put(SpiConstants.PROPNAME_ACLINHERITANCETYPE,
         SpiConstants.AclInheritanceType.PARENT_OVERRIDES.toString());
-    props.put(SpiConstants.PROPNAME_ACLINHERITFROM, "parent-doc");
     props.put(SpiConstants.PROPNAME_ACLUSERS, "John Doe");
     props.put(SpiConstants.PROPNAME_ACLUSERS, "John Doe");
     props.put(SpiConstants.PROPNAME_ACLDENYUSERS, "Jason Wang");
     props.put(SpiConstants.PROPNAME_ACLGROUPS, "Engineering");
+    return props;
+  }
+
+  /**
+   * Tests ACL inheritance for ACL documents.
+   */
+  private void testAclInheritFrom(Map<String, Object> props,
+      String expectedParentUrl) throws Exception {
+    // Copy the properties so we can make internal changes.
+    props = new HashMap<String, Object>(props);
+
+    props.put(SpiConstants.PROPNAME_DOCUMENTTYPE,
+        SpiConstants.DocumentType.ACL.toString());
+    props.put(SpiConstants.PROPNAME_FEEDTYPE,
+        SpiConstants.FeedType.CONTENT.toString());
 
     Document document = ConnectorTestUtils.createSimpleDocument(props);
-
     String resultXML = feedDocument(document);
 
-    assertStringContains("<acl url=\"googleconnector://junit.localhost/doc"
-        + "?docid=doc1\" inheritance-type=\"parent-overrides\"" +
-        " inherit-from=\"parent-doc\">", resultXML);
+    assertStringContains("<acl url=\"" + ServletUtil.PROTOCOL
+        + "junit.localhost" + ServletUtil.DOCID
+        + "doc1\" inheritance-type=\"parent-overrides\" inherit-from=\""
+        + expectedParentUrl + "\">", resultXML);
     assertStringContains(
-        "<principal scope=\"USER\" access=\"PERMIT\">John Doe</principal>",
+        "<principal scope=\"user\" access=\"permit\">John Doe</principal>",
         resultXML);
     assertStringContains(
-        "<principal scope=\"USER\" access=\"DENY\">Jason Wang</principal>",
+        "<principal scope=\"user\" access=\"deny\">Jason Wang</principal>",
         resultXML);
     assertStringContains(
-        "<principal scope=\"GROUP\" access=\"PERMIT\">Engineering</principal>",
+        "<principal scope=\"group\" access=\"permit\">Engineering</principal>",
         resultXML);
   }
+
+  /**
+   * Tests ACL inheritance for regular documents that include ACLs.
+   * The ACL data shows up as regular google:acl* meta-data elements.
+   */
+  private void testDocumentAclInheritFrom(Map<String, Object> props,
+      String expectedParentUrl) throws Exception {
+    // Copy the properties so we can make internal changes.
+    props = new HashMap<String, Object>(props);
+
+    props.put(SpiConstants.PROPNAME_FEEDTYPE,
+        SpiConstants.FeedType.CONTENT.toString());
+
+    Document document = ConnectorTestUtils.createSimpleDocument(props);
+    String resultXML = feedDocument(document);
+
+    // This should be a regular feed record, not an acl record.
+    assertStringContains("<record url=\"" + ServletUtil.PROTOCOL
+        + "junit.localhost" + ServletUtil.DOCID + "doc1\"", resultXML);
+    assertStringNotContains("<acl url=\"" + ServletUtil.PROTOCOL, resultXML);
+
+    assertStringNotContains(SpiConstants.PROPNAME_ACLINHERITFROM_DOCID,
+                            resultXML);
+    assertStringNotContains(SpiConstants.PROPNAME_ACLINHERITFROM_FEEDTYPE,
+                            resultXML);
+
+    assertStringContains("<meta name=\"google:aclinheritfrom\" content=\""
+        + expectedParentUrl + "\"/>", resultXML);
+    assertStringContains(
+        "<meta name=\"google:aclinheritancetype\" content=\"parent-overrides\"/>",
+        resultXML);
+    assertStringContains(
+        "<meta name=\"google:acldenyusers\" content=\"Jason Wang\"/>",
+        resultXML);
+    assertStringContains(
+        "<meta name=\"google:aclusers\" content=\"John Doe\"/>",
+        resultXML);
+    assertStringContains(
+        "<meta name=\"google:aclgroups\" content=\"Engineering\"/>",
+        resultXML);
+ }
 
   private static class MockIdGenerator implements UniqueIdGenerator {
     // Return a predictable non-unique ID to ease expected output comparisons.
@@ -2546,36 +2716,22 @@ public class DocPusherTest extends TestCase {
   /**
    * A FeedConnection that throws FeedException when fed.
    */
-  private static class BadFeedConnection1 implements FeedConnection {
-    public String sendData(FeedData feedData)
-        throws FeedException {
+  private static class BadFeedConnection1 extends MockFeedConnection {
+    @Override
+    public String sendData(FeedData feedData) throws FeedException {
       throw new FeedException("Anorexic FeedConnection");
-    }
-    public boolean isBacklogged() {
-      return false;
-    }
-    public String getContentEncodings() {
-      return "base64binary";
     }
   }
 
   /**
-   * A FeedConnection that returns a bad response.
+   * A FeedConnection that returns a bad response when fed.
    */
   private static class BadFeedConnection2 extends MockFeedConnection {
     @Override
     public String sendData(FeedData feedData)
-        throws RepositoryException {
+        throws FeedException, RepositoryException {
       super.sendData(feedData);
       return "Bulimic FeedConnection";
-    }
-    @Override
-    public boolean isBacklogged() {
-      return false;
-    }
-    @Override
-    public String getContentEncodings() {
-      return "base64binary";
     }
   }
 
@@ -2587,7 +2743,7 @@ public class DocPusherTest extends TestCase {
     static long doneTime = clock.getTimeMillis() + 5000;
     @Override
     public String sendData(FeedData feedData)
-        throws RepositoryException {
+        throws FeedException, RepositoryException {
       try {
         while (clock.getTimeMillis() < doneTime) {
           Thread.sleep(250);
@@ -2596,14 +2752,6 @@ public class DocPusherTest extends TestCase {
         // Stop waiting.
       }
       return super.sendData(feedData);
-    }
-    @Override
-    public boolean isBacklogged() {
-      return false;
-    }
-    @Override
-    public String getContentEncodings() {
-      return "base64binary";
     }
   }
 

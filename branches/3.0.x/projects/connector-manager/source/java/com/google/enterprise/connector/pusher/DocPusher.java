@@ -38,7 +38,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.util.LinkedList;
 import java.util.ListIterator;
 import java.util.Set;
@@ -230,6 +229,7 @@ public class DocPusher implements Pusher {
     // All feeds in a feed file must be of the same type.
     // If the feed would change type, send the feed off to the GSA
     // and start a new one.
+    // TODO: Fix this check to allow ACLs in any type feed.
     if (xmlFeed != null && !feedType.isCompatible(xmlFeed.getFeedType())) {
       if (LOGGER.isLoggable(Level.FINE)) {
         LOGGER.fine("A new feedType, " + feedType + ", requires a new feed for "
@@ -263,10 +263,9 @@ public class DocPusher implements Pusher {
 
       // Add this document to the feed.
       contentStream = getContentStream(document, feedType);
-      Document feedDocument = new FeedDocument(document, xmlFeed.getFeedId());
-      xmlFeed.addRecord(feedDocument, contentStream, contentEncoding);
+      xmlFeed.addRecord(document, contentStream, contentEncoding);
       if (documentStore != null) {
-        documentStore.storeDocument(feedDocument);
+        documentStore.storeDocument(document);
       }
 
       // If the feed is full, send it off to the GSA.
@@ -630,9 +629,11 @@ public class DocPusher implements Pusher {
               SpiConstants.PROPNAME_CONTENT), fileSizeLimit.maxDocumentSize()),
           (Context.getInstance().getTeedFeedFile() != null), 1024 * 1024);
 
-      InputStream encodedAlternateStream = getEncodedStream(getAlternateContent(
-          DocUtils.getOptionalString(document, SpiConstants.PROPNAME_TITLE)),
-          false, 1024);
+      InputStream encodedAlternateStream = getEncodedStream(
+          AlternateContentFilterInputStream.getAlternateContent(
+          DocUtils.getOptionalString(document, SpiConstants.PROPNAME_TITLE),
+          DocUtils.getOptionalString(document, SpiConstants.PROPNAME_MIMETYPE)),
+          false, 2048);
 
       contentStream = new AlternateContentFilterInputStream(
           encodedContentStream, encodedAlternateStream, xmlFeed);
@@ -654,69 +655,5 @@ public class DocPusher implements Pusher {
     } else {
       return new Base64FilterInputStream(content, wrapLines);
      }
-  }
-
-  /**
-   * Construct the alternate content data for a feed item.  If the feed item
-   * has null or empty content, or if the feed item has excessively large
-   * content, substitute this data which will insure that the feed item gets
-   * indexed by the GSA. The alternate content consists of the item's title,
-   * or a single space, if it lacks a title.
-   *
-   * @param title from the feed item
-   * @return an InputStream containing the alternate content
-   */
-  private static InputStream getAlternateContent(String title) {
-    byte[] bytes = null;
-    // Alternate content is a string that is substituted for null or empty
-    // content streams, in order to make sure the GSA indexes the feed item.
-    // If the feed item supplied a title property, we build an HTML fragment
-    // containing that title.  This provides better looking search result
-    // entries.
-    if (title != null && title.trim().length() > 0) {
-      try {
-        String t = "<html><title>" + title.trim() + "</title></html>";
-        bytes = t.getBytes("UTF-8");
-      } catch (UnsupportedEncodingException uee) {
-        // Don't be fancy.  Try the single space content.
-      }
-    }
-    if (bytes != null) {
-      return new ByteArrayInputStream(bytes);
-    }
-    // If no title is available, we supply a single space as the content.
-    return AlternateContentFilterInputStream.getDefaultAlternateContent();
-  }
-
-  /**
-   * Wraps the supplied {@link Document}, adding a
-   * {@code SpiConstants.PROPNAME_FEEDID} property to the set of
-   * properties.
-   */
-  private class FeedDocument implements Document {
-    private String feedId;
-    private Document document;
-
-    FeedDocument(Document document, String feedId) {
-      this.document = document;
-      this.feedId = feedId;
-    }
-
-    /* @Override */
-    public Property findProperty(String name) throws RepositoryException {
-      if (SpiConstants.PROPNAME_FEEDID.equals(name)) {
-        return new SimpleProperty(Value.getStringValue(feedId));
-      } else {
-        return document.findProperty(name);
-      }
-    }
-
-    /* @Override */
-    public Set<String> getPropertyNames() throws RepositoryException {
-      return new ImmutableSet.Builder<String>()
-             .add(SpiConstants.PROPNAME_FEEDID)
-             .addAll(document.getPropertyNames())
-             .build();
-    }
   }
 }
