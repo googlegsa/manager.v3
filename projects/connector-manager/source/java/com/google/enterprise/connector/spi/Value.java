@@ -15,6 +15,7 @@
 package com.google.enterprise.connector.spi;
 
 import com.google.enterprise.connector.spiimpl.ValueImpl;
+import com.google.enterprise.connector.util.InputStreamFactory;
 
 import java.io.InputStream;
 import java.text.ParseException;
@@ -65,6 +66,16 @@ public abstract class Value {
    */
   public static Value getBinaryValue(InputStream inputStreamValue) {
     return ValueImpl.getBinaryValue(inputStreamValue);
+  }
+
+  /**
+   * Creates a value carrying binary data.
+   *
+   * @param inputStreamFactory an {@code InputStreamFactory}
+   * @return a {@link Value} instance carrying this data
+   */
+  public static Value getBinaryValue(InputStreamFactory inputStreamFactory) {
+    return ValueImpl.getBinaryValue(inputStreamFactory);
   }
 
   /**
@@ -155,7 +166,7 @@ public abstract class Value {
   }
 
   /**
-   * Convenience function for access to a single string value from a 
+   * Convenience function for access to a single string value from a
    * {@link Document}.
    *
    * @param document the {@link Document} from which to extract the

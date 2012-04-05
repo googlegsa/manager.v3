@@ -171,4 +171,17 @@ public class StringUtils {
   public static String normalizeNewlines(String input) {
     return input.replaceAll("\r\n", "\n");
   }
+
+  /**
+   * Performs a String.getBytes("UTF-8") without throwing
+   * UnsupportedEncodingException.
+   */
+  public static byte[] getBytes(String s) {
+    try {
+      return s.getBytes("UTF-8");
+    } catch (UnsupportedEncodingException e) {
+      // Not going to happen with UTF-8.
+      throw new AssertionError(e);
+    }
+  }
 }

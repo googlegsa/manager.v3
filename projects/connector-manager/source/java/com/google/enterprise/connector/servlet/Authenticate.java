@@ -99,7 +99,7 @@ public class Authenticate extends ConnectorManagerServlet {
     NDC.append(Strings.isNullOrEmpty(domain) ? username
                : (domain + "/" + username));
 
-    String password = XmlParseUtil.getFirstElementByTagName(
+    String password = XmlParseUtil.getOptionalElementByTagName(
         (Element) credList.item(0), ServletUtil.XMLTAG_AUTHN_PASSWORD);
     for (ConnectorStatus connector : manager.getConnectorStatuses()) {
       String connectorName = connector.getName();

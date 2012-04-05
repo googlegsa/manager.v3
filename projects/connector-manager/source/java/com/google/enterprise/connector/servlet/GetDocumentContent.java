@@ -117,9 +117,12 @@ public class GetDocumentContent extends HttpServlet {
   @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
-    // Make sure this requester is OK
-    if (!RemoteAddressFilter.getInstance()
-          .allowed(RemoteAddressFilter.Access.BLACK, req.getRemoteAddr())) {
+    // The servlet relies on proper security to be handled by a filter.
+
+    if ("SecMgr".equals(req.getHeader("User-Agent"))) {
+      // Assume that the SecMgr is performing a "HEAD" request to check authz.
+      // We don't support this, so we always issue deny.
+      LOGGER.finest("RETRIEVER: SecMgr request denied");
       res.sendError(HttpServletResponse.SC_FORBIDDEN);
       return;
     }
@@ -214,10 +217,12 @@ public class GetDocumentContent extends HttpServlet {
       } while (bytes != -1);
       return HttpServletResponse.SC_OK;
     } catch (ConnectorNotFoundException e) {
-      LOGGER.log(Level.WARNING, "Failed to retrieve document content", e);
+      LOGGER.log(Level.FINE, "Failed to retrieve document content: {0}",
+                 e.toString());
       return HttpServletResponse.SC_NOT_FOUND;
     } catch (RepositoryDocumentException e) {
-      LOGGER.log(Level.WARNING, "Failed to retrieve document content", e);
+      LOGGER.log(Level.FINE, "Failed to retrieve document content: {0}",
+                 e.toString());
       return HttpServletResponse.SC_NOT_FOUND;
     } catch (RepositoryException e) {
       LOGGER.log(Level.WARNING, "Failed to retrieve document content", e);
@@ -261,9 +266,7 @@ public class GetDocumentContent extends HttpServlet {
           LOGGER.finest("Document " + docid + " does not contain "
                         + SpiConstants.PROPNAME_LASTMODIFIED);
         }
-        return -1L;
-      }
-      if (value instanceof DateValue) {
+      } else if (value instanceof DateValue) {
         // DateValues don't give direct access to their Calendar object, but
         // I can get the Calendar back out by parsing the stringized version.
         // This method also applies the FeedTimeZone, if needed.
@@ -277,10 +280,15 @@ public class GetDocumentContent extends HttpServlet {
       }
       // TODO: Value and DateValue Calendar methods are too weak to try to get
       // last modified from non-DateValues.
-      return -1L;
+    } catch (ConnectorNotFoundException e) {
+      LOGGER.log(Level.FINE, "Failed to retrieve document last modified: {0}",
+                 e.toString());
+    } catch (RepositoryDocumentException e) {
+      LOGGER.log(Level.FINE, "Failed to retrieve document last modified: {0}",
+                 e.toString());
     } catch (Exception e) {
       LOGGER.log(Level.WARNING, "Failed to retrieve document last modified", e);
-      return -1L;
     }
+    return -1L;
   }
 }

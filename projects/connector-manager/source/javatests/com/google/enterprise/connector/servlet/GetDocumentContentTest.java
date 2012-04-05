@@ -234,6 +234,32 @@ public class GetDocumentContentTest extends TestCase {
     manager.setInstantiator(instantiator);
   }
 
+  /** Test ProductionManager getDocumentContent should deny SecMgr. */
+  public void testGetDocumentContentFromSecMgr() throws Exception {
+    patchRealProductionManager();
+    MockHttpServletRequest req = new MockHttpServletRequest("GET",
+        "/connector-manager/getDocumentContent");
+    req.setParameter(ServletUtil.XMLTAG_CONNECTOR_NAME, connectorName);
+    req.setParameter(ServletUtil.QUERY_PARAM_DOCID, docid);
+    req.addHeader("User-Agent", "SecMgr");
+    MockHttpServletResponse res = new MockHttpServletResponse();
+    new GetDocumentContent().service(req, res);
+    assertEquals(403, res.getStatus());
+  }
+
+  /** Test ProductionManager getDocumentContent should deny SecMgr. */
+  public void testGetDocumentContentHeadFromSecMgr() throws Exception {
+    patchRealProductionManager();
+    MockHttpServletRequest req = new MockHttpServletRequest("HEAD",
+        "/connector-manager/getDocumentContent");
+    req.setParameter(ServletUtil.XMLTAG_CONNECTOR_NAME, connectorName);
+    req.setParameter(ServletUtil.QUERY_PARAM_DOCID, docid);
+    req.addHeader("User-Agent", "SecMgr");
+    MockHttpServletResponse res = new MockHttpServletResponse();
+    new GetDocumentContent().service(req, res);
+    assertEquals(403, res.getStatus());
+  }
+
   /**
    * Test method for the HttpServlet.doGet.
    */

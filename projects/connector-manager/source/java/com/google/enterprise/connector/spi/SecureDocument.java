@@ -17,6 +17,7 @@ package com.google.enterprise.connector.spi;
 import com.google.enterprise.connector.spi.SpiConstants.AclAccess;
 import com.google.enterprise.connector.spi.SpiConstants.AclInheritanceType;
 import com.google.enterprise.connector.spi.SpiConstants.AclScope;
+import com.google.enterprise.connector.spi.SpiConstants.DocumentType;
 import com.google.enterprise.connector.spi.SpiConstants.FeedType;
 
 import java.util.ArrayList;
@@ -37,7 +38,10 @@ import java.util.Set;
  */
 public class SecureDocument implements Document {
   protected static final List<Value> ACL_VALUE =
-      getValueList(FeedType.ACL.toString());
+      getValueList(DocumentType.ACL.toString());
+
+  protected static final List<Value> RECORD_VALUE =
+      getValueList(DocumentType.RECORD.toString());
 
   protected static List<Value> getValueList(String value) {
     return Collections.singletonList(Value.getStringValue(value));
@@ -58,7 +62,7 @@ public class SecureDocument implements Document {
 
   /**
    * Constructs a {@code SecureDocument} representing a stand-alone ACL.
-   * Implies a feed type of {@code ACL}.
+   * Implies a document type of {@code ACL}.
    *
    * @param docId the unique document ID
    * @param searchUrl the repository URL, may be {@code null}
@@ -71,7 +75,7 @@ public class SecureDocument implements Document {
     if (searchUrl != null) {
       copy.put(SpiConstants.PROPNAME_SEARCHURL, getValueList(searchUrl));
     }
-    copy.put(SpiConstants.PROPNAME_FEEDTYPE, ACL_VALUE);
+    copy.put(SpiConstants.PROPNAME_DOCUMENTTYPE, ACL_VALUE);
     return new SecureDocument(copy, new EmptyDocument());
   }
 
@@ -79,21 +83,22 @@ public class SecureDocument implements Document {
    * Constructs a {@code SecureDocument} representing a stand-alone ACL whose
    * metadata consists of the supplied {@code Map} of properties,
    * associating property names with their {@link Value Values}.
-   * Implies a feed type of {@code ACL}.
+   * Implies a document type of {@code ACL}.
    *
    * @param properties a {@code Map} of document metadata
    */
   public static SecureDocument createAcl(Map<String, List<Value>> properties) {
     Map<String, List<Value>> copy =
         new HashMap<String, List<Value>>(properties);
-    copy.put(SpiConstants.PROPNAME_FEEDTYPE, ACL_VALUE);
+    copy.put(SpiConstants.PROPNAME_DOCUMENTTYPE, ACL_VALUE);
     return new SecureDocument(copy, new EmptyDocument());
   }
 
   /**
    * Constructs a {@code SecureDocument} representing a document with
    * an ACL whose metadata consists of the properties of the given
-   * {@code Document}.
+   * {@code Document}. The document may represent a stand-alone ACL or
+   * an indexable document.
    *
    * @param document a base document whose properties are included in
    *     the return {@code SecureDocument}
@@ -102,7 +107,6 @@ public class SecureDocument implements Document {
    */
   public static SecureDocument createDocumentWithAcl(Document document)
       throws RepositoryException {
-    // Should we require PROPNAME_FEEDTYPE != ACL here and below?
     Map<String, List<Value>> empty = new HashMap<String, List<Value>>();
     return new SecureDocument(empty, document);
   }
@@ -111,7 +115,7 @@ public class SecureDocument implements Document {
    * Constructs a {@code SecureDocument} representing a document with
    * an ACL whose metadata consists of the supplied {@code Map} of
    * properties, associating property names with their {@link Value
-   * Values}.
+   * Values}. Implies a document type of {@code RECORD}.
    *
    * @param properties a {@code Map} of document metadata
    */
@@ -119,6 +123,7 @@ public class SecureDocument implements Document {
       Map<String, List<Value>> properties) {
     Map<String, List<Value>> copy =
         new HashMap<String, List<Value>>(properties);
+    copy.put(SpiConstants.PROPNAME_DOCUMENTTYPE, RECORD_VALUE);
     return new SecureDocument(copy, new EmptyDocument());
   }
 
@@ -173,13 +178,48 @@ public class SecureDocument implements Document {
   }
 
   /**
-   * Sets the inherited ACL.
+   * Sets the URL for an inherited ACL.
+   * <p/>
+   * Only one of {@link #setInheritFrom(String url)} or
+   * {@link #setInheritFrom(String docid, FeedType feedType)}
+   * should be called.  If both are called the {@code inherit-from}
+   * {@code docid} and {@code feedType} will be ignored in favor
+   * of the {@code inherit-from url}.
    *
    * @param url the URL of the parent ACL
    * @see SpiConstants#PROPNAME_ACLINHERITFROM
    */
   public void setInheritFrom(String url) {
     properties.put(SpiConstants.PROPNAME_ACLINHERITFROM, getValueList(url));
+    // Obscure these properties, in case they are specified in the delegate.
+    properties.put(SpiConstants.PROPNAME_ACLINHERITFROM_DOCID, null);
+    properties.put(SpiConstants.PROPNAME_ACLINHERITFROM_FEEDTYPE, null);
+  }
+
+  /**
+   * Sets the components needed to construct the inherit-from URL of an ACL
+   * that was fed using FeedType.CONTENT, FeedType.CONTENTURL, or FeedType.ACL.
+   * <p/>
+   * Only one of {@link #setInheritFrom(String url)} or
+   * {@link #setInheritFrom(String docid, FeedType feedType)}
+   * should be called.  If both are called the {@code inherit-from}
+   * {@code docid} and {@code feedType} will be ignored in favor
+   * of the {@code inherit-from url}.
+   *
+   * @param docid the docid of the parent ACL document
+   * @param feedType the FeedType of the parent ACL document, or {@code null}
+   *        if this document's FeedType should be used.
+   * @see SpiConstants#PROPNAME_ACLINHERITFROM
+   */
+  public void setInheritFrom(String docid, FeedType feedType) {
+    properties.put(SpiConstants.PROPNAME_ACLINHERITFROM_DOCID,
+                   getValueList(docid));
+    if (feedType != null) {
+      properties.put(SpiConstants.PROPNAME_ACLINHERITFROM_FEEDTYPE,
+                     getValueList(feedType.toString()));
+    }
+    // Obscure this property, in case it is specified in the delegate.
+    properties.put(SpiConstants.PROPNAME_ACLINHERITFROM, null);
   }
 
   /**

@@ -81,6 +81,9 @@ public class GsaFeedConnection implements FeedConnection {
   // XmlFeed DTD URL
   private URL dtdUrl = null;
 
+  // XmlFeed DTD
+  private String feedDtd = null;
+
   // BacklogCount URL
   private URL backlogUrl = null;
 
@@ -227,7 +230,7 @@ public class GsaFeedConnection implements FeedConnection {
       buf.append(CRLF).append("--").append(BOUNDARY).append("--").append(CRLF);
       suffix = buf.toString().getBytes("UTF-8");
 
-      LOGGER.finest("Opening feed connection.");
+      LOGGER.finest("Opening feed connection to " + feedUrl);
       synchronized (this) {
         uc = (HttpURLConnection) feedUrl.openConnection();
       }
@@ -242,9 +245,9 @@ public class GsaFeedConnection implements FeedConnection {
           + BOUNDARY);
       outputStream = uc.getOutputStream();
     } catch (IOException ioe) {
-      throw new FeedException(ioe);
+      throw new FeedException(feedUrl.toString(), ioe);
     } catch (GeneralSecurityException e) {
-      throw new FeedException(e);
+      throw new FeedException(feedUrl.toString(), e);
     }
 
     boolean isThrowing = false;
@@ -319,35 +322,27 @@ public class GsaFeedConnection implements FeedConnection {
   /* @Override */
   public synchronized String getContentEncodings() {
     if (contentEncodings == null) {
-      try {
-        String dtd = doGet(dtdUrl, "Feed DTD");
-        if (Strings.isNullOrEmpty(dtd)) {
-          // Failed to get a DTD. Assume the GSA only supports base64 encoded.
-          contentEncodings = "base64binary";
-        } else {
-          // TODO: Extract the supported content encodings from the DTD.
-          // As of GSA 6.2, returning a DTD at all also means compression
-          // is supported.
-          contentEncodings = "base64binary,base64compressed";
-        }
-      } catch (FeedException e) {
-        if (gotFeedError) {
-          LOGGER.finest("Failed to read Feed DTD: " + e.getMessage());
-        } else {
-          LOGGER.log(Level.WARNING, "Failed to read Feed DTD. ", e);
-        }
-        return "base64binary";  // Assume only base64 encoded support for now.
-      } catch (UnsupportedOperationException e) {
-        // This older GSA does not support getdtd, so assume the GSA only
-        // supports base64 encoded.
-        LOGGER.fine("Unsupported GSA version lacks get Feed DTD support.");
+      String dtd = getFeedDtd();
+      if (dtd == null) {
+        // Failed to get a DTD. Assume the GSA only supports base64 encoded.
         contentEncodings = "base64binary";
+      } else {
+        // TODO: Extract the supported content encodings from the DTD.
+        // As of GSA 6.2, returning a DTD at all also means compression
+        // is supported.
+        contentEncodings = "base64binary,base64compressed";
       }
       if (LOGGER.isLoggable(Level.FINE)) {
         LOGGER.fine("GSA supports Content Encodings: " + contentEncodings);
       }
     }
     return contentEncodings;
+  }
+
+  /* @Override */
+  public synchronized boolean supportsAcls() {
+    String dtd = getFeedDtd();
+    return (dtd == null) ? false : dtd.contains("<!ELEMENT acl ");
   }
 
   /* @Override */
@@ -418,6 +413,28 @@ public class GsaFeedConnection implements FeedConnection {
   }
 
   /**
+   * @return the GSA's Feed DTD, or null if unavailable.
+   */
+  private String getFeedDtd() {
+    if (feedDtd == null) {
+      try {
+        feedDtd = Strings.emptyToNull(doGet(dtdUrl, "Feed DTD"));
+      } catch (FeedException e) {
+        if (gotFeedError) {
+          LOGGER.finest("Failed to read Feed DTD: " + e.getMessage());
+        } else {
+          LOGGER.log(Level.WARNING, "Failed to read Feed DTD. ", e);
+        }
+      } catch (UnsupportedOperationException e) {
+        // This older GSA does not support getdtd, so assume the GSA only
+        // supports base64 encoded.
+        LOGGER.fine("Unsupported GSA version lacks get Feed DTD support.");
+      }
+    }
+    return feedDtd;
+  }
+
+  /**
    * Get the response to a URL request.  The response is returned
    * as an HttpResponse containing the HTTP ResponseCode and the
    * returned content as a String. The content String is only returned
@@ -438,7 +455,7 @@ public class GsaFeedConnection implements FeedConnection {
     StringBuilder buf = new StringBuilder();
     try {
       if (LOGGER.isLoggable(Level.FINEST)) {
-        LOGGER.finest("Opening " + name + " connection.");
+        LOGGER.finest("Opening " + name + " connection to " + url);
       }
       conn = (HttpURLConnection)url.openConnection();
       if (conn instanceof HttpsURLConnection && !validateCertificate) {
@@ -461,13 +478,13 @@ public class GsaFeedConnection implements FeedConnection {
         throw new UnsupportedOperationException(
             "GSA lacks " + name + " support.");
       } else {
-        throw new FeedException(responseCode + "  "
-                                + conn.getResponseMessage());
+        throw new FeedException(url.toString() + " returned response "
+            + responseCode + "  " + conn.getResponseMessage());
       }
     } catch (IOException ioe) {
-      throw new FeedException(ioe);
+      throw new FeedException(url.toString(), ioe);
     } catch (GeneralSecurityException e) {
-      throw new FeedException(e);
+      throw new FeedException(url.toString(), e);
     } finally {
       try {
         if (br != null) {

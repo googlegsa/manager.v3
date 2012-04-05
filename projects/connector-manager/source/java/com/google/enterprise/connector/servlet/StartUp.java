@@ -26,30 +26,31 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.servlet.ServletContext;
+import javax.servlet.ServletContextEvent;
+import javax.servlet.ServletContextListener;
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 
 import org.springframework.web.context.support.XmlWebApplicationContext;
 
 /**
  * The main purpose of this servlet is to have its "init" method called when the
- * container starts up. This is by done by means of the web.xml file. But I also
- * gave it a get and post that do the same thing.
- *
+ * container starts up. This is by done by means of the web.xml file.
  */
-public class StartUp extends HttpServlet {
+public class StartUp implements ServletContextListener {
   private static final Logger LOGGER =
       Logger.getLogger(StartUp.class.getName());
 
   @Override
-  public void init() throws ServletException {
+  public void contextInitialized(ServletContextEvent sce) {
     NDC.push("Init");
     try {
       LOGGER.info("init");
-      ServletContext servletContext = this.getServletContext();
+      ServletContext servletContext = sce.getServletContext();
       doStartup(servletContext);
+    } catch (ServletException ex) {
+      throw new RuntimeException(ex);
     } finally {
       LOGGER.info("init done.");
       NDC.remove();
@@ -57,7 +58,7 @@ public class StartUp extends HttpServlet {
   }
 
   @Override
-  public void destroy() {
+  public void contextDestroyed(ServletContextEvent sce) {
     NDC.push("Shutdown");
     try {
       LOGGER.info("destroy");
@@ -65,30 +66,6 @@ public class StartUp extends HttpServlet {
     } finally {
       LOGGER.info("destroy done.");
       NDC.remove();
-    }
-  }
-
-  @Override
-  protected void doGet(HttpServletRequest req, HttpServletResponse res)
-      throws ServletException, IOException {
-    doPost(req, res);
-  }
-
-  @Override
-  protected void doPost(HttpServletRequest req, HttpServletResponse res)
-      throws ServletException, IOException {
-    NDC.pushAppend("Init");
-    try {
-      ServletContext servletContext = this.getServletContext();
-      doStartup(servletContext);
-      res.setContentType(ServletUtil.MIMETYPE_HTML);
-      PrintWriter out = res.getWriter();
-      out.println("<HTML><HEAD><TITLE>Connector Manager Started</TITLE></HEAD>"
-          + "<BODY>Connector manager has been successfully started.</BODY>"
-          + "</HTML>");
-      out.close();
-    } finally {
-      NDC.pop();
     }
   }
 

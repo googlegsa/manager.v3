@@ -37,7 +37,7 @@ import javax.xml.parsers.ParserConfigurationException;
 
 /**
  * A user profile document object.
- * 
+ *
  * @author tapasnay
  * @since 3.0
  */
@@ -64,7 +64,7 @@ final public class SocialUserProfileDocument implements Document {
   /**
    * A colleague object. A colleague of a user is a person who the user normally
    * works with, may or may not be in the same group.
-   * 
+   *
    * @since 3.0
    */
   public static class ColleagueData {
@@ -78,8 +78,8 @@ final public class SocialUserProfileDocument implements Document {
 
     /**
      * Sets identity of colleague.
-     * 
-     * @param accName Colleague's identity (account name)
+     *
+     * @param identity identity (account name) of colleague
      */
     public void setIdentity(String identity) {
       this.identity = identity;
@@ -87,7 +87,7 @@ final public class SocialUserProfileDocument implements Document {
 
     /**
      * Gets identity of colleague.
-     * 
+     *
      * @return identity of colleague
      */
     public String getIdentity() {
@@ -96,7 +96,7 @@ final public class SocialUserProfileDocument implements Document {
 
     /**
      * Sets name of colleague.
-     * 
+     *
      * @param name commonly used name of colleague
      */
     public void setName(String name) {
@@ -105,8 +105,8 @@ final public class SocialUserProfileDocument implements Document {
 
     /**
      * Gets name of colleague.
-     * 
-     * @return
+     *
+     * @return commonly used name of colleague
      */
     public String getName() {
       return name;
@@ -114,7 +114,7 @@ final public class SocialUserProfileDocument implements Document {
 
     /**
      * Sets if colleague is in same work group as user.
-     * 
+     *
      * @param isInWorkGroup {@code true} if colleague is in same work group as
      *          user
      */
@@ -124,7 +124,7 @@ final public class SocialUserProfileDocument implements Document {
 
     /**
      * Gets whether colleague is in same work group as user.
-     * 
+     *
      * @return {@code true} if colleague is in same work group as user
      */
     public boolean isInWorkGroup() {
@@ -133,7 +133,7 @@ final public class SocialUserProfileDocument implements Document {
 
     /**
      * Sets work group of colleague.
-     * 
+     *
      * @param group work group of colleague
      */
     public void setGroup(String group) {
@@ -142,7 +142,7 @@ final public class SocialUserProfileDocument implements Document {
 
     /**
      * Gets work group of colleague.
-     * 
+     *
      * @return work group of colleague
      */
     public String getGroup() {
@@ -151,7 +151,7 @@ final public class SocialUserProfileDocument implements Document {
 
     /**
      * Sets emailId of colleague.
-     * 
+     *
      * @param email emailId of colleague
      */
     public void setEmail(String email) {
@@ -160,7 +160,7 @@ final public class SocialUserProfileDocument implements Document {
 
     /**
      * Gets emailId of colleague.
-     * 
+     *
      * @return emailId of colleague
      */
     public String getEmail() {
@@ -169,7 +169,7 @@ final public class SocialUserProfileDocument implements Document {
 
     /**
      * Sets title of colleague.
-     * 
+     *
      * @param title title of colleague
      */
     public void setTitle(String title) {
@@ -178,7 +178,7 @@ final public class SocialUserProfileDocument implements Document {
 
     /**
      * Gets title of colleague.
-     * 
+     *
      * @return title of colleague
      */
     public String getTitle() {
@@ -187,7 +187,7 @@ final public class SocialUserProfileDocument implements Document {
 
     /**
      * Sets URL of colleague.
-     * 
+     *
      * @param url URL of the colleague
      */
     public void setUrl(String url) {
@@ -196,7 +196,7 @@ final public class SocialUserProfileDocument implements Document {
 
     /**
      * Gets URL of colleague.
-     * 
+     *
      * @return URL of the colleague
      */
     public String getUrl() {
@@ -207,7 +207,7 @@ final public class SocialUserProfileDocument implements Document {
   /**
    * Set of properties, besides the special ones.
    */
-  private final Map<String, List<Value>> properties = 
+  private final Map<String, List<Value>> properties =
       new HashMap<String, List<Value>>();
   /**
    * Colleagues of this user.
@@ -221,7 +221,7 @@ final public class SocialUserProfileDocument implements Document {
   /**
    * Constructor takes collectionName as parameter for the user profile
    * document.
-   * 
+   *
    * @param collectionName name of collection where the profile document needs
    *          to go
    */
@@ -232,7 +232,7 @@ final public class SocialUserProfileDocument implements Document {
   /**
    * Gets user content which is typically a description of the user in his/her
    * own words.
-   * 
+   *
    * @return user content
    */
   public Value getUserContent() {
@@ -246,7 +246,7 @@ final public class SocialUserProfileDocument implements Document {
 
   /**
    * Sets user content: typically a description of user in own words.
-   * 
+   *
    * @param userContent user content
    */
   public void setUserContent(String userContent) {
@@ -256,7 +256,7 @@ final public class SocialUserProfileDocument implements Document {
 
   /**
    * Sets skill set of user.
-   * 
+   *
    * @param skillText skills
    */
   public void setSkills(List<String> skillText) {
@@ -266,7 +266,7 @@ final public class SocialUserProfileDocument implements Document {
 
   /**
    * Gets skills of user.
-   * 
+   *
    * @return skills
    */
   public List<Value> getSkills() {
@@ -275,7 +275,7 @@ final public class SocialUserProfileDocument implements Document {
 
   /**
    * Sets topics user can be asked about.
-   * 
+   *
    * @param askmeAbout topics user can be asked about
    */
   public void setAskmeAbout(List<String> askmeAbout) {
@@ -285,7 +285,7 @@ final public class SocialUserProfileDocument implements Document {
 
   /**
    * Gets topics user can be asked about.
-   * 
+   *
    * @return topics user can be asked about
    */
   public List<Value> getAskmeAbout() {
@@ -294,7 +294,7 @@ final public class SocialUserProfileDocument implements Document {
 
   /**
    * Sets user's past projects.
-   * 
+   *
    * @param values projects user worked in the past
    */
   public void setPastProjects(List<String> values) {
@@ -304,7 +304,7 @@ final public class SocialUserProfileDocument implements Document {
 
   /**
    * Gets user's past projects.
-   * 
+   *
    * @return projects user worked in the past
    */
   public List<Value> getPastProjects() {
@@ -313,7 +313,7 @@ final public class SocialUserProfileDocument implements Document {
 
   /**
    * Sets whether the profile is public or not.
-   * 
+   *
    * @param isPublic true if the profile is public
    */
   public void setPublic(boolean isPublic) {
@@ -323,7 +323,7 @@ final public class SocialUserProfileDocument implements Document {
 
   /**
    * Gets whether profile is public.
-   * 
+   *
    * @return true if the profile is public
    */
   public boolean getPublic() {
@@ -339,7 +339,7 @@ final public class SocialUserProfileDocument implements Document {
 
   /**
    * Gets user's unique identity.
-   * 
+   *
    * @return unique key identifying a user
    */
   public Value getUserKey() {
@@ -349,7 +349,7 @@ final public class SocialUserProfileDocument implements Document {
 
   /**
    * Sets user's unique identity.
-   * 
+   *
    * @param userKey unique key identifying a user
    */
   public void setUserKey(String userKey) {
@@ -360,7 +360,7 @@ final public class SocialUserProfileDocument implements Document {
   /**
    * Sets a list of values to a property (maybe beyond the distinguished
    * properties).
-   * 
+   *
    * @param name name of user profile property
    * @param values list of values of property
    */
@@ -370,7 +370,7 @@ final public class SocialUserProfileDocument implements Document {
 
   /**
    * Sets a single value to a property.
-   * 
+   *
    * @param name name of property
    * @param value value of property
    */
@@ -380,7 +380,7 @@ final public class SocialUserProfileDocument implements Document {
 
   /**
    * Gets a list of values for a property, the list may be null.
-   * 
+   *
    * @param name name of property
    * @return list of values: may be null
    */
@@ -390,7 +390,7 @@ final public class SocialUserProfileDocument implements Document {
 
   /**
    * Sets URL of the profile picture of user.
-   * 
+   *
    * @param pictureUrl URL with the profile picture of user
    */
   public void setPictureUrl(String pictureUrl) {
@@ -400,7 +400,7 @@ final public class SocialUserProfileDocument implements Document {
 
   /**
    * Gets URL of the profile picture.
-   * 
+   *
    * @return : profile picture URL
    */
   public Value getPictureUrl() {
@@ -410,7 +410,7 @@ final public class SocialUserProfileDocument implements Document {
 
   /**
    * Sets organization URL of the user.
-   * 
+   *
    * @param orgUrl URL of user's organization
    */
   public void setOrgUrl(String orgUrl) {
@@ -420,7 +420,7 @@ final public class SocialUserProfileDocument implements Document {
 
   /**
    * Gets organization URL of the user.
-   * 
+   *
    * @return URL of user's organization
    */
   public Value getOrgUrl() {
@@ -431,7 +431,7 @@ final public class SocialUserProfileDocument implements Document {
   /**
    * Sets list of colleagues of user. This method serializes the list into XML
    * according to <code>Contacts.xsd</code>.
-   * 
+   *
    * @param colleagues list of colleagues of user
    * @throws RepositoryException
    */
@@ -449,7 +449,7 @@ final public class SocialUserProfileDocument implements Document {
 
   /**
    * Gets list of colleagues.
-   * 
+   *
    * @return list of colleagues of user
    */
   public List<ColleagueData> getColleagues() {
@@ -531,24 +531,24 @@ final public class SocialUserProfileDocument implements Document {
 
   /**
    * Gets colleague list as XML of the form below:
-   * 
+   *
    * <pre>
    * {@code <?xml version="1.0" encoding="UTF-8"?>
-   *       <gsa:Contacts xmlns:gsa="http://www.google.com/schemas/gsa" 
+   *       <gsa:Contacts xmlns:gsa="http://www.google.com/schemas/gsa"
    *       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-   *         <gsa:contact gsa:accountname="accountname" gsa:email="email" 
-   *         gsa:group="group" gsa:isinworkinggroup="true" gsa:name="name" 
+   *         <gsa:contact gsa:accountname="accountname" gsa:email="email"
+   *         gsa:group="group" gsa:isinworkinggroup="true" gsa:name="name"
    *         gsa:title="mytitle" gsa:url="myurl"/>
    *       </gsa:Contacts> }
    * </pre>
-   * 
+   *
    * XSD for the XML is
-   * 
+   *
    * <pre>
    * {@code <?xml version="1.0" encoding="UTF-8"?>
-   *       <schema xmlns="http://www.w3.org/2001/XMLSchema" 
+   *       <schema xmlns="http://www.w3.org/2001/XMLSchema"
    *       targetNamespace="http://www.google.com/schemas/gsa"
-   *         xmlns:gsa="http://www.google.com/schemas/gsa" 
+   *         xmlns:gsa="http://www.google.com/schemas/gsa"
    *         elementFormDefault="qualified">
    *         <element name="Contacts">
    *           <complexType>
@@ -566,7 +566,7 @@ final public class SocialUserProfileDocument implements Document {
    *                     use="optional" />
    *                   <attribute name="group" type="string" form="qualified"
    *                     use="optional" />
-   *                   <attribute name="isinworkinggroup" type="boolean" 
+   *                   <attribute name="isinworkinggroup" type="boolean"
    *                   form="qualified" use="optional" />
    *                 </complexType>
    *               </element>
@@ -575,7 +575,7 @@ final public class SocialUserProfileDocument implements Document {
    *         </element>
    *       </schema> }
    * </pre>
-   * 
+   *
    * @return colleague list as XML
    */
   public Value getColleagueXml() {
@@ -585,7 +585,7 @@ final public class SocialUserProfileDocument implements Document {
 
   /**
    * Static method to create a docId from a user profile.
-   * 
+   *
    * @param userId
    * @return docId for the user profile document
    */

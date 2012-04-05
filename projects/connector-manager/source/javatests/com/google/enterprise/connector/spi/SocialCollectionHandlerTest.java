@@ -14,10 +14,15 @@
 
 package com.google.enterprise.connector.spi;
 
+import com.google.enterprise.apis.client.GsaClient;
+import com.google.enterprise.apis.client.GsaEntry;
+import com.google.gdata.util.AuthenticationException;
+
 import junit.framework.TestCase;
 
 import java.io.FileInputStream;
 import java.util.Properties;
+import java.util.Random;
 
 public class SocialCollectionHandlerTest extends TestCase {
   String gsaHost;
@@ -41,10 +46,47 @@ public class SocialCollectionHandlerTest extends TestCase {
     super.tearDown();
   }
 
-  public void testInitialize() throws RepositoryException {
+  private GsaEntry getCollection(String collectionName) throws Exception {
+    GsaClient client = 
+        new GsaClient(gsaHost, gsaPort, gsaAdmin, gsaAdminPassword);
+    return client.getEntry("collection", collectionName);
+  }
+
+  public void testInitialize() throws Exception {
     SocialCollectionHandler
         .initializeSocialCollection(gsaHost, gsaPort, gsaAdmin,
             gsaAdminPassword, SpiConstants.DEFAULT_USERPROFILE_COLLECTION);
+    assertNotNull(getCollection(SpiConstants.DEFAULT_USERPROFILE_COLLECTION));
   }
 
+  public void testInitializeRandom() throws Exception {
+    Random random = new Random();
+    String collectionName = SpiConstants.DEFAULT_USERPROFILE_COLLECTION
+        + random.nextInt();
+    SocialCollectionHandler.initializeSocialCollection(gsaHost, gsaPort,
+        gsaAdmin, gsaAdminPassword, collectionName);
+    assertNotNull(getCollection(collectionName));
+  }
+
+  public void testInitializeNull() throws Exception {
+    SocialCollectionHandler.initializeSocialCollection(gsaHost, gsaPort,
+        gsaAdmin, gsaAdminPassword, null);
+    assertNotNull(getCollection(SpiConstants.DEFAULT_USERPROFILE_COLLECTION));
+  }
+
+  public void testInitializeEmpty() throws Exception {
+    SocialCollectionHandler.initializeSocialCollection(gsaHost, gsaPort,
+        gsaAdmin, gsaAdminPassword, "");
+    assertNotNull(getCollection(SpiConstants.DEFAULT_USERPROFILE_COLLECTION));
+  }
+
+  public void testInitializeAuthException() throws Exception {
+    try {
+      SocialCollectionHandler.initializeSocialCollection(gsaHost, gsaPort,
+          gsaAdmin, gsaAdminPassword + "x", "");
+      fail("Expected an exception");
+    } catch (RepositoryException e) {
+      //good;
+    }
+  }
 }
