@@ -26,6 +26,7 @@ import com.google.enterprise.connector.manager.MockManager;
 import com.google.enterprise.connector.manager.ProductionManager;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.spi.ConfigureResponse;
+import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.MockConnector;
 import com.google.enterprise.connector.spi.MockRetriever;
 import com.google.enterprise.connector.spi.Value;
@@ -79,21 +80,40 @@ public class GetDocumentContentTest extends TestCase {
   public void testGetLastModifiedMockManager() throws Exception {
     Manager manager = MockManager.getInstance();
     long lastModified;
+    Document document;
 
     // Connector1 has a lastModifiedDate
-    lastModified = GetDocumentContent.handleGetLastModified(
-                   manager, "connector1", "xyzzy");
+    document = manager.getDocumentMetaData("connector1", "xyzzy");
+    lastModified = GetDocumentContent.handleGetLastModified(document);
     assertEquals(3600 * 1000, lastModified);
 
     // Connector2 has no lastModifiedDate
-    lastModified = GetDocumentContent.handleGetLastModified(
-                   manager, "connector2", "xyzzy");
+    document = manager.getDocumentMetaData("connector2", "xyzzy");
+    lastModified = GetDocumentContent.handleGetLastModified(document);
     assertEquals(-1L, lastModified);
+  }
 
+  /** Test getDocumentMetaData against a MockManager. */
+  public void testGetDocumentMetaDataMockManager() throws Exception {
+    Manager manager = MockManager.getInstance();
+    MockHttpServletRequest req;
+
+    req = createMockRequest();
+    // xyzzy has metadata.
+    Document metaData = GetDocumentContent.getDocumentMetaData(req,
+        manager, "connector1", "xyzzy");
+    assertNotNull(metaData);
+    // Test cache.
+    assertSame(metaData, GetDocumentContent.getDocumentMetaData(req,
+        manager, "connector1", "xyzzy"));
+
+    req = createMockRequest();
     // UnknownConnector does not exist.
-    lastModified = GetDocumentContent.handleGetLastModified(
-                   manager, "unknownConnector", "xyzzy");
-    assertEquals(-1L, lastModified);
+    assertNull(GetDocumentContent.getDocumentMetaData(req,
+        manager, "unknownConnector", "xyzzy"));
+    // Test cache.
+    assertNull(GetDocumentContent.getDocumentMetaData(req,
+        manager, "unknownConnector", "xyzzy"));
   }
 
   private String connectorName = MockInstantiator.TRAVERSER_NAME1;
@@ -180,45 +200,52 @@ public class GetDocumentContentTest extends TestCase {
     checkGetDocumentContent(connectorName, docid, 200, docid);
   }
 
+  private MockHttpServletRequest createMockRequest() {
+    return new MockHttpServletRequest("GET",
+        "/connector-manager/getDocumentContent");
+  }
+
+  /** Test getDocumentMetaData against a MockManager. */
+  public void testGetDocumentMetaDataProductionManager() throws Exception {
+    Manager manager = getProductionManager();
+
+    // Null or empty ConnectorName.
+    assertNull(GetDocumentContent.getDocumentMetaData(createMockRequest(),
+        manager, null, docid));
+    assertNull(GetDocumentContent.getDocumentMetaData(createMockRequest(),
+        manager, "", docid));
+
+    // Null or empty docid.
+    assertNull(GetDocumentContent.getDocumentMetaData(createMockRequest(),
+        manager, connectorName, null));
+    assertNull(GetDocumentContent.getDocumentMetaData(createMockRequest(),
+        manager, connectorName, ""));
+
+    // UnknownConnector does not exist.
+    assertNull(GetDocumentContent.getDocumentMetaData(createMockRequest(),
+        manager, "unknownConnector", docid));
+
+    // Unknown document does not exist.
+    assertNull(GetDocumentContent.getDocumentMetaData(createMockRequest(),
+        manager, connectorName, MockRetriever.DOCID_NOT_FOUND));
+  }
+
+
   /** Test getLastModified function against a ProductionManager. */
   public void testGetLastModifiedProductionManager() throws Exception {
     Manager manager = getProductionManager();
     long lastModified;
-
-    // Null or empty ConnectorName.
-    lastModified = GetDocumentContent.handleGetLastModified(
-        manager, null, docid);
-    assertEquals(-1L, lastModified);
-    lastModified = GetDocumentContent.handleGetLastModified(
-        manager, "", docid);
-    assertEquals(-1L, lastModified);
-
-    // Null or empty docid.
-    lastModified = GetDocumentContent.handleGetLastModified(
-        manager, connectorName, null);
-    assertEquals(-1L, lastModified);
-    lastModified = GetDocumentContent.handleGetLastModified(
-        manager, connectorName, "");
-    assertEquals(-1L, lastModified);
+    Document document;
 
     // Connector regular docids have lastModified.
-    lastModified = GetDocumentContent.handleGetLastModified(
-        manager, connectorName, docid);
+    document = manager.getDocumentMetaData(connectorName, docid);
+    lastModified = GetDocumentContent.handleGetLastModified(document);
     assertEquals(3600 * 1000, lastModified);
 
     // This Document has no lastModifiedDate
-    lastModified = GetDocumentContent.handleGetLastModified(
-        manager, connectorName, MockRetriever.DOCID_NO_LASTMODIFIED);
-    assertEquals(-1L, lastModified);
-
-    // UnknownConnector does not exist.
-    lastModified = GetDocumentContent.handleGetLastModified(
-        manager, "unknownConnector", docid);
-    assertEquals(-1L, lastModified);
-
-    // Unknown document does not exist.
-    lastModified = GetDocumentContent.handleGetLastModified(
-        manager, connectorName, MockRetriever.DOCID_NOT_FOUND);
+    document = manager.getDocumentMetaData(connectorName,
+        MockRetriever.DOCID_NO_LASTMODIFIED);
+    lastModified = GetDocumentContent.handleGetLastModified(document);
     assertEquals(-1L, lastModified);
   }
 
@@ -258,6 +285,29 @@ public class GetDocumentContentTest extends TestCase {
     MockHttpServletResponse res = new MockHttpServletResponse();
     new GetDocumentContent().service(req, res);
     assertEquals(403, res.getStatus());
+  }
+
+  /** Test requiring GSA to use authentication for private doc. */
+  public void testHttpBasicWithoutCredentials() throws Exception {
+    MockHttpServletRequest req = createMockRequest();
+    // connector5's documents are private.
+    MockHttpServletResponse res = new MockHttpServletResponse();
+    int status = GetDocumentContent.handleMarkingDocumentSecurity(req, res,
+        MockManager.getInstance(), "connector5", docid);
+    assertEquals(401, status);
+    assertNotNull(res.getHeader("WWW-Authenticate"));
+  }
+
+  /** Test successful use of authentication for private doc. */
+  public void testHttpBasicWithArbitraryCredentials() throws Exception {
+    MockHttpServletRequest req = createMockRequest();
+    // Credentials: gsa:password
+    req.addHeader("Authorization", "Basic Z3NhOnBhc3N3b3Jk");
+    // connector5's documents are private.
+    MockHttpServletResponse res = new MockHttpServletResponse();
+    int status = GetDocumentContent.handleMarkingDocumentSecurity(req, res,
+        MockManager.getInstance(), "connector5", docid);
+    assertEquals(200, status);
   }
 
   /**

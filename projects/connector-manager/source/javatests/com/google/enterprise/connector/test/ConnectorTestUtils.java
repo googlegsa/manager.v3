@@ -203,6 +203,8 @@ public class ConnectorTestUtils {
         val = Value.getDateValue((Calendar) obj);
       } else if (obj instanceof InputStream) {
         val = Value.getBinaryValue((InputStream) obj);
+      } else if (obj instanceof Boolean) {
+        val = Value.getBooleanValue((Boolean) obj);
       } else {
         throw new AssertionError(obj);
       }
