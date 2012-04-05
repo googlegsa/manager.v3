@@ -16,6 +16,7 @@ package com.google.enterprise.connector.servlet;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
+import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.manager.ConnectorManagerException;
 import com.google.enterprise.connector.manager.Context;
@@ -46,6 +47,17 @@ public class GetDocumentContent extends HttpServlet {
   private static Logger LOGGER =
     Logger.getLogger(GetDocumentContent.class.getName());
   private static final String HDR_IF_MODIFIED = "If-Modified-Since";
+  /**
+   * Attribute name on the ServletRequest containing a cache of the metadata
+   * of the requested document.
+   */
+  private static final String METADATA_CACHE_NAME =
+      GetDocumentContent.class.getName() + ".document";
+  /**
+   * Distinguished attribute value denoting that the metadata is already known
+   * to be unavailable.
+   */
+  private static final Object NEGATIVE_METADATA_CACHE_VALUE = new Object();
 
   private static boolean useCompression = false;
 
@@ -55,44 +67,6 @@ public class GetDocumentContent extends HttpServlet {
 
   // TODO: HEAD requests?
   // TODO: Range requests?
-
-  /**
-   * Fetch the document LastModified date.
-   *
-   * @param req an HttpServletRequest that specifies the connector name and
-   *        docid for a document as query parameters
-   * @return a long integer specifying the time the document was last modified,
-   *         in milliseconds since midnight, January 1, 1970 GMT, or -1L if the
-   *         time is not known
-   */
-  @Override
-  protected long getLastModified(HttpServletRequest req) {
-    /* NOTE: For reasons that defy comprehension, javax.servlet.http.HttpServlet
-     * calls this even if the request does not include the "If-Modified-Since"
-     * Header.  Fetching the lastModifiedDate from the ECM repository can be
-     * quite expensive (certainly more expensive than req.containsHeader()).
-     * So I disable this and perform "If-Modified-Since" checking in doGet().
-     */
-    return -1L;
-    // TODO: Restore this if we choose to fully support getLastModified().
-    /*
-    // Make sure this requester is OK
-    if (!RemoteAddressFilter.getInstance()
-        .allowed(RemoteAddressFilter.Access.BLACK, req.getRemoteAddr())) {
-      return -1L;
-    }
-
-    String connectorName = req.getParameter(ServletUtil.XMLTAG_CONNECTOR_NAME);
-    NDC.pushAppend("LastModified " + connectorName);
-    try {
-      Manager manager = Context.getInstance().getManager();
-      String docid = req.getParameter(ServletUtil.QUERY_PARAM_DOCID);
-      return handleGetLastModified(manager, connectorName, docid);
-    } finally {
-      NDC.pop();
-    }
-    */
-  }
 
   /**
    * Retrieves the content of a document from a connector instance.
@@ -132,15 +106,35 @@ public class GetDocumentContent extends HttpServlet {
     Manager manager = Context.getInstance().getManager();
     String docid = req.getParameter(ServletUtil.QUERY_PARAM_DOCID);
 
-    // Only fetch the lastModifiedDate from the repository if requested.
-    // See the comment in getLastModified() above.
+    int securityCode =
+        handleMarkingDocumentSecurity(req, res, manager, connectorName, docid);
+    if (securityCode != HttpServletResponse.SC_OK) {
+      res.sendError(securityCode);
+      return;
+    }
+
+    // Manually process If-Modified-Since headers instead of implementing
+    // getLastModified().
+    //
+    // getLastModified() is called for every request in order to see if doGet()
+    // can be circumvented (via If-Modified-Since) and to set the Last-Modified
+    // response header (whose date is typically provided in the
+    // If-Modified-Since header in later requests).
+    //
+    // Retrieving the lastModifiedDate from the ECM repository can be quite
+    // expensive (certainly more expensive than req.containsHeader()) and the
+    // GSA ignores the Last-Modified response header, so we don't provide the
+    // Last-Modified header and manually process If-Modified-Since.
     long ifModifiedSince = req.getDateHeader(HDR_IF_MODIFIED);
     if (ifModifiedSince != -1L) {
       if (LOGGER.isLoggable(Level.FINEST)) {
         LOGGER.finest("RETRIEVER: Get Document " + docid + " "
             + HDR_IF_MODIFIED + " " + req.getHeader(HDR_IF_MODIFIED));
       }
-      long lastModified = handleGetLastModified(manager, connectorName, docid);
+      Document metaData =
+          getDocumentMetaData(req, manager, connectorName, docid);
+      long lastModified =
+          metaData == null ? -1L : handleGetLastModified(metaData);
       // If the document modification time is later, fall through to fetch
       // the content, otherwise return SC_NOT_MODIFIED.  Since the GSA sends
       // a modified-since time of the crawl time, rather than the document's
@@ -238,32 +232,66 @@ public class GetDocumentContent extends HttpServlet {
   }
 
   /**
-   * Retrieves the last modified date of a document from a connector instance.
+   * Retrieve and cache the metadata of the currently requested document. The
+   * metadata is cached for the life of the servlet request.
    *
+   * @param req Request to use for caching return value
    * @param manager a Manager
    * @param connectorName the name of the connector instance that
    *        can access the document
    * @param docId the document identifer
+   * @return document's metadata or {@code null} if it is unavailable
+   */
+  @VisibleForTesting
+  static Document getDocumentMetaData(HttpServletRequest req, Manager manager,
+      String connectorName, String docid) {
+    Object cache = req.getAttribute(METADATA_CACHE_NAME);
+    if (cache != null) {
+      return cache == NEGATIVE_METADATA_CACHE_VALUE ? null : (Document) cache;
+    }
+
+    if (Strings.isNullOrEmpty(connectorName) || Strings.isNullOrEmpty(docid)) {
+      LOGGER.warning("Missing connectorName or docid parameter");
+      req.setAttribute(METADATA_CACHE_NAME, NEGATIVE_METADATA_CACHE_VALUE);
+      return null;
+    }
+    Document document;
+    try {
+      document = manager.getDocumentMetaData(connectorName, docid);
+    } catch (RepositoryException ex) {
+      LOGGER.log(Level.WARNING, "Unable to get document metadata", ex);
+      req.setAttribute(METADATA_CACHE_NAME, NEGATIVE_METADATA_CACHE_VALUE);
+      return null;
+    } catch (ConnectorManagerException ex) {
+      LOGGER.log(Level.WARNING, "Unable to get document metadata", ex);
+      req.setAttribute(METADATA_CACHE_NAME, NEGATIVE_METADATA_CACHE_VALUE);
+      return null;
+    }
+    if (document == null) {
+      LOGGER.warning("Document metadata was null");
+      req.setAttribute(METADATA_CACHE_NAME, NEGATIVE_METADATA_CACHE_VALUE);
+      return null;
+    }
+    req.setAttribute(METADATA_CACHE_NAME, document);
+    return document;
+  }
+
+  /**
+   * Retrieves the last modified date of a document from a connector instance.
+   *
+   * @param req Request whose parameters identify the document of interest
    * @return a long integer specifying the time the document was last modified,
    *         in milliseconds since midnight, January 1, 1970 GMT, or -1L if the
    *         time is not known
    */
   @VisibleForTesting
-  static long handleGetLastModified(Manager manager, String connectorName,
-                                    String docid) {
-    if (Strings.isNullOrEmpty(connectorName) || Strings.isNullOrEmpty(docid)) {
-      return -1L;
-    }
+  static long handleGetLastModified(Document metaData) {
     try {
-      Document document = manager.getDocumentMetaData(connectorName, docid);
-      if (document == null) {
-        return -1L;
-      }
       ValueImpl value = (ValueImpl)
-          Value.getSingleValue(document, SpiConstants.PROPNAME_LASTMODIFIED);
+          Value.getSingleValue(metaData, SpiConstants.PROPNAME_LASTMODIFIED);
       if (value == null) {
         if (LOGGER.isLoggable(Level.FINEST)) {
-          LOGGER.finest("Document " + docid + " does not contain "
+          LOGGER.finest("Document does not contain "
                         + SpiConstants.PROPNAME_LASTMODIFIED);
         }
       } else if (value instanceof DateValue) {
@@ -274,15 +302,12 @@ public class GetDocumentContent extends HttpServlet {
         // directly access the wrapped value.
         String lastModified = ((DateValue) value).toIso8601();
         if (LOGGER.isLoggable(Level.FINEST)) {
-          LOGGER.finest("Document " + docid + " last modified " + lastModified);
+          LOGGER.finest("Document last modified " + lastModified);
         }
         return Value.iso8601ToCalendar(lastModified).getTimeInMillis();
       }
       // TODO: Value and DateValue Calendar methods are too weak to try to get
       // last modified from non-DateValues.
-    } catch (ConnectorNotFoundException e) {
-      LOGGER.log(Level.FINE, "Failed to retrieve document last modified: {0}",
-                 e.toString());
     } catch (RepositoryDocumentException e) {
       LOGGER.log(Level.FINE, "Failed to retrieve document last modified: {0}",
                  e.toString());
@@ -290,5 +315,37 @@ public class GetDocumentContent extends HttpServlet {
       LOGGER.log(Level.WARNING, "Failed to retrieve document last modified", e);
     }
     return -1L;
+  }
+
+  @VisibleForTesting
+  static int handleMarkingDocumentSecurity(HttpServletRequest req,
+      HttpServletResponse res, Manager manager, String connectorName,
+      String docid) throws IOException {
+    if (req.getHeader("Authorization") != null) {
+      // GSA logged in; it is aware of the access restrictions on the document.
+      return HttpServletResponse.SC_OK;
+    }
+
+    Document document = getDocumentMetaData(req, manager, connectorName, docid);
+    if (document == null) {
+      return HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
+    }
+
+    ValueImpl isPublic;
+    try {
+      isPublic = (ValueImpl) Value.getSingleValue(document,
+          SpiConstants.PROPNAME_ISPUBLIC);
+    } catch (RepositoryException ex) {
+      LOGGER.log(Level.WARNING, "Failed retrieving isPublic property", ex);
+      return HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
+    }
+    if (isPublic == null || isPublic.toBoolean()) {
+      // Document is public.
+      return HttpServletResponse.SC_OK;
+    }
+
+    // Document is private.
+    res.setHeader("WWW-Authenticate", "Basic realm=\"Retriever\"");
+    return HttpServletResponse.SC_UNAUTHORIZED;
   }
 }

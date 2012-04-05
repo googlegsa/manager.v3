@@ -62,6 +62,7 @@ public class MockManager implements Manager {
   private static final String CONNECTOR2 = "connector2";
   private static final String CONNECTOR3 = "connector3";
   private static final String CONNECTOR4 = "connector4";
+  private static final String CONNECTOR5 = "connector5";
 
   private boolean shouldVerifyIdentity;
   private String domain;
@@ -199,6 +200,9 @@ public class MockManager implements Manager {
     if (CONNECTOR2.equals(connectorName)) {
       return null;  // no content
     }
+    if (CONNECTOR5.equals(connectorName)) {
+      return new ByteArrayInputStream(docid.getBytes());
+    }
     throw new ConnectorNotFoundException("Connector not found: "
                                          + connectorName);
   }
@@ -218,6 +222,13 @@ public class MockManager implements Manager {
       props.remove(SpiConstants.PROPNAME_CONTENT);
       props.remove(SpiConstants.PROPNAME_LASTMODIFIED);
       props.remove(SpiConstants.PROPNAME_MIMETYPE);
+      return ConnectorTestUtils.createSimpleDocument(props);
+    }
+    if (CONNECTOR5.equals(connectorName)) {
+      Map<String, Object> props =
+          ConnectorTestUtils.createSimpleDocumentBasicProperties(docid);
+      props.remove(SpiConstants.PROPNAME_CONTENT);
+      props.put(SpiConstants.PROPNAME_ISPUBLIC, false);
       return ConnectorTestUtils.createSimpleDocument(props);
     }
     throw new ConnectorNotFoundException("Connector not found: "
