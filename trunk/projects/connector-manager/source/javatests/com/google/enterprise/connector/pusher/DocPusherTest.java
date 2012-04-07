@@ -57,6 +57,7 @@ import java.io.StringReader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -75,6 +76,13 @@ public class DocPusherTest extends TestCase {
   private FileSizeLimitInfo fsli;
   private DocumentFilterChain dfc;
   private String contentUrlPrefix;
+
+  private FeedConnection aclsUnsupportedFeedConnection
+      = new MockFeedConnection() {
+    public boolean supportsAcls() {
+      return false;
+    }
+  };
 
   @Override
   protected void setUp() throws Exception {
@@ -2705,6 +2713,63 @@ public class DocPusherTest extends TestCase {
         "<meta name=\"google:aclgroups\" content=\"Engineering\"/>",
         resultXML);
  }
+
+  public void testAclSmartGsa() throws Exception {
+    String parentUrl = "http://foo/parent-doc";
+    Map<String, Object> props = getTestAclDocumentConfig();
+    props.put(SpiConstants.PROPNAME_ACLINHERITFROM, parentUrl);
+    props.put(SpiConstants.PROPNAME_FEEDTYPE,
+        SpiConstants.FeedType.CONTENT.toString());
+    Document document = ConnectorTestUtils.createSimpleDocument(props);
+    dfc = new DocumentFilterChain(Collections.singletonList(
+        new AclDocumentFilter(new MockFeedConnection())));
+    String resultXML = feedDocument(document);
+    assertStringContains("parent-doc", resultXML);
+    assertStringNotContains("httpbasic", resultXML);
+  }
+
+  public void testAclNoDumbDown() throws Exception {
+    Map<String, Object> props = getTestAclDocumentConfig();
+    props.put(SpiConstants.PROPNAME_FEEDTYPE,
+        SpiConstants.FeedType.CONTENT.toString());
+    Document document = ConnectorTestUtils.createSimpleDocument(props);
+    dfc = new DocumentFilterChain(Collections.singletonList(
+        new AclDocumentFilter(aclsUnsupportedFeedConnection)));
+    String resultXML = feedDocument(document);
+    assertStringNotContains("httpbasic", resultXML);
+  }
+
+  public void testAclDumbDown() throws Exception {
+    String parentUrl = "http://foo/parent-doc";
+    Map<String, Object> props = getTestAclDocumentConfig();
+    props.put(SpiConstants.PROPNAME_ACLINHERITFROM, parentUrl);
+    props.put(SpiConstants.PROPNAME_FEEDTYPE,
+        SpiConstants.FeedType.CONTENT.toString());
+    Document document = ConnectorTestUtils.createSimpleDocument(props);
+    dfc = new DocumentFilterChain(Collections.singletonList(
+        new AclDocumentFilter(aclsUnsupportedFeedConnection)));
+    String resultXML = feedDocument(document);
+    assertStringNotContains("parent-doc", resultXML);
+    assertStringContains("httpbasic", resultXML);
+  }
+
+  public void testAclSkip() throws Exception {
+    String parentUrl = "http://foo/parent-doc";
+    Map<String, Object> props = getTestAclDocumentConfig();
+    props.put(SpiConstants.PROPNAME_ACLINHERITFROM, parentUrl);
+    props.put(SpiConstants.PROPNAME_FEEDTYPE,
+        SpiConstants.FeedType.CONTENT.toString());
+    props.put(SpiConstants.PROPNAME_DOCUMENTTYPE,
+        SpiConstants.DocumentType.ACL.toString());
+    Document document = ConnectorTestUtils.createSimpleDocument(props);
+    dfc = new DocumentFilterChain(Collections.singletonList(
+        new AclDocumentFilter(aclsUnsupportedFeedConnection)));
+    try {
+      feedDocument(document);
+      fail("Excepted SkippedDocumentException");
+    } catch (SkippedDocumentException ex) {
+    }
+  }
 
   private static class MockIdGenerator implements UniqueIdGenerator {
     // Return a predictable non-unique ID to ease expected output comparisons.

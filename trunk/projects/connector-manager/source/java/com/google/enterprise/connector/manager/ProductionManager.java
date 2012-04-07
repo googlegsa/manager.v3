@@ -38,6 +38,8 @@ import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.RepositoryLoginException;
 import com.google.enterprise.connector.spi.Retriever;
 import com.google.enterprise.connector.util.EofFilterInputStream;
+import com.google.enterprise.connector.util.filter.DocumentFilterChain;
+import com.google.enterprise.connector.util.filter.DocumentFilterFactory;
 
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -60,6 +62,7 @@ public class ProductionManager implements Manager {
       Logger.getLogger(ProductionManager.class.getName());
 
   Instantiator instantiator;
+  private DocumentFilterFactory documentFilter = new DocumentFilterChain();
 
   public ProductionManager() {
   }
@@ -69,6 +72,15 @@ public class ProductionManager implements Manager {
    */
   public void setInstantiator(Instantiator instantiator) {
     this.instantiator = instantiator;
+  }
+
+  /**
+   * Specify the document filter that should be applied to documents.
+   *
+   * @param documentFilter document filter to use
+   */
+  public void setDocumentFilter(DocumentFilterFactory documentFilter) {
+    this.documentFilter = documentFilter;
   }
 
   /* @Override */
@@ -202,6 +214,8 @@ public class ProductionManager implements Manager {
     if (metaDoc == null) {
       LOGGER.finer("RETRIEVER: Document has no metadata.");
       // TODO: Create empty Document?
+    } else {
+      metaDoc = documentFilter.newDocumentFilter(metaDoc);
     }
     return metaDoc;
   }
