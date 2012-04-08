@@ -68,7 +68,7 @@ public class MockManager implements Manager {
   private String domain;
   private String username;
   private String password;
-  private Collection<String> groups;
+  private Collection<?> groups;
 
   /** Stand-in for the manager.locked property. */
   private boolean isLocked = false;
@@ -399,7 +399,7 @@ public class MockManager implements Manager {
   }
 
   public void setExpectedIdentity(String domain, String username,
-      String password, Collection<String> groups) {
+      String password, Collection<?> groups) {
     this.domain = domain;
     this.username = username;
     this.password = password;
