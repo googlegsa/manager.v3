@@ -124,6 +124,8 @@ public class ServletUtil {
   public static final String XMLTAG_CONNECTOR_CONFIG_XML = "ConnectorConfigXml";
   public static final String XMLTAG_UPDATE_CONNECTOR = "Update";
   public static final String XMLTAG_PARAMETERS = "Param";
+  public static final String XMLTAG_GLOBAL_NAMESPACE = "GlobalNamespace";
+  public static final String XMLTAG_LOCAL_NAMESPACE = "LocalNamespace";
 
   public static final String XMLTAG_AUTHN_REQUEST = "AuthnRequest";
   public static final String XMLTAG_AUTHN_CREDENTIAL = "Credentials";

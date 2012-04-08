@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.servlet;
 
+import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.common.SecurityUtils;
 import com.google.enterprise.connector.instantiator.ExtendedConfigureResponse;
 import com.google.enterprise.connector.logging.NDC;
@@ -23,6 +24,7 @@ import com.google.enterprise.connector.spi.ConfigureResponse;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -171,12 +173,30 @@ public abstract class ConnectorManagerGetServlet extends HttpServlet {
     if (configRes != null) {
       ServletUtil.writeXMLTag(
           out, 1, ServletUtil.XMLTAG_CONFIGURE_RESPONSE, false);
+
+      // Write out the Global and Local Namespaces, if provided.
+      Map<String, String> configData = configRes.getConfigData();
+      if (configData != null) {
+        String nameSpace =
+            configData.get(PropertiesUtils.GOOGLE_GLOBAL_NAMESPACE);
+        if (nameSpace != null) {
+          ServletUtil.writeXMLElement(out, 2,
+              ServletUtil.XMLTAG_GLOBAL_NAMESPACE, nameSpace);
+        }
+        nameSpace = configData.get(PropertiesUtils.GOOGLE_LOCAL_NAMESPACE);
+        if (nameSpace != null) {
+          ServletUtil.writeXMLElement(out, 2,
+              ServletUtil.XMLTAG_LOCAL_NAMESPACE, nameSpace);
+        }
+      }
+
       if (formSnippet != null) {
         ServletUtil.writeXMLElement(
             out, 2, ServletUtil.XMLTAG_FORM_SNIPPET,
             ServletUtil.XML_CDATA_START + formSnippet
             + ServletUtil.XML_CDATA_END);
       }
+
       if (configRes instanceof ExtendedConfigureResponse) {
         String configXml =
             ((ExtendedConfigureResponse) configRes).getConfigXml();
@@ -188,14 +208,17 @@ public abstract class ConnectorManagerGetServlet extends HttpServlet {
               + ServletUtil.XML_CDATA_END);
         }
       }
+
       if (configRes.getMessage() != null &&
           configRes.getMessage().length() > 0) {
         ServletUtil.writeXMLElement(
             out, 2, ServletUtil.XMLTAG_MESSAGE, configRes.getMessage());
       }
+
       ServletUtil.writeXMLTag(
           out, 1, ServletUtil.XMLTAG_CONFIGURE_RESPONSE, true);
     }
+
     ServletUtil.writeRootTag(out, true);
   }
 }

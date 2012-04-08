@@ -15,6 +15,7 @@
 package com.google.enterprise.connector.servlet;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.instantiator.Configuration;
 import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.logging.NDC;
@@ -102,6 +103,19 @@ public class SetConnectorConfigHandler {
     // that a Connector *must* have configuration properties.
     if (configData.isEmpty()) {
       status.setMessageId(ConnectorMessageCode.RESPONSE_NULL_CONFIG_DATA);
+    }
+
+    // Extract Global and Local Namespaces and add them to the configuration
+    // properties.
+    String nameSpace = XmlParseUtil.getFirstElementByTagName(
+        root, ServletUtil.XMLTAG_GLOBAL_NAMESPACE);
+    if (nameSpace != null) {
+      configData.put(PropertiesUtils.GOOGLE_GLOBAL_NAMESPACE, nameSpace);
+    }
+    nameSpace = XmlParseUtil.getFirstElementByTagName(
+        root, ServletUtil.XMLTAG_LOCAL_NAMESPACE);
+    if (nameSpace != null) {
+      configData.put(PropertiesUtils.GOOGLE_LOCAL_NAMESPACE, nameSpace);
     }
 
     // Extract the connectorInstance.xml, if present.
