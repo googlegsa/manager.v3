@@ -17,6 +17,8 @@ package com.google.enterprise.connector.servlet;
 import com.google.common.collect.ImmutableList;
 import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.manager.MockManager;
+import com.google.enterprise.connector.spi.Principal;
+import com.google.enterprise.connector.spi.SpiConstants;
 
 import junit.framework.TestCase;
 
@@ -290,6 +292,41 @@ public class AuthenticateTest extends TestCase {
            makeGroups("staff", "wheel"));
   }
 
+  public void testGroupsWithNamespaces() {
+    String xmlBody =
+      "<AuthnRequest>\n" +
+      "  <Connectors>\n" +
+      "    <ConnectorName>connector1</ConnectorName>\n" +
+      "  </Connectors>\n" +
+      "  <Credentials>\n" +
+      "    <Username>fooUser</Username>\n" +
+      "    <Domain>connector1</Domain>\n" +
+      "  </Credentials>\n" +
+      "</AuthnRequest>";
+
+    String expectedResult =
+      "<CmResponse>\n" +
+      "  <AuthnResponse>\n" +
+      "    <Success ConnectorName=\"connector1\">\n" +
+      "      <Identity>fooUser</Identity>\n" +
+      "      <Group principaltype=\"dn\" namespace=\"global\">staff</Group>\n" +
+      "      <Group principaltype=\"dn\" namespace=\"global\">wheel</Group>\n" +
+      "      <Group namespace=\"local\">slo</Group>\n" +
+      "      <Group namespace=\"local\">wheel</Group>\n" +
+      "    </Success>\n" +
+      "  </AuthnResponse>\n" +
+      "</CmResponse>\n";
+
+    Collection<Principal> groups = ImmutableList.of(
+        new Principal(SpiConstants.PrincipalType.DN, "global", "staff"),
+        new Principal(SpiConstants.PrincipalType.DN, "global", "wheel"),
+        new Principal(null, "local", "slo"),
+        new Principal(null, "local", "wheel"));
+
+    doTest(xmlBody, expectedResult, "connector1", "fooUser", "fooPassword",
+           groups);
+  }
+
   private void doTestGroups(String xmlBody) {
     String expectedResult =
       "<CmResponse>\n" +
@@ -342,7 +379,7 @@ public class AuthenticateTest extends TestCase {
   }
 
   private void doTest(String xmlBody, String expectedResult, String domain,
-      String username, String password, Collection<String> groups) {
+      String username, String password, Collection<?> groups) {
     LOGGER.info("============== " + getName() + " ====================");
     LOGGER.info("xmlBody:\n" + xmlBody);
     MockManager manager = MockManager.getInstance();

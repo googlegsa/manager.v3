@@ -818,4 +818,24 @@ public class SpiConstants {
       return tag;
     }
   }
+
+  /**
+   * Enum for the types of Principals: NetBIOS, DNS, or DN.
+   *
+   * @since 3.0
+   */
+  public enum PrincipalType {
+    NETBIOS("netbios"), DNS("dns"), DN("dn");
+
+    private final String tag;
+
+    private PrincipalType(String tag) {
+      this.tag = tag;
+    }
+
+    @Override
+    public String toString() {
+      return tag;
+    }
+  }
 }
