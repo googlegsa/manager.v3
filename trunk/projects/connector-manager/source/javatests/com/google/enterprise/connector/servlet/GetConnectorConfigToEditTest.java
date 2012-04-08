@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
+import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.instantiator.Configuration;
 import com.google.enterprise.connector.instantiator.Instantiator;
@@ -264,6 +265,67 @@ public class GetConnectorConfigToEditTest extends TestCase {
 
     // Use the Servlet to get the populated config form.  Make sure it can be
     // parsed and make sure the reserved XML properties are preserved.
+    doTest(connectorName, expectedResult);
+  }
+
+  /**
+   * Tests case where config values contain Global and Local Namespaces.
+   */
+  public void testHandleDoGetWithNamespaces() throws Exception {
+    String connectorName = "xml-con-03";
+    String expectedResult =
+        "<CmResponse>\n"
+        + "  <StatusId>0</StatusId>\n"
+        + "  <ConfigureResponse>\n"
+        + "    <GlobalNamespace>ThinkGlobally</GlobalNamespace>\n"
+        + "    <LocalNamespace>ActLocally</LocalNamespace>\n"
+        + "    <FormSnippet><![CDATA[<tr>\n"
+        + "<td>Username</td>\n"
+        + "<td><input name=\"Username\""
+        + " type=\"text\" value=\"user\"></td>\n"
+        + "</tr>\n"
+        + "<tr>\n"
+        + "<td>Password</td>\n"
+        + "<td><input name=\"Password\""
+        + " type=\"password\" value=\"*****\"></td>\n"
+        + "</tr>\n"
+        + "<tr>\n"
+        + "<td>Color</td>\n"
+        + "<td><input name=\"Color\""
+        + " type=\"text\" value=\"blue\"></td>\n"
+        + "</tr>\n"
+        + "<tr>\n"
+        + "<td>RepositoryFile</td>\n"
+        + "<td><input name=\"RepositoryFile\""
+        + " type=\"text\" value=\"MockRepositoryEventLog1.txt\"></td>\n"
+        + "</tr>\n"
+        + "]]></FormSnippet>\n"
+        + "    <ConnectorConfigXml><![CDATA["
+        + instantiator.getConnectorInstancePrototype(connectorType)
+        + "]]></ConnectorConfigXml>\n"
+        + "  </ConfigureResponse>\n"
+        + "</CmResponse>\n";
+
+    // Use the manager directly to create a connector with properties.
+    Map<String, String> configData = new HashMap<String, String>();
+    configData.put("Username", "user");
+    configData.put("Password", "12345");
+    configData.put("Color", "blue");
+    configData.put("RepositoryFile", "MockRepositoryEventLog1.txt");
+    configData.put(PropertiesUtils.GOOGLE_GLOBAL_NAMESPACE, "ThinkGlobally");
+    configData.put(PropertiesUtils.GOOGLE_LOCAL_NAMESPACE, "ActLocally");
+    manager.setConnectorConfiguration(connectorName,
+        new Configuration(connectorType, configData, null),
+        "en", false);
+
+    // Check the properties values to make sure the namespaces are included.
+    Map<String, String> retrievedData =
+        manager.getConnectorConfiguration(connectorName).getMap();
+    assertEquals("ThinkGlobally", retrievedData.get("googleGlobalNamespace"));
+    assertEquals("ActLocally", retrievedData.get("googleLocalNamespace"));
+
+    // Use the Servlet to get the populated config form.
+    // Make sure the Namespaces are returned.
     doTest(connectorName, expectedResult);
   }
 
