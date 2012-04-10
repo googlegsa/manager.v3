@@ -33,9 +33,14 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -471,6 +476,55 @@ public class ServletUtil {
         // Can't happen with UTF-8.
       }
     }
+  }
+
+  /**
+   * Parse an un-decoded query string into its parts, correctly taking into
+   * account {@code charset}. {@code queryString} should be commonly obtained
+   * from {@code HttpServletRequest.getQueryString}.
+   *
+   * @param queryString encoded parameter string
+   * @return fully-decoded parameter values
+   */
+  public static Map<String, List<String>> parseQueryString(String queryString) {
+    if (queryString == null || queryString.isEmpty()) {
+      return Collections.emptyMap();
+    }
+    Map<String, List<String>> parsedParams
+        = new HashMap<String, List<String>>();
+    for (String param : queryString.split("&")) {
+      String[] parts = param.split("=", 2);
+      String key = parts[0];
+      String value = parts.length == 2 ? parts[1] : "";
+      try {
+        key = URLDecoder.decode(key, "UTF-8");
+        value = URLDecoder.decode(value, "UTF-8");
+      } catch (UnsupportedEncodingException ex) {
+        // UTF-8 is always supported.
+        throw new AssertionError(ex);
+      }
+      List<String> values = parsedParams.get(key);
+      if (values == null) {
+        values = new ArrayList<String>();
+        parsedParams.put(key, values);
+      }
+      values.add(value);
+    }
+    return parsedParams;
+  }
+
+  /**
+   * Get the first parameter in the list, or {@code null} if there are no values
+   * for the parameter.
+   *
+   * @param params parameters returned from {@link #parseQueryString}
+   * @param param parameter to retrieve first value
+   * @return first value of {@code param}, or {@code null}
+   */
+  public static String getFirstParameter(Map<String, List<String>> params,
+      String param) {
+    List<String> values = params.get(param);
+    return values == null ? null : values.get(0);
   }
 
   /**

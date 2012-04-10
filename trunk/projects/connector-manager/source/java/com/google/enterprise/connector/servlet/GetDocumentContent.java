@@ -33,6 +33,8 @@ import com.google.enterprise.connector.spiimpl.ValueImpl;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.GZIPOutputStream;
@@ -91,6 +93,20 @@ public class GetDocumentContent extends HttpServlet {
   @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
+    doGet(req, res, Context.getInstance().getManager());
+  }
+
+  /**
+   * Retrieves the content of a document from a connector instance.
+   *
+   * @param req
+   * @param res
+   * @param manager manager to use for retrieving document information
+   * @throws IOException
+   */
+  @VisibleForTesting
+  static void doGet(HttpServletRequest req, HttpServletResponse res,
+      Manager manager) throws IOException {
     // The servlet relies on proper security to be handled by a filter.
 
     if ("SecMgr".equals(req.getHeader("User-Agent"))) {
@@ -101,10 +117,13 @@ public class GetDocumentContent extends HttpServlet {
       return;
     }
 
-    String connectorName = req.getParameter(ServletUtil.XMLTAG_CONNECTOR_NAME);
+    Map<String, List<String>> params = ServletUtil.parseQueryString(
+        req.getQueryString());
+    String connectorName = ServletUtil.getFirstParameter(
+        params, ServletUtil.XMLTAG_CONNECTOR_NAME);
     NDC.pushAppend("Retrieve " + connectorName);
-    Manager manager = Context.getInstance().getManager();
-    String docid = req.getParameter(ServletUtil.QUERY_PARAM_DOCID);
+    String docid = ServletUtil.getFirstParameter(
+        params, ServletUtil.QUERY_PARAM_DOCID);
 
     int securityCode =
         handleMarkingDocumentSecurity(req, res, manager, connectorName, docid);
