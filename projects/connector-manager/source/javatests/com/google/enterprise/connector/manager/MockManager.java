@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.manager;
 
+import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
 import com.google.enterprise.connector.instantiator.Configuration;
 import com.google.enterprise.connector.instantiator.ExtendedConfigureResponse;
@@ -63,6 +64,11 @@ public class MockManager implements Manager {
   private static final String CONNECTOR3 = "connector3";
   private static final String CONNECTOR4 = "connector4";
   private static final String CONNECTOR5 = "connector5";
+  public static final String CONNECTOR6 = "connector6";
+
+  public static final String CONNECTOR6_SPECIAL_CHAR_DOCID
+      = "AaZz09-_.~`=/?+';\\/\"!@#$%^&*()[]{}ëこんにちは世界\u0001";
+  public static final String CONNECTOR6_SUCCESS = "success";
 
   private boolean shouldVerifyIdentity;
   private String domain;
@@ -195,13 +201,21 @@ public class MockManager implements Manager {
   public InputStream getDocumentContent(String connectorName, String docid)
       throws ConnectorNotFoundException {
     if (CONNECTOR1.equals(connectorName)) {
-      return new ByteArrayInputStream(docid.getBytes());
+      return new ByteArrayInputStream(docid.getBytes(Charsets.UTF_8));
     }
     if (CONNECTOR2.equals(connectorName)) {
       return null;  // no content
     }
     if (CONNECTOR5.equals(connectorName)) {
-      return new ByteArrayInputStream(docid.getBytes());
+      return new ByteArrayInputStream(docid.getBytes(Charsets.UTF_8));
+    }
+    if (CONNECTOR6.equals(connectorName)) {
+      if (CONNECTOR6_SPECIAL_CHAR_DOCID.equals(docid)) {
+        return new ByteArrayInputStream(
+            CONNECTOR6_SUCCESS.getBytes(Charsets.UTF_8));
+      } else {
+        return null;
+      }
     }
     throw new ConnectorNotFoundException("Connector not found: "
                                          + connectorName);
@@ -210,7 +224,7 @@ public class MockManager implements Manager {
   /* @Override */
   public Document getDocumentMetaData(String connectorName, String docid)
       throws ConnectorNotFoundException {
-    if (CONNECTOR1.equals(connectorName)) {
+    if (CONNECTOR1.equals(connectorName) || CONNECTOR6.equals(connectorName)) {
       Map<String, Object> props =
           ConnectorTestUtils.createSimpleDocumentBasicProperties(docid);
       props.remove(SpiConstants.PROPNAME_CONTENT);

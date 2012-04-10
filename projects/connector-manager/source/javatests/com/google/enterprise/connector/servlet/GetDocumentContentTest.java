@@ -39,6 +39,9 @@ import junit.framework.TestCase;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.net.URLEncoder;
+import java.util.Collections;
+import java.util.Map;
 import java.util.logging.Logger;
 import java.util.zip.GZIPInputStream;
 
@@ -310,6 +313,23 @@ public class GetDocumentContentTest extends TestCase {
     assertEquals(200, status);
   }
 
+  private void encodeQueryParameter(MockHttpServletRequest req)
+      throws Exception {
+    StringBuilder sb = new StringBuilder();
+    @SuppressWarnings("unchecked")
+    java.util.Enumeration<String> e = req.getParameterNames();
+    for (String key : Collections.list(e)) {
+      for (String value : req.getParameterValues(key)) {
+        sb.append(URLEncoder.encode(key, "UTF-8"));
+        sb.append("=");
+        sb.append(URLEncoder.encode(value, "UTF-8"));
+        sb.append("&");
+      }
+    }
+    String query = sb.length() == 0 ? null : sb.substring(0, sb.length() - 1);
+    req.setQueryString(query);
+  }
+
   /**
    * Test method for the HttpServlet.doGet.
    */
@@ -319,11 +339,25 @@ public class GetDocumentContentTest extends TestCase {
         "/connector-manager/getDocumentContent");
     req.setParameter(ServletUtil.XMLTAG_CONNECTOR_NAME, connectorName);
     req.setParameter(ServletUtil.QUERY_PARAM_DOCID, docid);
+    encodeQueryParameter(req);
     MockHttpServletResponse res = new MockHttpServletResponse();
     new GetDocumentContent().doGet(req, res);
     assertEquals(200, res.getStatus());
     assertEquals(docid, res.getContentAsString());
     assertNull(res.getHeader("Content-Encoding"));
+  }
+
+  public void testSpecialCharsDocId() throws Exception {
+    MockHttpServletRequest req = createMockRequest();
+    req.setParameter(ServletUtil.XMLTAG_CONNECTOR_NAME, MockManager.CONNECTOR6);
+    req.setParameter(ServletUtil.QUERY_PARAM_DOCID,
+        MockManager.CONNECTOR6_SPECIAL_CHAR_DOCID);
+    encodeQueryParameter(req);
+    MockHttpServletResponse res = new MockHttpServletResponse();
+    new GetDocumentContent().doGet(req, res, MockManager.getInstance());
+    // connector6 checks docid values.
+    assertEquals(200, res.getStatus());
+    assertEquals(MockManager.CONNECTOR6_SUCCESS, res.getContentAsString());
   }
 
   /**
@@ -336,6 +370,7 @@ public class GetDocumentContentTest extends TestCase {
         "/connector-manager/getDocumentContent");
     req.setParameter(ServletUtil.XMLTAG_CONNECTOR_NAME, connectorName);
     req.setParameter(ServletUtil.QUERY_PARAM_DOCID, docid);
+    encodeQueryParameter(req);
     req.addHeader("Accept-Encoding", "gzip");
     GetDocumentContent.setUseCompression(true);
     MockHttpServletResponse res = new MockHttpServletResponse();
@@ -358,6 +393,7 @@ public class GetDocumentContentTest extends TestCase {
         "/connector-manager/getDocumentContent");
     req.setParameter(ServletUtil.XMLTAG_CONNECTOR_NAME, connectorName);
     req.setParameter(ServletUtil.QUERY_PARAM_DOCID, docid);
+    encodeQueryParameter(req);
     req.addHeader("If-Modified-Since", SystemClock.INSTANCE.getTimeMillis());
     MockHttpServletResponse res = new MockHttpServletResponse();
     new GetDocumentContent().doGet(req, res);
@@ -374,6 +410,7 @@ public class GetDocumentContentTest extends TestCase {
         "/connector-manager/getDocumentContent");
     req.setParameter(ServletUtil.XMLTAG_CONNECTOR_NAME, connectorName);
     req.setParameter(ServletUtil.QUERY_PARAM_DOCID, docid);
+    encodeQueryParameter(req);
     req.addHeader("If-Modified-Since", 1);
     MockHttpServletResponse res = new MockHttpServletResponse();
     new GetDocumentContent().doGet(req, res);
@@ -391,6 +428,7 @@ public class GetDocumentContentTest extends TestCase {
         "/connector-manager/getDocumentContent");
     req.setParameter(ServletUtil.XMLTAG_CONNECTOR_NAME, connectorName);
     req.setParameter(ServletUtil.QUERY_PARAM_DOCID, docid);
+    encodeQueryParameter(req);
     req.addHeader("If-Modified-Since", SystemClock.INSTANCE.getTimeMillis());
     MockHttpServletResponse res = new MockHttpServletResponse();
     new GetDocumentContent().doGet(req, res);
