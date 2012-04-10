@@ -14,7 +14,6 @@
 
 package com.google.enterprise.connector.manager;
 
-import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
 import com.google.enterprise.connector.instantiator.Configuration;
 import com.google.enterprise.connector.instantiator.ExtendedConfigureResponse;
@@ -35,6 +34,7 @@ import com.google.enterprise.connector.test.ConnectorTestUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -200,22 +200,27 @@ public class MockManager implements Manager {
   /* @Override */
   public InputStream getDocumentContent(String connectorName, String docid)
       throws ConnectorNotFoundException {
-    if (CONNECTOR1.equals(connectorName)) {
-      return new ByteArrayInputStream(docid.getBytes(Charsets.UTF_8));
-    }
-    if (CONNECTOR2.equals(connectorName)) {
-      return null;  // no content
-    }
-    if (CONNECTOR5.equals(connectorName)) {
-      return new ByteArrayInputStream(docid.getBytes(Charsets.UTF_8));
-    }
-    if (CONNECTOR6.equals(connectorName)) {
-      if (CONNECTOR6_SPECIAL_CHAR_DOCID.equals(docid)) {
-        return new ByteArrayInputStream(
-            CONNECTOR6_SUCCESS.getBytes(Charsets.UTF_8));
-      } else {
-        return null;
+    try {
+      if (CONNECTOR1.equals(connectorName)) {
+        return new ByteArrayInputStream(docid.getBytes("UTF-8"));
       }
+      if (CONNECTOR2.equals(connectorName)) {
+        return null;  // no content
+      }
+      if (CONNECTOR5.equals(connectorName)) {
+        return new ByteArrayInputStream(docid.getBytes("UTF-8"));
+      }
+      if (CONNECTOR6.equals(connectorName)) {
+        if (CONNECTOR6_SPECIAL_CHAR_DOCID.equals(docid)) {
+          return new ByteArrayInputStream(
+              CONNECTOR6_SUCCESS.getBytes("UTF-8"));
+        } else {
+          return null;
+        }
+      }
+    } catch (UnsupportedEncodingException e) {
+      // UTF-8 is always supported.
+      throw new AssertionError(e);
     }
     throw new ConnectorNotFoundException("Connector not found: "
                                          + connectorName);

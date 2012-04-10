@@ -487,7 +487,7 @@ public class ServletUtil {
    * @return fully-decoded parameter values
    */
   public static Map<String, List<String>> parseQueryString(String queryString) {
-    if (queryString == null || queryString.isEmpty()) {
+    if (Strings.isNullOrEmpty(queryString)) {
       return Collections.emptyMap();
     }
     Map<String, List<String>> parsedParams
