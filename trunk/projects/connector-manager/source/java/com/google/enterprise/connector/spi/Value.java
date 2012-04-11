@@ -146,6 +146,24 @@ public abstract class Value {
   }
 
   /**
+   * Creates a value carrying a principal.
+   *
+   * @param name a String representing the name of a principal.
+   */
+  public static Value getPrincipalValue(String name) {
+    return ValueImpl.getPrincipalValue(new Principal(name));
+  }
+
+  /**
+   * Creates a value carrying a principal.
+   *
+   * @param principal a Principal
+   */
+  public static Value getPrincipalValue(Principal principal) {
+    return ValueImpl.getPrincipalValue(principal);
+  }
+
+  /**
    * Convenience function for access to a single named value from a
    * {@link Document}.
    *

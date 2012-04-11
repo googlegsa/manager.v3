@@ -23,6 +23,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.spi.Document;
+import com.google.enterprise.connector.spi.Principal;
 import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.RepositoryDocumentException;
 import com.google.enterprise.connector.spi.RepositoryException;
@@ -35,6 +36,7 @@ import com.google.enterprise.connector.spi.SpiConstants.FeedType;
 import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.spi.XmlUtils;
 import com.google.enterprise.connector.spi.SpiConstants.ActionType;
+import com.google.enterprise.connector.spiimpl.PrincipalValue;
 import com.google.enterprise.connector.spiimpl.ValueImpl;
 import com.google.enterprise.connector.util.UniqueIdGenerator;
 import com.google.enterprise.connector.util.UuidGenerator;
@@ -638,13 +640,23 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
       throws RepositoryException, IOException {
     ValueImpl value;
     while ((value = (ValueImpl) property.nextValue()) != null) {
-      String valString = value.toFeedXml();
-      if (!Strings.isNullOrEmpty(valString)) {
+      Principal principal = (value instanceof PrincipalValue)
+          ? ((PrincipalValue) value).getPrincipal()
+          : new Principal(value.toString().trim());
+      if (!Strings.isNullOrEmpty(principal.getName())) {
         buff.append("<").append(XML_PRINCIPAL);
+        if (principal.getType() != null) {
+          XmlUtils.xmlAppendAttr(ServletUtil.XMLTAG_PRINCIPALTYPE_ATTRIBUTE,
+                                 principal.getType().toString(), buff);
+        }
+        if (principal.getNamespace() != null) {
+          XmlUtils.xmlAppendAttr(ServletUtil.XMLTAG_NAMESPACE_ATTRIBUTE,
+                                 principal.getNamespace(), buff);
+        }
         XmlUtils.xmlAppendAttr(XML_SCOPE, scope.toString(), buff);
         XmlUtils.xmlAppendAttr(XML_ACCESS, access.toString(), buff);
         buff.append(">");
-        XmlUtils.xmlAppendAttrValue(value.toFeedXml(), buff);
+        XmlUtils.xmlAppendAttrValue(principal.getName(), buff);
         XmlUtils.xmlAppendEndTag(XML_PRINCIPAL, buff);
       }
     }
