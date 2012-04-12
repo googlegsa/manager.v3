@@ -340,7 +340,7 @@ public class GsaFeedConnection implements FeedConnection {
   }
 
   /* @Override */
-  public synchronized boolean supportsAcls() {
+  public synchronized boolean supportsInheritedAcls() {
     String dtd = getFeedDtd();
     return (dtd == null) ? false : dtd.contains("<!ELEMENT acl ");
   }
