@@ -20,7 +20,7 @@ package com.google.enterprise.connector.spi;
  *
  * @since 3.0
  */
-public class Principal {
+public class Principal implements Comparable<Principal> {
 
   private final SpiConstants.PrincipalType type;
   private final String namespace;
@@ -80,5 +80,62 @@ public class Principal {
   public String toString() {
     return "{ type = " + type + ", namespace = " + namespace
            + ", name = " + name + " }";
+  }
+
+  @Override
+  public int hashCode() {
+    final int prime = 593;
+    int result = 1;
+    result = prime * result + ((name == null) ? 0 : name.hashCode());
+    result = prime * result + ((namespace == null) ? 0 : namespace.hashCode());
+    result = prime * result + ((type == null) ? 0 : type.hashCode());
+    return result;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    }
+    if (obj == null) {
+      return false;
+    }
+    if (getClass() != obj.getClass()) {
+      return false;
+    }
+    Principal other = (Principal) obj;
+    if ((compareStrings(name, other.name) != 0) ||
+        (compareStrings(namespace, other.namespace) != 0)) {
+      return false;
+    }
+    return (type == null) ? (other.type == null) : type.equals(other.type);
+  }
+
+  /**
+   * Note that is comparison is inconsistent with equals, in
+   * that the PrincipalType is not considered in ordering.
+   */
+  @Override
+  public int compareTo(Principal other) {
+    if (this == other) {
+      return 0;
+    }
+    if (other == null) {
+      return 1;
+    }
+    int result = compareStrings(namespace, other.namespace);
+    if (result != 0) {
+      return result;
+    }
+    return compareStrings(name, other.name);
+  }
+
+  private static int compareStrings(String s1, String s2) {
+    if (s1 == null) {
+      return (s2 != null) ? -1 : 0;
+    } else if (s2 != null) {
+      return s1.compareTo(s2);
+    }
+    return 1;
   }
 }
