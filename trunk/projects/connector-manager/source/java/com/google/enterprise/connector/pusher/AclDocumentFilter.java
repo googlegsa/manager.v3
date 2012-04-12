@@ -36,8 +36,6 @@ import java.util.Set;
  * authz.
  */
 public class AclDocumentFilter implements DocumentFilterFactory {
-  private static final Property PROPERTY_FALSE =
-      new SimpleProperty(Value.getBooleanValue(false));
   private static final Set<String> PROPERTIES_UNSUPPORTED;
   private static final Set<String> PROPERTIES_TO_REMOVE;
 
@@ -194,7 +192,7 @@ public class AclDocumentFilter implements DocumentFilterFactory {
     public Property findProperty(String name)
         throws RepositoryException {
       if (name == SpiConstants.PROPNAME_ISPUBLIC) {
-        return PROPERTY_FALSE;
+        return new SimpleProperty(Value.getBooleanValue(false));
       } else if (PROPERTIES_TO_REMOVE.contains(name)) {
         return null;
       } else {
