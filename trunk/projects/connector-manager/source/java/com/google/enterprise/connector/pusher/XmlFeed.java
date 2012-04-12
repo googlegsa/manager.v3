@@ -78,7 +78,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
   private final String contentUrlPrefix;
 
   /** If true, ACLs support inheritance and deny; otherwise legacy ACLs. */
-  private final boolean supportsAcls;
+  private final boolean supportsInheritedAcls;
 
   private static Predicate<String> aclPredicate = new Predicate<String>() {
     public boolean apply(String input) {
@@ -150,8 +150,8 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
   private static final String XML_ACCESS = "access";
 
   public XmlFeed(String dataSource, FeedType feedType, int maxFeedSize,
-      Appendable feedLogBuilder, String contentUrlPrefix, boolean supportsAcls)
-      throws IOException {
+      Appendable feedLogBuilder, String contentUrlPrefix,
+      boolean supportsInheritedAcls) throws IOException {
     super(maxFeedSize);
     this.maxFeedSize = maxFeedSize;
     this.dataSource = dataSource;
@@ -161,7 +161,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
     this.isClosed = false;
     this.feedId = uniqueIdGenerator.uniqueId();
     this.contentUrlPrefix = contentUrlPrefix;
-    this.supportsAcls = supportsAcls;
+    this.supportsInheritedAcls = supportsInheritedAcls;
     String prefix = xmlFeedPrefix(dataSource, feedType);
     write(prefix.getBytes(XML_DEFAULT_ENCODING));
   }
@@ -352,7 +352,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
    */
   private void xmlWrapRecord(Document document, InputStream contentStream,
       String contentEncoding) throws RepositoryException, IOException {
-    if (supportsAcls) {
+    if (supportsInheritedAcls) {
       String docType = DocUtils.getOptionalString(document,
           SpiConstants.PROPNAME_DOCUMENTTYPE);
       if (docType != null

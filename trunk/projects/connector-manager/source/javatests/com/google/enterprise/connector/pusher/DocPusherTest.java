@@ -79,7 +79,7 @@ public class DocPusherTest extends TestCase {
 
   private FeedConnection aclsUnsupportedFeedConnection
       = new MockFeedConnection() {
-    public boolean supportsAcls() {
+    public boolean supportsInheritedAcls() {
       return false;
     }
   };
@@ -331,7 +331,7 @@ public class DocPusherTest extends TestCase {
   }
 
   /**
-   * Test for multiple document feed on smart GSA (supportsAcls).
+   * Test for multiple document feed on smart GSA (supportsInheritedAcls).
    */
   public void testMultiRecordFeedSmartGsa() throws Exception {
     String feedType = "incremental";
@@ -390,7 +390,7 @@ public class DocPusherTest extends TestCase {
   }
 
   private void takeMultiFeed(String expectedXml, String repository,
-      final boolean supportsAcls) throws Exception {
+      final boolean supportsInheritedAcls) throws Exception {
     String gsaExpectedResponse = GsaFeedConnection.SUCCESS_RESPONSE;
     String gsaActualResponse;
 
@@ -400,8 +400,8 @@ public class DocPusherTest extends TestCase {
     TraversalManager qtm = new JcrTraversalManager(qm);
 
     MockFeedConnection feedConnection = new MockFeedConnection() {
-      public boolean supportsAcls() {
-        return supportsAcls;
+      public boolean supportsInheritedAcls() {
+        return supportsInheritedAcls;
       }
     };
 
@@ -450,7 +450,7 @@ public class DocPusherTest extends TestCase {
   }
 
   private void takeFeed(String[] expectedXml, String repository,
-      final boolean useCompression, final boolean supportsAcls)
+      final boolean useCompression, final boolean supportsInheritedAcls)
       throws Exception {
     String gsaExpectedResponse = GsaFeedConnection.SUCCESS_RESPONSE;
     String gsaActualResponse;
@@ -469,8 +469,8 @@ public class DocPusherTest extends TestCase {
         }
       }
 
-      public boolean supportsAcls() {
-        return supportsAcls;
+      public boolean supportsInheritedAcls() {
+        return supportsInheritedAcls;
       }
     };
 
@@ -586,7 +586,8 @@ public class DocPusherTest extends TestCase {
 
     assertStringContains("last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\"",
         resultXML);
-    assertStringContains("<meta name=\"author\" content=\"johnson\"/>", resultXML);
+    assertStringContains("<meta name=\"author\" content=\"johnson\"/>",
+        resultXML);
     assertStringNotContains("ziff", resultXML);
     assertStringContains("url=" + googleConnectorUrl("doc1"), resultXML);
   }
@@ -1307,10 +1308,10 @@ public class DocPusherTest extends TestCase {
    * Utility method to take the given JSON event string and feed it through a
    * DocPusher and return the resulting XML feed string.
    */
-  private String feedJsonEvent(String jsonEventString, boolean supportsAcls)
-      throws Exception {
+  private String feedJsonEvent(String jsonEventString,
+      boolean supportsInheritedAcls) throws Exception {
     return feedDocument(JcrDocumentTest.makeDocumentFromJson(jsonEventString),
-                        supportsAcls);
+                        supportsInheritedAcls);
   }
 
   /**
@@ -1325,9 +1326,9 @@ public class DocPusherTest extends TestCase {
    * Utility method to take the given Document and feed it through a
    * DocPusher and return the resulting XML feed string.
    */
-  private String feedDocument(Document document, boolean supportsAcls)
+  private String feedDocument(Document document, boolean supportsInheritedAcls)
       throws Exception {
-    return feedDocument(document, dfc, supportsAcls);
+    return feedDocument(document, dfc, supportsInheritedAcls);
   }
 
   /**
@@ -1336,10 +1337,10 @@ public class DocPusherTest extends TestCase {
    * string.
    */
   private String feedDocument(Document document, DocumentFilterFactory dff,
-      final boolean supportsAcls) throws Exception {
+      final boolean supportsInheritedAcls) throws Exception {
     MockFeedConnection mockFeedConnection = new MockFeedConnection() {
-      public boolean supportsAcls() {
-        return supportsAcls;
+      public boolean supportsInheritedAcls() {
+        return supportsInheritedAcls;
       }
     };
 

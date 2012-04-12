@@ -87,7 +87,7 @@ public class AclDocumentFilter implements DocumentFilterFactory {
       return useEnhancedAcls;
     }
 
-    this.useEnhancedAcls = feedConnection.supportsAcls();
+    this.useEnhancedAcls = feedConnection.supportsInheritedAcls();
     return useEnhancedAcls;
   }
 
