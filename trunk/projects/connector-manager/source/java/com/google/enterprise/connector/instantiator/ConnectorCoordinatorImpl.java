@@ -284,8 +284,7 @@ class ConnectorCoordinatorImpl implements
     if (traversalManager == null && traversalEnabled) {
       traversalManager = getConnectorInterfaces().getTraversalManager();
       if (traversalManager == null) {
-        LOGGER.info("Connector " + name + " has no TraversalManager;"
-                    + " disabling traversals.");
+        LOGGER.fine("Connector " + name + " has no TraversalManager.");
         traversalEnabled = false;
       } else {
         setTraversalContext(traversalManager);
