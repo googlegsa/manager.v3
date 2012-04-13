@@ -187,6 +187,19 @@ public class SpiConstants {
   public static final String PROPNAME_ISPUBLIC = "google:ispublic";
 
   /**
+   * Identifies a single-valued Boolean property. When this property is
+   * {@code false}, ACLs will not be explicitly cleared if no ACL is provided.
+   * This is to allow a Connector to send the ACLs for a Document as a separate
+   * ACL Document. If this property is missing or {@code true}, the default
+   * behavior of always specifying an empty ACL if no ACL is provided is used.
+   * <p/>
+   * Value: google:overwriteacls
+   *
+   * @since 3.0
+   */
+  public static final String PROPNAME_OVERWRITEACLS = "google:overwriteacls";
+
+  /**
    * The prefix for the ACL property names.
    * <p/>
    * Value: "google:acl"

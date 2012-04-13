@@ -350,7 +350,7 @@ public class DocPusherTest extends TestCase {
         + " mimetype=\"" + SpiConstants.DEFAULT_MIMETYPE + "\""
         + " last-modified=\"Thu, 01 Jan 1970 00:00:00 GMT\""
         + " authmethod=\"httpbasic\">\n"
-        + "<metadata>\n"
+        + "<metadata overwrite-acls=\"false\">\n"
         + "<meta name=\"google:ispublic\" content=\"false\"/>\n"
         + "<meta name=\"google:lastmodified\" content=\"1970-01-01\"/>\n"
         + "</metadata>\n" + "<content encoding=\"base64binary\">\n"
@@ -365,7 +365,7 @@ public class DocPusherTest extends TestCase {
         + "<record url=" + googleConnectorUrl("doc2")
         + " mimetype=\"" + SpiConstants.DEFAULT_MIMETYPE + "\""
         + " last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\">\n"
-        + "<metadata>\n"
+        + "<metadata overwrite-acls=\"false\">\n"
         + "<meta name=\"google:ispublic\" content=\"true\"/>\n"
         + "<meta name=\"google:lastmodified\" content=\"1970-01-01\"/>\n"
         + "</metadata>\n" + "<content encoding=\"base64binary\">\n"
@@ -380,7 +380,7 @@ public class DocPusherTest extends TestCase {
         + "<record url=" + googleConnectorUrl("doc3")
         + " mimetype=\"" + SpiConstants.DEFAULT_MIMETYPE + "\""
         + " last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\">\n"
-        + "<metadata>\n"
+        + "<metadata overwrite-acls=\"false\">\n"
         + "<meta name=\"google:ispublic\" content=\"true\"/>\n"
         + "<meta name=\"google:lastmodified\" content=\"1970-01-01\"/>\n"
         + "</metadata>\n" + "<content encoding=\"base64binary\">\n"
