@@ -47,6 +47,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -110,6 +111,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
     propertySkipSet.add(SpiConstants.PROPNAME_FEEDTYPE);
     propertySkipSet.add(SpiConstants.PROPNAME_LOCK);
     propertySkipSet.add(SpiConstants.PROPNAME_PAGERANK);
+    propertySkipSet.add(SpiConstants.PROPNAME_OVERWRITEACLS);
   }
 
   // Strings for XML tags.
@@ -136,6 +138,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
   private static final String XML_PAGERANK = "pagerank";
   private static final String XML_NAME = "name";
   private static final String XML_ENCODING = "encoding";
+  private static final String XML_OVERWRITEACLS = "overwrite-acls";
 
   public static final String XML_BASE64BINARY = "base64binary";
   public static final String XML_BASE64COMPRESSED = "base64compressed";
@@ -452,6 +455,14 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
       LOGGER.log(Level.WARNING, "Illegal value for ispublic property."
           + " Treat as a public doc", e);
     }
+
+    boolean overwriteAcls = DocUtils.getOptionalBoolean(document,
+        SpiConstants.PROPNAME_OVERWRITEACLS, true);
+    if (!overwriteAcls) {
+      XmlUtils.xmlAppendAttr(XML_OVERWRITEACLS,
+          Value.getBooleanValue(false).toString(), prefix);
+    }
+
     prefix.append(">\n");
     if (metadataAllowed) {
       xmlWrapMetadata(prefix, document);
@@ -851,20 +862,27 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
 
   /**
    * A DocumentFilter that strips all ACL properties from the Document's
-   * Properties.
+   * Properties, since the ACLs are being sent separately. The filter also
+   * sets {@link SpiConstants.PROPNAME_OVERWRITEACLS} to {@code false}.
    */
   private static class StripAclDocumentFilter extends AbstractDocumentFilter {
     private static Predicate<String> predicate = Predicates.not(aclPredicate);
+    private static final Set<String> overwriteAclsSet =
+        Collections.singleton(SpiConstants.PROPNAME_OVERWRITEACLS);
 
     @Override
     public Set<String> getPropertyNames(Document source)
         throws RepositoryException {
-      return Sets.filter(source.getPropertyNames(), predicate);
+      return Sets.union(overwriteAclsSet,
+        Sets.filter(source.getPropertyNames(), predicate));
     }
 
     @Override
     public Property findProperty(Document source, String name)
         throws RepositoryException {
+      if (SpiConstants.PROPNAME_OVERWRITEACLS.equals(name)) {
+        return new SimpleProperty(Value.getBooleanValue(false));
+      }
       return (predicate.apply(name)) ? source.findProperty(name) : null;
     }
   }
