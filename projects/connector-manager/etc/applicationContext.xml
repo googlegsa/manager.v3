@@ -171,6 +171,16 @@
     </property>
   </bean>
 
+  <bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+    <property name="staticMethod"
+              value="com.google.enterprise.connector.servlet.GetDocumentContent.setFeedConnection"/>
+    <property name="arguments">
+      <list>
+        <ref bean="FeedConnection"/>
+      </list>
+    </property>
+  </bean>
+
   <!-- Create a Handler for the Feed Logger and add it to the logger. -->
   <bean id="FeedFormatter" class="java.util.logging.SimpleFormatter"/>
 
