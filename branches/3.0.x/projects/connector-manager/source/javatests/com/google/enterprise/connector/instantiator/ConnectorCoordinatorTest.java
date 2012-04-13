@@ -504,9 +504,9 @@ public class ConnectorCoordinatorTest extends TestCase {
     assertEquals(instancePasswd, plainPasswd);
 
     // Verify that the google*WorkDir properties were not persisted.
-    assertFalse(instanceProps.containsKey(PropertiesUtils.GOOGLE_WORK_DIR));
-    assertFalse(instanceProps
-        .containsKey(PropertiesUtils.GOOGLE_CONNECTOR_WORK_DIR));
+    for (String propName : PropertiesUtils.GOOGLE_NONPERSISTABLE_PROPERTIES) {
+      assertFalse(instanceProps.containsKey(propName));
+    }
   }
 
   private void removeConnector(ConnectorCoordinatorImpl instance)

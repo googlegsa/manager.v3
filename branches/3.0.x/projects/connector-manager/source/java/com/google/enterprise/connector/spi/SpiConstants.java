@@ -187,6 +187,15 @@ public class SpiConstants {
   public static final String PROPNAME_ISPUBLIC = "google:ispublic";
 
   /**
+   * The prefix for the ACL property names.
+   * <p/>
+   * Value: "google:acl"
+   *
+   * @since 3.0
+   */
+  public static final String ACL_PROPNAME_PREFIX = "google:acl";
+
+  /**
    * Identifies a multiple-valued String property that gives the list of group
    * ACL Scope IDs that are permitted {@link RoleType#READER RoleType.READER}
    * access to this document. If either of the {@link #PROPNAME_ACLGROUPS} or
@@ -810,6 +819,26 @@ public class SpiConstants {
     private final String tag;
 
     private AclAccess(String tag) {
+      this.tag = tag;
+    }
+
+    @Override
+    public String toString() {
+      return tag;
+    }
+  }
+
+  /**
+   * Enum for the types of Principals: NetBIOS, DNS, or DN.
+   *
+   * @since 3.0
+   */
+  public enum PrincipalType {
+    NETBIOS("netbios"), DNS("dns"), DN("dn");
+
+    private final String tag;
+
+    private PrincipalType(String tag) {
       this.tag = tag;
     }
 

@@ -75,5 +75,5 @@ public interface FeedConnection {
    *
    * @since 3.0
    */
-  boolean supportsAcls();
+  boolean supportsInheritedAcls();
 }

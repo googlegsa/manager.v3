@@ -101,7 +101,12 @@ public class DocPusher implements Pusher {
   /**
    * Encoding method to use for Document content.
    */
-  private String contentEncoding;
+  private final String contentEncoding;
+
+  /**
+   * Indicates whether the FeedConnection supports ACL inheritance and deny.
+   */
+  private final boolean supportsInheritedAcls;
 
   /**
    * The Connector name that is the dataSource for this Feed.
@@ -172,6 +177,9 @@ public class DocPusher implements Pusher {
     this.contentEncoding =
         (supportedEncodings.indexOf(XmlFeed.XML_BASE64COMPRESSED) >= 0) ?
         XmlFeed.XML_BASE64COMPRESSED : XmlFeed.XML_BASE64BINARY;
+
+    // Check to see if the GSA supports ACL inheritance and deny.
+    this.supportsInheritedAcls = feedConnection.supportsInheritedAcls();
 
     // Initialize background feed submission.
     this.submissions = new LinkedList<FutureTask<String>>();
@@ -473,7 +481,7 @@ public class DocPusher implements Pusher {
     try {
       try {
         xmlFeed = new XmlFeed(connectorName, feedType, feedSize, feedLog,
-                              contentUrlPrefix);
+                              contentUrlPrefix, supportsInheritedAcls);
       } catch (OutOfMemoryError me) {
         // We shouldn't even have gotten this far under a low memory condition.
         // However, try to allocate a tiny feed buffer.  It should fill up on
@@ -484,7 +492,7 @@ public class DocPusher implements Pusher {
         feedSize = 1024;
         try {
           xmlFeed = new XmlFeed(connectorName, feedType, feedSize, feedLog,
-                                contentUrlPrefix);
+                                contentUrlPrefix, supportsInheritedAcls);
         } catch (OutOfMemoryError oome) {
           throw new OutOfMemoryError(
                "Unable to allocate feed buffer for connector " + connectorName);

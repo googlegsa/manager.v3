@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.servlet;
 
+import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.instantiator.Configuration;
 import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.manager.Manager;
@@ -42,12 +43,16 @@ public class SetConnectorConfigHandlerTest extends TestCase {
   private String connectorType;
   private Map<String, String> configData;
   private String configXml;
+  private String globalNamespace;
+  private String localNamespace;
   private boolean update;
   private MockManager manager;
 
   @Override
   protected void setUp() {
     manager = new ConfigSavingManager();
+    globalNamespace = null;
+    localNamespace = null;
   }
 
   /** Test invalid configure xml element. */
@@ -112,6 +117,34 @@ public class SetConnectorConfigHandlerTest extends TestCase {
     configXml = "<?xml?><beans><bean id=\"NewConfigXML\"/></beans>";
     update = false;
     doTest();
+  }
+
+  /** Test set config with connectorInstance.xml */
+  public void testCreateConnectorWithConfigNamespaces() throws Exception {
+    language = "en";
+    connectorName = "connectorA";
+    connectorType = "documentum";
+    globalNamespace = "ThinkGlobally";
+    localNamespace = "ActLocally";
+    configData = new TreeMap<String, String>();
+    configData.put("name1", "valueA1");
+    configData.put("name2", "valueA2");
+    configData.put("name3", "valueA3");
+    configXml = "<?xml?><beans><bean id=\"NewConfigXML\"/></beans>";
+    update = false;
+
+    String xmlBody = setXMLBody();
+
+    configData.put(PropertiesUtils.GOOGLE_GLOBAL_NAMESPACE, globalNamespace);
+    configData.put(PropertiesUtils.GOOGLE_LOCAL_NAMESPACE, localNamespace);
+
+    SetConnectorConfigHandler hdl = doTest(xmlBody);
+    ConnectorMessageCode status = hdl.getStatus();
+    ConfigureResponse response = hdl.getConfigRes();
+    assertTrue("Status: Code=" + status.getMessageId() + "  Message="
+        + status.getMessage() + ((response == null) ? "" :
+        "  Response: Message=" + response.getMessage()),
+        status.isSuccess());
   }
 
   /** Test update configuration. */
@@ -336,6 +369,15 @@ public class SetConnectorConfigHandlerTest extends TestCase {
       "</" + ServletUtil.XMLTAG_CONNECTOR_TYPE + ">\n" +
       "  <" + ServletUtil.XMLTAG_UPDATE_CONNECTOR + ">" + update +
       "</" + ServletUtil.XMLTAG_UPDATE_CONNECTOR + ">\n";
+
+    if (globalNamespace != null) {
+       body += "  <" + ServletUtil.XMLTAG_GLOBAL_NAMESPACE + ">" +
+           globalNamespace + "</" + ServletUtil.XMLTAG_GLOBAL_NAMESPACE+ ">\n";
+    }
+    if (localNamespace != null) {
+       body += "  <" + ServletUtil.XMLTAG_LOCAL_NAMESPACE + ">" +
+           localNamespace + "</" + ServletUtil.XMLTAG_LOCAL_NAMESPACE+ ">\n";
+    }
 
     for (Map.Entry<String, String> entry : configData.entrySet()) {
       body += "  <" + ServletUtil.XMLTAG_PARAMETERS + " name=\""
