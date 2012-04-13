@@ -16,6 +16,7 @@ package com.google.enterprise.connector.test;
 
 import com.google.enterprise.connector.instantiator.Configuration;
 import com.google.enterprise.connector.servlet.ServletUtil;
+import com.google.enterprise.connector.spi.Principal;
 import com.google.enterprise.connector.spi.SimpleDocument;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.Value;
@@ -205,6 +206,8 @@ public class ConnectorTestUtils {
         val = Value.getBinaryValue((InputStream) obj);
       } else if (obj instanceof Boolean) {
         val = Value.getBooleanValue((Boolean) obj);
+      } else if (obj instanceof Principal) {
+        val = Value.getPrincipalValue((Principal) obj);
       } else {
         throw new AssertionError(obj);
       }

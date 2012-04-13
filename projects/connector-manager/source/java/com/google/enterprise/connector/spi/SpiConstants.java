@@ -847,4 +847,28 @@ public class SpiConstants {
       return tag;
     }
   }
+
+  /**
+   * Enum for the possible case sensitivity rules.
+   *
+   * @since 3.0
+   */
+  public enum CaseSensitivityType {
+    /** All strings are case sensitive. */
+    EVERYTHING_CASE_SENSITIVE("everything-case-sensitive"),
+    /** All strings are case insensitive. */
+    EVERYTHING_CASE_INSENSITIVE("everything-case-insensitive"),
+    ;
+
+    private final String tag;
+
+    private CaseSensitivityType(String tag) {
+      this.tag = tag;
+    }
+
+    @Override
+    public String toString() {
+      return tag;
+    }
+  }
 }

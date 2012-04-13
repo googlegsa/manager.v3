@@ -24,6 +24,7 @@ import com.google.enterprise.connector.pusher.Pusher.PusherStatus;
 import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.DocumentList;
+import com.google.enterprise.connector.spi.Principal;
 import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.RepositoryDocumentException;
 import com.google.enterprise.connector.spi.RepositoryException;
@@ -564,6 +565,23 @@ public class DocPusherTest extends TestCase {
     } catch (Exception e) {
       fail("No content document take");
     }
+  }
+
+  /**
+   * Verify that case insensitivity is written to feed correctly.
+   */
+  public void testCaseInsensitiveAcl() throws Exception {
+    Map<String, Object> props = getTestDocumentConfig();
+    props.put(SpiConstants.PROPNAME_ACLUSERS,
+        new Principal(null, null, "John Doe",
+          SpiConstants.CaseSensitivityType.EVERYTHING_CASE_INSENSITIVE));
+    Document document = ConnectorTestUtils.createSimpleDocument(props);
+
+    String resultXML = feedDocument(document, true);
+    assertStringContains("<principal"
+        + " case-sensitivity-type=\"everything-case-insensitive\""
+        + " scope=\"user\" access=\"permit\">John Doe</principal>", resultXML);
+    assertStringContains("url=" + googleConnectorUrl("doc1"), resultXML);
   }
 
   /**

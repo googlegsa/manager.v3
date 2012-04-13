@@ -148,6 +148,8 @@ public class ServletUtil {
   public static final String XMLTAG_PASSWORD_ATTRIBUTE = "password";
   public static final String XMLTAG_NAMESPACE_ATTRIBUTE = "namespace";
   public static final String XMLTAG_PRINCIPALTYPE_ATTRIBUTE = "principaltype";
+  public static final String XMLTAG_CASESENSITIVITYTYPE_ATTRIBUTE =
+      "case-sensitivity-type";
   public static final String XMLTAG_RESOURCE = "Resource";
   public static final String XMLTAG_CONNECTOR_NAME_ATTRIBUTE = "connectorname";
   public static final String XMLTAG_AUTHZ_RESPONSE = "AuthorizationResponse";
