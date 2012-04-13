@@ -22,6 +22,7 @@ import com.google.enterprise.connector.manager.ConnectorManagerException;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
+import com.google.enterprise.connector.pusher.FeedConnection;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.RepositoryDocumentException;
 import com.google.enterprise.connector.spi.RepositoryException;
@@ -62,9 +63,40 @@ public class GetDocumentContent extends HttpServlet {
   private static final Object NEGATIVE_METADATA_CACHE_VALUE = new Object();
 
   private static boolean useCompression = false;
+  private static FeedConnection feedConnection;
+  /**
+   * GSA 7.0 introduces the ability to provide a HTTP header that specifies
+   * whether the document is secure. In previous GSAs we are required to use
+   * HTTP basic, which has to be configured correctly on the GSA.
+   */
+  private static Boolean securityHeaderSupported;
 
   public static void setUseCompression(boolean doCompression) {
     useCompression = doCompression;
+  }
+
+  /**
+   * Set the feed connection to use to discover if the security header is
+   * supported. This must be set during startup to take effect.
+   */
+  public static void setFeedConnection(FeedConnection fc) {
+    feedConnection = fc;
+  }
+
+  private synchronized static boolean isSecurityHeaderSupported() {
+    if (securityHeaderSupported != null) {
+      return securityHeaderSupported;
+    }
+
+    if (feedConnection == null) {
+      // FeedConnection is unavailable, so choose the pessimistic choice.
+      securityHeaderSupported = false;
+    } else {
+      // The newer ACL format was added in same GSA version as security header,
+      // so we abuse the ACL feature detection logic.
+      securityHeaderSupported = feedConnection.supportsAcls();
+    }
+    return securityHeaderSupported;
   }
 
   // TODO: HEAD requests?
@@ -350,21 +382,26 @@ public class GetDocumentContent extends HttpServlet {
       return HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
     }
 
-    ValueImpl isPublic;
+    ValueImpl isPublicVal;
     try {
-      isPublic = (ValueImpl) Value.getSingleValue(document,
+      isPublicVal = (ValueImpl) Value.getSingleValue(document,
           SpiConstants.PROPNAME_ISPUBLIC);
     } catch (RepositoryException ex) {
       LOGGER.log(Level.WARNING, "Failed retrieving isPublic property", ex);
       return HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
     }
-    if (isPublic == null || isPublic.toBoolean()) {
-      // Document is public.
-      return HttpServletResponse.SC_OK;
-    }
+    boolean isPublic = isPublicVal == null || isPublicVal.toBoolean();
 
-    // Document is private.
-    res.setHeader("WWW-Authenticate", "Basic realm=\"Retriever\"");
-    return HttpServletResponse.SC_UNAUTHORIZED;
+    if (isSecurityHeaderSupported()) {
+      res.setHeader("X-Gsa-Serve-Security", isPublic ? "public" : "secure");
+      return HttpServletResponse.SC_OK;
+    } else {
+      if (isPublic) {
+        return HttpServletResponse.SC_OK;
+      } else {
+        res.setHeader("WWW-Authenticate", "Basic realm=\"Retriever\"");
+        return HttpServletResponse.SC_UNAUTHORIZED;
+      }
+    }
   }
 }
