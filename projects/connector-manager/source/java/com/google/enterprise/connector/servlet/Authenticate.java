@@ -20,6 +20,7 @@ import com.google.enterprise.connector.manager.ConnectorStatus;
 import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
+import com.google.enterprise.connector.spi.Principal;
 import com.google.enterprise.connector.spi.SimpleAuthenticationIdentity;
 import com.google.enterprise.connector.spi.XmlUtils;
 import com.google.enterprise.connector.util.XmlParseUtil;
@@ -29,6 +30,7 @@ import org.w3c.dom.NodeList;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Level;
@@ -125,11 +127,25 @@ public class Authenticate extends ConnectorManagerServlet {
           XmlUtils.xmlAppendStartTag(ServletUtil.XMLTAG_IDENTITY, out);
           XmlUtils.xmlAppendAttrValue(username, out);
           XmlUtils.xmlAppendEndTag(ServletUtil.XMLTAG_IDENTITY, out);
+
+          // Add any returned groups that the user may belong to.
           if (response.getGroups() != null) {
-            for (String group : response.getGroups()) {
+            for (Object item : response.getGroups()) {
+              Principal group = (item instanceof String) ?
+                  new Principal((String) item) : (Principal) item;
               out.append(ServletUtil.indentStr(3));
-              XmlUtils.xmlAppendStartTag(ServletUtil.XMLTAG_GROUP, out);
-              XmlUtils.xmlAppendAttrValue(group, out);
+              out.append('<').append(ServletUtil.XMLTAG_GROUP);
+              if (group.getType() != null) {
+                XmlUtils.xmlAppendAttr(
+                    ServletUtil.XMLTAG_PRINCIPALTYPE_ATTRIBUTE,
+                    group.getType().toString(), out);
+              }
+              if (group.getNamespace() != null) {
+                XmlUtils.xmlAppendAttr(ServletUtil.XMLTAG_NAMESPACE_ATTRIBUTE,
+                    group.getNamespace(), out);
+              }
+              out.append('>');
+              XmlUtils.xmlAppendAttrValue(group.getName(), out);
               XmlUtils.xmlAppendEndTag(ServletUtil.XMLTAG_GROUP, out);
             }
           }

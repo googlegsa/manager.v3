@@ -59,13 +59,15 @@ public class AlternateContentFilterInputStreamTest extends TestCase {
 
   /** Test XmlFeed Rollback. */
   public void testFeedRollback() throws Exception {
-    XmlFeed feed = new XmlFeed("test", FeedType.CONTENT, 10000, null, null);
+    XmlFeed feed =
+        new XmlFeed("test", FeedType.CONTENT, 10000, null, null, false);
     checkACIS(new BigInputStream(), feed, ALTERNATE_CONTENT);
   }
 
   /** Test No XmlFeed Rollback. */
   public void testNoFeedRollback() throws Exception {
-    XmlFeed feed = new XmlFeed("test", FeedType.CONTENT, 10000, null, null);
+    XmlFeed feed =
+        new XmlFeed("test", FeedType.CONTENT, 10000, null, null, false);
     checkACIS(new ByteArrayInputStream(CONTENT.getBytes()), feed, CONTENT);
   }
 
@@ -142,7 +144,8 @@ public class AlternateContentFilterInputStreamTest extends TestCase {
    */
   private void checkACISReadByte(InputStream source, InputStream alt,
       String expectedResult) throws Exception {
-    XmlFeed feed = new XmlFeed("test", FeedType.CONTENT, 10000, null, null);
+    XmlFeed feed =
+        new XmlFeed("test", FeedType.CONTENT, 10000, null, null, false);
     feed.reset(0);
     feed.write(PREFIX.getBytes());
     InputStream is = new AlternateContentFilterInputStream(source, alt, feed);

@@ -14,7 +14,9 @@
 
 package com.google.enterprise.connector.pusher;
 
+import com.google.common.base.Strings;
 import com.google.enterprise.connector.spi.Document;
+import com.google.enterprise.connector.spi.Principal;
 import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.RepositoryDocumentException;
 import com.google.enterprise.connector.spi.RepositoryException;
@@ -24,6 +26,7 @@ import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.spi.SpiConstants.FeedType;
 import com.google.enterprise.connector.spiimpl.BinaryValue;
 import com.google.enterprise.connector.spiimpl.DateValue;
+import com.google.enterprise.connector.spiimpl.PrincipalValue;
 import com.google.enterprise.connector.spiimpl.ValueImpl;
 
 import java.io.ByteArrayInputStream;
@@ -71,9 +74,13 @@ public class DocUtils {
     Property scopeProp = document.findProperty(aclPropName);
     Value scopeVal = null;
     while ((scopeVal = scopeProp.nextValue()) != null) {
-      String aclScope = scopeVal.toString().trim();
-      if (aclScope.length() == 0)
+      Principal principal = (scopeVal instanceof PrincipalValue)
+          ? ((PrincipalValue) scopeVal).getPrincipal()
+          : new Principal(scopeVal.toString().trim());
+      String aclScope = principal.getName();
+      if (Strings.isNullOrEmpty(aclScope)) {
         continue;
+      }
       Property scopeRoleProp = null;
       if (SpiConstants.PROPNAME_ACLGROUPS.equals(aclPropName)) {
         scopeRoleProp = document.findProperty(
@@ -88,7 +95,8 @@ public class DocUtils {
         while ((roleVal = scopeRoleProp.nextValue()) != null) {
           String role = roleVal.toString().trim();
           if (role.length() > 0) {
-            acl.add(Value.getStringValue(aclScope + '=' + role));
+            acl.add(Value.getPrincipalValue(new Principal(principal.getType(),
+                principal.getNamespace(), aclScope + '=' + role)));
           } else {
             // XXX: Empty role implies reader?
             acl.add(scopeVal);

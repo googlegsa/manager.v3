@@ -16,9 +16,14 @@ package com.google.enterprise.connector.pusher;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
+import com.google.common.base.Predicates;
 import com.google.common.base.Strings;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
 import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.spi.Document;
+import com.google.enterprise.connector.spi.Principal;
 import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.RepositoryDocumentException;
 import com.google.enterprise.connector.spi.RepositoryException;
@@ -31,9 +36,11 @@ import com.google.enterprise.connector.spi.SpiConstants.FeedType;
 import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.spi.XmlUtils;
 import com.google.enterprise.connector.spi.SpiConstants.ActionType;
+import com.google.enterprise.connector.spiimpl.PrincipalValue;
 import com.google.enterprise.connector.spiimpl.ValueImpl;
 import com.google.enterprise.connector.util.UniqueIdGenerator;
 import com.google.enterprise.connector.util.UuidGenerator;
+import com.google.enterprise.connector.util.filter.AbstractDocumentFilter;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -70,7 +77,20 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
    */
   private final String contentUrlPrefix;
 
+  /** If true, ACLs support inheritance and deny; otherwise legacy ACLs. */
+  private final boolean supportsInheritedAcls;
+
+  private static Predicate<String> aclPredicate = new Predicate<String>() {
+    public boolean apply(String input) {
+      return (input.startsWith(SpiConstants.ACL_PROPNAME_PREFIX) ||
+              input.startsWith(SpiConstants.GROUP_ROLES_PROPNAME_PREFIX) ||
+              input.startsWith(SpiConstants.USER_ROLES_PROPNAME_PREFIX));
+    }
+  };
+
   private static UniqueIdGenerator uniqueIdGenerator = new UuidGenerator();
+  private static StripAclDocumentFilter stripAclDocumentFilter =
+      new StripAclDocumentFilter();
 
   private boolean isClosed;
   private int recordCount;
@@ -130,7 +150,8 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
   private static final String XML_ACCESS = "access";
 
   public XmlFeed(String dataSource, FeedType feedType, int maxFeedSize,
-      Appendable feedLogBuilder, String contentUrlPrefix) throws IOException {
+      Appendable feedLogBuilder, String contentUrlPrefix,
+      boolean supportsInheritedAcls) throws IOException {
     super(maxFeedSize);
     this.maxFeedSize = maxFeedSize;
     this.dataSource = dataSource;
@@ -140,6 +161,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
     this.isClosed = false;
     this.feedId = uniqueIdGenerator.uniqueId();
     this.contentUrlPrefix = contentUrlPrefix;
+    this.supportsInheritedAcls = supportsInheritedAcls;
     String prefix = xmlFeedPrefix(dataSource, feedType);
     write(prefix.getBytes(XML_DEFAULT_ENCODING));
   }
@@ -330,14 +352,19 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
    */
   private void xmlWrapRecord(Document document, InputStream contentStream,
       String contentEncoding) throws RepositoryException, IOException {
-    String docType = DocUtils.getOptionalString(document,
-        SpiConstants.PROPNAME_DOCUMENTTYPE);
-    if (docType != null
-        && DocumentType.findDocumentType(docType) == DocumentType.ACL) {
-      xmlWrapAclRecord(document);
-    } else {
-      xmlWrapDocumentRecord(document, contentStream, contentEncoding);
+    if (supportsInheritedAcls) {
+      String docType = DocUtils.getOptionalString(document,
+          SpiConstants.PROPNAME_DOCUMENTTYPE);
+      if (docType != null
+          && DocumentType.findDocumentType(docType) == DocumentType.ACL) {
+        xmlWrapAclRecord(document);
+        return;
+      } else if (hasAclProperties(document)) {
+        xmlWrapAclRecord(document);
+        document = stripAclDocumentFilter.newDocumentFilter(document);
+      }
     }
+    xmlWrapDocumentRecord(document, contentStream, contentEncoding);
   }
 
   /*
@@ -531,6 +558,14 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
     return (feedType == null) ? this.feedType : FeedType.findFeedType(feedType);
   }
 
+  /**
+   * Returns true if the document exposes any acl properties, false otherwise.
+   */
+  private static boolean hasAclProperties(Document document)
+      throws RepositoryException {
+    return Iterables.any(document.getPropertyNames(), aclPredicate);
+  }
+
   /*
    * Generate the record tag for the ACL xml data.
    */
@@ -605,13 +640,23 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
       throws RepositoryException, IOException {
     ValueImpl value;
     while ((value = (ValueImpl) property.nextValue()) != null) {
-      String valString = value.toFeedXml();
-      if (!Strings.isNullOrEmpty(valString)) {
+      Principal principal = (value instanceof PrincipalValue)
+          ? ((PrincipalValue) value).getPrincipal()
+          : new Principal(value.toString().trim());
+      if (!Strings.isNullOrEmpty(principal.getName())) {
         buff.append("<").append(XML_PRINCIPAL);
+        if (principal.getType() != null) {
+          XmlUtils.xmlAppendAttr(ServletUtil.XMLTAG_PRINCIPALTYPE_ATTRIBUTE,
+                                 principal.getType().toString(), buff);
+        }
+        if (principal.getNamespace() != null) {
+          XmlUtils.xmlAppendAttr(ServletUtil.XMLTAG_NAMESPACE_ATTRIBUTE,
+                                 principal.getNamespace(), buff);
+        }
         XmlUtils.xmlAppendAttr(XML_SCOPE, scope.toString(), buff);
         XmlUtils.xmlAppendAttr(XML_ACCESS, access.toString(), buff);
         buff.append(">");
-        XmlUtils.xmlAppendAttrValue(value.toFeedXml(), buff);
+        XmlUtils.xmlAppendAttrValue(principal.getName(), buff);
         XmlUtils.xmlAppendEndTag(XML_PRINCIPAL, buff);
       }
     }
@@ -793,6 +838,26 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
     } catch (MalformedURLException e) {
       throw new RepositoryDocumentException(
           "Supplied " + description + " URL " + url + " is malformed.", e);
+    }
+  }
+
+  /**
+   * A DocumentFilter that strips all ACL properties from the Document's
+   * Properties.
+   */
+  private static class StripAclDocumentFilter extends AbstractDocumentFilter {
+    private static Predicate<String> predicate = Predicates.not(aclPredicate);
+
+    @Override
+    public Set<String> getPropertyNames(Document source)
+        throws RepositoryException {
+      return Sets.filter(source.getPropertyNames(), predicate);
+    }
+
+    @Override
+    public Property findProperty(Document source, String name)
+        throws RepositoryException {
+      return (predicate.apply(name)) ? source.findProperty(name) : null;
     }
   }
 }

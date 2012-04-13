@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.spiimpl;
 
+import com.google.enterprise.connector.spi.Principal;
 import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.util.InputStreamFactory;
 
@@ -56,6 +57,10 @@ public abstract class ValueImpl extends Value {
 
   public static Value getBooleanValue(String s) {
     return BooleanValue.makeBooleanValue(s);
+  }
+
+  public static Value getPrincipalValue(Principal p) {
+    return new PrincipalValue(p);
   }
 
   /**

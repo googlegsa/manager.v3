@@ -99,5 +99,5 @@ public interface TraversalContext {
    *
    * @since 3.0
    */
-  boolean supportsAcls();
+  boolean supportsInheritedAcls();
 }

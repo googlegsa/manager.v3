@@ -759,13 +759,13 @@ public class Context {
           + " bean in context, using default.");
       traversalContext = new ProductionTraversalContext();
     }
-    // Lazily initialize supportsAcls, since it requires communicating with
-    // the GSA.
+    // Lazily initialize supportsInheritedAcls, since it requires communicating
+    // with the GSA.
     if (traversalContext instanceof SimpleTraversalContext) {
       GsaFeedConnection feeder = getGsaFeedConnection();
       if (feeder != null) {
-        ((SimpleTraversalContext) traversalContext).setSupportsAcls(
-            feeder.supportsAcls());
+        ((SimpleTraversalContext) traversalContext).setSupportsInheritedAcls(
+            feeder.supportsInheritedAcls());
       }
     }
     return traversalContext;

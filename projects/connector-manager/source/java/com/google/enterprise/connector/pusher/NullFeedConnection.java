@@ -52,7 +52,7 @@ public class NullFeedConnection implements FeedConnection {
   }
 
   /* @Override */
-  public boolean supportsAcls() {
+  public boolean supportsInheritedAcls() {
     return true;
   }
 }

@@ -284,8 +284,7 @@ class ConnectorCoordinatorImpl implements
     if (traversalManager == null && traversalEnabled) {
       traversalManager = getConnectorInterfaces().getTraversalManager();
       if (traversalManager == null) {
-        LOGGER.info("Connector " + name + " has no TraversalManager;"
-                    + " disabling traversals.");
+        LOGGER.fine("Connector " + name + " has no TraversalManager.");
         traversalEnabled = false;
       } else {
         setTraversalContext(traversalManager);
@@ -419,7 +418,7 @@ class ConnectorCoordinatorImpl implements
         response =
             connectorType.getPopulatedConfigForm(config.getMap(), locale);
         if (response != null) {
-          return new ExtendedConfigureResponse(response, config.getXml());
+          return new ExtendedConfigureResponse(response, config);
         }
       }
       return response;
@@ -1153,14 +1152,15 @@ class ConnectorCoordinatorImpl implements
   }
 
   /**
-   * Removes properties whose names start with "google" from the Configuration.
+   * Removes non-persistable "google" properties from the Configuration.
    */
   private Configuration removeGoogleProperties(Configuration config) {
     // Make a copy of the map with google* entries removed.
     Map<String, String> newConfig = Maps.newHashMap(
         Maps.filterKeys(config.getMap(), new Predicate<String>() {
             public boolean apply(String input) {
-              return !input.startsWith("google");
+              return !PropertiesUtils.GOOGLE_NONPERSISTABLE_PROPERTIES
+                      .contains(input);
             }
         }));
 
