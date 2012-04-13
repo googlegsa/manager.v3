@@ -653,6 +653,14 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
           XmlUtils.xmlAppendAttr(ServletUtil.XMLTAG_NAMESPACE_ATTRIBUTE,
                                  principal.getNamespace(), buff);
         }
+        // The GSA's default is EVERYTHING_CASE_SENSITIVE. No need to send the
+        // attribute when it is the default.
+        if (principal.getCaseSensitivityType()
+            != SpiConstants.CaseSensitivityType.EVERYTHING_CASE_SENSITIVE) {
+          XmlUtils.xmlAppendAttr(
+              ServletUtil.XMLTAG_CASESENSITIVITYTYPE_ATTRIBUTE,
+              principal.getCaseSensitivityType().toString(), buff);
+        }
         XmlUtils.xmlAppendAttr(XML_SCOPE, scope.toString(), buff);
         XmlUtils.xmlAppendAttr(XML_ACCESS, access.toString(), buff);
         buff.append(">");

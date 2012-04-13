@@ -14,6 +14,8 @@
 
 package com.google.enterprise.connector.spi;
 
+import com.google.enterprise.connector.spi.SpiConstants.CaseSensitivityType;
+import com.google.enterprise.connector.spi.SpiConstants.PrincipalType;
 
 /**
  * Represents a principal for authentication and authorization purposes.
@@ -22,12 +24,13 @@ package com.google.enterprise.connector.spi;
  */
 public class Principal implements Comparable<Principal> {
 
-  private final SpiConstants.PrincipalType type;
+  private final PrincipalType type;
   private final String namespace;
   private final String name;
+  private final CaseSensitivityType caseSensitivityType;
 
   /**
-   * Builds a Principal instance with simply a name.
+   * Builds a Principal instance with simply a case-sensitive name.
    *
    * @param name the name of the principal
    */
@@ -36,17 +39,33 @@ public class Principal implements Comparable<Principal> {
   }
 
   /**
-   * Builds a Principal instance.
+   * Builds a case-sensitive Principal instance.
    *
    * @param type the principal type for the principal
    * @param namespace the namespace for the principal
    * @param name the name of the principal
    */
-  public Principal(SpiConstants.PrincipalType type, String namespace,
-                   String name) {
+  public Principal(PrincipalType type, String namespace, String name) {
+    this(type, namespace, name, CaseSensitivityType.EVERYTHING_CASE_SENSITIVE);
+  }
+
+  /**
+   * Builds a Principal instance.
+   *
+   * @param type the principal type for the principal
+   * @param namespace the namespace for the principal
+   * @param name the name of the principal
+   * @param caseSensitivityType how to handle casing for the principal
+   */
+  public Principal(PrincipalType type, String namespace, String name,
+      CaseSensitivityType caseSensitivityType) {
+    if (caseSensitivityType == null) {
+      throw new NullPointerException("caseSensitivityType must not be null");
+    }
     this.type = type;
     this.namespace = namespace;
     this.name = name;
+    this.caseSensitivityType = caseSensitivityType;
   }
 
   /**
@@ -72,14 +91,23 @@ public class Principal implements Comparable<Principal> {
    *
    * @return the principal type
    */
-  public SpiConstants.PrincipalType getType() {
+  public PrincipalType getType() {
     return type;
+  }
+
+  /**
+   * Gets how cases are handled for the principal.
+   *
+   * @return the case sensitivity type
+   */
+  public CaseSensitivityType getCaseSensitivityType() {
+    return caseSensitivityType;
   }
 
   @Override
   public String toString() {
     return "{ type = " + type + ", namespace = " + namespace
-           + ", name = " + name + " }";
+           + ", name = " + name + ", casing = " + caseSensitivityType + " }";
   }
 
   @Override
