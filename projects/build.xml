@@ -105,8 +105,10 @@
       <zipfileset dir="${connector-manager.dir}/source/scripts" includes="*"
         prefix="connector-manager-${version}/Scripts"/>
     </zip>
-    <checksum file="${downloads.dir}/connector-manager-${version}.tar.gz"/>
-    <checksum file="${downloads.dir}/connector-manager-${version}.zip"/>
+    <checksum algorithm="SHA-1"
+              file="${downloads.dir}/connector-manager-${version}.tar.gz"/>
+    <checksum algorithm="SHA-1"
+              file="${downloads.dir}/connector-manager-${version}.zip"/>
     <tar destfile="${downloads.dir}/connector-manager-${version}-src.tar"
          longfile="gnu">
       <tarfileset dir="." prefix="connector-manager-${version}-src">
@@ -166,8 +168,10 @@
         .classpath,.project"
         prefix="connector-manager-${version}-src/${test-connectorB.dir}"/>
     </zip>
-    <checksum file="${downloads.dir}/connector-manager-${version}-src.tar.gz"/>
-    <checksum file="${downloads.dir}/connector-manager-${version}-src.zip"/>
+    <checksum algorithm="SHA-1"
+              file="${downloads.dir}/connector-manager-${version}-src.tar.gz"/>
+    <checksum algorithm="SHA-1"
+              file="${downloads.dir}/connector-manager-${version}-src.zip"/>
     <delete file="${trunk.dir}/LICENSE"/>
   </target>
 
