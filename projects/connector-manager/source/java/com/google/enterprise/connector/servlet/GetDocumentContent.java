@@ -94,7 +94,7 @@ public class GetDocumentContent extends HttpServlet {
     } else {
       // The newer ACL format was added in same GSA version as security header,
       // so we abuse the ACL feature detection logic.
-      securityHeaderSupported = feedConnection.supportsAcls();
+      securityHeaderSupported = feedConnection.supportsInheritedAcls();
     }
     return securityHeaderSupported;
   }
