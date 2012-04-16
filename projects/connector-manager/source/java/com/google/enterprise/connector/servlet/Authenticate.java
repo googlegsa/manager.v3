@@ -136,12 +136,14 @@ public class Authenticate extends ConnectorManagerServlet {
                   new Principal((String) item) : (Principal) item;
               out.append(ServletUtil.indentStr(3));
               out.append('<').append(ServletUtil.XMLTAG_GROUP);
+              /* TODO: Re-enable once the GSA supports principal-type attribute.
               if (group.getPrincipalType() !=
                   SpiConstants.PrincipalType.UNQUALIFIED) {
                 XmlUtils.xmlAppendAttr(
                     ServletUtil.XMLTAG_PRINCIPALTYPE_ATTRIBUTE,
                     group.getPrincipalType().toString(), out);
               }
+              */
               if (!Strings.isNullOrEmpty(group.getNamespace())) {
                 XmlUtils.xmlAppendAttr(ServletUtil.XMLTAG_NAMESPACE_ATTRIBUTE,
                     group.getNamespace(), out);
