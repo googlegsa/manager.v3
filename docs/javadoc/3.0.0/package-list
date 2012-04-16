@@ -1,0 +1,8 @@
+com.google.enterprise.connector.spi
+com.google.enterprise.connector.util
+com.google.enterprise.connector.util.database
+com.google.enterprise.connector.util.database.testing
+com.google.enterprise.connector.util.diffing
+com.google.enterprise.connector.util.diffing.testing
+com.google.enterprise.connector.util.filter
+com.google.enterprise.connector.util.testing
