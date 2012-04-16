@@ -95,8 +95,10 @@ public class DocUtils {
         while ((roleVal = scopeRoleProp.nextValue()) != null) {
           String role = roleVal.toString().trim();
           if (role.length() > 0) {
-            acl.add(Value.getPrincipalValue(new Principal(principal.getType(),
-                principal.getNamespace(), aclScope + '=' + role)));
+            acl.add(Value.getPrincipalValue(new Principal(
+                principal.getPrincipalType(),
+                principal.getNamespace(), aclScope + '=' + role,
+                principal.getCaseSensitivityType())));
           } else {
             // XXX: Empty role implies reader?
             acl.add(scopeVal);

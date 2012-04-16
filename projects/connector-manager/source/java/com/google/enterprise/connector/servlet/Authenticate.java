@@ -22,6 +22,7 @@ import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.connector.spi.Principal;
 import com.google.enterprise.connector.spi.SimpleAuthenticationIdentity;
+import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.XmlUtils;
 import com.google.enterprise.connector.util.XmlParseUtil;
 
@@ -135,12 +136,15 @@ public class Authenticate extends ConnectorManagerServlet {
                   new Principal((String) item) : (Principal) item;
               out.append(ServletUtil.indentStr(3));
               out.append('<').append(ServletUtil.XMLTAG_GROUP);
-              if (group.getType() != null) {
+              /* TODO: Re-enable once the GSA supports principal-type attribute.
+              if (group.getPrincipalType() !=
+                  SpiConstants.PrincipalType.UNQUALIFIED) {
                 XmlUtils.xmlAppendAttr(
                     ServletUtil.XMLTAG_PRINCIPALTYPE_ATTRIBUTE,
-                    group.getType().toString(), out);
+                    group.getPrincipalType().toString(), out);
               }
-              if (group.getNamespace() != null) {
+              */
+              if (!Strings.isNullOrEmpty(group.getNamespace())) {
                 XmlUtils.xmlAppendAttr(ServletUtil.XMLTAG_NAMESPACE_ATTRIBUTE,
                     group.getNamespace(), out);
               }

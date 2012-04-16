@@ -14,6 +14,8 @@
 
 package com.google.enterprise.connector.spi;
 
+import com.google.enterprise.connector.spi.SpiConstants.CaseSensitivityType;
+import com.google.enterprise.connector.spi.SpiConstants.PrincipalType;
 
 /**
  * Represents a principal for authentication and authorization purposes.
@@ -22,31 +24,52 @@ package com.google.enterprise.connector.spi;
  */
 public class Principal implements Comparable<Principal> {
 
-  private final SpiConstants.PrincipalType type;
+  private final PrincipalType principalType;
   private final String namespace;
   private final String name;
+  private final CaseSensitivityType caseSensitivityType;
 
   /**
-   * Builds a Principal instance with simply a name.
+   * Builds a Principal instance with simply a case-sensitive name.
    *
    * @param name the name of the principal
    */
   public Principal(String name) {
-    this(null, null, name);
+    this(PrincipalType.UNQUALIFIED, null, name);
   }
 
   /**
-   * Builds a Principal instance.
+   * Builds a case-sensitive Principal instance.
    *
    * @param type the principal type for the principal
    * @param namespace the namespace for the principal
    * @param name the name of the principal
    */
-  public Principal(SpiConstants.PrincipalType type, String namespace,
-                   String name) {
-    this.type = type;
+  public Principal(PrincipalType principalType, String namespace, String name) {
+    this(principalType, namespace, name,
+         CaseSensitivityType.EVERYTHING_CASE_SENSITIVE);
+  }
+
+  /**
+   * Builds a Principal instance.
+   *
+   * @param principalType the principal type
+   * @param namespace the namespace for the principal
+   * @param name the name of the principal
+   * @param caseSensitivityType how to handle casing for the principal
+   */
+  public Principal(PrincipalType principalType, String namespace, String name,
+      CaseSensitivityType caseSensitivityType) {
+    if (principalType == null) {
+      throw new NullPointerException("Principal type must not be null");
+    }
+    if (caseSensitivityType == null) {
+      throw new NullPointerException("caseSensitivityType must not be null");
+    }
+    this.principalType = principalType;
     this.namespace = namespace;
     this.name = name;
+    this.caseSensitivityType = caseSensitivityType;
   }
 
   /**
@@ -72,14 +95,23 @@ public class Principal implements Comparable<Principal> {
    *
    * @return the principal type
    */
-  public SpiConstants.PrincipalType getType() {
-    return type;
+  public PrincipalType getPrincipalType() {
+    return principalType;
+  }
+
+  /**
+   * Gets how cases are handled for the principal.
+   *
+   * @return the case sensitivity type
+   */
+  public CaseSensitivityType getCaseSensitivityType() {
+    return caseSensitivityType;
   }
 
   @Override
   public String toString() {
-    return "{ type = " + type + ", namespace = " + namespace
-           + ", name = " + name + " }";
+    return "{ type = " + principalType + ", namespace = " + namespace
+           + ", name = " + name + ", casing = " + caseSensitivityType + " }";
   }
 
   @Override
@@ -88,7 +120,8 @@ public class Principal implements Comparable<Principal> {
     int result = 1;
     result = prime * result + ((name == null) ? 0 : name.hashCode());
     result = prime * result + ((namespace == null) ? 0 : namespace.hashCode());
-    result = prime * result + ((type == null) ? 0 : type.hashCode());
+    result = prime * result + principalType.hashCode();
+    result = prime * result + caseSensitivityType.hashCode();
     return result;
   }
 
@@ -104,11 +137,11 @@ public class Principal implements Comparable<Principal> {
       return false;
     }
     Principal other = (Principal) obj;
-    if ((compareStrings(name, other.name) != 0) ||
-        (compareStrings(namespace, other.namespace) != 0)) {
+    if (compareTo(other) != 0) {
       return false;
     }
-    return (type == null) ? (other.type == null) : type.equals(other.type);
+    return principalType.equals(other.principalType) &&
+        caseSensitivityType.equals(other.caseSensitivityType);
   }
 
   /**
@@ -120,21 +153,22 @@ public class Principal implements Comparable<Principal> {
     if (this == other) {
       return 0;
     }
-    if (other == null) {
-      return 1;
-    }
-    int result = compareStrings(namespace, other.namespace);
+    int result = compareStrings(namespace, other.namespace, false);
     if (result != 0) {
       return result;
     }
-    return compareStrings(name, other.name);
+    return compareStrings(name, other.name,
+        // Only do case insensitive comparison if both are case-insensitive.
+        caseSensitivityType.equals(CaseSensitivityType.EVERYTHING_CASE_INSENSITIVE)
+        && caseSensitivityType.equals(other.caseSensitivityType));
   }
 
-  private static int compareStrings(String s1, String s2) {
+  private static int compareStrings(String s1, String s2,
+                                    boolean caseInsensitive) {
     if (s1 == null) {
       return (s2 != null) ? -1 : 0;
     } else if (s2 != null) {
-      return s1.compareTo(s2);
+      return (caseInsensitive) ? s1.compareToIgnoreCase(s2) : s1.compareTo(s2);
     }
     return 1;
   }

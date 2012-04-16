@@ -187,6 +187,19 @@ public class SpiConstants {
   public static final String PROPNAME_ISPUBLIC = "google:ispublic";
 
   /**
+   * Identifies a single-valued Boolean property. When this property is
+   * {@code false}, ACLs will not be explicitly cleared if no ACL is provided.
+   * This is to allow a Connector to send the ACLs for a Document as a separate
+   * ACL Document. If this property is missing or {@code true}, the default
+   * behavior of always specifying an empty ACL if no ACL is provided is used.
+   * <p/>
+   * Value: google:overwriteacls
+   *
+   * @since 3.0
+   */
+  public static final String PROPNAME_OVERWRITEACLS = "google:overwriteacls";
+
+  /**
    * The prefix for the ACL property names.
    * <p/>
    * Value: "google:acl"
@@ -834,11 +847,35 @@ public class SpiConstants {
    * @since 3.0
    */
   public enum PrincipalType {
-    NETBIOS("netbios"), DNS("dns"), DN("dn");
+    UNQUALIFIED(null), NETBIOS("netbios"), DNS("dns"), DN("dn");
 
     private final String tag;
 
     private PrincipalType(String tag) {
+      this.tag = tag;
+    }
+
+    @Override
+    public String toString() {
+      return tag;
+    }
+  }
+
+  /**
+   * Enum for the possible case sensitivity rules.
+   *
+   * @since 3.0
+   */
+  public enum CaseSensitivityType {
+    /** All strings are case sensitive. */
+    EVERYTHING_CASE_SENSITIVE("everything-case-sensitive"),
+    /** All strings are case insensitive. */
+    EVERYTHING_CASE_INSENSITIVE("everything-case-insensitive"),
+    ;
+
+    private final String tag;
+
+    private CaseSensitivityType(String tag) {
       this.tag = tag;
     }
 
