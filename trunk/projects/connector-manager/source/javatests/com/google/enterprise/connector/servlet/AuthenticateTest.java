@@ -309,8 +309,13 @@ public class AuthenticateTest extends TestCase {
       "  <AuthnResponse>\n" +
       "    <Success ConnectorName=\"connector1\">\n" +
       "      <Identity>fooUser</Identity>\n" +
+      /* TODO: Re-enable once the GSA supports principal-type attribute.
       "      <Group principaltype=\"dn\" namespace=\"global\">staff</Group>\n" +
       "      <Group principaltype=\"dn\" namespace=\"global\">wheel</Group>\n" +
+      * else */
+      "      <Group namespace=\"global\">staff</Group>\n" +
+      "      <Group namespace=\"global\">wheel</Group>\n" +
+      /* end TODO */
       "      <Group namespace=\"local\">wheel</Group>\n" +
       "      <Group namespace=\"local\">slo</Group>\n" +
       "    </Success>\n" +
