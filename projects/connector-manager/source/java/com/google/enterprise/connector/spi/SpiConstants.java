@@ -847,7 +847,7 @@ public class SpiConstants {
    * @since 3.0
    */
   public enum PrincipalType {
-    NETBIOS("netbios"), DNS("dns"), DN("dn");
+    UNQUALIFIED(null), NETBIOS("netbios"), DNS("dns"), DN("dn");
 
     private final String tag;
 
