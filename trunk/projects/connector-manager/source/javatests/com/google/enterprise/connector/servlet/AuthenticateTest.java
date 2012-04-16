@@ -311,8 +311,8 @@ public class AuthenticateTest extends TestCase {
       "      <Identity>fooUser</Identity>\n" +
       "      <Group principaltype=\"dn\" namespace=\"global\">staff</Group>\n" +
       "      <Group principaltype=\"dn\" namespace=\"global\">wheel</Group>\n" +
-      "      <Group namespace=\"local\">slo</Group>\n" +
       "      <Group namespace=\"local\">wheel</Group>\n" +
+      "      <Group namespace=\"local\">slo</Group>\n" +
       "    </Success>\n" +
       "  </AuthnResponse>\n" +
       "</CmResponse>\n";
@@ -320,9 +320,8 @@ public class AuthenticateTest extends TestCase {
     Collection<Principal> groups = ImmutableList.of(
         new Principal(SpiConstants.PrincipalType.DN, "global", "staff"),
         new Principal(SpiConstants.PrincipalType.DN, "global", "wheel"),
-        new Principal(null, "local", "slo"),
-        new Principal(null, "local", "wheel"));
-
+        new Principal(SpiConstants.PrincipalType.UNQUALIFIED, "local", "wheel"),
+        new Principal(SpiConstants.PrincipalType.UNQUALIFIED, "local", "slo"));
     doTest(xmlBody, expectedResult, "connector1", "fooUser", "fooPassword",
            groups);
   }

@@ -573,7 +573,7 @@ public class DocPusherTest extends TestCase {
   public void testCaseInsensitiveAcl() throws Exception {
     Map<String, Object> props = getTestDocumentConfig();
     props.put(SpiConstants.PROPNAME_ACLUSERS,
-        new Principal(null, null, "John Doe",
+        new Principal(SpiConstants.PrincipalType.UNQUALIFIED, null, "John Doe",
           SpiConstants.CaseSensitivityType.EVERYTHING_CASE_INSENSITIVE));
     Document document = ConnectorTestUtils.createSimpleDocument(props);
 

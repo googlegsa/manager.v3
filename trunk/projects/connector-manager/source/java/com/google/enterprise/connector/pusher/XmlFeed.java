@@ -656,9 +656,10 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
           : new Principal(value.toString().trim());
       if (!Strings.isNullOrEmpty(principal.getName())) {
         buff.append("<").append(XML_PRINCIPAL);
-        if (principal.getType() != null) {
+        if (principal.getPrincipalType() !=
+            SpiConstants.PrincipalType.UNQUALIFIED) {
           XmlUtils.xmlAppendAttr(ServletUtil.XMLTAG_PRINCIPALTYPE_ATTRIBUTE,
-                                 principal.getType().toString(), buff);
+                                 principal.getPrincipalType().toString(), buff);
         }
         if (!Strings.isNullOrEmpty(principal.getNamespace())) {
           XmlUtils.xmlAppendAttr(ServletUtil.XMLTAG_NAMESPACE_ATTRIBUTE,
