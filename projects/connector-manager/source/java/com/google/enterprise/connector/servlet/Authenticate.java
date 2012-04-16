@@ -140,7 +140,7 @@ public class Authenticate extends ConnectorManagerServlet {
                     ServletUtil.XMLTAG_PRINCIPALTYPE_ATTRIBUTE,
                     group.getType().toString(), out);
               }
-              if (group.getNamespace() != null) {
+              if (!Strings.isNullOrEmpty(group.getNamespace())) {
                 XmlUtils.xmlAppendAttr(ServletUtil.XMLTAG_NAMESPACE_ATTRIBUTE,
                     group.getNamespace(), out);
               }

@@ -660,7 +660,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
           XmlUtils.xmlAppendAttr(ServletUtil.XMLTAG_PRINCIPALTYPE_ATTRIBUTE,
                                  principal.getType().toString(), buff);
         }
-        if (principal.getNamespace() != null) {
+        if (!Strings.isNullOrEmpty(principal.getNamespace())) {
           XmlUtils.xmlAppendAttr(ServletUtil.XMLTAG_NAMESPACE_ATTRIBUTE,
                                  principal.getNamespace(), buff);
         }
