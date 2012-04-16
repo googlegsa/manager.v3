@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project name="slf4j-stub" default="slf4j_stub" basedir=".">
+
+  <!-- ========================= PROPERTIES ============================= -->
+  <property name="jvm.version" value="1.5" />
+
+  <!-- Define Directories. -->
+  <property name="projects.dir" value=".." />
+
+  <property file="${projects.dir}/version.properties"/>
+
+  <property name="COMPILE_DEBUG_FLAG" value="false" />
+  <property name="COMPILE_DEBUG_LEVEL" value="" />
+
+  <property name="build" value="build" />
+  <property name="prod" value="${build}/prod" />
+  <property name="dist" value="dist" />
+  <property name="src" value="source/java" />
+  <property name="classes" value="${prod}/classes" />
+
+  <property name="jar.dir" value="${dist}/jarfile" />
+  <property name="jarfile" value="${jar.dir}/mime-util-slf4j-stub.jar" />
+
+  <property name="install.dir"
+            value="${projects.dir}/connector-manager/third-party/prod" />
+
+  <!-- =========================== TASKS =============================== -->
+  <target name="build" depends="all"
+          description="Stub SLF4J implementation for mime-util" />
+
+  <target name="all" depends="jar" />
+  <target name="everything" depends="all" />
+
+  <target name="init">
+    <mkdir dir="${build}" />
+    <mkdir dir="${prod}" />
+    <mkdir dir="${dist}" />
+    <mkdir dir="${classes}" />
+    <mkdir dir="${jar.dir}" />
+  </target>
+
+  <target name="prebuild" unless="svnversion">
+    <exec executable="svnversion" spawn="false"
+      failifexecutionfails="false"
+      dir="${projects.dir}"
+      outputproperty="svnversion">
+      <arg line="."/>
+    </exec>
+  </target>
+
+  <target name="clean" description="Deletes all build files.">
+    <delete dir="${build}" />
+    <delete dir="${dist}" />
+  </target>
+
+  <target name="compile" depends="init"
+          description="Compile java source files" >
+    <javac sourcepath="" srcdir="${src}" destdir="${classes}"
+           includeantruntime="false"
+           debug="${COMPILE_DEBUG_FLAG}" debuglevel="${COMPILE_DEBUG_LEVEL}"
+           target="${jvm.version}" source="${jvm.version}">
+      <compilerarg value="-Xlint"/>
+      <compilerarg value="-Xlint:-serial"/>
+    </javac>
+  </target>
+
+  <target name="jar" depends="prebuild,compile"
+          description="Create stub SLF4J jar.">
+    <tstamp />
+    <jar jarfile="${jarfile}">
+      <fileset dir="${classes}" />
+      <fileset dir="." includes="README.txt" />
+      <manifest>
+        <attribute name="Implementation-Title"
+                   value="Google Stub SLF4J Logging"/>
+        <attribute name="Implementation-Version"
+                   value="${version} (${TODAY})"/>
+        <attribute name="Implementation-Vendor" value="Google Inc."/>
+      </manifest>
+    </jar>
+  </target>
+
+  <target name="install" depends="jar"
+          description="Install stub SLF4J jar in Connector Manager.">
+    <copy file="${jarfile}" todir="${install.dir}"/>
+  </target>
+
+</project>
