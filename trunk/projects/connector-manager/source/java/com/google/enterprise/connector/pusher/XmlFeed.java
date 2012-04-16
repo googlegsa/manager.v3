@@ -456,13 +456,6 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
           + " Treat as a public doc", e);
     }
 
-    boolean overwriteAcls = DocUtils.getOptionalBoolean(document,
-        SpiConstants.PROPNAME_OVERWRITEACLS, true);
-    if (!overwriteAcls) {
-      XmlUtils.xmlAppendAttr(XML_OVERWRITEACLS,
-          Value.getBooleanValue(false).toString(), prefix);
-    }
-
     prefix.append(">\n");
     if (metadataAllowed) {
       xmlWrapMetadata(prefix, document);
@@ -694,8 +687,14 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
    */
   private void xmlWrapMetadata(StringBuilder buf, Document document)
       throws RepositoryException, IOException {
-    XmlUtils.xmlAppendStartTag(XML_METADATA, buf);
-    buf.append("\n");
+    boolean overwriteAcls = DocUtils.getOptionalBoolean(document,
+        SpiConstants.PROPNAME_OVERWRITEACLS, true);
+    buf.append('<').append(XML_METADATA);
+    if (!overwriteAcls) {
+      XmlUtils.xmlAppendAttr(XML_OVERWRITEACLS,
+          Value.getBooleanValue(false).toString(), buf);
+    }
+    buf.append(">\n");
 
     // Add all the metadata supplied by the Connector.
     Set<String> propertyNames = document.getPropertyNames();
