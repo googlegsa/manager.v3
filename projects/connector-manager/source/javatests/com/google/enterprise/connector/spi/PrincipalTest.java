@@ -26,7 +26,7 @@ public class PrincipalTest extends TestCase {
 
   public void testSimpleConstructor() {
     Principal p = new Principal("test");
-    assertEquals(PrincipalType.UNQUALIFIED, p.getPrincipalType());
+    assertEquals(PrincipalType.UNKNOWN, p.getPrincipalType());
     assertNull(p.getNamespace());
     assertEquals("test", p.getName());
     assertEquals(CaseSensitivityType.EVERYTHING_CASE_SENSITIVE,
@@ -34,8 +34,8 @@ public class PrincipalTest extends TestCase {
   }
 
   public void testConstructor() {
-    Principal p = new Principal(PrincipalType.DN, "namespace", "test");
-    assertEquals(PrincipalType.DN, p.getPrincipalType());
+    Principal p = new Principal(PrincipalType.UNQUALIFIED, "namespace", "test");
+    assertEquals(PrincipalType.UNQUALIFIED, p.getPrincipalType());
     assertEquals("namespace", p.getNamespace());
     assertEquals("test", p.getName());
     assertEquals(CaseSensitivityType.EVERYTHING_CASE_SENSITIVE,
@@ -43,9 +43,9 @@ public class PrincipalTest extends TestCase {
   }
 
   public void testFullConstructor() {
-    Principal p = new Principal(PrincipalType.DN, "namespace", "test",
+    Principal p = new Principal(PrincipalType.UNQUALIFIED, "namespace", "test",
         CaseSensitivityType.EVERYTHING_CASE_INSENSITIVE);
-    assertEquals(PrincipalType.DN, p.getPrincipalType());
+    assertEquals(PrincipalType.UNQUALIFIED, p.getPrincipalType());
     assertEquals("namespace", p.getNamespace());
     assertEquals("test", p.getName());
     assertEquals(CaseSensitivityType.EVERYTHING_CASE_INSENSITIVE,
@@ -53,9 +53,9 @@ public class PrincipalTest extends TestCase {
   }
 
   public void testToString() {
-    Principal p = new Principal(PrincipalType.DN, "global", "test");
+    Principal p = new Principal(PrincipalType.UNQUALIFIED, "global", "test");
     String s = p.toString();
-    assertTrue(s.contains("dn"));
+    assertTrue(s.contains("unqualified"));
     assertTrue(s.contains("global"));
     assertTrue(s.contains("test"));
     assertTrue(s.contains("-case-"));
@@ -63,11 +63,13 @@ public class PrincipalTest extends TestCase {
 
   public void testHashCode() {
     Principal p1 = new Principal("test");
-    Principal p2 = new Principal(PrincipalType.UNQUALIFIED, null, "test");
-    Principal p3 = new Principal(PrincipalType.UNQUALIFIED, "namespace", "test");
-    Principal p4 = new Principal(PrincipalType.DN, "namespace", "test");
+    Principal p2 = new Principal(PrincipalType.UNKNOWN, null, "test");
+    Principal p3 = new Principal(PrincipalType.UNKNOWN, "namespace", "test");
+    Principal p4 =
+        new Principal(PrincipalType.UNQUALIFIED, "namespace", "test");
     Principal p5 = new Principal("test2");
-    Principal p6 = new Principal(PrincipalType.DN, "namespace", "test");
+    Principal p6 =
+        new Principal(PrincipalType.UNQUALIFIED, "namespace", "test");
     Principal p7 = new Principal(null);
     assertEquals(p1.hashCode(), p2.hashCode());
     assertEquals(p4.hashCode(), p6.hashCode());
@@ -79,18 +81,21 @@ public class PrincipalTest extends TestCase {
 
   public void testEquals() {
     Principal p1 = new Principal("test");
-    Principal p2 = new Principal(PrincipalType.UNQUALIFIED, null, "test");
-    Principal p3 = new Principal(PrincipalType.UNQUALIFIED, "namespace", "test");
-    Principal p4 = new Principal(PrincipalType.DN, "namespace", "test");
+    Principal p2 = new Principal(PrincipalType.UNKNOWN, null, "test");
+    Principal p3 = new Principal(PrincipalType.UNKNOWN, "namespace", "test");
+    Principal p4 =
+        new Principal(PrincipalType.UNQUALIFIED, "namespace", "test");
     Principal p5 = new Principal("test2");
-    Principal p6 = new Principal(PrincipalType.DN, "namespace", "test");
-    Principal p7 = new Principal(PrincipalType.DNS, "namespace", "test");
-    Principal p8 = new Principal(PrincipalType.DN, "global", "test");
-    Principal p9 = new Principal(PrincipalType.DN, "namespace", "test2");
+    Principal p6 =
+        new Principal(PrincipalType.UNQUALIFIED, "namespace", "test");
+    // p7 missing due to historical circumstances.
+    Principal p8 = new Principal(PrincipalType.UNQUALIFIED, "global", "test");
+    Principal p9 =
+        new Principal(PrincipalType.UNQUALIFIED, "namespace", "test2");
     Principal p10 = new Principal(null);
-    Principal p11 = new Principal(PrincipalType.DN, "namespace", "test",
+    Principal p11 = new Principal(PrincipalType.UNKNOWN, "namespace", "test",
         CaseSensitivityType.EVERYTHING_CASE_INSENSITIVE);
-    Principal p12 = new Principal(PrincipalType.DN, "namespace", "TEST",
+    Principal p12 = new Principal(PrincipalType.UNKNOWN, "namespace", "TEST",
         CaseSensitivityType.EVERYTHING_CASE_INSENSITIVE);
 
     assertEquals(p1, p1);
@@ -100,10 +105,10 @@ public class PrincipalTest extends TestCase {
     assertEquals(p4, p4);
     assertEquals(p6, p4);
     assertEquals(p11, p12);
-    assertEquals(p10, new Principal(PrincipalType.UNQUALIFIED, null, null));
+    assertEquals(p10, new Principal(PrincipalType.UNKNOWN, null, null));
     assertFalse(p1.equals("test"));
     assertFalse(p4.equals(null));
-    assureNotEqual(p1, p3, p4, p5, p7, p8, p9, p10, p11);
+    assureNotEqual(p1, p3, p4, p5, p8, p9, p10, p11);
   }
 
   /** Assure that no two principals are equal. */
@@ -121,36 +126,37 @@ public class PrincipalTest extends TestCase {
   public void testCompareTo() {
     Principal p1 = new Principal("test");
     Principal p2 = new Principal(PrincipalType.UNQUALIFIED, null, "test");
-    Principal p3 = new Principal(PrincipalType.UNQUALIFIED, "namespace", "test");
-    Principal p4 = new Principal(PrincipalType.DN, "namespace", "test");
+    Principal p3 =
+        new Principal(PrincipalType.UNQUALIFIED, "namespace", "test");
+    Principal p4 = new Principal(PrincipalType.UNKNOWN, "namespace", "test");
     Principal p5 = new Principal("test2");
-    Principal p6 = new Principal(PrincipalType.DN, "namespace", "test");
-    Principal p7 = new Principal(PrincipalType.DNS, "namespace", "test");
-    Principal p8 = new Principal(PrincipalType.DN, "global", "test");
-    Principal p9 = new Principal(PrincipalType.DN, "namespace", "test2");
+    Principal p6 = new Principal(PrincipalType.UNKNOWN, "namespace", "test");
+    // p7 missing due to historical circumstances.
+    Principal p8 = new Principal(PrincipalType.UNKNOWN, "global", "test");
+    Principal p9 = new Principal(PrincipalType.UNKNOWN, "namespace", "test2");
     Principal p10 = new Principal(null);
-    Principal p11 = new Principal(PrincipalType.DN, "namespace", "test",
+    Principal p11 = new Principal(PrincipalType.UNKNOWN, "namespace", "test",
         CaseSensitivityType.EVERYTHING_CASE_INSENSITIVE);
-    Principal p12 = new Principal(PrincipalType.DN, "namespace", "TEST",
+    Principal p12 = new Principal(PrincipalType.UNKNOWN, "namespace", "TEST",
         CaseSensitivityType.EVERYTHING_CASE_INSENSITIVE);
-    Principal p13 = new Principal(PrincipalType.DN, "namespace", "TEST",
+    Principal p13 = new Principal(PrincipalType.UNKNOWN, "namespace", "TEST",
         CaseSensitivityType.EVERYTHING_CASE_SENSITIVE);
-    Principal p14 = new Principal(PrincipalType.DN, "namespace", "Test2");
+    Principal p14 = new Principal(PrincipalType.UNKNOWN, "namespace", "Test2");
 
     assureCompareTo0(p1, p2);
-    assureCompareTo0(p3, p4, p6, p7);
+    assureCompareTo0(p3, p4, p6);
     assureCompareTo0(p11, p12);
     assureCompareTo0(p12, p13);
-    assureOrder(p1, p3, p4, p5, p6, p7, p8, p9);
-    assureOrder(p2, p3, p4, p5, p6, p7, p8, p9);
+    assureOrder(p1, p3, p4, p5, p6, p8, p9);
+    assureOrder(p2, p3, p4, p5, p6, p8, p9);
     assureOrder(p3, p9);
-    assureOrder(p5, p3, p4, p6, p7, p8, p9);
+    assureOrder(p5, p3, p4, p6, p8, p9);
     assureOrder(p6, p9);
-    assureOrder(p8, p3, p4, p6, p7, p9);
-    assureOrder(p10, p1, p2, p3, p4, p5, p6, p7, p8, p9);
+    assureOrder(p8, p3, p4, p6, p9);
+    assureOrder(p10, p1, p2, p3, p4, p5, p6, p8, p9);
     assureOrder(p11, p9);
     assureOrder(p12, p9);
-    assureOrder(p13, p3, p4, p6, p7, p9, p11, p14);
+    assureOrder(p13, p3, p4, p6, p9, p11, p14);
   }
 
   /**

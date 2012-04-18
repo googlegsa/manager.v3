@@ -651,13 +651,13 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
           : new Principal(value.toString().trim());
       if (!Strings.isNullOrEmpty(principal.getName())) {
         buff.append("<").append(XML_PRINCIPAL);
-        /* TODO: Re-enable once the GSA supports principal-type attribute.
-        if (principal.getPrincipalType() !=
+        if (principal.getPrincipalType() ==
             SpiConstants.PrincipalType.UNQUALIFIED) {
+          // UNQUALIFIED is a special-case on the GSA to allow us to prevent the
+          // GSA from mistakeningly finding a domain in the principal name.
           XmlUtils.xmlAppendAttr(ServletUtil.XMLTAG_PRINCIPALTYPE_ATTRIBUTE,
-                                 principal.getPrincipalType().toString(), buff);
+              SpiConstants.PrincipalType.UNQUALIFIED.toString(), buff);
         }
-        */
         if (!Strings.isNullOrEmpty(principal.getNamespace())) {
           XmlUtils.xmlAppendAttr(ServletUtil.XMLTAG_NAMESPACE_ATTRIBUTE,
                                  principal.getNamespace(), buff);

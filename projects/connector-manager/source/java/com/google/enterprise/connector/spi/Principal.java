@@ -35,7 +35,7 @@ public class Principal implements Comparable<Principal> {
    * @param name the name of the principal
    */
   public Principal(String name) {
-    this(PrincipalType.UNQUALIFIED, null, name);
+    this(PrincipalType.UNKNOWN, null, name);
   }
 
   /**
