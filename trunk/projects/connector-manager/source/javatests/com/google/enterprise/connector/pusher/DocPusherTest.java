@@ -578,7 +578,7 @@ public class DocPusherTest extends TestCase {
     Document document = ConnectorTestUtils.createSimpleDocument(props);
 
     String resultXML = feedDocument(document, true);
-    assertStringContains("<principal"
+    assertStringContains("<principal principal-type=\"unqualified\""
         + " case-sensitivity-type=\"everything-case-insensitive\""
         + " scope=\"user\" access=\"permit\">John Doe</principal>", resultXML);
     assertStringContains("url=" + googleConnectorUrl("doc1"), resultXML);

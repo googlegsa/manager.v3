@@ -316,15 +316,17 @@ public class AuthenticateTest extends TestCase {
       "      <Group namespace=\"global\">staff</Group>\n" +
       "      <Group namespace=\"global\">wheel</Group>\n" +
       /* end TODO */
-      "      <Group namespace=\"local\">wheel</Group>\n" +
-      "      <Group namespace=\"local\">slo</Group>\n" +
+      "      <Group principal-type=\"unqualified\" namespace=\"local\">wheel" +
+        "</Group>\n" +
+      "      <Group principal-type=\"unqualified\" namespace=\"local\">slo" +
+        "</Group>\n" +
       "    </Success>\n" +
       "  </AuthnResponse>\n" +
       "</CmResponse>\n";
 
     Collection<Principal> groups = ImmutableList.of(
-        new Principal(SpiConstants.PrincipalType.DN, "global", "staff"),
-        new Principal(SpiConstants.PrincipalType.DN, "global", "wheel"),
+        new Principal(SpiConstants.PrincipalType.UNKNOWN, "global", "staff"),
+        new Principal(SpiConstants.PrincipalType.UNKNOWN, "global", "wheel"),
         new Principal(SpiConstants.PrincipalType.UNQUALIFIED, "local", "wheel"),
         new Principal(SpiConstants.PrincipalType.UNQUALIFIED, "local", "slo"));
     doTest(xmlBody, expectedResult, "connector1", "fooUser", "fooPassword",
