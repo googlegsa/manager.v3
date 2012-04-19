@@ -153,13 +153,19 @@ enable-auto-props = yes
 
 The Connector Manager runs as a web application under Tomcat.  For ease of configuration, Tomcat v6.0.26 or newer should be used.  Download a binary distribution of Tomcat from the Apache site and unpack it.  Tomcat must then be configured slightly to enable Connector Manager ContextLogging.  Specifically, the connector-logging.jar file must be on the system classpath.  Tomcat can be configuration can often be altered using optional `$CATALINA_BASE/bin/setenv.sh` or `%CATALINA_BASE%\bin\setenv.bat` files.
 
+Here is a minmal `setenv.sh` script:
+
+{{{
+CLASSPATH="$CLASSPATH":"$CATALINA_BASE/webapps/connector-manager/WEB-INF/lib/connector-logging.jar"
+}}}
+
 Here is an example `setenv.sh` script for my particular environment:
 
 {{{
 # Use Java 1.6 JDK
 JAVA_HOME=/System/Library/Java/JavaVirtualMachines/1.6.0.jdk/Contents/Home
 
-# JVM memory config similar to the Goolgle Connector Installer
+# JVM memory config similar to the Google Connectors Installer
 JAVA_OPTS="$JAVA_OPTS -Xms256m -Xmx1024m"
 
 # Determine the Connector Manager directory
@@ -191,7 +197,7 @@ if [ -n "$DOCUMENTUM_SHARED" ] ; then
 fi
 }}}
 
-The Google Connector Installer also configures a Tomcat RemoteAddrValve in `$CATALINA_BASE/conf/server.xml` that limits access to the configured GSA and localhost.  I do not recommend this for development, especially when [ChangeGSA switching between several GSAs].
+The Google Connectors Installer also configures a Tomcat RemoteAddrValve in `$CATALINA_BASE/conf/server.xml` that limits access to the configured GSA and localhost.  I do not recommend this for development, especially when [ChangeGSA switching between several GSAs].
 
 == Deploying the Development Connector Manager under Tomcat ==
 
@@ -199,7 +205,7 @@ As mentioned previously, the `connector-manager-war-prod` ant task builds the Co
 
 The Connector Manager WAR file contains only the Connector Manager and most of its associated files.  It _does not_ contain any connectors.  Connectors may be manually deployed by installing their connector JAR files (and any required third-party JAR files) in the `webapps/connector-manager/WEB-INF/lib` directory.  There is a [http://code.google.com/p/googlesearchapplianceconnectors/source/browse/#svn%2Ftrunk%2Fprojects%2Fgsa-connectors-war tool] that can be used to bundle a Connector Manager and several Connectors into a single WAR file for deployment, however its configuration is specific to GSA on-board deployments, rather than external Tomcat deployments.
 
-The Connector Manager WAR file does not include two key components (besides connectors) that are installed by the [http://code.google.com/p/googlesearchapplianceconnectors/downloads/list Google Connector Installer]:
+The Connector Manager WAR file does not include two key components (besides connectors) that are installed by the [http://code.google.com/p/googlesearchapplianceconnectors/downloads/list Google Connectors Installer]:
 
   * `logging.properties`: A current TODO is to unify Connector logging, including having a single `logging.properties` supplied by the Connector Manager.  Currently, however, each Connector supplies its own `logging.properties` file, slightly different than the others, and the last one installed wins.  My best suggestion is to take a [http://code.google.com/p/google-enterprise-connector-file-system/source/browse/trunk/projects/file-system-connector/config/logging.properties logging.properties file from a connector] you are using to test your Connector Manager.  The `logging.properties` file should be placed in `webapps/connector-manager/WEB-INF/classes` directory.  You *will* need to restart Tomcat after installing a new `logging.properties`.
 
