@@ -27,6 +27,7 @@ import com.google.enterprise.connector.manager.ProductionManager;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.Document;
+import com.google.enterprise.connector.spi.DocumentNotFoundException;
 import com.google.enterprise.connector.spi.MockConnector;
 import com.google.enterprise.connector.spi.MockRetriever;
 import com.google.enterprise.connector.spi.Value;
@@ -68,14 +69,14 @@ public class GetDocumentContentTest extends TestCase {
     buffer.reset();
     status = GetDocumentContent.handleDoGet(manager, "connector2",
                                             "xyzzy", buffer);
-    assertEquals(204, status);
+    assertEquals(200, status);
     assertEquals(0, buffer.size());
 
     // UnknownConnector does not exist.
     buffer.reset();
     status = GetDocumentContent.handleDoGet(manager, "unknownConnector",
                                             "xyzzy", buffer);
-    assertEquals(404, status);
+    assertEquals(503, status);
     assertEquals(0, buffer.size());
   }
 
@@ -83,16 +84,15 @@ public class GetDocumentContentTest extends TestCase {
   public void testGetLastModifiedMockManager() throws Exception {
     Manager manager = MockManager.getInstance();
     long lastModified;
-    Document document;
 
     // Connector1 has a lastModifiedDate
-    document = manager.getDocumentMetaData("connector1", "xyzzy");
-    lastModified = GetDocumentContent.handleGetLastModified(document);
+    lastModified = GetDocumentContent.handleGetLastModified(
+        createMockRequest(), manager, "connector1", "xyzzy");
     assertEquals(3600 * 1000, lastModified);
 
     // Connector2 has no lastModifiedDate
-    document = manager.getDocumentMetaData("connector2", "xyzzy");
-    lastModified = GetDocumentContent.handleGetLastModified(document);
+    lastModified = GetDocumentContent.handleGetLastModified(
+        createMockRequest(), manager, "connector2", "xyzzy");
     assertEquals(-1L, lastModified);
   }
 
@@ -112,8 +112,13 @@ public class GetDocumentContentTest extends TestCase {
 
     req = createMockRequest();
     // UnknownConnector does not exist.
-    assertNull(GetDocumentContent.getDocumentMetaData(req,
-        manager, "unknownConnector", "xyzzy"));
+    try {
+      GetDocumentContent.getDocumentMetaData(req,
+          manager, "unknownConnector", "xyzzy");
+      fail("Expected ConnectorNotFoundException, but got none.");
+    } catch (ConnectorNotFoundException expected) {
+      // Expected.
+    }
     // Test cache.
     assertNull(GetDocumentContent.getDocumentMetaData(req,
         manager, "unknownConnector", "xyzzy"));
@@ -147,27 +152,38 @@ public class GetDocumentContentTest extends TestCase {
 
   /** Test ProductionManager getDocumentContent with null connectorName. */
   public void testGetDocumentContentNullConnectorName() throws Exception {
-    checkGetDocumentContent(null, docid, 400, "");
+    checkNullOrEmptyConnectorNameDocid(null, docid);
   }
 
   /** Test ProductionManager getDocumentContent with empty connectorName. */
   public void testGetDocumentContentEmptyConnectorName() throws Exception {
-    checkGetDocumentContent("", docid, 400, "");
+    checkNullOrEmptyConnectorNameDocid("", docid);
   }
 
   /** Test ProductionManager getDocumentContent with null docid. */
   public void testGetDocumentContentNullDocid() throws Exception {
-    checkGetDocumentContent(connectorName, null, 400, "");
+    checkNullOrEmptyConnectorNameDocid(connectorName, null);
   }
-
+                                       
   /** Test ProductionManager getDocumentContent with empty docid. */
   public void testGetDocumentContentEmptyDocid() throws Exception {
-    checkGetDocumentContent(connectorName, "", 400, "");
+    checkNullOrEmptyConnectorNameDocid(connectorName, "");
   }
+
+  private void checkNullOrEmptyConnectorNameDocid(String connectorName,
+      String docid) throws Exception {
+    patchRealProductionManager();
+    MockHttpServletRequest req = createMockRequest();
+    req.setParameter(ServletUtil.XMLTAG_CONNECTOR_NAME, connectorName);
+    req.setParameter(ServletUtil.QUERY_PARAM_DOCID, docid);
+    MockHttpServletResponse res = new MockHttpServletResponse();
+    new GetDocumentContent().service(req, res);
+    assertEquals(400, res.getStatus());
+  }    
 
   /** Test ProductionManager getDocumentContent with ConnectorNotFound. */
   public void testGetDocumentContentConnectorNotFound() throws Exception {
-    checkGetDocumentContent("unknownConnector", docid, 404, "");
+    checkGetDocumentContent("unknownConnector", docid, 503, "");
   }
 
   /** Test ProductionManager getDocumentContent with Document NotFound. */
@@ -211,44 +227,39 @@ public class GetDocumentContentTest extends TestCase {
   /** Test getDocumentMetaData against a MockManager. */
   public void testGetDocumentMetaDataProductionManager() throws Exception {
     Manager manager = getProductionManager();
-
-    // Null or empty ConnectorName.
-    assertNull(GetDocumentContent.getDocumentMetaData(createMockRequest(),
-        manager, null, docid));
-    assertNull(GetDocumentContent.getDocumentMetaData(createMockRequest(),
-        manager, "", docid));
-
-    // Null or empty docid.
-    assertNull(GetDocumentContent.getDocumentMetaData(createMockRequest(),
-        manager, connectorName, null));
-    assertNull(GetDocumentContent.getDocumentMetaData(createMockRequest(),
-        manager, connectorName, ""));
-
     // UnknownConnector does not exist.
-    assertNull(GetDocumentContent.getDocumentMetaData(createMockRequest(),
-        manager, "unknownConnector", docid));
+    try {
+      GetDocumentContent.getDocumentMetaData(createMockRequest(),
+          manager, "unknownConnector", docid);
+      fail("Expected ConnectorNotFoundException, but got none.");
+    } catch (ConnectorNotFoundException expected) {
+      // Expected
+    }
 
     // Unknown document does not exist.
-    assertNull(GetDocumentContent.getDocumentMetaData(createMockRequest(),
-        manager, connectorName, MockRetriever.DOCID_NOT_FOUND));
+    try {
+      GetDocumentContent.getDocumentMetaData(createMockRequest(),
+          manager, connectorName, MockRetriever.DOCID_NOT_FOUND);
+      fail("Expected DocumentNotFoundException, but got none.");
+    } catch (DocumentNotFoundException expected) {
+      // Expected.
+    }
   }
-
 
   /** Test getLastModified function against a ProductionManager. */
   public void testGetLastModifiedProductionManager() throws Exception {
+    patchRealProductionManager();
     Manager manager = getProductionManager();
     long lastModified;
-    Document document;
 
     // Connector regular docids have lastModified.
-    document = manager.getDocumentMetaData(connectorName, docid);
-    lastModified = GetDocumentContent.handleGetLastModified(document);
+    lastModified = GetDocumentContent.handleGetLastModified(
+        createMockRequest(), manager, connectorName, docid);
     assertEquals(3600 * 1000, lastModified);
 
     // This Document has no lastModifiedDate
-    document = manager.getDocumentMetaData(connectorName,
-        MockRetriever.DOCID_NO_LASTMODIFIED);
-    lastModified = GetDocumentContent.handleGetLastModified(document);
+    lastModified = GetDocumentContent.handleGetLastModified(createMockRequest(),
+        manager, connectorName, MockRetriever.DOCID_NO_LASTMODIFIED);
     assertEquals(-1L, lastModified);
   }
 
@@ -267,8 +278,7 @@ public class GetDocumentContentTest extends TestCase {
   /** Test ProductionManager getDocumentContent should deny SecMgr. */
   public void testGetDocumentContentFromSecMgr() throws Exception {
     patchRealProductionManager();
-    MockHttpServletRequest req = new MockHttpServletRequest("GET",
-        "/connector-manager/getDocumentContent");
+    MockHttpServletRequest req = createMockRequest();
     req.setParameter(ServletUtil.XMLTAG_CONNECTOR_NAME, connectorName);
     req.setParameter(ServletUtil.QUERY_PARAM_DOCID, docid);
     req.addHeader("User-Agent", "SecMgr");
@@ -335,8 +345,7 @@ public class GetDocumentContentTest extends TestCase {
    */
   public void testDoGetNoIfModifiedSince() throws Exception {
     patchRealProductionManager();
-    MockHttpServletRequest req = new MockHttpServletRequest("GET",
-        "/connector-manager/getDocumentContent");
+    MockHttpServletRequest req = createMockRequest();
     req.setParameter(ServletUtil.XMLTAG_CONNECTOR_NAME, connectorName);
     req.setParameter(ServletUtil.QUERY_PARAM_DOCID, docid);
     encodeQueryParameter(req);
@@ -366,8 +375,7 @@ public class GetDocumentContentTest extends TestCase {
   public void testDoGetWithCompression() throws Exception {
     patchRealProductionManager();
     String docid = "NowIsTheTimeForAllGoodMenToComeToTheAidOfTheCountry";
-    MockHttpServletRequest req = new MockHttpServletRequest("GET",
-        "/connector-manager/getDocumentContent");
+    MockHttpServletRequest req = createMockRequest();
     req.setParameter(ServletUtil.XMLTAG_CONNECTOR_NAME, connectorName);
     req.setParameter(ServletUtil.QUERY_PARAM_DOCID, docid);
     encodeQueryParameter(req);
@@ -389,8 +397,7 @@ public class GetDocumentContentTest extends TestCase {
   public void testDoGetIsModifiedSinceNoLastModified() throws Exception {
     patchRealProductionManager();
     String docid = MockRetriever.DOCID_NO_LASTMODIFIED;
-    MockHttpServletRequest req = new MockHttpServletRequest("GET",
-        "/connector-manager/getDocumentContent");
+    MockHttpServletRequest req = createMockRequest();
     req.setParameter(ServletUtil.XMLTAG_CONNECTOR_NAME, connectorName);
     req.setParameter(ServletUtil.QUERY_PARAM_DOCID, docid);
     encodeQueryParameter(req);
@@ -406,8 +413,7 @@ public class GetDocumentContentTest extends TestCase {
    */
   public void testDoGetIsModifiedSinceLastModified() throws Exception {
     patchRealProductionManager();
-    MockHttpServletRequest req = new MockHttpServletRequest("GET",
-        "/connector-manager/getDocumentContent");
+    MockHttpServletRequest req = createMockRequest();
     req.setParameter(ServletUtil.XMLTAG_CONNECTOR_NAME, connectorName);
     req.setParameter(ServletUtil.QUERY_PARAM_DOCID, docid);
     encodeQueryParameter(req);
@@ -424,8 +430,7 @@ public class GetDocumentContentTest extends TestCase {
    */
   public void testDoGetUnModifiedSinceLastModified() throws Exception {
     patchRealProductionManager();
-    MockHttpServletRequest req = new MockHttpServletRequest("GET",
-        "/connector-manager/getDocumentContent");
+    MockHttpServletRequest req = createMockRequest();
     req.setParameter(ServletUtil.XMLTAG_CONNECTOR_NAME, connectorName);
     req.setParameter(ServletUtil.QUERY_PARAM_DOCID, docid);
     encodeQueryParameter(req);

@@ -842,12 +842,16 @@ public class SpiConstants {
   }
 
   /**
-   * Enum for the types of Principals: NetBIOS, DNS, or DN.
+   * Enum for the types of Principals.
    *
    * @since 3.0
    */
   public enum PrincipalType {
-    UNQUALIFIED(null), NETBIOS("netbios"), DNS("dns"), DN("dn");
+    /** The type is not known. The GSA will guess what the domain is. */
+    UNKNOWN("unknown"),
+    /** There is no domain. The GSA will not guess the domain. */
+    UNQUALIFIED("unqualified"),
+    ;
 
     private final String tag;
 

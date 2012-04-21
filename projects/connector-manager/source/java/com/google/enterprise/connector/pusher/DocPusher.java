@@ -261,6 +261,7 @@ public class DocPusher implements Pusher {
 
     boolean isThrowing = false;
     int resetPoint = xmlFeed.size();
+    int resetCount = xmlFeed.getRecordCount();
     InputStream contentStream = null;
     try {
       if (LOGGER.isLoggable(Level.FINER)) {
@@ -290,20 +291,20 @@ public class DocPusher implements Pusher {
       return PusherStatus.OK;
 
     } catch (OutOfMemoryError me) {
-      xmlFeed.reset(resetPoint);
+      resetFeed(resetPoint, resetCount);
       throw new PushException("Out of memory building feed, retrying.", me);
     } catch (RuntimeException e) {
-      xmlFeed.reset(resetPoint);
+      resetFeed(resetPoint, resetCount);
       LOGGER.log(Level.WARNING,
           "Rethrowing RuntimeException as RepositoryDocumentException", e);
       throw new RepositoryDocumentException(e);
     } catch (RepositoryDocumentException rde) {
       // Skipping this document, remove it from the feed.
-      xmlFeed.reset(resetPoint);
+      resetFeed(resetPoint, resetCount);
       throw rde;
     } catch (IOException ioe) {
       LOGGER.log(Level.SEVERE, "IOException while reading: skipping", ioe);
-      xmlFeed.reset(resetPoint);
+      resetFeed(resetPoint, resetCount);
       Throwable t = ioe.getCause();
       isThrowing = true;
       if (t != null && (t instanceof RepositoryException)) {
@@ -324,6 +325,12 @@ public class DocPusher implements Pusher {
         }
       }
     }
+  }
+
+  /** Rolls back a feed to the reset point. */
+  private void resetFeed(int resetPoint, int resetCount) {
+    xmlFeed.reset(resetPoint);
+    xmlFeed.setRecordCount(resetCount);
   }
 
   /**

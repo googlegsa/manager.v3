@@ -205,10 +205,10 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
   }
 
   /**
-   * Bumps the count of records stored in this feed.
+   * Set the count of records in this feed.
    */
-  public synchronized void incrementRecordCount() {
-    recordCount++;
+  public synchronized void setRecordCount(int count) {
+    recordCount = count;
   }
 
   /**
@@ -226,7 +226,6 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
       throws RepositoryException, IOException {
     // Build an XML feed record for the document.
     xmlWrapRecord(document, contentStream, contentEncoding);
-    recordCount++;
   }
 
   /*
@@ -361,13 +360,16 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
       if (docType != null
           && DocumentType.findDocumentType(docType) == DocumentType.ACL) {
         xmlWrapAclRecord(document);
+        recordCount++;
         return;
       } else if (hasAclProperties(document)) {
         xmlWrapAclRecord(document);
+        recordCount++;
         document = stripAclDocumentFilter.newDocumentFilter(document);
       }
     }
     xmlWrapDocumentRecord(document, contentStream, contentEncoding);
+    recordCount++;
   }
 
   /*
@@ -649,13 +651,13 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
           : new Principal(value.toString().trim());
       if (!Strings.isNullOrEmpty(principal.getName())) {
         buff.append("<").append(XML_PRINCIPAL);
-        /* TODO: Re-enable once the GSA supports principal-type attribute.
-        if (principal.getPrincipalType() !=
+        if (principal.getPrincipalType() ==
             SpiConstants.PrincipalType.UNQUALIFIED) {
+          // UNQUALIFIED is a special-case on the GSA to allow us to prevent the
+          // GSA from mistakeningly finding a domain in the principal name.
           XmlUtils.xmlAppendAttr(ServletUtil.XMLTAG_PRINCIPALTYPE_ATTRIBUTE,
-                                 principal.getPrincipalType().toString(), buff);
+              SpiConstants.PrincipalType.UNQUALIFIED.toString(), buff);
         }
-        */
         if (!Strings.isNullOrEmpty(principal.getNamespace())) {
           XmlUtils.xmlAppendAttr(ServletUtil.XMLTAG_NAMESPACE_ATTRIBUTE,
                                  principal.getNamespace(), buff);
