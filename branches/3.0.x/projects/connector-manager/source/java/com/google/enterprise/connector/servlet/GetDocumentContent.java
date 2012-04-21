@@ -24,13 +24,16 @@ import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.pusher.FeedConnection;
 import com.google.enterprise.connector.spi.Document;
+import com.google.enterprise.connector.spi.DocumentNotFoundException;
 import com.google.enterprise.connector.spi.RepositoryDocumentException;
 import com.google.enterprise.connector.spi.RepositoryException;
+import com.google.enterprise.connector.spi.SkippedDocumentException;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.spiimpl.DateValue;
 import com.google.enterprise.connector.spiimpl.ValueImpl;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -157,6 +160,11 @@ public class GetDocumentContent extends HttpServlet {
     String docid = ServletUtil.getFirstParameter(
         params, ServletUtil.QUERY_PARAM_DOCID);
 
+    if (Strings.isNullOrEmpty(connectorName) || Strings.isNullOrEmpty(docid)) {
+      res.sendError(HttpServletResponse.SC_BAD_REQUEST);
+      return;
+    }
+
     int securityCode =
         handleMarkingDocumentSecurity(req, res, manager, connectorName, docid);
     if (securityCode != HttpServletResponse.SC_OK) {
@@ -182,10 +190,9 @@ public class GetDocumentContent extends HttpServlet {
         LOGGER.finest("RETRIEVER: Get Document " + docid + " "
             + HDR_IF_MODIFIED + " " + req.getHeader(HDR_IF_MODIFIED));
       }
-      Document metaData =
-          getDocumentMetaData(req, manager, connectorName, docid);
       long lastModified =
-          metaData == null ? -1L : handleGetLastModified(metaData);
+          handleGetLastModified(req, manager, connectorName, docid);
+
       // If the document modification time is later, fall through to fetch
       // the content, otherwise return SC_NOT_MODIFIED.  Since the GSA sends
       // a modified-since time of the crawl time, rather than the document's
@@ -242,15 +249,13 @@ public class GetDocumentContent extends HttpServlet {
   @VisibleForTesting
   static int handleDoGet(Manager manager, String connectorName, String docid,
       OutputStream out) throws IOException {
-    if (Strings.isNullOrEmpty(connectorName) || Strings.isNullOrEmpty(docid)) {
-      return HttpServletResponse.SC_BAD_REQUEST;
-    }
-
     InputStream in = null;
     try {
       in = manager.getDocumentContent(connectorName, docid);
       if (in == null) {
-        return HttpServletResponse.SC_NO_CONTENT;
+        // This is unlikely to happen, since Production Manager
+        // will return an AlternateContent InputStream.
+        in = new ByteArrayInputStream(new byte[0]);
       }
       byte[] buffer = new byte[1024 * 1024];
       int bytes;
@@ -264,8 +269,12 @@ public class GetDocumentContent extends HttpServlet {
     } catch (ConnectorNotFoundException e) {
       LOGGER.log(Level.FINE, "Failed to retrieve document content: {0}",
                  e.toString());
+      return HttpServletResponse.SC_SERVICE_UNAVAILABLE;
+    } catch (DocumentNotFoundException e) {
+      LOGGER.log(Level.FINE, "Failed to retrieve document content: {0}",
+                 e.toString());
       return HttpServletResponse.SC_NOT_FOUND;
-    } catch (RepositoryDocumentException e) {
+    } catch (SkippedDocumentException e) {
       LOGGER.log(Level.FINE, "Failed to retrieve document content: {0}",
                  e.toString());
       return HttpServletResponse.SC_NOT_FOUND;
@@ -283,8 +292,8 @@ public class GetDocumentContent extends HttpServlet {
   }
 
   /**
-   * Retrieve and cache the metadata of the currently requested document. The
-   * metadata is cached for the life of the servlet request.
+   * Retrieve and cache the metadata of the currently requested document.
+   * The metadata is cached for the life of the servlet request.
    *
    * @param req Request to use for caching return value
    * @param manager a Manager
@@ -295,35 +304,20 @@ public class GetDocumentContent extends HttpServlet {
    */
   @VisibleForTesting
   static Document getDocumentMetaData(HttpServletRequest req, Manager manager,
-      String connectorName, String docid) {
+      String connectorName, String docid) throws ConnectorManagerException,
+      RepositoryException {
     Object cache = req.getAttribute(METADATA_CACHE_NAME);
     if (cache != null) {
       return cache == NEGATIVE_METADATA_CACHE_VALUE ? null : (Document) cache;
     }
 
-    if (Strings.isNullOrEmpty(connectorName) || Strings.isNullOrEmpty(docid)) {
-      LOGGER.warning("Missing connectorName or docid parameter");
-      req.setAttribute(METADATA_CACHE_NAME, NEGATIVE_METADATA_CACHE_VALUE);
-      return null;
-    }
-    Document document;
+    Document document = null;
     try {
       document = manager.getDocumentMetaData(connectorName, docid);
-    } catch (RepositoryException ex) {
-      LOGGER.log(Level.WARNING, "Unable to get document metadata", ex);
-      req.setAttribute(METADATA_CACHE_NAME, NEGATIVE_METADATA_CACHE_VALUE);
-      return null;
-    } catch (ConnectorManagerException ex) {
-      LOGGER.log(Level.WARNING, "Unable to get document metadata", ex);
-      req.setAttribute(METADATA_CACHE_NAME, NEGATIVE_METADATA_CACHE_VALUE);
-      return null;
+    } finally {
+      req.setAttribute(METADATA_CACHE_NAME, 
+          (document == null) ? NEGATIVE_METADATA_CACHE_VALUE : document);
     }
-    if (document == null) {
-      LOGGER.warning("Document metadata was null");
-      req.setAttribute(METADATA_CACHE_NAME, NEGATIVE_METADATA_CACHE_VALUE);
-      return null;
-    }
-    req.setAttribute(METADATA_CACHE_NAME, document);
     return document;
   }
 
@@ -331,13 +325,24 @@ public class GetDocumentContent extends HttpServlet {
    * Retrieves the last modified date of a document from a connector instance.
    *
    * @param req Request whose parameters identify the document of interest
+   * @param manager a Manager
+   * @param connectorName the name of the connector instance that
+   *        can access the document
+   * @param docId the document identifer
    * @return a long integer specifying the time the document was last modified,
    *         in milliseconds since midnight, January 1, 1970 GMT, or -1L if the
    *         time is not known
    */
   @VisibleForTesting
-  static long handleGetLastModified(Document metaData) {
+  static long handleGetLastModified(HttpServletRequest req, Manager manager,
+      String connectorName, String docid) {
     try {
+      Document metaData =
+          getDocumentMetaData(req, manager, connectorName, docid);
+      if (metaData == null) {
+        return -1L;
+      }
+
       ValueImpl value = (ValueImpl)
           Value.getSingleValue(metaData, SpiConstants.PROPNAME_LASTMODIFIED);
       if (value == null) {
@@ -377,8 +382,29 @@ public class GetDocumentContent extends HttpServlet {
       return HttpServletResponse.SC_OK;
     }
 
-    Document document = getDocumentMetaData(req, manager, connectorName, docid);
-    if (document == null) {
+    Document document;
+    try { 
+      document = getDocumentMetaData(req, manager, connectorName, docid);
+      if (document == null) {
+        return HttpServletResponse.SC_SERVICE_UNAVAILABLE;
+      }
+    } catch (ConnectorNotFoundException e) {
+      LOGGER.log(Level.FINE, "Failed to retrieve document metadata: {0}",
+                 e.toString());
+      return HttpServletResponse.SC_SERVICE_UNAVAILABLE;
+    } catch (DocumentNotFoundException e) {
+      LOGGER.log(Level.FINE, "Failed to retrieve document metadata: {0}",
+                 e.toString());
+      return HttpServletResponse.SC_NOT_FOUND;
+    } catch (SkippedDocumentException e) {
+      LOGGER.log(Level.FINE, "Failed to retrieve document metadata: {0}",
+                 e.toString());
+      return HttpServletResponse.SC_NOT_FOUND;
+    } catch (RepositoryException e) {
+      LOGGER.log(Level.WARNING, "Failed to retrieve document metadata", e);
+      return HttpServletResponse.SC_SERVICE_UNAVAILABLE;
+    } catch (ConnectorManagerException e) {
+      LOGGER.log(Level.SEVERE, "Failed to retrieve document metadata", e);
       return HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
     }
 
@@ -388,7 +414,7 @@ public class GetDocumentContent extends HttpServlet {
           SpiConstants.PROPNAME_ISPUBLIC);
     } catch (RepositoryException ex) {
       LOGGER.log(Level.WARNING, "Failed retrieving isPublic property", ex);
-      return HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
+      return HttpServletResponse.SC_SERVICE_UNAVAILABLE;
     }
     boolean isPublic = isPublicVal == null || isPublicVal.toBoolean();
 
