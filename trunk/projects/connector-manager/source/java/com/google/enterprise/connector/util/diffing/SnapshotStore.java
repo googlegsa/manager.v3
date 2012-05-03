@@ -16,6 +16,7 @@ package com.google.enterprise.connector.util.diffing;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Ordering;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -31,7 +32,6 @@ import java.io.Reader;
 import java.io.Writer;
 import java.nio.charset.Charset;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.Iterator;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -146,27 +146,13 @@ public class SnapshotStore {
   /**
    * @return sorted set of all available snapshots
    */
-  static private SortedSet<Long> getExistingSnapshots(File snapshotDirec) {
-    Comparator<Long> comparator = new Comparator<Long>() {
-      /* @Override */
-      public int compare(Long o1, Long o2) {
-        Preconditions.checkState(!o1.equals(o2), "two snapshots with the same number");
-        return (o1 > o2) ? -1 : +1;
-      }
-    };
-
-    TreeSet<Long> result = new TreeSet<Long>(comparator);
-    FilenameFilter snapshotFilter = new FilenameFilter() {
-      public boolean accept(File dir, String name) {
-        Matcher m = SNAPSHOT_PATTERN.matcher(name);
-        return m.matches();
-      }
-    };
-
-    for (File f : snapshotDirec.listFiles(snapshotFilter)) {
+  static private SortedSet<Long> getExistingSnapshots(File snapshotDirectory) {
+    TreeSet<Long> result =
+        new TreeSet<Long>(Ordering.<Long>natural().reverse());
+    for (File f : snapshotDirectory.listFiles()) {
       Matcher m = SNAPSHOT_PATTERN.matcher(f.getName());
       if (m.matches()) {
-        result.add(Long.parseLong(m.group(1)));
+        result.add(Long.valueOf(m.group(1)));
       }
     }
     return result;
