@@ -258,6 +258,7 @@ public class ConnectorCoordinatorTest extends TestCase {
       updateConnectorTest(instance, typeName, true, jsonConfigString);
       assertFalse(originalConnectorDir.exists());
     }
+    removeConnector(instance);
   }
 
   public void testCreateExising() throws Exception {
@@ -323,6 +324,8 @@ public class ConnectorCoordinatorTest extends TestCase {
                         new RunOnceUpdater(instance2, 100));
     checkThreadDeadlock(new RestartUpdater(instance1, 100),
                         new RunOnceUpdater(instance1, 100));
+    removeConnector(instance1);
+    removeConnector(instance2);
   }
 
   private void checkThreadDeadlock(Updater updater1, Updater updater2)
@@ -349,6 +352,11 @@ public class ConnectorCoordinatorTest extends TestCase {
         throw new RuntimeException("Deadlock");
       }
     }
+
+    try {
+      thread1.join(1000);
+      thread2.join(1000);
+    } catch (InterruptedException e) {}
 
     if (updater1.getException() != null)
       throw updater1.getException();
