@@ -22,6 +22,7 @@ import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.common.SecurityUtils;
 import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.database.ConnectorPersistentStoreFactory;
+import com.google.enterprise.connector.database.DocumentStore;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
@@ -53,7 +54,7 @@ import com.google.enterprise.connector.traversal.QueryTraverser;
 import com.google.enterprise.connector.traversal.TraversalDelayPolicy;
 import com.google.enterprise.connector.traversal.Traverser;
 import com.google.enterprise.connector.util.Clock;
-import com.google.enterprise.connector.database.DocumentStore;
+import com.google.enterprise.connector.util.filter.DocumentFilterFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -425,6 +426,12 @@ class ConnectorCoordinatorImpl implements
     } catch (Exception e) {
       throw new InstantiatorException("Failed to get configuration form", e);
     }
+  }
+
+  @Override
+  public DocumentFilterFactory getDocumentFilterFactory()
+      throws ConnectorNotFoundException {
+    return getInstanceInfo().getDocumentFilterFactory();
   }
 
   /**
