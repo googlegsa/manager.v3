@@ -47,6 +47,7 @@ import com.google.enterprise.connector.traversal.NoopQueryTraverser;
 import com.google.enterprise.connector.traversal.QueryTraverser;
 import com.google.enterprise.connector.traversal.TraversalStateStore;
 import com.google.enterprise.connector.traversal.Traverser;
+import com.google.enterprise.connector.util.filter.DocumentFilterFactory;
 import com.google.enterprise.connector.util.SystemClock;
 
 import java.util.Collection;
@@ -327,6 +328,12 @@ public class MockInstantiator implements Instantiator {
   public String getConnectorState(String connectorName)
       throws ConnectorNotFoundException {
     return getConnectorCoordinator(connectorName).getConnectorState();
+  }
+
+  @Override
+  public DocumentFilterFactory getDocumentFilterFactory(String connectorName)
+      throws ConnectorNotFoundException {
+    return null;
   }
 
   public void setGDataConfig() {

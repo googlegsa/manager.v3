@@ -423,11 +423,17 @@
     </constructor-arg>
   </bean>
 
+  <bean id="DocumentFilterFactoryFactory"
+        class="com.google.enterprise.connector.instantiator.DocumentFilterFactoryFactoryImpl">
+    <constructor-arg index="0" ref="InternalDocumentFilters"/>
+    <constructor-arg index="1" ref="ConnectorCoordinatorMap"/>
+  </bean>
+
   <bean id="PusherFactory"
         class="com.google.enterprise.connector.pusher.DocPusherFactory">
     <constructor-arg index="0" ref="FeedConnection" />
     <constructor-arg index="1" ref="FileSizeLimitInfo"/>
-    <constructor-arg index="2" ref="InternalDocumentFilters"/>
+    <constructor-arg index="2" ref="DocumentFilterFactoryFactory"/>
     <constructor-arg index="3" value="${feed.contenturl.prefix}"/>
   </bean>
 
@@ -487,7 +493,7 @@
   <bean id="Manager"
         class="com.google.enterprise.connector.manager.ProductionManager">
     <property name="instantiator" ref="Instantiator"/>
-    <property name="documentFilter" ref="InternalDocumentFilters"/>
+    <property name="documentFilterFactoryFactory" ref="DocumentFilterFactoryFactory"/>
   </bean>
 
   <bean id="TraversalScheduler"

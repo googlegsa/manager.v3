@@ -32,6 +32,7 @@ import com.google.enterprise.connector.traversal.BatchSize;
 import com.google.enterprise.connector.traversal.BatchTimeout;
 import com.google.enterprise.connector.traversal.TraversalStateStore;
 import com.google.enterprise.connector.traversal.Traverser;
+import com.google.enterprise.connector.util.filter.DocumentFilterFactory;
 import com.google.enterprise.connector.util.SystemClock;
 
 import java.util.Locale;
@@ -165,6 +166,11 @@ class MockConnectorCoordinator implements ConnectorCoordinator {
                    + name, e);
       }
     }
+  }
+
+  @Override
+  public DocumentFilterFactory getDocumentFilterFactory() {
+    return null;
   }
 
   public synchronized boolean startBatch() {
