@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.servlet;
 
+import com.google.common.io.Files;
 import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.manager.Context;
@@ -43,29 +44,44 @@ public class LogLevelTest extends TestCase {
   private static final String APP_PROP_FILE = "applicationContext.properties";
   private final File baseDirectory  = new File(TEST_DIR_NAME);
 
+  private File testPropFile;
+  private File classesDirectory;
+  private File classesPropFile;
+  private File configPropFile;
+  private File appPropFile;
+
+  private Logger feedLogger;
   private Logger rootLogger;
   private Level origLevel;
   private String origPropFile;
-  private String propFile;
-  private Logger feedLogger;
-  private String appPropFile;
+
   private MockHttpServletRequest req;
   private MockHttpServletResponse res;
+
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
     ConnectorTestUtils.deleteAllFiles(baseDirectory);
     assertTrue(ConnectorTestUtils.mkdirs(baseDirectory));
-    propFile = TEST_DIR_NAME + PROP_FILE;
-    appPropFile = TEST_DIR_NAME + APP_PROP_FILE;
-    ConnectorTestUtils.copyFile("testdata/config/" + PROP_FILE, propFile);
-    ConnectorTestUtils.copyFile("testdata/mocktestdata/" + APP_PROP_FILE,
-                                appPropFile);
+
+    testPropFile = new File(new File("testdata", "config"), PROP_FILE);
+    configPropFile = new File(baseDirectory, PROP_FILE);
+    appPropFile = new File(baseDirectory, APP_PROP_FILE);
+
+    Files.copy(testPropFile, configPropFile);
+    Files.copy(new File(new File("testdata", "mocktestdata"), APP_PROP_FILE),
+               appPropFile);
+
     Context.refresh();
     Context context = Context.getInstance();
     context.setStandaloneContext(APPLICATION_CONTEXT,
         Context.DEFAULT_JUNIT_COMMON_DIR_PATH);
+
+    classesDirectory = new File(context.getCommonDirPath(), "classes");
+    classesPropFile = new File(classesDirectory, PROP_FILE);
+    assertTrue(ConnectorTestUtils.mkdirs(classesDirectory));
+
     feedLogger =  (Logger) context.getApplicationContext()
         .getBean("FeedWrapperLogger", Logger.class);
     feedLogger.setLevel(Level.OFF);
@@ -73,7 +89,8 @@ public class LogLevelTest extends TestCase {
     rootLogger = Logger.getLogger("");
     origLevel = rootLogger.getLevel();
     origPropFile = System.getProperty("java.util.logging.config.file");
-    System.setProperty("java.util.logging.config.file", propFile);
+    System.setProperty("java.util.logging.config.file",
+                       configPropFile.getAbsolutePath());
     rootLogger.setLevel(Level.CONFIG);
 
     req = new MockHttpServletRequest();
@@ -83,6 +100,7 @@ public class LogLevelTest extends TestCase {
   @Override
   protected void tearDown() throws Exception {
     ConnectorTestUtils.deleteAllFiles(baseDirectory);
+    ConnectorTestUtils.deleteAllFiles(classesDirectory);
     rootLogger.setLevel(origLevel);
     System.setProperty("java.util.logging.config.file", origPropFile);
   }
@@ -97,8 +115,47 @@ public class LogLevelTest extends TestCase {
                  removeInfoElements(res.getContentAsString()));
   }
 
-  /** Test setConnectorLogLevel. */
-  public void testSetConnectorLogLevel() throws Exception {
+  /** Test setConnectorLogLevel with logging config system property. */
+  public void testSetConnectorLogLevel1() throws Exception {
+    setConnectorLogLevel();
+
+    // Check that the system property logging.properties file has new log level.
+    checkProperty(configPropFile, ".level", "FINEST");
+  }
+
+  /**
+   * Test setConnectorLogLevel with no classes/logging.properties and no
+   * System logging config property.
+   */
+  public void testSetConnectorLogLevel2() throws Exception {
+    // Make sure there is no classes/logging.properties file.
+    classesPropFile.delete();
+    assertFalse(classesPropFile.exists());
+      
+    // And no System logging configuration.
+    System.clearProperty("java.util.logging.config.file");
+
+    setConnectorLogLevel();
+
+    // Check that the system property logging.properties file is intact.
+    assertTrue(Files.equal(testPropFile, configPropFile));
+  }
+
+  /** Test setConnectorLogLevel with classes/logging.properties. */
+  public void testSetConnectorLogLevel3() throws Exception {
+    Files.copy(testPropFile, classesPropFile);
+
+    setConnectorLogLevel();
+
+    // Check that the classes/logging.properties file has new log level.
+    checkProperty(classesPropFile, ".level", "FINEST");
+
+    // Check that the system property logging.properties file is intact.
+    assertTrue(Files.equal(testPropFile, configPropFile));
+  }
+
+  /** Set Connector Log Level. */
+  private void setConnectorLogLevel() throws Exception {
     req.setServletPath("/setConnectorLogLevel");
     req.setParameter("level", "finest");
     new LogLevel().doPost(req, res);
@@ -107,8 +164,6 @@ public class LogLevelTest extends TestCase {
     assertEquals(expectedResponse,
                  removeInfoElements(res.getContentAsString()));
     assertEquals(Level.FINEST, rootLogger.getLevel());
-    Properties props = PropertiesUtils.loadFromFile(new File(propFile));
-    assertEquals("FINEST", props.get(".level"));
   }
 
   /** Test getFeedLogLevel. */
@@ -131,8 +186,13 @@ public class LogLevelTest extends TestCase {
     assertEquals(expectedResponse,
                  removeInfoElements(res.getContentAsString()));
     assertEquals(Level.FINEST, feedLogger.getLevel());
-    Properties props = PropertiesUtils.loadFromFile(new File(appPropFile));
-    assertEquals("FINEST", props.get("feedLoggingLevel"));
+    checkProperty(appPropFile, "feedLoggingLevel", "FINEST");
+  }
+
+  private void checkProperty(File propFile, String propName,
+      String expectedValue) throws Exception {
+    Properties props = PropertiesUtils.loadFromFile(propFile);
+    assertEquals(expectedValue, props.get(propName));
   }
 
   /**

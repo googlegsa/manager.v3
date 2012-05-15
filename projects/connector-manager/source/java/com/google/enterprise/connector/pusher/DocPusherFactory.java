@@ -1,10 +1,10 @@
-// Copyright (C) 2009 Google Inc.
+// Copyright 2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+//     http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,9 +14,9 @@
 
 package com.google.enterprise.connector.pusher;
 
+import com.google.enterprise.connector.instantiator.DocumentFilterFactoryFactory;
+import com.google.enterprise.connector.instantiator.DocumentFilterFactoryFactoryImpl;
 import com.google.enterprise.connector.traversal.FileSizeLimitInfo;
-import com.google.enterprise.connector.util.filter.DocumentFilterChain;
-import com.google.enterprise.connector.util.filter.DocumentFilterFactory;
 
 import java.util.logging.Logger;
 
@@ -51,25 +51,25 @@ public class DocPusherFactory implements PusherFactory {
   private final String contentUrlPrefix;
 
   /**
-   * The {@link DocumentFilterFactory} is used to construct
+   * The {@link DocumentFilterFactoryFactory} is used to construct
    * {@code Document} instances that act as filters on a source
    * document.  Document filters may add, remove, or modify
-   * {@code Properties}.  The DocumentFilterFactory set here
-   * is typically a {@link DocumentFilterChain} - a chain of
+   * {@code Properties}.  The DocumentFilterFactoryFactory set here
+   * typically creates a {@link DocumentFilterChain} - a chain of
    * DocumentFilterFactories that is used to construct a
    * Document manipulation pipeline.
    */
-  private final DocumentFilterFactory documentFilterFactory;
+  private final DocumentFilterFactoryFactory documentFilterFactoryFactory;
 
   /**
    * Creates a {@code DocPusherFactory} object from the specified
-   * {@code feedConnection}.
+   * {@code feedConnection}.  This constructor is Used by the tests.
    *
    * @param feedConnection a FeedConnection
    */
   public DocPusherFactory(FeedConnection feedConnection) {
-    this(feedConnection, new FileSizeLimitInfo(), new DocumentFilterChain(),
-         null);
+    this(feedConnection, new FileSizeLimitInfo(),
+         new DocumentFilterFactoryFactoryImpl(null, null), null);
   }
 
   /**
@@ -81,8 +81,8 @@ public class DocPusherFactory implements PusherFactory {
    * @param feedConnection a {@link FeedConnection} sink for documents.
    * @param fileSizeLimit {@link FileSizeLimitInfo} constraints on document
    *        content and feed size.
-   * @param documentFilterFactory a {@link DocumentFilterFactory} that creates
-   *        document processing filters.
+   * @param documentFilterFactoryFactory a {@link DocumentFilterFactoryFactory}
+   *        that will be used to create document processing filters.
    * @param contentUrlPrefix the prefix that will be used for Feed contentUrl
    *        generation. The prefix should include protocol, host and port,
    *        web app, and servlet to point back at this Connector Manager
@@ -90,23 +90,24 @@ public class DocPusherFactory implements PusherFactory {
    *        {@code http://localhost:8080/connector-manager/getDocumentContent}
    */
   public DocPusherFactory(FeedConnection feedConnection,
-                          FileSizeLimitInfo fileSizeLimit,
-                          DocumentFilterFactory documentFilterFactory,
-                          String contentUrlPrefix) {
+      FileSizeLimitInfo fileSizeLimit,
+      DocumentFilterFactoryFactory documentFilterFactoryFactory,
+      String contentUrlPrefix) {
     this.feedConnection = feedConnection;
     this.fileSizeLimit = fileSizeLimit;
-    this.documentFilterFactory = documentFilterFactory;
+    this.documentFilterFactoryFactory = documentFilterFactoryFactory;
     this.contentUrlPrefix = contentUrlPrefix;
 
     LOGGER.config(feedConnection.toString());
     LOGGER.config(fileSizeLimit.toString());
-    LOGGER.config(documentFilterFactory.toString());
+    LOGGER.config(documentFilterFactoryFactory.toString());
     LOGGER.config("ContentURL prefix: " + contentUrlPrefix);
   }
 
-  //@Override
+  @Override
   public Pusher newPusher(String dataSource) {
     return new DocPusher(feedConnection, dataSource, fileSizeLimit,
-                         documentFilterFactory, contentUrlPrefix);
+        documentFilterFactoryFactory.getDocumentFilterFactory(dataSource),
+        contentUrlPrefix);
   }
 }

@@ -26,6 +26,7 @@ import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.ConnectorType;
 import com.google.enterprise.connector.spi.Retriever;
+import com.google.enterprise.connector.util.filter.DocumentFilterFactory;
 
 import org.springframework.core.io.Resource;
 
@@ -276,6 +277,12 @@ public class SpringInstantiator implements Instantiator {
   public Schedule getConnectorSchedule(String connectorName)
       throws ConnectorNotFoundException {
     return getConnectorCoordinator(connectorName).getConnectorSchedule();
+  }
+
+  @Override
+  public DocumentFilterFactory getDocumentFilterFactory(String connectorName)
+      throws ConnectorNotFoundException {
+    return getConnectorCoordinator(connectorName).getDocumentFilterFactory();
   }
 
   /* @Override */

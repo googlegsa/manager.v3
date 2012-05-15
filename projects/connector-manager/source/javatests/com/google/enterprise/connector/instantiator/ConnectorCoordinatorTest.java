@@ -28,6 +28,9 @@ import com.google.enterprise.connector.spi.MockConnectorType;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
 import com.google.enterprise.connector.test.JsonObjectAsMap;
 import com.google.enterprise.connector.traversal.TraversalDelayPolicy;
+import com.google.enterprise.connector.util.filter.AbstractDocumentFilter;
+import com.google.enterprise.connector.util.filter.DocumentFilterChain;
+import com.google.enterprise.connector.util.filter.DocumentFilterFactory;
 
 import junit.framework.TestCase;
 
@@ -69,13 +72,15 @@ public class ConnectorCoordinatorTest extends TestCase {
   }
 
   private ConnectorCoordinatorImpl newCoordinator(String name) {
-    Context context = Context.getInstance();
-    ConnectorCoordinatorMap ccm =
-        (ConnectorCoordinatorMap) context.getRequiredBean(
-        "ConnectorCoordinatorMap", ConnectorCoordinatorMap.class);
-
-    return (ConnectorCoordinatorImpl) ccm.getOrAdd(name);
+    return (ConnectorCoordinatorImpl) getCoordinatorMap()
+        .getOrAdd(name);
   }
+
+  private ConnectorCoordinatorMap getCoordinatorMap() {
+    Context context = Context.getInstance();
+    return (ConnectorCoordinatorMap) context.getRequiredBean(
+        "ConnectorCoordinatorMap", ConnectorCoordinatorMap.class);
+  }    
 
   private TypeMap getTypeMap() {
     Context context = Context.getInstance();
@@ -258,6 +263,7 @@ public class ConnectorCoordinatorTest extends TestCase {
       updateConnectorTest(instance, typeName, true, jsonConfigString);
       assertFalse(originalConnectorDir.exists());
     }
+    removeConnector(instance);
   }
 
   public void testCreateExising() throws Exception {
@@ -323,6 +329,8 @@ public class ConnectorCoordinatorTest extends TestCase {
                         new RunOnceUpdater(instance2, 100));
     checkThreadDeadlock(new RestartUpdater(instance1, 100),
                         new RunOnceUpdater(instance1, 100));
+    removeConnector(instance1);
+    removeConnector(instance2);
   }
 
   private void checkThreadDeadlock(Updater updater1, Updater updater2)
@@ -349,6 +357,11 @@ public class ConnectorCoordinatorTest extends TestCase {
         throw new RuntimeException("Deadlock");
       }
     }
+
+    try {
+      thread1.join(1000);
+      thread2.join(1000);
+    } catch (InterruptedException e) {}
 
     if (updater1.getException() != null)
       throw updater1.getException();
@@ -719,5 +732,247 @@ public class ConnectorCoordinatorTest extends TestCase {
     public void setGoogleFeedHost(String addr) {
       googleFeedHost = addr;
     }
+  }
+
+  /* TODO (bmj): Many of these tests are really testing stuff in InstanceInfo
+     and DocumentFilterFactoryFactory, but are included here to leverage
+     all the test machinery to create connector instances.  Perhaps the
+     machinery could be extracted moved to ConnectorTestUtils.
+  */
+
+  /** Test no Document Filters defined by Connector. */
+  public void testNoDocumentFilter() throws Exception {
+    String connectorInstancePrototype = BEANS_PREFIX
+        + "<bean class=\"" + MockConnector.class.getName() + "\"/>\n"
+        + BEANS_POSTFIX;
+        
+    ConnectorCoordinatorImpl instance =
+        createMockConnector("no_filter", connectorInstancePrototype);
+    DocumentFilterFactory factory = instance.getDocumentFilterFactory();
+    assertNull(factory);
+  }
+
+  /** Test Empty Document Filter Chain defined by Connector. */
+  public void testEmptyDocumentFilterChain() throws Exception {
+    String connectorInstancePrototype = BEANS_PREFIX
+        + "<bean class=\"" + MockConnector.class.getName() + "\"/>\n"
+        + "<bean class=\"" + DocumentFilterChain.class.getName() + "\">"
+        + "<constructor-arg><list></list></constructor-arg></bean>\n"
+        + BEANS_POSTFIX;
+
+    ConnectorCoordinatorImpl instance =
+        createMockConnector("empty_filter", connectorInstancePrototype);
+    DocumentFilterFactory factory = instance.getDocumentFilterFactory();
+    assertNotNull(factory);
+    assertTrue(factory instanceof DocumentFilterChain);
+    assertEquals("DocumentFilterChain: []", factory.toString());
+  }
+
+  /** Test Single Document Filter defined by Connector. */
+  public void testSingleDocumentFilter() throws Exception {
+    String connectorInstancePrototype = BEANS_PREFIX
+        + "<bean class=\"" + MockConnector.class.getName() + "\"/>\n"
+        + "<bean class=\"" + NoopDocumentFilter.class.getName() + "\"/>\n"
+        + BEANS_POSTFIX;
+
+    ConnectorCoordinatorImpl instance =
+        createMockConnector("noop_filter", connectorInstancePrototype);
+    DocumentFilterFactory factory = instance.getDocumentFilterFactory();
+    assertNotNull(factory);
+    assertTrue(factory instanceof NoopDocumentFilter);
+  }
+
+  /** Test Multiple Document Filters defined by Connector. */
+  public void testMultipleDocumentFilters() throws Exception {
+    String connectorInstancePrototype = BEANS_PREFIX
+        + "<bean class=\"" + MockConnector.class.getName() + "\"/>\n"
+        + "<bean id=\"a\" class=\"" + NoopDocumentFilter.class.getName()
+        + "\"/>\n"
+        + "<bean id=\"b\" class=\"" + NoopDocumentFilter.class.getName()
+        + "\"/>\n"
+        + BEANS_POSTFIX;
+
+    ConnectorCoordinatorImpl instance =
+        createMockConnector("noop_filter_x2", connectorInstancePrototype);
+    DocumentFilterFactory factory = instance.getDocumentFilterFactory();
+    assertNotNull(factory);
+    assertTrue(factory instanceof DocumentFilterChain);
+    assertEquals("DocumentFilterChain: [Noop, Noop]", factory.toString());
+  }
+
+  /** Test Multiple Document Filters with Chain defined by Connector. */
+  public void testMultipleDocumentFiltersWithChain() throws Exception {
+    String connectorInstancePrototype = BEANS_PREFIX
+        + "<bean class=\"" + MockConnector.class.getName() + "\"/>\n"
+        + "<bean id=\"a\" class=\"" + NoopDocumentFilter.class.getName()
+        + "\"/>\n"
+        + "<bean id=\"b\" class=\"" + NoopDocumentFilter.class.getName()
+        + "\"/>\n"
+        + "<bean class=\"" + DocumentFilterChain.class.getName() + "\">"
+        + "<constructor-arg><list>"
+        + "<ref bean=\"a\"/><ref bean=\"b\"/>"
+        + "</list></constructor-arg></bean>\n"
+        + BEANS_POSTFIX;
+
+    ConnectorCoordinatorImpl instance =
+        createMockConnector("filters_with_chain", connectorInstancePrototype);
+    DocumentFilterFactory factory = instance.getDocumentFilterFactory();
+    assertNotNull(factory);
+    assertTrue(factory instanceof DocumentFilterChain);
+    assertEquals("DocumentFilterChain: [Noop, Noop]", factory.toString());
+  }
+
+  /** Test Multiple Document Filters in Chain defined by Connector. */
+  public void testMultipleDocumentFiltersInChain() throws Exception {
+    String connectorInstancePrototype = BEANS_PREFIX
+        + "<bean class=\"" + MockConnector.class.getName() + "\"/>\n"
+        + "<bean class=\"" + DocumentFilterChain.class.getName() + "\">"
+        + "<constructor-arg><list>"
+        + "<bean class=\"" + NoopDocumentFilter.class.getName() + "\"/>\n"
+        + "<bean class=\"" + NoopDocumentFilter.class.getName() + "\"/>\n"
+        + "</list></constructor-arg></bean>\n"
+        + BEANS_POSTFIX;
+
+    ConnectorCoordinatorImpl instance =
+        createMockConnector("filters_in_chain", connectorInstancePrototype);
+    DocumentFilterFactory factory = instance.getDocumentFilterFactory();
+    assertNotNull(factory);
+    assertTrue(factory instanceof DocumentFilterChain);
+    assertEquals("DocumentFilterChain: [Noop, Noop]", factory.toString());
+  }
+
+  /** Test Multiple Document Filters, but not all included in a Chain. */
+  public void testExtraDocumentFiltersWithChain() throws Exception {
+    String connectorInstancePrototype = BEANS_PREFIX
+        + "<bean class=\"" + MockConnector.class.getName() + "\"/>\n"
+        + "<bean id=\"a\" class=\"" + NoopDocumentFilter.class.getName()
+        + "\"/>\n"
+        + "<bean id=\"b\" class=\"" + NoopDocumentFilter.class.getName()
+        + "\"/>\n"
+        + "<bean id=\"c\" class=\"" + NoopDocumentFilter.class.getName()
+        + "\"/>\n"
+        + "<bean class=\"" + DocumentFilterChain.class.getName() + "\">"
+        + "<constructor-arg><list>"
+        + "<ref bean=\"c\"/>"
+        + "</list></constructor-arg></bean>\n"
+        + BEANS_POSTFIX;
+
+    ConnectorCoordinatorImpl instance =
+        createMockConnector("filters_with_chain", connectorInstancePrototype);
+    DocumentFilterFactory factory = instance.getDocumentFilterFactory();
+    assertNotNull(factory);
+    assertTrue(factory instanceof DocumentFilterChain);
+    assertEquals("DocumentFilterChain: [Noop]", factory.toString());
+  }
+
+  public void testDocumentFilterFactoryFactoryNoFilterNoMap() throws Exception {
+    DocumentFilterFactoryFactory factoryFactory =
+        new DocumentFilterFactoryFactoryImpl(null, null);
+    DocumentFilterFactory factory =
+        factoryFactory.getDocumentFilterFactory("test");
+    assertTrue(factory instanceof DocumentFilterChain);
+    assertEquals("DocumentFilterChain: []", factory.toString());
+  }
+
+  public void testDocumentFilterFactoryFactoryOneFilterNoMap()
+      throws Exception {
+    DocumentFilterFactoryFactory factoryFactory =
+        new DocumentFilterFactoryFactoryImpl(new NoopDocumentFilter(), null);
+    DocumentFilterFactory factory =
+        factoryFactory.getDocumentFilterFactory("test");
+    assertTrue(factory instanceof NoopDocumentFilter);
+  }
+
+  public void testDocumentFilterFactoryFactoryNoFilterConnectorNotFound()
+       throws Exception {
+    DocumentFilterFactoryFactory factoryFactory =
+        new DocumentFilterFactoryFactoryImpl(null, getCoordinatorMap());
+    DocumentFilterFactory factory =
+        factoryFactory.getDocumentFilterFactory("nonexistant");
+    assertTrue(factory instanceof DocumentFilterChain);
+    assertEquals("DocumentFilterChain: []", factory.toString());
+  }
+
+  public void testDocumentFilterFactoryFactoryNoFilterNoConnectorFilter()
+      throws Exception {
+    DocumentFilterFactoryFactory factoryFactory =
+        new DocumentFilterFactoryFactoryImpl(null, getCoordinatorMap());
+    String connectorInstancePrototype = BEANS_PREFIX
+        + "<bean class=\"" + MockConnector.class.getName() + "\"/>\n"
+        + BEANS_POSTFIX;
+
+    ConnectorCoordinatorImpl instance =
+        createMockConnector("no_filter", connectorInstancePrototype);
+    DocumentFilterFactory factory =
+        factoryFactory.getDocumentFilterFactory("no_filter");
+    assertTrue(factory instanceof DocumentFilterChain);
+    assertEquals("DocumentFilterChain: []", factory.toString());
+  }
+
+  public void testDocumentFilterFactoryFactoryNoFilterConnectorFilter()
+      throws Exception {
+    DocumentFilterFactoryFactory factoryFactory =
+        new DocumentFilterFactoryFactoryImpl(null, getCoordinatorMap());
+    String connectorInstancePrototype = BEANS_PREFIX
+        + "<bean class=\"" + MockConnector.class.getName() + "\"/>\n"
+        + "<bean class=\"" + NoopDocumentFilter.class.getName() + "\"/>\n"
+        + BEANS_POSTFIX;
+
+    ConnectorCoordinatorImpl instance =
+        createMockConnector("noop_filter", connectorInstancePrototype);
+    DocumentFilterFactory factory =
+        factoryFactory.getDocumentFilterFactory("noop_filter");
+    assertNotNull(factory);
+    assertTrue(factory instanceof NoopDocumentFilter);
+  }
+
+  public void testDocumentFilterFactoryFactoryGlobalFilterConnectorFilter()
+      throws Exception {
+    DocumentFilterFactoryFactory factoryFactory =
+        new DocumentFilterFactoryFactoryImpl(new NoopDocumentFilter(),
+                                             getCoordinatorMap());
+    String connectorInstancePrototype = BEANS_PREFIX
+        + "<bean class=\"" + MockConnector.class.getName() + "\"/>\n"
+        + "<bean class=\"" + DocumentFilterChain.class.getName() + "\">"
+        + "<constructor-arg><list>"
+        + "<bean class=\"" + NoopDocumentFilter.class.getName() + "\"/>\n"
+        + "</list></constructor-arg></bean>\n"
+        + BEANS_POSTFIX;
+
+    ConnectorCoordinatorImpl instance =
+        createMockConnector("filter_in_chain", connectorInstancePrototype);
+    DocumentFilterFactory factory =
+        factoryFactory.getDocumentFilterFactory("filter_in_chain");
+
+    assertNotNull(factory);
+    assertTrue(factory instanceof DocumentFilterChain);
+    assertEquals("DocumentFilterChain: [DocumentFilterChain: [Noop], Noop]",
+                 factory.toString());
+  }
+
+  private static class NoopDocumentFilter extends AbstractDocumentFilter {
+    @Override
+    public String toString() {
+      return "Noop";
+    }
+  }
+
+  private ConnectorCoordinatorImpl createMockConnector(String name, 
+      String connectorInstancePrototype)
+      throws JSONException, InstantiatorException, ConnectorNotFoundException,
+      ConnectorExistsException, ConnectorTypeNotFoundException {
+    // Inject our test ConnectorType into the TypeMap.
+    MockConnectorType type = new MockConnectorType(name);
+    TypeInfo typeInfo = new TypeInfo(type.toString(), type, null, null);
+    getTypeMap().addTypeInfo(typeInfo);
+
+    final ConnectorCoordinatorImpl instance = newCoordinator(name);
+    assertFalse(instance.exists());
+
+    Configuration config = new Configuration(type.toString(),
+        new HashMap<String, String>(), connectorInstancePrototype);
+
+    updateConnectorTest(instance, config, false);
+    return instance;
   }
 }
