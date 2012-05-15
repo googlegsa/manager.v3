@@ -11,16 +11,22 @@ issues and work-arounds.
 Web Site: http://code.google.com/p/google-enterprise-connector-manager/
 
 
-Release 2.8.6, 26 March 2012
-============================
+Release 2.8.6, 5 May 2012
+=========================
 
 Introduction
 ------------
 This is a patch release that fixes a few small problems discovered in the
-the previous release. Users of the previous release are encouraged to upgrade.
+the previous release. Users of previous releases are encouraged to review
+the changes below to determine whether to upgrade.
 
 Summary of Changes
 ------------------
+  * Fix Issue 6305209 - Text conversion fails on PDF files when skipping
+    the content. Handle PDF documents that are zero-length or too long more
+    gracefully. Rather than skip the document entirely, feed a stub
+    document with just the document's title, if available.
+
   * Fix Issue 5599305 - Retry Connector startup if instantiation fails.
     The FileSystem Connector fails Connector bean instantiation if the file
     share is off-line.  The other connectors that use the Diffing package
@@ -28,12 +34,14 @@ Summary of Changes
     failed Connector instantiation to be retried after a period, in hopes
     that any transient errors may have been corrected.
 
-  * Handle PDF documents that are zero-length or too long more gracefully.
-    Rather than skip the document entirely, feed a stub document with just
-    the document's title, if available.
+  * Fix file system connector code site issue 32 - Initial snapshot fails
+    in Java 7 with error "two snapshots with the same number". Note that
+    Java 7 is not officially supported.
 
   * Differentiate between no password and empty-string password in the
     user authentication servlet.
+
+  * Remove the google:feedid property from records in the feeds.
 
 
 Release 2.8.4, 23 February 2012
