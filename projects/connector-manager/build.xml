@@ -138,7 +138,7 @@
       <manifest>
         <attribute name="Implementation-Title" value="Connector Manager SPI"/>
         <attribute name="Implementation-Version"
-                   value="${version} (build ${svn.version}  ${TODAY})"/>
+                   value="${version} (build ${svn.branch.version} ${TODAY})"/>
         <attribute name="Implementation-Vendor" value="Google Inc."/>
       </manifest>
     </jar>
@@ -199,7 +199,7 @@
       <manifest>
         <attribute name="Implementation-Title" value="Connector Manager Logging"/>
         <attribute name="Implementation-Version"
-                   value="${version} (build ${svn.version}  ${TODAY})"/>
+                   value="${version} (build ${svn.branch.version} ${TODAY})"/>
         <attribute name="Implementation-Vendor" value="Google Inc."/>
       </manifest>
     </jar>
@@ -212,7 +212,7 @@
       <manifest>
         <attribute name="Implementation-Title" value="Connector Manager Utility"/>
         <attribute name="Implementation-Version"
-                   value="${version} (build ${svn.version}  ${TODAY})"/>
+                   value="${version} (build ${svn.branch.version} ${TODAY})"/>
         <attribute name="Implementation-Vendor" value="Google Inc."/>
       </manifest>
     </jar>
@@ -232,7 +232,7 @@
       <manifest>
         <attribute name="Implementation-Title" value="Connector Manager Impl"/>
         <attribute name="Implementation-Version"
-                   value="${version} (build ${svn.version}  ${TODAY})"/>
+                   value="${version} (build ${svn.branch.version} ${TODAY})"/>
         <attribute name="Implementation-Vendor" value="Google Inc."/>
         <attribute name="Main-Class"
                    value="com.google.enterprise.connector.manager.ManagerMain" />
@@ -272,7 +272,7 @@
       <manifest>
         <attribute name="Implementation-Title" value="Connector Manager Tests"/>
         <attribute name="Implementation-Version"
-                   value="${version} (build ${svn.version}  ${TODAY})"/>
+                   value="${version} (build ${svn.branch.version} ${TODAY})"/>
         <attribute name="Implementation-Vendor" value="Google Inc."/>
       </manifest>
     </jar>
@@ -422,7 +422,7 @@
       <manifest>
         <attribute name="Implementation-Title" value="Connector Manager"/>
         <attribute name="Implementation-Version"
-                   value="${version} (build ${svn.version}  ${TODAY})"/>
+                   value="${version} (build ${svn.branch.version} ${TODAY})"/>
         <attribute name="Implementation-Vendor" value="Google Inc."/>
       </manifest>
     </war>
@@ -449,7 +449,7 @@
       <manifest>
         <attribute name="Implementation-Title" value="Connector Manager"/>
         <attribute name="Implementation-Version"
-                   value="${version} (build ${svn.version}  ${TODAY})"/>
+                   value="${version} (build ${svn.branch.version} ${TODAY})"/>
         <attribute name="Implementation-Vendor" value="Google Inc."/>
       </manifest>
     </war>
