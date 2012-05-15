@@ -9,7 +9,7 @@
   -->
   <property name="svn.base.dir" value=".." />
 
-  <!-- Run Subverstion Status command on the svn.base.dir.
+  <!-- Run Subversion Status command on the svn.base.dir.
        The output of the command is stored in the property svn.status.
        The execution result code (typically 0 for success) is stored in
        svn.status.result.
@@ -70,7 +70,9 @@
 	        <linecontains>
 	          <contains value="URL: "/>
 	        </linecontains>
-          <replacestring from="URL: ${svn.repository.root}/"/>
+          <replacestring from="URL: ${svn.repository.root}"/>
+          <replaceregex pattern="/projects.*" />
+          <replaceregex pattern=".*/" />
         </outputfilterchain>
       </redirector>
     </exec>
@@ -98,7 +100,7 @@
   <target name="svn-branch-version"
           depends="svn-repository-root,svn-branch,svn-version">
     <condition property="svn.branch.version"
-	             value="${svn.version} (${svn.branch})"
+	             value="${svn.version} ${svn.branch}"
 	             else="?? Unknown svn version">
       <and>
         <equals arg1="0" arg2="${svn.repository.root.result}" />

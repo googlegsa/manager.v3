@@ -19,6 +19,7 @@ import com.google.enterprise.connector.common.AlternateContentFilterInputStream;
 import com.google.enterprise.connector.common.BigEmptyDocumentFilterInputStream;
 import com.google.enterprise.connector.common.I18NUtil;
 import com.google.enterprise.connector.instantiator.Configuration;
+import com.google.enterprise.connector.instantiator.DocumentFilterFactoryFactory;
 import com.google.enterprise.connector.instantiator.ExtendedConfigureResponse;
 import com.google.enterprise.connector.instantiator.Instantiator;
 import com.google.enterprise.connector.instantiator.InstantiatorException;
@@ -38,7 +39,6 @@ import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.RepositoryLoginException;
 import com.google.enterprise.connector.spi.Retriever;
 import com.google.enterprise.connector.util.EofFilterInputStream;
-import com.google.enterprise.connector.util.filter.DocumentFilterChain;
 import com.google.enterprise.connector.util.filter.DocumentFilterFactory;
 
 import java.io.InputStream;
@@ -62,7 +62,7 @@ public class ProductionManager implements Manager {
       Logger.getLogger(ProductionManager.class.getName());
 
   Instantiator instantiator;
-  private DocumentFilterFactory documentFilter = new DocumentFilterChain();
+  private DocumentFilterFactoryFactory documentFilterFactoryFactory = null;
 
   public ProductionManager() {
   }
@@ -75,12 +75,13 @@ public class ProductionManager implements Manager {
   }
 
   /**
-   * Specify the document filter that should be applied to documents.
+   * Specify the document filter factory that should be applied to documents.
    *
-   * @param documentFilter document filter to use
+   * @param documentFilterFactoryFactory document filter factory to use
    */
-  public void setDocumentFilter(DocumentFilterFactory documentFilter) {
-    this.documentFilter = documentFilter;
+  public void setDocumentFilterFactoryFactory(
+      DocumentFilterFactoryFactory documentFilterFactoryFactory) {
+    this.documentFilterFactoryFactory = documentFilterFactoryFactory;
   }
 
   /* @Override */
@@ -186,6 +187,7 @@ public class ProductionManager implements Manager {
     // The GSA can't handle meta-and-url feeds with no content, so we
     // provide some minimal content of a single space, if none is available.
     // We are only detecting empty content here, not large documents.
+    // TODO: Figure out how to handle CONTENT morphing document filters.
     return
         new AlternateContentFilterInputStream(
             new BigEmptyDocumentFilterInputStream(
@@ -214,8 +216,10 @@ public class ProductionManager implements Manager {
     if (metaDoc == null) {
       LOGGER.finer("RETRIEVER: Document has no metadata.");
       // TODO: Create empty Document?
-    } else {
-      metaDoc = documentFilter.newDocumentFilter(metaDoc);
+    } else if (documentFilterFactoryFactory != null) {
+      DocumentFilterFactory documentFilterFactory = 
+          documentFilterFactoryFactory.getDocumentFilterFactory(connectorName);
+      metaDoc = documentFilterFactory.newDocumentFilter(metaDoc);
     }
     return metaDoc;
   }

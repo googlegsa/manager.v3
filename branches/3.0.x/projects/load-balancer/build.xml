@@ -42,17 +42,11 @@
   <property name="catalina-webapps.dir" value="${catalina-base.dir}/webapps" />
 
   <!-- =========================== TASKS =============================== -->
+  <include file="${projects.dir}/svnbuild.xml" as="svn"/>
 
   <target name="all" depends="deploy-all" />
   <target name="deploy-all"
           depends="connector-manager, deploy-setenv, deploy-valve, deploy-managers" />
-
-  <target name="prebuild">
-    <exec executable="svnversion" spawn="false" failifexecutionfails="false"
-          dir="${projects.dir}" outputproperty="svnversion">
-      <arg line="."/>
-    </exec>
-  </target>
 
   <target name="init">
    <fail unless="catalina.base"
@@ -91,7 +85,7 @@
   </target>
 
   <!-- Build the BalancerValve jar file. -->
-  <target name="jar-valve" depends="prebuild, compile-valve"
+  <target name="jar-valve" depends="compile-valve, svn.svn-branch-version"
           description="Create production valve jar">
     <tstamp />
     <jar jarfile="${valve.jarfile}">
@@ -100,7 +94,7 @@
         <attribute name="Implementation-Title"
                    value="Connector Manager Load Balancer Valve"/>
         <attribute name="Implementation-Version"
-                   value="${version} (build ${svnversion}  ${TODAY})"/>
+                   value="${version} (build ${svn.branch.version} ${TODAY})"/>
         <attribute name="Implementation-Vendor" value="Google Inc."/>
       </manifest>
     </jar>
