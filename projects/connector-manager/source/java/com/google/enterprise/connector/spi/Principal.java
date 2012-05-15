@@ -41,7 +41,7 @@ public class Principal implements Comparable<Principal> {
   /**
    * Builds a case-sensitive Principal instance.
    *
-   * @param type the principal type for the principal
+   * @param principalType the principal type for the principal
    * @param namespace the namespace for the principal
    * @param name the name of the principal
    */
