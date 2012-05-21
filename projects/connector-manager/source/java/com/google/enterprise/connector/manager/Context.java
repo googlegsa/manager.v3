@@ -22,6 +22,7 @@ import com.google.enterprise.connector.instantiator.Instantiator;
 import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.instantiator.SpringInstantiator;
 import com.google.enterprise.connector.instantiator.ThreadPool;
+import com.google.enterprise.connector.pusher.DocPusherFactory;
 import com.google.enterprise.connector.pusher.GsaFeedConnection;
 import com.google.enterprise.connector.scheduler.TraversalScheduler;
 import com.google.enterprise.connector.spi.SimpleTraversalContext;
@@ -81,11 +82,15 @@ public class Context {
 
   public static final String GSA_ADMIN_REQUIRES_PREFIX_KEY =
       "gsa.admin.requiresPrefix";
+  public static final Boolean GSA_ADMIN_REQUIRES_PREFIX_DEFAULT =
+      Boolean.FALSE;
+
   public static final String TEED_FEED_FILE_PROPERTY_KEY = "teedFeedFile";
   public static final String MANAGER_LOCKED_PROPERTY_KEY = "manager.locked";
 
-  public static final Boolean GSA_ADMIN_REQUIRES_PREFIX_DEFAULT =
-      Boolean.FALSE;
+  public static final String FEED_CONTENTURL_PREFIX_PROPERTY_KEY =
+      "feed.contenturl.prefix";
+  public static final String FEED_CONTENTURL_SERVLET = "/getDocumentContent";
 
   public static final String DEFAULT_JUNIT_CONTEXT_LOCATION =
       "testdata/mocktestdata/applicationContext.xml";
@@ -973,11 +978,12 @@ public class Context {
   }
 
   public void setConnectorManagerConfig(String feederGateProtocol,
-      String feederGateHost, int feederGatePort, int feederGateSecurePort)
-      throws InstantiatorException {
+      String feederGateHost, int feederGatePort, int feederGateSecurePort,
+      String connectorManagerUrl) throws InstantiatorException {
     initApplicationContext();
     setConnectorManagerConfig(feederGateProtocol, feederGateHost,
-        feederGatePort, feederGateSecurePort, getGsaFeedConnection());
+        feederGatePort, feederGateSecurePort, getGsaFeedConnection(),
+        connectorManagerUrl);
   }
 
   private GsaFeedConnection getGsaFeedConnection() {
@@ -995,7 +1001,8 @@ public class Context {
   @VisibleForTesting
   void setConnectorManagerConfig(String feederGateProtocol,
       String feederGateHost, int feederGatePort, int feederGateSecurePort,
-      GsaFeedConnection feeder) throws InstantiatorException {
+      GsaFeedConnection feeder, String connectorManagerUrl)
+      throws InstantiatorException {
     // Update the feed host and port in the CM properties file.
     String propFileName = getPropFileName();
     File propFile = getPropFile(propFileName);
@@ -1043,6 +1050,11 @@ public class Context {
       props.put(GSA_FEED_PROTOCOL_PROPERTY_KEY, feederGateProtocol);
     }
 
+    if (!Strings.isNullOrEmpty(connectorManagerUrl)) {
+      props.put(FEED_CONTENTURL_PREFIX_PROPERTY_KEY,
+                connectorManagerUrl + FEED_CONTENTURL_SERVLET);
+    }
+
     // Lock down the manager at this point.
     props.put(MANAGER_LOCKED_PROPERTY_KEY, Boolean.TRUE.toString());
     try {
@@ -1065,6 +1077,8 @@ public class Context {
         + GSA_FEED_VALIDATE_CERTIFICATE_PROPERTY_KEY + "="
         + validateCertificate + "; "
         + GSA_FEED_SECURE_PORT_PROPERTY_KEY + "=" + feederGateSecurePort + "; "
+        + FEED_CONTENTURL_PREFIX_PROPERTY_KEY + "="
+        + props.getProperty(FEED_CONTENTURL_PREFIX_PROPERTY_KEY) + "; " 
         + MANAGER_LOCKED_PROPERTY_KEY + "="
         + props.getProperty(MANAGER_LOCKED_PROPERTY_KEY));
 
@@ -1085,6 +1099,16 @@ public class Context {
         feeder.setValidateCertificate(validateCertificate);
       } catch (MalformedURLException e) {
         throw new InstantiatorException("Invalid GSA Feed specification", e);
+      }
+    }
+
+    // Notify DocPusherFactory of new contentUrlPrefix.
+    if (!Strings.isNullOrEmpty(connectorManagerUrl)) {
+      DocPusherFactory pusherFactory =
+          (DocPusherFactory) getBean("PusherFactory", DocPusherFactory.class);
+      if (pusherFactory != null) {
+        pusherFactory.setContentUrlPrefix(
+            props.getProperty(FEED_CONTENTURL_PREFIX_PROPERTY_KEY));
       }
     }
 

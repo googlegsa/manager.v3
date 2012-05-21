@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.pusher;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.enterprise.connector.instantiator.DocumentFilterFactoryFactory;
 import com.google.enterprise.connector.instantiator.DocumentFilterFactoryFactoryImpl;
 import com.google.enterprise.connector.traversal.FileSizeLimitInfo;
@@ -48,7 +49,7 @@ public class DocPusherFactory implements PusherFactory {
    * For example:
    * {@code http://localhost:8080/connector-manager/getDocumentContent}
    */
-  private final String contentUrlPrefix;
+  private String contentUrlPrefix = null;
 
   /**
    * The {@link DocumentFilterFactoryFactory} is used to construct
@@ -69,7 +70,7 @@ public class DocPusherFactory implements PusherFactory {
    */
   public DocPusherFactory(FeedConnection feedConnection) {
     this(feedConnection, new FileSizeLimitInfo(),
-         new DocumentFilterFactoryFactoryImpl(null, null), null);
+         new DocumentFilterFactoryFactoryImpl(null, null));
   }
 
   /**
@@ -83,31 +84,42 @@ public class DocPusherFactory implements PusherFactory {
    *        content and feed size.
    * @param documentFilterFactoryFactory a {@link DocumentFilterFactoryFactory}
    *        that will be used to create document processing filters.
-   * @param contentUrlPrefix the prefix that will be used for Feed contentUrl
-   *        generation. The prefix should include protocol, host and port,
-   *        web app, and servlet to point back at this Connector Manager
-   *        instance. For example:
-   *        {@code http://localhost:8080/connector-manager/getDocumentContent}
    */
   public DocPusherFactory(FeedConnection feedConnection,
       FileSizeLimitInfo fileSizeLimit,
-      DocumentFilterFactoryFactory documentFilterFactoryFactory,
-      String contentUrlPrefix) {
+      DocumentFilterFactoryFactory documentFilterFactoryFactory) {
     this.feedConnection = feedConnection;
     this.fileSizeLimit = fileSizeLimit;
     this.documentFilterFactoryFactory = documentFilterFactoryFactory;
-    this.contentUrlPrefix = contentUrlPrefix;
 
     LOGGER.config(feedConnection.toString());
     LOGGER.config(fileSizeLimit.toString());
     LOGGER.config(documentFilterFactoryFactory.toString());
+  }
+
+  /**
+   * Sets the contentUrlPrefix that will be used for Feed contentUrl
+   * generation. The prefix should include protocol, host and port,
+   * web app, and servlet to point back at this Connector Manager instance.
+   * For example:
+   *    {@code http://localhost:8080/connector-manager/getDocumentContent}
+   *
+   * @param contentUrlPrefix the content url prefix
+   */
+  public synchronized void setContentUrlPrefix(String contentUrlPrefix) {
+    this.contentUrlPrefix = contentUrlPrefix;
     LOGGER.config("ContentURL prefix: " + contentUrlPrefix);
+  }
+
+  @VisibleForTesting
+  public synchronized String getContentUrlPrefix() {
+    return contentUrlPrefix;
   }
 
   @Override
   public Pusher newPusher(String dataSource) {
     return new DocPusher(feedConnection, dataSource, fileSizeLimit,
         documentFilterFactoryFactory.getDocumentFilterFactory(dataSource),
-        contentUrlPrefix);
+        getContentUrlPrefix());
   }
 }

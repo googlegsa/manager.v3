@@ -14,30 +14,16 @@
 
 package com.google.enterprise.connector.servlet;
 
-import com.google.common.base.Strings;
-import com.google.enterprise.connector.common.StringUtils;
-import com.google.enterprise.connector.logging.NDC;
-import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.manager.Manager;
 
-import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Enumeration;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * An abstract class for Connector Manager servlets.
  * It contains an abstract method "processDoPost".
  */
-public abstract class ConnectorManagerServlet extends HttpServlet {
-  private static final Logger LOGGER =
-      Logger.getLogger(ConnectorManagerServlet.class.getName());
+public abstract class ConnectorManagerServlet
+    extends ConnectorManagerUrlServlet {
 
   /**
    * This abstract method processes XML servlet-specific request body,
@@ -51,62 +37,10 @@ public abstract class ConnectorManagerServlet extends HttpServlet {
   protected abstract void processDoPost(
       String xmlBody, Manager manager, PrintWriter out);
 
-  /**
-   * Returns an XML response to the HTTP GET request.
-   *
-   * @param req
-   * @param res
-   * @throws IOException
-   */
+
   @Override
-  protected void doGet(HttpServletRequest req, HttpServletResponse res)
-      throws IOException {
-    doPost(req, res);
-  }
-
-  /**
-   * Returns an XML response including full status (ConnectorMessageCode) to
-   * the HTTP POST request.
-   *
-   * @param req
-   * @param res
-   * @throws IOException
-   */
-  @Override
-  protected void doPost(HttpServletRequest req, HttpServletResponse res)
-      throws IOException {
-    // Make sure this requester is OK
-    if (!RemoteAddressFilter.getInstance()
-          .allowed(RemoteAddressFilter.Access.BLACK, req.getRemoteAddr())) {
-      res.sendError(HttpServletResponse.SC_FORBIDDEN);
-      return;
-    }
-
-    if (req.getCharacterEncoding() == null) {
-      req.setCharacterEncoding("UTF-8");
-    }
-    BufferedReader reader = req.getReader();
-    res.setContentType(ServletUtil.MIMETYPE_XML);
-    res.setCharacterEncoding("UTF-8");
-    PrintWriter out = res.getWriter();
-    NDC.push(NDC.peek());
-    try {
-      // I encountered a null reader if no content or body.
-      String xmlBody =
-          (reader == null) ? null : StringUtils.readAllToString(reader);
-      if (Strings.isNullOrEmpty(xmlBody)) {
-        ServletUtil.writeResponse(
-            out, ConnectorMessageCode.RESPONSE_EMPTY_REQUEST);
-        LOGGER.log(Level.WARNING, ServletUtil.LOG_RESPONSE_EMPTY_REQUEST);
-        return;
-      }
-
-      Manager manager = Context.getInstance().getManager();
-      processDoPost(xmlBody, manager, out);
-
-    } finally {
-      out.close();
-      NDC.pop();
-    }
+  protected void processDoPost(String connectorManagerUrl, 
+      String xmlBody, Manager manager, PrintWriter out) {
+    processDoPost(xmlBody, manager, out);
   }
 }

@@ -434,7 +434,7 @@
     <constructor-arg index="0" ref="FeedConnection" />
     <constructor-arg index="1" ref="FileSizeLimitInfo"/>
     <constructor-arg index="2" ref="DocumentFilterFactoryFactory"/>
-    <constructor-arg index="3" value="${feed.contenturl.prefix}"/>
+    <property name="contentUrlPrefix" value="${feed.contenturl.prefix}"/>
   </bean>
 
   <bean id="LoadManagerFactory"
