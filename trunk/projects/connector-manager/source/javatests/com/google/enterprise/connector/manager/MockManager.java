@@ -363,11 +363,12 @@ public class MockManager implements Manager {
 
   /* @Override */
   public void setConnectorManagerConfig(String feederGateProtocol,
-      String feederGateHost, int feederGatePort, int feederGateSecurePort) {
+      String feederGateHost, int feederGatePort, int feederGateSecurePort,
+      String connectorManagerUrl) {
     if (!Strings.isNullOrEmpty(feederGateProtocol)) {
       managerConfig.put(Context.GSA_FEED_PROTOCOL_PROPERTY_KEY,
           feederGateProtocol);
-  }
+    }
     if (!Strings.isNullOrEmpty(feederGateHost)) {
       managerConfig.put(Context.GSA_FEED_HOST_PROPERTY_KEY,
           feederGateHost);
@@ -378,7 +379,10 @@ public class MockManager implements Manager {
       managerConfig.put(Context.GSA_FEED_SECURE_PORT_PROPERTY_KEY,
           String.valueOf(feederGateSecurePort));
     }
-
+    if (!Strings.isNullOrEmpty(connectorManagerUrl)) {
+      managerConfig.put(Context.FEED_CONTENTURL_PREFIX_PROPERTY_KEY,
+          connectorManagerUrl + Context.FEED_CONTENTURL_SERVLET);
+    }
     isLocked = true;
   }
 

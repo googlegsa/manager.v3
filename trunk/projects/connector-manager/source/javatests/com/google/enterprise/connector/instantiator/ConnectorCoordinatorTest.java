@@ -677,7 +677,7 @@ public class ConnectorCoordinatorTest extends TestCase {
 
     // Change the feed host and verify it gets updated in connector.
     context.setConnectorManagerConfig("", "shme", 14,
-        Context.GSA_FEED_SECURE_PORT_INVALID);
+        Context.GSA_FEED_SECURE_PORT_INVALID, null);
     assertEquals("shme", connector.googleFeedHost);
 
     removeConnector(instance);

@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.servlet;
 
+import com.google.common.base.Strings;
 import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.spi.ConfigureResponse;
@@ -29,18 +30,18 @@ import java.io.StringWriter;
 import java.util.logging.Logger;
 
 /**
- * Tests ConnectorManagerServlet base class.
+ * Tests ConnectorManagerUrlServlet base class.
  */
-public class ConnectorManagerServletTest extends TestCase {
+public class ConnectorManagerUrlServletTest extends TestCase {
   private static final Logger LOGGER =
-      Logger.getLogger(ConnectorManagerServletTest.class.getName());
+      Logger.getLogger(ConnectorManagerUrlServletTest.class.getName());
 
   private MockHttpServletRequest req;
   private MockHttpServletResponse res;
 
   @Override
   protected void setUp() throws Exception {
-    req = new MockHttpServletRequest("POST","");
+    req = new MockHttpServletRequest("POST", "");
     res = new MockHttpServletResponse();
   }
 
@@ -67,7 +68,6 @@ public class ConnectorManagerServletTest extends TestCase {
   public void testXmlBody() throws Exception {
     String expectedResult = "<test>hello</test>";
     req.setContent(expectedResult.getBytes("UTF-8"));
-    System.out.println("char enc = " + req.getCharacterEncoding());
     new TestServlet().doPost(req, res);
     assertEquals(expectedResult, res.getContentAsString());
   }
@@ -92,12 +92,52 @@ public class ConnectorManagerServletTest extends TestCase {
     assertEquals(expectedResult, res.getContentAsString());
   }
 
-  /** Subclass of ConnectorManagerServlet that prints its parameters out. */
-  private static class TestServlet extends ConnectorManagerServlet {
+  /** Subclass of ConnectorManagerUrlServlet that prints its parameters out. */
+  private static class TestServlet extends ConnectorManagerUrlServlet {
     @Override
-    protected void processDoPost(
+    protected void processDoPost(String connectorManagerUrl,
         String xmlBody, Manager manager, PrintWriter out) {
       out.print(xmlBody);
+      out.flush();
+    }
+  }
+
+  /** Test extracting the Connetor Manager URL. */
+  public void testConnectorManagerUrl1() throws Exception {
+    testConnectorManagerUrl("/connector-manager", "");
+  }
+
+  public void testConnectorManagerUrl2() throws Exception {
+    testConnectorManagerUrl("/connector-manager/", "");
+  }
+
+  public void testConnectorManagerUrl3() throws Exception {
+    testConnectorManagerUrl("/connector-manager", "/testServlet");
+  }
+
+  public void testConnectorManagerUrl4() throws Exception {
+    testConnectorManagerUrl("/connector-manager/", "/testServlet");
+  }
+
+  private void testConnectorManagerUrl(String contextPath, String servletPath)
+      throws Exception {
+    req = new MockHttpServletRequest("POST", contextPath + servletPath);
+    req.setServerName("test");
+    req.setServerPort(8080);
+    req.setContextPath(contextPath);
+    req.setServletPath(servletPath);
+    req.setContent("<test>hello</test>".getBytes("UTF-8"));
+    new TestUrlServlet().doPost(req, res);
+    assertEquals("http://test:8080/connector-manager",
+                 res.getContentAsString());
+  }
+
+  /** Subclass of ConnectorManagerUrlServlet that prints its CM URL out. */
+  private static class TestUrlServlet extends ConnectorManagerUrlServlet {
+    @Override
+    protected void processDoPost(String connectorManagerUrl,
+        String xmlBody, Manager manager, PrintWriter out) {
+      out.print(connectorManagerUrl);
       out.flush();
     }
   }
