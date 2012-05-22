@@ -1,0 +1,13 @@
+#summary Reporting Issues with the Google Search Appliance Connector Manager
+#labels Phase-Support
+*Reporting Issues with the Google Search Appliance Connector Manager*
+
+For customers who qualify for enterprise-level support, Google
+provides support for the Google Search Appliance Connectors. You can
+go to [http://www.google.com/support/enterprise/go/gsa_support] for
+instructions on how to contact Google Enterprise Support.
+
+For unsupported issues, such as using the connectors without a Google Search
+Appliance, working with the source code, or to report problems with
+unsupported development builds, you can [http://code.google.com/p/google-enterprise-connector-manager/issues/list file an issue] on this code site. 
+Google may not respond to every issue.
