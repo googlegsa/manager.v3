@@ -362,10 +362,6 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
         xmlWrapAclRecord(document);
         recordCount++;
         return;
-      } else if (hasAclProperties(document)) {
-        xmlWrapAclRecord(document);
-        recordCount++;
-        document = stripAclDocumentFilter.newDocumentFilter(document);
       }
     }
     xmlWrapDocumentRecord(document, contentStream, contentEncoding);
@@ -460,6 +456,11 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
 
     prefix.append(">\n");
     if (metadataAllowed) {
+      if (supportsInheritedAcls && hasAclProperties(document)) {
+        xmlWrapAclRecord(prefix, document);
+        // Prevent ACLs from showing up in metadata.
+        document = stripAclDocumentFilter.newDocumentFilter(document);
+      }
       xmlWrapMetadata(prefix, document);
     }
 
@@ -573,18 +574,23 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
   }
 
   /*
-   * Generate the record tag for the ACL xml data.
+   * Generate the record tag for the ACL xml data, appending to {@code aclBuff}.
    */
-  private void xmlWrapAclRecord(Document acl)
+  private void xmlWrapAclRecord(StringBuilder aclBuff, Document acl)
       throws IOException, RepositoryException {
-    StringBuffer aclBuff = new StringBuffer();
     String inheritFrom = getInheritFromUrl(acl);
     String inheritanceType = DocUtils.getOptionalString(acl,
         SpiConstants.PROPNAME_ACLINHERITANCETYPE);
 
     aclBuff.append("<").append(XML_ACL);
-    XmlUtils.xmlAppendAttr(XML_URL, getRecordUrl(acl, DocumentType.ACL),
-        aclBuff);
+    String docType = DocUtils.getOptionalString(acl,
+        SpiConstants.PROPNAME_DOCUMENTTYPE);
+    if (docType != null
+        && DocumentType.findDocumentType(docType) == DocumentType.ACL) {
+      // Only specify the URL if this is a stand-alone ACL.
+      XmlUtils.xmlAppendAttr(XML_URL, getRecordUrl(acl, DocumentType.ACL),
+          aclBuff);
+    }
     if (!Strings.isNullOrEmpty(inheritanceType)) {
       XmlUtils.xmlAppendAttr(XML_TYPE, inheritanceType, aclBuff);
     }
@@ -597,6 +603,15 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
     // add principal info
     getPrincipalXml(acl, aclBuff);
     XmlUtils.xmlAppendEndTag(XML_ACL, aclBuff);
+  }
+
+  /*
+   * Generate the record tag for the ACL xml data.
+   */
+  private void xmlWrapAclRecord(Document acl) throws IOException,
+      RepositoryException {
+    StringBuilder aclBuff = new StringBuilder();
+    xmlWrapAclRecord(aclBuff, acl);
 
     write(aclBuff.toString().getBytes(XML_DEFAULT_ENCODING));
 
@@ -613,7 +628,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
   /*
    * Generate the ACL principal XML data.
    */
-  private void getPrincipalXml(Document acl, StringBuffer buff)
+  private void getPrincipalXml(Document acl, StringBuilder buff)
       throws IOException, RepositoryException {
     Property property;
 
@@ -641,7 +656,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
   /*
    * Wrap the ACL principal info as XML data.
    */
-  private static void wrapAclPrincipal(StringBuffer buff, Property property,
+  private static void wrapAclPrincipal(StringBuilder buff, Property property,
       AclScope scope, AclAccess access)
       throws RepositoryException, IOException {
     ValueImpl value;
@@ -866,27 +881,21 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
 
   /**
    * A DocumentFilter that strips all ACL properties from the Document's
-   * Properties, since the ACLs are being sent separately. The filter also
-   * sets {@link SpiConstants.PROPNAME_OVERWRITEACLS} to {@code false}.
+   * Properties, since the ACLs are being sent in a separate tag from generic
+   * metadata.
    */
   private static class StripAclDocumentFilter extends AbstractDocumentFilter {
     private static Predicate<String> predicate = Predicates.not(aclPredicate);
-    private static final Set<String> overwriteAclsSet =
-        Collections.singleton(SpiConstants.PROPNAME_OVERWRITEACLS);
 
     @Override
     public Set<String> getPropertyNames(Document source)
         throws RepositoryException {
-      return Sets.union(overwriteAclsSet,
-        Sets.filter(source.getPropertyNames(), predicate));
+      return Sets.filter(source.getPropertyNames(), predicate);
     }
 
     @Override
     public Property findProperty(Document source, String name)
         throws RepositoryException {
-      if (SpiConstants.PROPNAME_OVERWRITEACLS.equals(name)) {
-        return new SimpleProperty(Value.getBooleanValue(false));
-      }
       return (predicate.apply(name)) ? source.findProperty(name) : null;
     }
   }
