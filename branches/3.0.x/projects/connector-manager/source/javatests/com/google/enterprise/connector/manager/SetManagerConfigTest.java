@@ -16,6 +16,7 @@ package com.google.enterprise.connector.manager;
 
 import com.google.common.base.Strings;
 import com.google.enterprise.connector.instantiator.InstantiatorException;
+import com.google.enterprise.connector.pusher.DocPusherFactory;
 import com.google.enterprise.connector.pusher.GsaFeedConnection;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
 
@@ -87,7 +88,7 @@ public class SetManagerConfigTest extends TestCase {
 
     // Update the manager config and pull again.
     context.setConnectorManagerConfig("", "shme", 14,
-        Context.GSA_FEED_SECURE_PORT_INVALID);
+        Context.GSA_FEED_SECURE_PORT_INVALID, null);
     managerProps = context.getConnectorManagerConfig();
     ctxHost =
         managerProps.getProperty(Context.GSA_FEED_HOST_PROPERTY_KEY);
@@ -103,16 +104,28 @@ public class SetManagerConfigTest extends TestCase {
     String host = props.getProperty(Context.GSA_FEED_HOST_PROPERTY_KEY);
     int port = Integer.parseInt(props.getProperty(
         Context.GSA_FEED_PORT_PROPERTY_KEY, Context.GSA_FEED_PORT_DEFAULT));
+    String contentUrlPrefix = props.getProperty(
+        Context.FEED_CONTENTURL_PREFIX_PROPERTY_KEY);
+
     assertEquals("fubar", host);
     assertEquals(25, port);
+    assertNull(contentUrlPrefix);
 
     context.setConnectorManagerConfig("", "shme", 14,
-        Context.GSA_FEED_SECURE_PORT_INVALID);
-    verifyPropsValues("shme", 14, propFile);
+        Context.GSA_FEED_SECURE_PORT_INVALID,
+        "http://test:8080/connector-manager");
+    String expectedContentUrlPrefix =
+        "http://test:8080/connector-manager/getDocumentContent";
+    verifyPropsValues("shme", 14, expectedContentUrlPrefix, propFile);
 
     context.setConnectorManagerConfig("", host, port,
-        Context.GSA_FEED_SECURE_PORT_INVALID);
-    verifyPropsValues(host, port, propFile);
+        Context.GSA_FEED_SECURE_PORT_INVALID, null);
+    verifyPropsValues(host, port, expectedContentUrlPrefix, propFile);
+
+    // Verify that the contentUrlPrefix was also set in the DocPusherFactory.
+    DocPusherFactory pusherFactory = (DocPusherFactory)
+        context.getBean("PusherFactory", DocPusherFactory.class);
+    assertEquals(expectedContentUrlPrefix, pusherFactory.getContentUrlPrefix());
   }
 
   public final void testIsManagerLocked() throws Exception {
@@ -123,7 +136,7 @@ public class SetManagerConfigTest extends TestCase {
     assertFalse("Manager with prop set to false", context.getIsManagerLocked());
     // Check state after updating the manager config.
     context.setConnectorManagerConfig("", "172.25.25.25", 19900,
-        Context.GSA_FEED_SECURE_PORT_INVALID);
+        Context.GSA_FEED_SECURE_PORT_INVALID, null);
     assertTrue("Manager is locked after setting config",
         context.getIsManagerLocked());
   }
@@ -141,13 +154,16 @@ public class SetManagerConfigTest extends TestCase {
   }
 
   private void verifyPropsValues(String expectedHost, int expectedPort,
-      File propFile) throws IOException {
+      String expectedContentUrlPrefix, File propFile) throws IOException {
     Properties props = loadProperties(propFile);
     String actualHost = props.getProperty(Context.GSA_FEED_HOST_PROPERTY_KEY);
     int actualPort = Integer.valueOf(props.getProperty(
         Context.GSA_FEED_PORT_PROPERTY_KEY, Context.GSA_FEED_PORT_DEFAULT));
+    String actualContentUrlPrefix = props.getProperty(
+        Context.FEED_CONTENTURL_PREFIX_PROPERTY_KEY);                                                      
     assertEquals(expectedHost, actualHost);
     assertEquals(expectedPort, actualPort);
+    assertEquals(expectedContentUrlPrefix, actualContentUrlPrefix);
     String isManagerLocked =
         props.getProperty(Context.MANAGER_LOCKED_PROPERTY_KEY);
     assertEquals("Manager is locked", Boolean.TRUE.toString(), isManagerLocked);
@@ -167,7 +183,7 @@ public class SetManagerConfigTest extends TestCase {
   public void testDefaultPropertyValidateCertificate() throws Exception {
     GsaFeedConnection feeder = new GsaFeedConnection("", "fubar", 25, -1);
     context.setConnectorManagerConfig("", "shme", 14,
-        Context.GSA_FEED_SECURE_PORT_INVALID, feeder);
+        Context.GSA_FEED_SECURE_PORT_INVALID, feeder, null);
     assertFalse(feeder.getValidateCertificate());
   }
 
@@ -176,7 +192,7 @@ public class SetManagerConfigTest extends TestCase {
         "true", "Updating validateCertificate");
     GsaFeedConnection feeder = new GsaFeedConnection("", "fubar", 25, -1);
     context.setConnectorManagerConfig("", "shme", 14,
-        Context.GSA_FEED_SECURE_PORT_INVALID, feeder);
+        Context.GSA_FEED_SECURE_PORT_INVALID, feeder, null);
     assertTrue(feeder.getValidateCertificate());
   }
 
@@ -221,7 +237,7 @@ public class SetManagerConfigTest extends TestCase {
     assertNull(ctxSecurePort, ctxSecurePort);
 
     context.setConnectorManagerConfig("", "shme", 14,
-        Context.GSA_FEED_SECURE_PORT_INVALID);
+        Context.GSA_FEED_SECURE_PORT_INVALID, null);
     managerProps = context.getConnectorManagerConfig();
     ctxSecurePort = managerProps.getProperty(
         Context.GSA_FEED_SECURE_PORT_PROPERTY_KEY);
@@ -231,7 +247,7 @@ public class SetManagerConfigTest extends TestCase {
   private void setAndGetSecurePort(int setPort, int expectedPort)
       throws MalformedURLException, InstantiatorException {
     GsaFeedConnection feeder = new GsaFeedConnection("", "fubar", 25, -1);
-    context.setConnectorManagerConfig("", "shme", 14, setPort, feeder);
+    context.setConnectorManagerConfig("", "shme", 14, setPort, feeder, null);
     Properties managerProps = context.getConnectorManagerConfig();
     String ctxSecurePort = managerProps.getProperty(
         Context.GSA_FEED_SECURE_PORT_PROPERTY_KEY);
@@ -274,7 +290,6 @@ public class SetManagerConfigTest extends TestCase {
    * @param extraProps the stored properties
    * @param expectedProtocol the expected feed URL protocol
    * @param expectedPort the expected feed URL port
-   * @param httpsOverPort expecting HTTPS over the gsa.feed.port
    */
   private void setManagerConfig(Gsa gsa, Properties extraProps,
       String expectedProtocol, int expectedPort)
@@ -286,7 +301,7 @@ public class SetManagerConfigTest extends TestCase {
     // Make the call.
     GsaFeedConnection feeder = new GsaFeedConnection("", "fubar", 25, -1);
     context.setConnectorManagerConfig(gsa.protocolAttribute, "shme",
-        gsa.portAttribute, gsa.securePortAttribute, feeder);
+        gsa.portAttribute, gsa.securePortAttribute, feeder, null);
 
     // Check the feed URL.
     assertEquals(expectedProtocol, feeder.getFeedUrl().getProtocol());

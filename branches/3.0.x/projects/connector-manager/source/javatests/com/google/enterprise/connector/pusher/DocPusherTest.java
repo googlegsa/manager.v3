@@ -338,7 +338,11 @@ public class DocPusherTest extends TestCase {
     String feedType = "incremental";
 
     // Doc 1.
-    String records = "<acl url=" + googleConnectorUrl("doc1") + ">\n"
+    String records = "<record url=" + googleConnectorUrl("doc1")
+        + " mimetype=\"" + SpiConstants.DEFAULT_MIMETYPE + "\""
+        + " last-modified=\"Thu, 01 Jan 1970 00:00:00 GMT\""
+        + " authmethod=\"httpbasic\">\n"
+        + "<acl>\n"
         + "<principal scope=\"user\" access=\"permit\">joe</principal>\n"
         + "<principal scope=\"user\" access=\"permit\">mary</principal>\n"
         + "<principal scope=\"user\" access=\"permit\">fred</principal>\n"
@@ -346,11 +350,7 @@ public class DocPusherTest extends TestCase {
         + "<principal scope=\"user\" access=\"permit\">bill</principal>\n"
         + "<principal scope=\"user\" access=\"permit\">admin</principal>\n"
         + "</acl>\n"
-        + "<record url=" + googleConnectorUrl("doc1")
-        + " mimetype=\"" + SpiConstants.DEFAULT_MIMETYPE + "\""
-        + " last-modified=\"Thu, 01 Jan 1970 00:00:00 GMT\""
-        + " authmethod=\"httpbasic\">\n"
-        + "<metadata overwrite-acls=\"false\">\n"
+        + "<metadata>\n"
         + "<meta name=\"google:ispublic\" content=\"false\"/>\n"
         + "<meta name=\"google:lastmodified\" content=\"1970-01-01\"/>\n"
         + "</metadata>\n" + "<content encoding=\"base64binary\">\n"
@@ -358,14 +358,14 @@ public class DocPusherTest extends TestCase {
         + "</record>\n";
 
     // Doc 2
-    records += "<acl url=" + googleConnectorUrl("doc2") + ">\n"
+    records += "<record url=" + googleConnectorUrl("doc2")
+        + " mimetype=\"" + SpiConstants.DEFAULT_MIMETYPE + "\""
+        + " last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\">\n"
+        + "<acl>\n"
         + "<principal scope=\"user\" access=\"permit\">joe</principal>\n"
         + "<principal scope=\"user\" access=\"permit\">mary</principal>\n"
         + "</acl>\n"
-        + "<record url=" + googleConnectorUrl("doc2")
-        + " mimetype=\"" + SpiConstants.DEFAULT_MIMETYPE + "\""
-        + " last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\">\n"
-        + "<metadata overwrite-acls=\"false\">\n"
+        + "<metadata>\n"
         + "<meta name=\"google:ispublic\" content=\"true\"/>\n"
         + "<meta name=\"google:lastmodified\" content=\"1970-01-01\"/>\n"
         + "</metadata>\n" + "<content encoding=\"base64binary\">\n"
@@ -373,14 +373,14 @@ public class DocPusherTest extends TestCase {
         + "</record>\n";
 
     // Doc 3
-    records += "<acl url=" + googleConnectorUrl("doc3") + ">\n"
+    records += "<record url=" + googleConnectorUrl("doc3")
+        + " mimetype=\"" + SpiConstants.DEFAULT_MIMETYPE + "\""
+        + " last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\">\n"
+        + "<acl>\n"
         + "<principal scope=\"user\" access=\"permit\">joe</principal>\n"
         + "<principal scope=\"user\" access=\"permit\">mary</principal>\n"
         + "</acl>\n"
-        + "<record url=" + googleConnectorUrl("doc3")
-        + " mimetype=\"" + SpiConstants.DEFAULT_MIMETYPE + "\""
-        + " last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\">\n"
-        + "<metadata overwrite-acls=\"false\">\n"
+        + "<metadata>\n"
         + "<meta name=\"google:ispublic\" content=\"true\"/>\n"
         + "<meta name=\"google:lastmodified\" content=\"1970-01-01\"/>\n"
         + "</metadata>\n" + "<content encoding=\"base64binary\">\n"
@@ -1052,8 +1052,7 @@ public class DocPusherTest extends TestCase {
         + ",\"acl\":{type:string, value:[joe,mary,admin]}"
         + ",\"google:ispublic\":\"false\"}";
     String resultXML = feedJsonEvent(userAcl, true);
-    assertStringContains("<acl url=" + googleConnectorUrl("user_acl"),
-                         resultXML);
+    assertStringContains("<acl", resultXML);
     assertStringContains("<principal scope=\"user\" access=\"permit\">"
                          + "joe</principal>", resultXML);
     assertStringContains("<principal scope=\"user\" access=\"permit\">"
@@ -1160,8 +1159,7 @@ public class DocPusherTest extends TestCase {
         + ",\"google:ispublic\":\"false\"}";
     String resultXML = feedJsonEvent(userGroupAcl, true);
 
-    assertStringContains("<acl url=" + googleConnectorUrl("user_group_acl"),
-                         resultXML);
+    assertStringContains("<acl", resultXML);
     assertStringContains("<principal scope=\"user\" access=\"permit\">"
                          + "joe</principal>", resultXML);
     assertStringContains("<principal scope=\"user\" access=\"permit\">"
@@ -2820,9 +2818,8 @@ public class DocPusherTest extends TestCase {
     String resultXML = feedDocument(document, true);
 
     // This should be an acl feed record, followed by a regular feed record.
-    assertStringContains("<acl url=" + googleConnectorUrl("doc1")
-        + " inheritance-type=\"parent-overrides\" inherit-from=\""
-        + expectedParentUrl + "\">", resultXML);
+    assertStringContains("<acl inheritance-type=\"parent-overrides\" "
+        + "inherit-from=\"" + expectedParentUrl + "\">", resultXML);
     assertStringContains(
         "<principal scope=\"user\" access=\"permit\">John Doe</principal>",
         resultXML);
