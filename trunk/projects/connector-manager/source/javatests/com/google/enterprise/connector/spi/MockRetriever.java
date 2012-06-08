@@ -37,6 +37,9 @@ public class MockRetriever implements Retriever {
   /** A docid that is not found. */
   public static final String DOCID_NOT_FOUND = "nonexistent";
 
+  /** A docid that has insufficient permissions. */
+  public static final String DOCID_NO_ACCESS = "topSecret";
+
   /** A docid that throws RepositoryExeception. */
   public static final String DOCID_REPOSITORY_EXCEPTION = "repositoryError";
 
@@ -44,6 +47,8 @@ public class MockRetriever implements Retriever {
   public InputStream getContent(String docid) throws RepositoryException {
     if (DOCID_NOT_FOUND.equals(docid)) {
       throw new DocumentNotFoundException("Not Found");
+    } else if (DOCID_NO_ACCESS.equals(docid)) {
+      throw new DocumentAccessException("Access Denied");
     } else if (DOCID_REPOSITORY_EXCEPTION.equals(docid)) {
       throw new RepositoryException("Repository Error");
     } else if (DOCID_NO_CONTENT.equals(docid)) {
@@ -59,6 +64,8 @@ public class MockRetriever implements Retriever {
   public Document getMetaData(String docid) throws RepositoryException {
     if (DOCID_NOT_FOUND.equals(docid)) {
       throw new DocumentNotFoundException("Not Found");
+    } else if (DOCID_NO_ACCESS.equals(docid)) {
+      throw new DocumentAccessException("Access Denied");
     } else if (DOCID_REPOSITORY_EXCEPTION.equals(docid)) {
       throw new RepositoryException("Repository Error");
     } else if (DOCID_NO_LASTMODIFIED.equals(docid)) {
