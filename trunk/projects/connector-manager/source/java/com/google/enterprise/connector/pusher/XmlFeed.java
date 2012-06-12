@@ -529,8 +529,14 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
    */
   private String getRecordUrl(Document document, DocumentType documentType)
       throws RepositoryException, RepositoryDocumentException {
-    return getOrConstructUrl(document, SpiConstants.PROPNAME_SEARCHURL,
+    String url = getOrConstructUrl(document, SpiConstants.PROPNAME_SEARCHURL,
         SpiConstants.PROPNAME_DOCID, feedType, documentType);
+    if (url == null) {
+      throw new RepositoryDocumentException(
+          "Document has neither property " + SpiConstants.PROPNAME_DOCID
+          + " nor property " + SpiConstants.PROPNAME_SEARCHURL);
+    }
+    return url;
   }
 
   /**
