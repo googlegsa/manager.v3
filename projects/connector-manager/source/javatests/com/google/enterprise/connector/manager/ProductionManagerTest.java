@@ -72,7 +72,7 @@ public class ProductionManagerTest extends TestCase {
   /** Test authenticate() with no AuthenticationManager. */
   public void testAuthenticateNoAuthenticationManger() throws Exception {
     instantiator.addConnector(connectorName,
-                              new MockConnector(null, null, null, null));
+        new MockConnector(null, null, null, null, null));
     AuthenticationResponse response =
         manager.authenticate(connectorName, identity);
     assertNotNull(response);
@@ -84,7 +84,7 @@ public class ProductionManagerTest extends TestCase {
   /** Test authenticate() with success response. */
   public void testAuthenticateSuccess() throws Exception {
     instantiator.addConnector(connectorName, new MockConnector(null,
-        new AuthenticatingAuthenticationManager(), null, null));
+        new AuthenticatingAuthenticationManager(), null, null, null));
     AuthenticationResponse response =
         manager.authenticate(connectorName, identity);
     assertNotNull(response);
@@ -95,7 +95,7 @@ public class ProductionManagerTest extends TestCase {
   /** Test authenticate() ConnectorNotFoundException. */
   public void testAuthenticateConnectorNotFoundException() throws Exception {
     instantiator.addConnector(connectorName, new MockConnector(null,
-        new AuthenticatingAuthenticationManager(), null, null));
+        new AuthenticatingAuthenticationManager(), null, null, null));
     AuthenticationResponse response =
         manager.authenticate("nonexistent", identity);
     assertNotNull(response);
@@ -108,7 +108,7 @@ public class ProductionManagerTest extends TestCase {
   public void testAuthenticateRepositoryException() throws Exception {
     instantiator.addConnector(connectorName, new MockConnector(null,
         new ExceptionalAuthenticationManager(new RepositoryException()),
-        null, null));
+        null, null, null));
     AuthenticationResponse response =
         manager.authenticate(connectorName, identity);
     assertNotNull(response);
@@ -121,7 +121,7 @@ public class ProductionManagerTest extends TestCase {
   public void testAuthenticateRepositoryLoginException() throws Exception {
     instantiator.addConnector(connectorName, new MockConnector(null,
         new ExceptionalAuthenticationManager(new RepositoryLoginException()),
-        null, null));
+        null, null, null));
     AuthenticationResponse response =
         manager.authenticate(connectorName, identity);
     assertNotNull(response);
@@ -133,7 +133,7 @@ public class ProductionManagerTest extends TestCase {
   /** Test authenticate() throws RuntimeException. */
   public void testAuthenticateRuntimeException() throws Exception {
     instantiator.addConnector(connectorName, new MockConnector(null,
-        new ExceptionalAuthenticationManager(null), null, null));
+        new ExceptionalAuthenticationManager(null), null, null, null));
     AuthenticationResponse response = manager.authenticate(
         connectorName, identity);
     assertNotNull(response);
@@ -169,7 +169,7 @@ public class ProductionManagerTest extends TestCase {
   /** Test authorizeDocids with no AuthorizationManager. */
   public void testAuthorizeDocidsNoAuthorizationManager() throws Exception {
     instantiator.addConnector(connectorName,
-                              new MockConnector(null, null, null, null));
+        new MockConnector(null, null, null, null, null));
     List<String> docids = Arrays.asList(new String[] { "foo", "bar", "baz" });
     assertNull(manager.authorizeDocids(connectorName, docids, identity));
   }
@@ -178,7 +178,7 @@ public class ProductionManagerTest extends TestCase {
   public void testAuthorizeDocidsExceptionalAuthorizationManager()
       throws Exception {
     instantiator.addConnector(connectorName, new MockConnector(null, null,
-        new ExceptionalAuthorizationManager(), null));
+        new ExceptionalAuthorizationManager(), null, null));
     List<String> docids = Arrays.asList(new String[] { "foo", "bar", "baz" });
     assertNull(manager.authorizeDocids(connectorName, docids, identity));
   }
@@ -192,7 +192,7 @@ public class ProductionManagerTest extends TestCase {
   /** Test authorizeDocids. */
   public void testAuthorizeDocids() throws Exception {
     instantiator.addConnector(connectorName, new MockConnector(null, null,
-        new AuthorizeAllAuthorizationManager(), null));
+        new AuthorizeAllAuthorizationManager(), null, null));
     List<String> docids = Arrays.asList(new String[] { "foo", "bar", "baz" });
     Collection<AuthorizationResponse> authorized =
         manager.authorizeDocids(connectorName, docids, identity);
@@ -254,14 +254,14 @@ public class ProductionManagerTest extends TestCase {
   /** Test getDocumentContent with no Retriever. */
   public void testGetDocumentContentNoRetriever() throws Exception {
     instantiator.addConnector(connectorName,
-        new MockConnector(null, null, null, null));
+        new MockConnector(null, null, null, null, null));
     assertNull(manager.getDocumentContent(connectorName, "docid"));
   }
 
   /** Test getDocumentContent with Document NotFound. */
   public void testGetDocumentContentDocumentNotFound() throws Exception {
     instantiator.addConnector(connectorName,
-        new MockConnector(null, null, null, new MockRetriever()));
+        new MockConnector(null, null, null, new MockRetriever(), null));
     try {
       manager.getDocumentContent(connectorName, MockRetriever.DOCID_NOT_FOUND);
       fail("Expected RepositoryDocumentException");
@@ -273,7 +273,7 @@ public class ProductionManagerTest extends TestCase {
   /** Test getDocumentContent with RepositoryException. */
   public void testGetDocumentContentRepositoryException() throws Exception {
     instantiator.addConnector(connectorName,
-        new MockConnector(null, null, null, new MockRetriever()));
+        new MockConnector(null, null, null, new MockRetriever(), null));
     try {
       manager.getDocumentContent(connectorName,
                                  MockRetriever.DOCID_REPOSITORY_EXCEPTION);
@@ -286,7 +286,7 @@ public class ProductionManagerTest extends TestCase {
   /** Test getDocumentContent where document has no content. */
   public void testGetDocumentContentNoContent() throws Exception {
     instantiator.addConnector(connectorName,
-        new MockConnector(null, null, null, new MockRetriever()));
+        new MockConnector(null, null, null, new MockRetriever(), null));
     InputStream in = manager.getDocumentContent(connectorName,
                                                 MockRetriever.DOCID_NO_CONTENT);
     // GSA still doesn't handle docs with no content, so the
@@ -298,7 +298,7 @@ public class ProductionManagerTest extends TestCase {
   /** Test getDocumentContent where document has empty content. */
   public void testGetDocumentContentEmptyContent() throws Exception {
     instantiator.addConnector(connectorName,
-        new MockConnector(null, null, null, new MockRetriever()));
+        new MockConnector(null, null, null, new MockRetriever(), null));
     InputStream in = manager.getDocumentContent(connectorName,
                                                 MockRetriever.DOCID_NO_CONTENT);
     // GSA still doesn't handle docs with no content, so the
@@ -310,7 +310,7 @@ public class ProductionManagerTest extends TestCase {
   /** Test getDocumentContent. */
   public void testGetDocumentContent() throws Exception {
     instantiator.addConnector(connectorName,
-        new MockConnector(null, null, null, new MockRetriever()));
+        new MockConnector(null, null, null, new MockRetriever(), null));
     InputStream in = manager.getDocumentContent(connectorName, "docid");
     assertNotNull(in);
     assertEquals("docid", StringUtils.streamToString(in));
@@ -329,14 +329,14 @@ public class ProductionManagerTest extends TestCase {
   /** Test getDocumentMetaData with no Retriever. */
   public void testGetDocumentMetaDataNoRetriever() throws Exception {
     instantiator.addConnector(connectorName,
-        new MockConnector(null, null, null, null));
+        new MockConnector(null, null, null, null, null));
     assertNull(manager.getDocumentMetaData(connectorName, "docid"));
   }
 
   /** Test getDocumentMetaData with Document NotFound. */
   public void testGetDocumentMetaDataDocumentNotFound() throws Exception {
     instantiator.addConnector(connectorName,
-        new MockConnector(null, null, null, new MockRetriever()));
+        new MockConnector(null, null, null, new MockRetriever(), null));
     try {
       manager.getDocumentMetaData(connectorName, MockRetriever.DOCID_NOT_FOUND);
       fail("Expected RepositoryDocumentException");
@@ -348,7 +348,7 @@ public class ProductionManagerTest extends TestCase {
   /** Test getDocumentMetaData with RepositoryException. */
   public void testGetDocumentMetaDataRepositoryException() throws Exception {
     instantiator.addConnector(connectorName,
-        new MockConnector(null, null, null, new MockRetriever()));
+        new MockConnector(null, null, null, new MockRetriever(), null));
     try {
       manager.getDocumentMetaData(connectorName,
                                   MockRetriever.DOCID_REPOSITORY_EXCEPTION);
@@ -361,7 +361,7 @@ public class ProductionManagerTest extends TestCase {
   /** Test getDocumentMetaData. */
   public void testGetDocumentMetaData() throws Exception {
     instantiator.addConnector(connectorName,
-        new MockConnector(null, null, null, new MockRetriever()));
+        new MockConnector(null, null, null, new MockRetriever(), null));
     Document document = manager.getDocumentMetaData(connectorName, "docid");
     assertNotNull(document);
     assertEquals("docid",

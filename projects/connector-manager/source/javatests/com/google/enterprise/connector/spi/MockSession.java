@@ -17,20 +17,22 @@ package com.google.enterprise.connector.spi;
 /**
  * A mock implementation for the Session interface.
  */
-public class MockSession implements Session, RetrieverAware {
+public class MockSession implements Session, RetrieverAware, ListerAware {
   private final TraversalManager traversalManager;
   private final AuthenticationManager authenticationManager;
   private final AuthorizationManager authorizationManager;
   private final Retriever retriever;
+  private final Lister lister;
 
   public MockSession(TraversalManager traversalManager,
                      AuthenticationManager authenticationManager,
                      AuthorizationManager authorizationManager,
-                     Retriever retriever) {
+                     Retriever retriever, Lister lister) {
     this.traversalManager = traversalManager;
     this.authenticationManager = authenticationManager;
     this.authorizationManager = authorizationManager;
     this.retriever = retriever;
+    this.lister = lister;
   }
 
   /* @Override */
@@ -53,5 +55,10 @@ public class MockSession implements Session, RetrieverAware {
   /* @Override */
   public Retriever getRetriever() throws RepositoryException {
     return retriever;
+  }
+
+  /* @Override */
+  public Lister getLister() throws RepositoryException {
+    return lister;
   }
 }
