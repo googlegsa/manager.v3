@@ -133,7 +133,7 @@ public class GetDocumentContentTest extends TestCase {
         new MockInstantiator(new ThreadPool(5, new SystemClock()));
     instantiator.setupTestTraversers();
     instantiator.addConnector(connectorName,
-        new MockConnector(null, null, null, new MockRetriever()));
+        new MockConnector(null, null, null, new MockRetriever(), null));
     ProductionManager manager = new ProductionManager();
     manager.setInstantiator(instantiator);
     return manager;
@@ -295,7 +295,7 @@ public class GetDocumentContentTest extends TestCase {
         new MockInstantiator(new ThreadPool(5, new SystemClock()));
     instantiator.setupTestTraversers();
     instantiator.addConnector(connectorName,
-        new MockConnector(null, null, null, new MockRetriever()));
+        new MockConnector(null, null, null, new MockRetriever(), null));
     assertTrue(Context.getInstance().getManager() instanceof ProductionManager);
     ProductionManager manager =
         (ProductionManager) (Context.getInstance().getManager());

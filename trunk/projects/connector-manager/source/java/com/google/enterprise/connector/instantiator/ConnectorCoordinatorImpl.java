@@ -457,6 +457,13 @@ class ConnectorCoordinatorImpl implements
           getInstanceInfo().setConnectorSchedule(schedule);
       }
     }
+
+    // TODO: Remove this if we switch completely to JDBC PersistentStore.
+    // FileStore doesn't notice the deletion of a file that did not exist.
+    if (lister != null) {
+      connectorCheckpointChanged(null);
+    }
+
     // This must not be called while holding the lock.
     changeDetector.detect();
   }
@@ -563,16 +570,26 @@ class ConnectorCoordinatorImpl implements
    */
   /* @Override */
   public void connectorCheckpointChanged(String checkpoint) {
-    // TODO: actually detect transition from non-null to null?
     // If checkpoint has been nulled, then traverse the repository from scratch.
     if (checkpoint == null) {
       synchronized(this) {
         // Halt any traversal in progress.
         resetBatch();
 
+        // Shut down any Lister.
+        stopLister();
+
         // Discard all content from the LocalDocumentStore for this connector.
         if (documentStore != null) {
           documentStore.delete();
+        }
+
+        try {
+          // Restart Lister.
+          startLister();
+        } catch (InstantiatorException e) {
+          LOGGER.log(Level.WARNING, "Failed to restart Lister for connector "
+                     + name, e);
         }
 
         // Kick off a restart immediately.

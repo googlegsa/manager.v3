@@ -22,24 +22,26 @@ public class MockConnector implements Connector {
   private final AuthenticationManager authenticationManager;
   private final AuthorizationManager authorizationManager;
   private final Retriever retriever;
+  private final Lister lister;
 
   public MockConnector() {
-    this(null, null, null, null);
+    this(null, null, null, null, null);
   }
 
   public MockConnector(TraversalManager traversalManager,
                        AuthenticationManager authenticationManager,
                        AuthorizationManager authorizationManager,
-                       Retriever retriever) {
+                       Retriever retriever, Lister lister) {
     this.traversalManager = traversalManager;
     this.authenticationManager = authenticationManager;
     this.authorizationManager = authorizationManager;
     this.retriever = retriever;
+    this.lister = lister;
   }
 
   /* @Override */
   public Session login() throws RepositoryLoginException, RepositoryException {
     return new MockSession(traversalManager, authenticationManager,
-                           authorizationManager, retriever);
+                           authorizationManager, retriever, lister);
   }
 }
