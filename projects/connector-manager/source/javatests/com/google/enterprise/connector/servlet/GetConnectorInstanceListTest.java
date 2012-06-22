@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.servlet;
 
+import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.instantiator.Configuration;
 import com.google.enterprise.connector.manager.Context;
@@ -27,6 +28,7 @@ import junit.framework.TestCase;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Logger;
 
 /**
@@ -76,9 +78,9 @@ public class GetConnectorInstanceListTest extends TestCase {
   }
 
   /**
-   * Test with connector instance, no Schedule.
+   * Test with connector instance, no Schedule and namespaces.
    */
-  public void testWithConnectorNoSchedule() throws Exception {
+  public void testWithConnectorNoScheduleAndNamespaces() throws Exception {
     String expectedResult =
         "<CmResponse>\n"
         + "  <StatusId>0</StatusId>\n"
@@ -93,7 +95,7 @@ public class GetConnectorInstanceListTest extends TestCase {
         + "  </ConnectorInstances>\n"
         + "</CmResponse>\n";
 
-    addConnector();
+    addConnector(null);
     doTest(expectedResult);
   }
 
@@ -113,22 +115,31 @@ public class GetConnectorInstanceListTest extends TestCase {
         + "</ConnectorSchedules>\n"
         + "      <ConnectorSchedule version=\"1\">connector1:200:1-12"
         + "</ConnectorSchedule>\n"
+        + "      <GlobalNamespace>ThinkGlobally</GlobalNamespace>\n"
+        + "      <LocalNamespace>ActLocally</LocalNamespace>\n"
         + "    </ConnectorInstance>\n"
         + "  </ConnectorInstances>\n"
         + "</CmResponse>\n";
 
-    addConnector();
+    Map<String, String> additionalConfigData = new HashMap<String, String>();
+    additionalConfigData.put("googleGlobalNamespace", "ThinkGlobally");
+    additionalConfigData.put("googleLocalNamespace", "ActLocally");
+    addConnector(additionalConfigData);
     manager.setSchedule(connectorName, "#connector1:200:300000:1-12");
     doTest(expectedResult);
   }
 
-  private void addConnector() throws Exception {
+  private void addConnector(Map<String, String> additionalConfig)
+      throws Exception {
     // Use the manager directly to create a connector.
     HashMap<String, String> configData = new HashMap<String, String>();
     configData.put("Username", "bob");
     configData.put("Password", "pwd");
     configData.put("Color", "red");
     configData.put("RepositoryFile", "MockRepositoryEventLog1.txt");
+    if (additionalConfig != null) {
+      configData.putAll(additionalConfig);
+    }
     manager.setConnectorConfiguration(connectorName,
         new Configuration(connectorType, configData, null),
         "en", false);
