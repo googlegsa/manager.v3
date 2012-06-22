@@ -159,7 +159,7 @@ public class GetConnectorStatusTest extends TestCase {
         throws ConnectorNotFoundException {
       ConnectorStatus status = super.getConnectorStatus(connectorName);
       return new ConnectorStatus(status.getName(), status.getType(),
-                                 status.getStatus(), null);
+                                 status.getStatus(), null, null, null);
     }
   }
 }
