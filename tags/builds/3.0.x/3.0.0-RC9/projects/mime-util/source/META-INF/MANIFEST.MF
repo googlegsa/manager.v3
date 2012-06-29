@@ -1,0 +1,29 @@
+Manifest-Version: 1.0
+Export-Package: eu.medsea.mimeutil;uses:="eu.medsea.util,eu.medsea.mim
+ eutil.detector,org.slf4j,eu.medsea.mimeutil.handler",eu.medsea.mimeut
+ il.detector;uses:="eu.medsea.mimeutil,org.slf4j,eu.medsea.util",eu.me
+ dsea.mimeutil.handler;uses:="eu.medsea.mimeutil",eu.medsea.util;uses:
+ ="org.slf4j"
+Built-By: Owner
+Tool: Bnd-0.0.357
+Package: eu.medsea.mimeutil
+Bundle-Name: Mime Detection Utility
+Created-By: Apache Maven Bundle Plugin
+url: http://www.medsea.eu/mime-util/
+mode: development
+Bundle-Vendor: Medsea Business Solutions S.L.
+Build-Jdk: 1.6.0_10
+Bundle-Version: 2.1.3-G1
+Bnd-LastModified: 1262673014099
+Bundle-ManifestVersion: 2
+Bundle-License: http://www.apache.org/licenses/LICENSE-2.0.txt
+Bundle-Description: mime-util is a simple to use, small, light weight
+  and fast open source java utility library that can detect MIME types
+  from files, input streams, URL's and byte arrays.  Due to the use of
+  regular expressions and the java.nio packages, it requires at least
+   Java 1.4.
+Bundle-DocURL: http://www.medsea.eu
+Bundle-SymbolicName: eu.medsea.mimeutil.mime-util
+Import-Package: org.slf4j;version="1.5"
+Google-Modified: Updated mime-types.properties: correct errors and add
+  many new filename extension to mime-type mappings. [Brett Johnson]
