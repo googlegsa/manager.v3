@@ -18,6 +18,7 @@ import com.google.common.collect.Maps;
 import com.google.enterprise.connector.common.AlternateContentFilterInputStream;
 import com.google.enterprise.connector.common.BigEmptyDocumentFilterInputStream;
 import com.google.enterprise.connector.common.I18NUtil;
+import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.instantiator.Configuration;
 import com.google.enterprise.connector.instantiator.DocumentFilterFactoryFactory;
 import com.google.enterprise.connector.instantiator.ExtendedConfigureResponse;
@@ -270,9 +271,18 @@ public class ProductionManager implements Manager {
       throws ConnectorNotFoundException {
     String connectorTypeName = instantiator.getConnectorTypeName(connectorName);
     Schedule schedule = instantiator.getConnectorSchedule(connectorName);
+    Configuration config = getConnectorConfiguration(connectorName);
+    String globalNamespace = null;
+    String localNamespace = null;
+    if (config != null) {
+      Map<String, String> configData = config.getMap();
+      globalNamespace = configData.get(PropertiesUtils.GOOGLE_GLOBAL_NAMESPACE);
+      localNamespace = configData.get(PropertiesUtils.GOOGLE_LOCAL_NAMESPACE);
+    }
     // TODO: resolve the third parameter - we need to give status a meaning
     return new ConnectorStatus(connectorName, connectorTypeName, 0,
-        ((schedule == null) ? null : schedule.toString()));
+        ((schedule == null) ? null : schedule.toString()), globalNamespace,
+        localNamespace);
   }
 
   /* @Override */

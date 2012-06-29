@@ -265,9 +265,12 @@ public class DocPusher implements Pusher {
     InputStream contentStream = null;
     try {
       if (LOGGER.isLoggable(Level.FINER)) {
-        LOGGER.finer("DOCUMENT: Adding document "
-            + DocUtils.getRequiredString(document, SpiConstants.PROPNAME_DOCID)
-            + " from connector " + connectorName + " to feed.");
+        LOGGER.log(Level.FINER, "DOCUMENT: Adding document with docid={0} and "
+            + "searchurl={1} from connector {2} to feed.", new Object[] {
+            DocUtils.getOptionalString(document, SpiConstants.PROPNAME_DOCID),
+            DocUtils.getOptionalString(document,
+              SpiConstants.PROPNAME_SEARCHURL),
+            connectorName});
       }
 
       // Add this document to the feed.

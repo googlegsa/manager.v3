@@ -161,6 +161,15 @@ public class GetConnectorInstanceList extends HttpServlet {
 
         out.println(buffer.toString());
       }
+
+      if (connectorStatus.getGlobalNamespace() != null) {
+        ServletUtil.writeXMLElement(out, 3, ServletUtil.XMLTAG_GLOBAL_NAMESPACE,
+            connectorStatus.getGlobalNamespace());
+      }
+      if (connectorStatus.getLocalNamespace() != null) {
+        ServletUtil.writeXMLElement(out, 3, ServletUtil.XMLTAG_LOCAL_NAMESPACE,
+            connectorStatus.getLocalNamespace());
+      }
       ServletUtil.writeXMLTag(out, 2, ServletUtil.XMLTAG_CONNECTOR_INSTANCE,
           true);
     }

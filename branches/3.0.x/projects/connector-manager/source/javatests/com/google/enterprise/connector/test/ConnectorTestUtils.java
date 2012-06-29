@@ -188,6 +188,33 @@ public class ConnectorTestUtils {
     return new SimpleDocument(createSpiProperties(props));
   }
 
+  @SuppressWarnings("unchecked")
+  public static void addValueToList(Object obj, List<Value> list) {
+    if (obj instanceof List) {
+      for (Object listItem : (List<Object>) obj) {
+        addValueToList(listItem, list);
+      }
+    } else if (obj instanceof Value) {
+      list.add((Value) obj);
+    } else if (obj instanceof String) {
+      list.add(Value.getStringValue((String) obj));
+    } else if (obj instanceof Calendar) {
+      list.add(Value.getDateValue((Calendar) obj));
+    } else if (obj instanceof InputStream) {
+      list.add(Value.getBinaryValue((InputStream) obj));
+    } else if (obj instanceof Boolean) {
+      list.add(Value.getBooleanValue((Boolean) obj));
+    } else if (obj instanceof Long) {
+      list.add(Value.getLongValue((Long) obj));
+    } else if (obj instanceof Double) {
+      list.add(Value.getDoubleValue((Double) obj));
+    } else if (obj instanceof Principal) {
+      list.add(Value.getPrincipalValue((Principal) obj));
+    } else {
+      throw new AssertionError(obj);
+    }
+  }
+
   /**
    * Creates a properties map matching the SPI type, mapping String
    * property names to {@code List<Value>}.
@@ -197,22 +224,8 @@ public class ConnectorTestUtils {
     Map<String, List<Value>> spiValues = new HashMap<String, List<Value>>();
     for (Map.Entry<String, Object> entry : props.entrySet()) {
       Object obj = entry.getValue();
-      Value val = null;
-      if (obj instanceof String) {
-        val = Value.getStringValue((String) obj);
-      } else if (obj instanceof Calendar) {
-        val = Value.getDateValue((Calendar) obj);
-      } else if (obj instanceof InputStream) {
-        val = Value.getBinaryValue((InputStream) obj);
-      } else if (obj instanceof Boolean) {
-        val = Value.getBooleanValue((Boolean) obj);
-      } else if (obj instanceof Principal) {
-        val = Value.getPrincipalValue((Principal) obj);
-      } else {
-        throw new AssertionError(obj);
-      }
       List<Value> values = new ArrayList<Value>();
-      values.add(val);
+      addValueToList(obj, values);
       spiValues.put(entry.getKey(), values);
     }
     return spiValues;

@@ -24,6 +24,7 @@ import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.pusher.FeedConnection;
 import com.google.enterprise.connector.spi.Document;
+import com.google.enterprise.connector.spi.DocumentAccessException;
 import com.google.enterprise.connector.spi.DocumentNotFoundException;
 import com.google.enterprise.connector.spi.RepositoryDocumentException;
 import com.google.enterprise.connector.spi.RepositoryException;
@@ -266,10 +267,6 @@ public class GetDocumentContent extends HttpServlet {
         }
       } while (bytes != -1);
       return HttpServletResponse.SC_OK;
-    } catch (ConnectorNotFoundException e) {
-      LOGGER.log(Level.FINE, "Failed to retrieve document content: {0}",
-                 e.toString());
-      return HttpServletResponse.SC_SERVICE_UNAVAILABLE;
     } catch (DocumentNotFoundException e) {
       LOGGER.log(Level.FINE, "Failed to retrieve document content: {0}",
                  e.toString());
@@ -278,6 +275,14 @@ public class GetDocumentContent extends HttpServlet {
       LOGGER.log(Level.FINE, "Failed to retrieve document content: {0}",
                  e.toString());
       return HttpServletResponse.SC_NOT_FOUND;
+    } catch (DocumentAccessException e) {
+      LOGGER.log(Level.FINE, "Failed to retrieve document content: {0}",
+                 e.toString());
+      return HttpServletResponse.SC_FORBIDDEN;
+    } catch (ConnectorNotFoundException e) {
+      LOGGER.log(Level.FINE, "Failed to retrieve document content: {0}",
+                 e.toString());
+      return HttpServletResponse.SC_SERVICE_UNAVAILABLE;
     } catch (RepositoryException e) {
       LOGGER.log(Level.WARNING, "Failed to retrieve document content", e);
       return HttpServletResponse.SC_SERVICE_UNAVAILABLE;
@@ -388,10 +393,6 @@ public class GetDocumentContent extends HttpServlet {
       if (document == null) {
         return HttpServletResponse.SC_SERVICE_UNAVAILABLE;
       }
-    } catch (ConnectorNotFoundException e) {
-      LOGGER.log(Level.FINE, "Failed to retrieve document metadata: {0}",
-                 e.toString());
-      return HttpServletResponse.SC_SERVICE_UNAVAILABLE;
     } catch (DocumentNotFoundException e) {
       LOGGER.log(Level.FINE, "Failed to retrieve document metadata: {0}",
                  e.toString());
@@ -400,6 +401,14 @@ public class GetDocumentContent extends HttpServlet {
       LOGGER.log(Level.FINE, "Failed to retrieve document metadata: {0}",
                  e.toString());
       return HttpServletResponse.SC_NOT_FOUND;
+    } catch (DocumentAccessException e) {
+      LOGGER.log(Level.FINE, "Failed to retrieve document metadata: {0}",
+                 e.toString());
+      return HttpServletResponse.SC_FORBIDDEN;
+    } catch (ConnectorNotFoundException e) {
+      LOGGER.log(Level.FINE, "Failed to retrieve document metadata: {0}",
+                 e.toString());
+      return HttpServletResponse.SC_SERVICE_UNAVAILABLE;
     } catch (RepositoryException e) {
       LOGGER.log(Level.WARNING, "Failed to retrieve document metadata", e);
       return HttpServletResponse.SC_SERVICE_UNAVAILABLE;
