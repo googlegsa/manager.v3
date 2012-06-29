@@ -51,16 +51,12 @@ jar xvf %WAR_DIR%\connector-manager.war
 cd %CATALINA_HOME%\webapps\connector-manager\WEB-INF
 copy applicationContext.properties.backup applicationContext.properties
 }}}
-  # Add a new `feed.contenturl.prefix` property to the  Connector Manager configuration properties file.  Substitute the `host` and `port` portions of the URL with the actual hostname or IP address and port number for the Tomcat web application server. 
-{{{
-cd %CATALINA_HOME%\webapps\connector-manager\WEB-INF
-echo feed.contenturl.prefix=http://host:port/connector-manager/getDocumentContent >> applicationContext.properties
-}}}
   # Restart the Tomcat web application server, either via the Services control panel, by using the `Start_*_Connector_Console` command in the Connector installation directory, or by using Tomcat's `startup` command or `startService` command.
 {{{
 cd %CATALINA_HOME%\bin
 startService.bat
 }}}
+  # Register your Connector Manager with the Search Appliance.  This _must_ be done, even if your Connector Manager had been previously registered.  This step sets the new `feed.contenturl.prefix` configuration property for the Connector Manager. On the Search Appliance Admin Console, go to the *Connector Administration > Connector Managers* page.  Click the *Edit* link for your Connector Manager,  then click *Save*.  You do not need to unregister the Connector Manager or change its configuration.
 
 == Updating a Connector Manager deployed on Unix or Linux ==
 
@@ -101,13 +97,9 @@ jar xvf ${WAR_DIR}/connector-manager.war
 cd ${CATALINA_HOME}/webapps/connector-manager/WEB-INF
 cp applicationContext.properties.backup applicationContext.properties
 }}}
-  # Add a new `feed.contenturl.prefix` property to the  Connector Manager configuration properties file.  Substitute the `host` and `port` portions of the URL with the actual hostname or IP address and port number for the Tomcat web application server. 
-{{{
-cd ${CATALINA_HOME}/webapps/connector-manager/WEB-INF
-echo 'feed.contenturl.prefix=http://host:port/connector-manager/getDocumentContent' >> applicationContext.properties
-}}}
   # Restart the Tomcat web application server, either by using the `Start_*_Connector_Console` command in the Connector installation directory, or by using Tomcat's `startup` command.
 {{{
 cd ${CATALINA_HOME}/bin
 ./startup.sh 
 }}}
+  # Register your Connector Manager with the Search Appliance.  This _must_ be done, even if your Connector Manager had been previously registered.  This step sets the new `feed.contenturl.prefix` configuration property for the Connector Manager. On the Search Appliance Admin Console, go to the *Connector Administration > Connector Managers* page.  Click the *Edit* link for your Connector Manager,  then click *Save*.  You do not need to unregister the Connector Manager or change its configuration.
