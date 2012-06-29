@@ -32,7 +32,24 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *
+ * A {@link Document} filter that forces the {@link CaseSensitivityType} field
+ * for all ACL {@link com.google.enterprise.connector.spi.Principal Principals}
+ * supplied by the connector to be set to a specified value.
+ * <p/>
+ * This will over-ride any {@link CaseSensitivityType} that may have been set
+ * by the connector, and supply one if none was set by the connector.
+ * <p/>
+ * <b>Example {@code documentFilters.xml} Configurations:</b>
+ * <p/>
+ * The following example forces all ACL Principals for all fed documents to be
+ * considered case-insensitive.
+ * <pre><code>
+   &lt;!-- Force case-insensitive ACLs. --&gt;
+   &lt;bean id="CaseInsensitiveACLs"
+      class="com.google.enterprise.connector.util.filter.AclPropertyFilter"&gt;
+     &lt;property name="caseSensitivityType" value="everything-case-insensitive"/&gt;
+   &lt;/bean&gt;
+   </code></pre>
  */
 public class AclPropertyFilter extends AbstractDocumentFilter {
 
@@ -40,7 +57,7 @@ public class AclPropertyFilter extends AbstractDocumentFilter {
   private static final Logger LOGGER = Logger.getLogger(
       AclPropertyFilter.class.getName());
 
-  /** case sensitivity type flag. */
+  /** Case sensitivity type flag. */
   protected CaseSensitivityType caseSensitivityType;
 
   private static final Set<String> aclUsersGroups;
@@ -54,15 +71,21 @@ public class AclPropertyFilter extends AbstractDocumentFilter {
   }
 
   /**
+   * Sets the {@link CaseSensitivityType} to be used for all ACL
+   * {@link com.google.enterprise.connector.spi.Principal Principals}
+   * supplied by the connector.
    *
+   * @param caseSensitivityType a String representation of a
+   *        {@link CaseSensitivityType}; i.e. {@code everything-case-sensitive}
+   *        or {@code everything-case-insensitive}.
    */
   public void setCaseSensitivityType(String caseSensitivityType) {
     if (caseSensitivityType.equalsIgnoreCase(
-            CaseSensitivityType.EVERYTHING_CASE_INSENSITIVE.toString())) {
+        CaseSensitivityType.EVERYTHING_CASE_INSENSITIVE.toString())) {
       this.caseSensitivityType = 
           CaseSensitivityType.EVERYTHING_CASE_INSENSITIVE;
     } else if (caseSensitivityType.equalsIgnoreCase(
-            CaseSensitivityType.EVERYTHING_CASE_SENSITIVE.toString())) {
+        CaseSensitivityType.EVERYTHING_CASE_SENSITIVE.toString())) {
       this.caseSensitivityType = CaseSensitivityType.EVERYTHING_CASE_SENSITIVE;
     }
   }
