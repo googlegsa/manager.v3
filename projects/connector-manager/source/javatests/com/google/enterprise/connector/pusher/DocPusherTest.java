@@ -131,6 +131,38 @@ public class DocPusherTest extends TestCase {
   }
 
   /**
+   * Test that Take works for a URL/metadata feed when google:docid is missing
+   * but google:searchurl is provided.
+   */
+  public void testTakeUrlMetaNoDocid() throws Exception {
+    String feedType = "metadata-and-url";
+    String record = "<record url=\"http://www.sometesturl.com/searchurl\""
+        + " mimetype=\"text/plain\""
+        + " last-modified=\"Thu, 01 Jan 1970 01:00:00 GMT\">\n"
+        + "<metadata>\n"
+        + "<meta name=\"google:lastmodified\" content=\"1970-01-01\"/>\n"
+        + "<meta name=\"google:mimetype\" content=\"text/plain\"/>\n"
+        + "<meta name=\"google:searchurl\" content=\"http://www.sometesturl.com/searchurl\"/>\n"
+        + "</metadata>\n" + "</record>\n";
+
+    String expectedXml = buildExpectedXML(feedType, record);
+
+    Map<String, Object> props = getTestDocumentConfig();
+    props.put(SpiConstants.PROPNAME_SEARCHURL,
+        "http://www.sometesturl.com/searchurl");
+    props.remove(SpiConstants.PROPNAME_DOCID);
+    props.remove(SpiConstants.PROPNAME_DISPLAYURL);
+    Document document = ConnectorTestUtils.createSimpleDocument(props);
+
+    MockFeedConnection feedConnection = new MockFeedConnection();
+    DocPusher dpusher =
+        new DocPusher(feedConnection, "junit", fsli, dfc, null);
+    dpusher.take(document, null);
+    dpusher.flush();
+    assertEquals(expectedXml, feedConnection.getFeed());
+  }
+
+  /**
    * Test Take for a URL/metadata feed when google:searchurl exists, and some of
    * the metadata is empty. In this case, the MockRepositoryEventLog5null.txt
    * file is almost the same as MockRepositoryEventLog5.txt but has a metadata
@@ -1814,8 +1846,9 @@ public class DocPusherTest extends TestCase {
       feedDocument(doc);
       fail("Expected RepositoryDocumentException, but got none.");
     } catch (RepositoryDocumentException expected) {
-      assertEquals("Document missing required property "
-                   + SpiConstants.PROPNAME_DOCID, expected.getMessage());
+      assertEquals("Document has neither property "
+          + SpiConstants.PROPNAME_DOCID + " nor property "
+          + SpiConstants.PROPNAME_SEARCHURL, expected.getMessage());
     } catch (Throwable t) {
       fail("Expected RepositoryDocumentException, but got " + t.toString());
     }
@@ -1836,8 +1869,9 @@ public class DocPusherTest extends TestCase {
       feedDocument(doc);
       fail("Expected RepositoryDocumentException, but got none.");
     } catch (RepositoryDocumentException expected) {
-      assertEquals("Fail " + SpiConstants.PROPNAME_DOCID,
-                   expected.getMessage());
+      assertEquals("Document has neither property "
+          + SpiConstants.PROPNAME_DOCID + " nor property "
+          + SpiConstants.PROPNAME_SEARCHURL, expected.getMessage());
     } catch (Throwable t) {
       fail("Expected RepositoryDocumentException, but got " + t.toString());
     }

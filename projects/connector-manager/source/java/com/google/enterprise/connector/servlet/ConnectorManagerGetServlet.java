@@ -14,7 +14,6 @@
 
 package com.google.enterprise.connector.servlet;
 
-import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.common.SecurityUtils;
 import com.google.enterprise.connector.instantiator.ExtendedConfigureResponse;
 import com.google.enterprise.connector.logging.NDC;
@@ -24,7 +23,6 @@ import com.google.enterprise.connector.spi.ConfigureResponse;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -173,22 +171,6 @@ public abstract class ConnectorManagerGetServlet extends HttpServlet {
     if (configRes != null) {
       ServletUtil.writeXMLTag(
           out, 1, ServletUtil.XMLTAG_CONFIGURE_RESPONSE, false);
-
-      // Write out the Global and Local Namespaces, if provided.
-      Map<String, String> configData = configRes.getConfigData();
-      if (configData != null) {
-        String nameSpace =
-            configData.get(PropertiesUtils.GOOGLE_GLOBAL_NAMESPACE);
-        if (nameSpace != null) {
-          ServletUtil.writeXMLElement(out, 2,
-              ServletUtil.XMLTAG_GLOBAL_NAMESPACE, nameSpace);
-        }
-        nameSpace = configData.get(PropertiesUtils.GOOGLE_LOCAL_NAMESPACE);
-        if (nameSpace != null) {
-          ServletUtil.writeXMLElement(out, 2,
-              ServletUtil.XMLTAG_LOCAL_NAMESPACE, nameSpace);
-        }
-      }
 
       if (formSnippet != null) {
         ServletUtil.writeXMLElement(

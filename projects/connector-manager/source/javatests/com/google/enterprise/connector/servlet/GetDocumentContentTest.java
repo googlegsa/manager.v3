@@ -27,6 +27,7 @@ import com.google.enterprise.connector.manager.ProductionManager;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.Document;
+import com.google.enterprise.connector.spi.DocumentAccessException;
 import com.google.enterprise.connector.spi.DocumentNotFoundException;
 import com.google.enterprise.connector.spi.MockConnector;
 import com.google.enterprise.connector.spi.MockRetriever;
@@ -132,7 +133,7 @@ public class GetDocumentContentTest extends TestCase {
         new MockInstantiator(new ThreadPool(5, new SystemClock()));
     instantiator.setupTestTraversers();
     instantiator.addConnector(connectorName,
-        new MockConnector(null, null, null, new MockRetriever()));
+        new MockConnector(null, null, null, new MockRetriever(), null));
     ProductionManager manager = new ProductionManager();
     manager.setInstantiator(instantiator);
     return manager;
@@ -192,6 +193,12 @@ public class GetDocumentContentTest extends TestCase {
                             404, "");
   }
 
+  /** Test ProductionManager getDocumentContent with Document Access Denied. */
+  public void testGetDocumentContentDocumentNoAccess() throws Exception {
+    checkGetDocumentContent(connectorName, MockRetriever.DOCID_NO_ACCESS,
+                            403, "");
+  }
+
   /** Test ProductionManager getDocumentContent with RepositoryException. */
   public void testGetDocumentContentRepositoryException() throws Exception {
     checkGetDocumentContent(connectorName,
@@ -224,8 +231,9 @@ public class GetDocumentContentTest extends TestCase {
         "/connector-manager/getDocumentContent");
   }
 
-  /** Test getDocumentMetaData against a MockManager. */
-  public void testGetDocumentMetaDataProductionManager() throws Exception {
+  /** Test getDocumentMetaData against a ProductionManager. */
+  public void testConnectorNotFoundGetDocumentMetaDataProductionManager()
+      throws Exception {
     Manager manager = getProductionManager();
     // UnknownConnector does not exist.
     try {
@@ -235,13 +243,32 @@ public class GetDocumentContentTest extends TestCase {
     } catch (ConnectorNotFoundException expected) {
       // Expected
     }
+  }
 
+  /** Test getDocumentMetaData against a ProductionManager. */
+  public void testDocumentNotFoundGetDocumentMetaDataProductionManager()
+      throws Exception {
+    Manager manager = getProductionManager();
     // Unknown document does not exist.
     try {
       GetDocumentContent.getDocumentMetaData(createMockRequest(),
           manager, connectorName, MockRetriever.DOCID_NOT_FOUND);
       fail("Expected DocumentNotFoundException, but got none.");
     } catch (DocumentNotFoundException expected) {
+      // Expected.
+    }
+  }
+
+  /** Test getDocumentMetaData against a ProductionManager. */
+  public void testDocumentNoAccessGetDocumentMetaDataProductionManager()
+      throws Exception {
+    Manager manager = getProductionManager();
+    // Insufficient access to document.
+    try {
+      GetDocumentContent.getDocumentMetaData(createMockRequest(),
+          manager, connectorName, MockRetriever.DOCID_NO_ACCESS);
+      fail("Expected DocumentAccessException, but got none.");
+    } catch (DocumentAccessException expected) {
       // Expected.
     }
   }
@@ -268,7 +295,7 @@ public class GetDocumentContentTest extends TestCase {
         new MockInstantiator(new ThreadPool(5, new SystemClock()));
     instantiator.setupTestTraversers();
     instantiator.addConnector(connectorName,
-        new MockConnector(null, null, null, new MockRetriever()));
+        new MockConnector(null, null, null, new MockRetriever(), null));
     assertTrue(Context.getInstance().getManager() instanceof ProductionManager);
     ProductionManager manager =
         (ProductionManager) (Context.getInstance().getManager());

@@ -23,6 +23,8 @@ import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.scheduler.Schedule;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.ConnectorFactory;
+import com.google.enterprise.connector.spi.DocumentAcceptor;
+import com.google.enterprise.connector.spi.Lister;
 import com.google.enterprise.connector.spi.MockConnector;
 import com.google.enterprise.connector.spi.MockConnectorType;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
@@ -732,6 +734,76 @@ public class ConnectorCoordinatorTest extends TestCase {
     public void setGoogleFeedHost(String addr) {
       googleFeedHost = addr;
     }
+  }
+
+  /** A Lister that tracks starts and shutdowns. */
+  private static class CountingLister implements Lister {
+    private boolean isRunning = false;
+    private int startCount = 0;
+    private int shutdownCount = 0;
+
+    @Override
+    public void start() {
+      synchronized(this) {
+        startCount++;
+        isRunning = true;
+      }
+      // "Run" for a bit, pretending to traverse repository.
+      try { Thread.sleep(250L); } catch (InterruptedException e) {}
+    }
+
+    @Override
+    public synchronized void shutdown() {
+      shutdownCount++;
+      isRunning = false;
+    }
+
+    @Override
+    public void setDocumentAcceptor(DocumentAcceptor ignored) {}
+
+    synchronized int getStartCount() {
+      return startCount;
+    }
+    
+    synchronized int getShutdownCount() {
+      return shutdownCount;
+    }
+    
+    synchronized boolean isRunning() {
+      return isRunning;
+    }
+  }
+
+  /** A Connector that has a lister that tracks restarts. */
+  private static class CountingListerConnector extends MockConnector {
+    public CountingListerConnector() {
+      super(null, null, null, null, new CountingLister());
+    }
+  }
+
+  /** Tests restartConnectorTraversal restarts a Lister. */
+  public void testRestartLister() throws Exception {
+    String connectorInstancePrototype = BEANS_PREFIX
+        + "<bean class=\"" + CountingListerConnector.class.getName() + "\"/>\n"
+        + BEANS_POSTFIX;
+        
+    ConnectorCoordinatorImpl instance =
+        createMockConnector("counting_lister", connectorInstancePrototype);
+
+    @SuppressWarnings("unchecked")
+    CountingLister lister = (CountingLister) instance.getLister();
+    assertNotNull(lister);
+
+    // Lister should be up and running.
+    assertTrue(lister.isRunning());
+    assertEquals(1, lister.getStartCount());
+    assertEquals(0, lister.getShutdownCount());
+
+    // RestartConnectorTraversal should shut it down and start it up again.
+    instance.restartConnectorTraversal();
+    assertTrue(lister.isRunning());
+    assertEquals(2, lister.getStartCount());
+    assertEquals(1, lister.getShutdownCount());
   }
 
   /* TODO (bmj): Many of these tests are really testing stuff in InstanceInfo

@@ -312,7 +312,7 @@ public class MockManager implements Manager {
     String type = "Documentum";
     int status = 0;
     String schedule = connectorName + ":100:0:0-0";
-    return new ConnectorStatus(name, type, status, schedule);
+    return new ConnectorStatus(name, type, status, schedule, null, null);
   }
 
   /* @Override */
