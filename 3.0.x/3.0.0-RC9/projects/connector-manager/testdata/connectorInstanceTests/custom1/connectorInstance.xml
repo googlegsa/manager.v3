@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+<beans>
+  <bean id="TestConnector1"
+        class="com.google.enterprise.connector.instantiator.CustomProtoTestConnector">
+    <property name="delegateConnector" ref="nestedConnector"/>
+    <property name="customProperty" value="oogabooga"/>
+  </bean>
+  <bean id="nestedConnector"
+        class="com.google.enterprise.connector.jcr.JcrConnector">
+    <constructor-arg>
+      <bean class="com.google.enterprise.connector.mock.jcr.MockJcrRepository">
+        <constructor-arg>
+          <bean class="com.google.enterprise.connector.mock.MockRepository">
+            <constructor-arg>
+              <bean class="com.google.enterprise.connector.mock.MockRepositoryEventList">
+                <constructor-arg value="${RepositoryFile}" />
+              </bean>
+            </constructor-arg>
+          </bean>
+        </constructor-arg>
+      </bean>
+    </constructor-arg>
+  </bean>
+</beans>
