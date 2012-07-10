@@ -793,6 +793,7 @@ public class ConnectorCoordinatorTest extends TestCase {
     @SuppressWarnings("unchecked")
     CountingLister lister = (CountingLister) instance.getLister();
     assertNotNull(lister);
+    try { Thread.sleep(50L); } catch (InterruptedException e) {}
 
     // Lister should be up and running.
     assertTrue(lister.isRunning());
@@ -801,6 +802,7 @@ public class ConnectorCoordinatorTest extends TestCase {
 
     // RestartConnectorTraversal should shut it down and start it up again.
     instance.restartConnectorTraversal();
+    try { Thread.sleep(50L); } catch (InterruptedException e) {}
     assertTrue(lister.isRunning());
     assertEquals(2, lister.getStartCount());
     assertEquals(1, lister.getShutdownCount());
