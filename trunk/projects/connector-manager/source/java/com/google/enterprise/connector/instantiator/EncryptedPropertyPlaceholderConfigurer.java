@@ -370,10 +370,10 @@ public class EncryptedPropertyPlaceholderConfigurer extends
       throw logAndThrow(DECRYPT_MSG, name, null, e);
     } catch (BadPaddingException e) {
       throw logAndThrow(DECRYPT_MSG, name,
-          "it might be unencrypted or encrypted with a different algoritm", e);
+          "it might be unencrypted or encrypted with a different algorithm", e);
     } catch (IllegalBlockSizeException e) {
       throw logAndThrow(DECRYPT_MSG, name,
-          "it might be unencrypted or encrypted with a different algoritm", e);
+          "it might be unencrypted or encrypted with a different algorithm", e);
     } catch (Base64DecoderException e) {
       throw logAndThrow(DECRYPT_MSG, name,
                         "it might not be encrypted at all", e);
