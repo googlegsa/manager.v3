@@ -43,7 +43,7 @@ public class MimeTypeDetector {
    * MIME type for documents whose MIME type cannot be determined.
    */
   public static final String UNKNOWN_MIME_TYPE =
-      MimeUtil2.UNKNOWN_MIME_TYPE.toString();
+      mimeTypeStringValue(MimeUtil2.UNKNOWN_MIME_TYPE);
 
   private static MimeUtil2 delegate;
 
@@ -187,7 +187,7 @@ public class MimeTypeDetector {
         "filename and inputStreamFactory may not both be null");
     Collection<MimeType> mimeTypes = getMimeTypes(filename);
     String bestMimeType = pickBestMimeType(mimeTypes);
-    if (UNKNOWN_MIME_TYPE.equals(bestMimeType)) {
+    if (UNKNOWN_MIME_TYPE.equals(bestMimeType) && inputStreamFactory != null) {
       InputStream is = inputStreamFactory.getInputStream();
       try {
         byte[] bytes = getBytes(is);
@@ -245,16 +245,18 @@ public class MimeTypeDetector {
     // as they are returned by MimeUtil.
     Set<String> mimeTypeNames = new LinkedHashSet<String>();
     if (extensionMimeTypes != null) {
-      extensionMimeTypes.remove(MimeUtil2.UNKNOWN_MIME_TYPE);
       for (MimeType mimeType : extensionMimeTypes) {
-        mimeTypeNames.add(mimeTypeStringValue(mimeType));
+        if (!MimeUtil2.UNKNOWN_MIME_TYPE.equals(mimeType)) {
+          mimeTypeNames.add(mimeTypeStringValue(mimeType));
+        }
       }
     }
     if (contentMimeTypes != null) {
-      contentMimeTypes.remove(MimeUtil2.UNKNOWN_MIME_TYPE);
       for (MimeType mimeType : contentMimeTypes) {
-        mimeTypeNames.add(mimeTypeStringValue(mimeType));
-      }
+        if (!MimeUtil2.UNKNOWN_MIME_TYPE.equals(mimeType)) {
+          mimeTypeNames.add(mimeTypeStringValue(mimeType));
+        }
+      } 
     }
     if (mimeTypeNames.isEmpty()) {
       return UNKNOWN_MIME_TYPE;
@@ -269,7 +271,7 @@ public class MimeTypeDetector {
     return pickBestMimeType(mimeTypes, null);
   }
 
-  private String mimeTypeStringValue(MimeType mimeType) {
+  private static String mimeTypeStringValue(MimeType mimeType) {
     return mimeType.getMediaType() + "/" + mimeType.getSubType();
   }
 

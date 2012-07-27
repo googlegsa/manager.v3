@@ -41,6 +41,7 @@ public class MimeTypeDetectorTest extends TestCase {
         Sets.newHashSet("text/plain", "text/html", "text/xml"));
     mimeTypeMap.setSupportedMimeTypes(Sets.newHashSet(
         "application/pdf", "application/msword", "application/xml"));
+    mimeTypeMap.setExcludedMimeTypes(Sets.newHashSet("text/x-uuencode"));
     ProductionTraversalContext traversalContext =
         new ProductionTraversalContext();
     traversalContext.setMimeTypeMap(mimeTypeMap);
@@ -91,6 +92,29 @@ public class MimeTypeDetectorTest extends TestCase {
 
     assertEquals("text/html", mimeTypeDetector.getMimeType(
                  "a/big.html", (InputStreamFactory) null));
+  }
+
+  public void testUnknownMimeType() throws Exception {
+    // "Unknown" mime type is actually "application/octet-stream".
+    assertEquals("application/octet-stream",
+                 MimeTypeDetector.UNKNOWN_MIME_TYPE);
+
+    // Truly unknown.
+    assertEquals(MimeTypeDetector.UNKNOWN_MIME_TYPE,
+                 mimeTypeDetector.getMimeType("a/zork.xyzzy",
+                                              (InputStreamFactory) null));
+
+    // A file whose only mimetype is "application/octet-stream" should work.
+    // Note: Has internal knowledge of MimeUtil mime-types.properties.
+    assertEquals("application/octet-stream", mimeTypeDetector.getMimeType(
+                 "a/compiled.o", (InputStreamFactory) null));
+
+    // A file whose mimetype includes "application/octet-stream" as well
+    // as others, should return the other, even if it ranks less than
+    // "application/octet-stream".
+    // Note: Has internal knowledge of MimeUtil mime-types.properties.
+    assertEquals("text/x-uuencode", mimeTypeDetector.getMimeType(
+                 "a/uuencoded.uu", (InputStreamFactory) null));
   }
 
   public void testFileExtension() throws Exception {
