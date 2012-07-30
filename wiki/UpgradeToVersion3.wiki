@@ -37,8 +37,8 @@ copy applicationContext.properties applicationContext.properties.backup
 }}}
   # Remove incompatible third party JAR files. *WARNING:* Some versions of the Google Connector Installer mark the installed connector JAR files as Read-Only.  Write permission for these files must be restored before deploying the patch. 
 {{{
-cd %CATALINA_HOME%\webapps\connector-manager
-attrib -r WEB-INF\lib\*.jar
+cd %CATALINA_HOME%\webapps\connector-manager\WEB-INF\lib
+attrib -r *.jar
 del google-collect*.jar google-guava*.jar mime-util-2*.jar slf4j*.jar
 }}}
   # Deploy the new `connector-manager.war` over the old installation.  This is done by using the Java `jar` command to unpack the `war` file directly into the Tomcat deployment. 
@@ -83,8 +83,8 @@ cp applicationContext.properties applicationContext.properties.backup
 }}}
   # Remove incompatible third party JAR files. *WARNING:* Some versions of the Google Connector Installer mark the installed connector JAR files as Read-Only.  Write permission for these files must be restored before deploying the patch. 
 {{{
-cd ${CATALINA_HOME}/webapps/connector-manager
-chmod +w WEB-INF/lib/*.jar
+cd ${CATALINA_HOME}/webapps/connector-manager/WEB-INF/lib
+chmod +w *.jar
 rm google-collect*.jar google-guava*.jar mime-util-2*.jar slf4j*.jar
 }}}
   # Deploy the new `connector-manager.war` over the old installation.  This is done by using the Java `jar` command to unpack the `war` file directly into the Tomcat deployment.
