@@ -208,6 +208,13 @@ public class GetDocumentContent extends HttpServlet {
       }
     }
 
+    // Set the Content-Type. 
+    String mimeType = handleGetContentType(req, manager, connectorName, docid);
+    if (LOGGER.isLoggable(Level.FINEST)) {
+      LOGGER.finest("Document Content-Type " + mimeType);
+    }
+    res.setContentType(mimeType);
+
     OutputStream out = res.getOutputStream();
     if (useCompression) {
       // Select Content-Encoding based on the client's Accept-Encoding header.
@@ -220,7 +227,6 @@ public class GetDocumentContent extends HttpServlet {
       res.setHeader("Vary", "Accept-Encoding");
     }
 
-    // TODO: setContentType?
     // TODO: Configure chunked output?
 
     try {
@@ -378,6 +384,44 @@ public class GetDocumentContent extends HttpServlet {
     return -1L;
   }
 
+  /**
+   * Retrieves the content type of a document from a connector instance.
+   *
+   * @param req Request whose parameters identify the document of interest
+   * @param manager a Manager
+   * @param connectorName the name of the connector instance that
+   *        can access the document
+   * @param docId the document identifer
+   * @return the content-type of the document, as a string, or 
+   *         {@link SpiConstants.DEFAULT_MIMETYPE} if the content type
+   *         is not supplied.
+   */
+  @VisibleForTesting
+  static String handleGetContentType(HttpServletRequest req, Manager manager,
+      String connectorName, String docid) {
+    // NOTE: To maintain consistency with the XmlFeed, this code returns
+    // SpiConstants.DEFAULT_MIMETYPE ("text/html") if the Document supplies
+    // no mime type property. However, the GSA would really rather receive
+    // MimeTypeDetector.UKNOWN_MIMETYPE ("application/octet-stream").
+    try {
+      Document metaData =
+          getDocumentMetaData(req, manager, connectorName, docid);
+      if (metaData != null) {
+        String mimeType = Value.getSingleValueString(metaData, 
+                          SpiConstants.PROPNAME_MIMETYPE);
+        if (!Strings.isNullOrEmpty(mimeType)) {
+          return mimeType;
+        }
+      }
+    } catch (RepositoryDocumentException e) {
+      LOGGER.log(Level.FINE, "Failed to retrieve document content type: {0}",
+                 e.toString());
+    } catch (Exception e) {
+      LOGGER.log(Level.WARNING, "Failed to retrieve document content type", e);
+    }
+    return SpiConstants.DEFAULT_MIMETYPE;
+  }
+  
   @VisibleForTesting
   static int handleMarkingDocumentSecurity(HttpServletRequest req,
       HttpServletResponse res, Manager manager, String connectorName,

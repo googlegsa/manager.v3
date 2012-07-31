@@ -34,6 +34,9 @@ public class MockRetriever implements Retriever {
   /** A docid that has no last modified date. */
   public static final String DOCID_NO_LASTMODIFIED = "noLastModified";
 
+  /** A docid that has no mime type. */
+  public static final String DOCID_NO_MIMETYPE = "noMimeType";
+
   /** A docid that is not found. */
   public static final String DOCID_NOT_FOUND = "nonexistent";
 
@@ -73,6 +76,11 @@ public class MockRetriever implements Retriever {
           ConnectorTestUtils.createSimpleDocumentBasicProperties(docid);
       props.remove(SpiConstants.PROPNAME_CONTENT);
       props.remove(SpiConstants.PROPNAME_LASTMODIFIED);
+      props.remove(SpiConstants.PROPNAME_MIMETYPE);
+      return ConnectorTestUtils.createSimpleDocument(props);
+    } else if (DOCID_NO_MIMETYPE.equals(docid)) {
+      Map<String, Object> props =
+          ConnectorTestUtils.createSimpleDocumentBasicProperties(docid);
       props.remove(SpiConstants.PROPNAME_MIMETYPE);
       return ConnectorTestUtils.createSimpleDocument(props);
     } else {
