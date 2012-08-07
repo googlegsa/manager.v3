@@ -336,11 +336,15 @@ public class CheckpointAndChangeQueue {
   private RecoveryFile[] allRecoveryFiles() throws IOException {
     // TODO(pjo): Facilitate holding onto returned value to reduce invocations.
     File files[] = persistDir.listFiles();
-    ArrayList<RecoveryFile> recoveryFiles = new ArrayList<RecoveryFile>();
-    for (int i = 0; i < files.length; i++) {
-      recoveryFiles.add(new RecoveryFile(files[i].getAbsolutePath()));
+    if (files == null) {
+      return new RecoveryFile[0];
+    } else {
+      RecoveryFile[] recoveryFiles = new RecoveryFile[files.length];
+      for (int i = 0; i < files.length; i++) {
+        recoveryFiles[i] = new RecoveryFile(files[i].getAbsolutePath());
+      }
+      return recoveryFiles;
     }
-    return recoveryFiles.toArray(new RecoveryFile[0]);
   }
 
   /**
@@ -544,7 +548,7 @@ public class CheckpointAndChangeQueue {
       LOG.severe("Failure: " + e);
     }
 
-    if (!persistDir.delete()) {
+    if (persistDir.exists() && !persistDir.delete()) {
       String errmsg = "Failed to delete: " + persistDir.getAbsolutePath();
       LOG.severe(errmsg);
     }
