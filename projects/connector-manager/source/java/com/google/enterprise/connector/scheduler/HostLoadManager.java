@@ -38,9 +38,6 @@ public class HostLoadManager implements LoadManager {
 
   private static final long MINUTE_IN_MILLIS = 60 * 1000L;
 
-  /** The smallest batch size we will consider asking for. */
-  private static final int MIN_BATCH_SIZE = 20;
-
   /**
    * The batch size as calculated by the last call to determineBatchSize().
    */
@@ -56,13 +53,14 @@ public class HostLoadManager implements LoadManager {
 
   /**
    * The optimal number of documents for each Traversal to return.
-   * Small batches (<100) incur significant per batch overhead.
+   * Small batches (<100) incur significant per batch overhead, and may
+   * backlog feed processing on the GSA.
    * Large batches may consume excessive local and Repository resources.
    */
   private int batchSize = 500;
 
   /** The smallest allowed batch size. */
-  private int minBatchSize = 50;
+  private int minBatchSize;
 
   /**
    * Number of milliseconds used to measure the feed rate.
@@ -149,10 +147,8 @@ public class HostLoadManager implements LoadManager {
    */
   /* @Override */
   public void setBatchSize(int batchSize) {
-    this.batchSize = Math.max(MIN_BATCH_SIZE, batchSize);
-    this.minBatchSize = Math.max(MIN_BATCH_SIZE, batchSize/10);
-    LOGGER.fine("Setting the maximum batch size to " + batchSize
-                + " and the minimum batch size to " + minBatchSize);
+    this.batchSize = batchSize;
+    LOGGER.fine("Setting the maximum batch size to " + batchSize);
     seedLoad();
   }
 
@@ -161,6 +157,9 @@ public class HostLoadManager implements LoadManager {
    * and seeds the lastBatchRequest().
    */
   private void seedLoad() {
+    minBatchSize = Math.min(load, batchSize);
+    LOGGER.fine("Setting the minimum batch size to " + batchSize);
+
     rate = ((float) load) / periodInMillis;
     lastBatchSize = Math.min(load, batchSize);
     lastBatchResult = new BatchResult(TraversalDelayPolicy.IMMEDIATE,

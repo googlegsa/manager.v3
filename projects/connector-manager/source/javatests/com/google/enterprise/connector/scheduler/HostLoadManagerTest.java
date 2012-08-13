@@ -106,13 +106,15 @@ public class HostLoadManagerTest extends TestCase {
     HostLoadManager hostLoadManager = newHostLoadManager(60);
     hostLoadManager.setBatchSize(10);
     BatchSize batchSize = hostLoadManager.determineBatchSize();
-    assertEquals(20, batchSize.getHint());
+    assertEquals(10, batchSize.getHint());
+
     hostLoadManager.setBatchSize(20);
     batchSize = hostLoadManager.determineBatchSize();
     assertEquals(20, batchSize.getHint());
-    hostLoadManager.setBatchSize(30);
+
+    hostLoadManager.setBatchSize(100);
     batchSize = hostLoadManager.determineBatchSize();
-    assertEquals(30, batchSize.getHint());
+    assertEquals(60, batchSize.getHint());
   }
 
   /**
@@ -133,7 +135,7 @@ public class HostLoadManagerTest extends TestCase {
 
     // At that throughput, a batch size of 1 or 2 would be calculated.
     BatchSize batchSize = hostLoadManager.determineBatchSize();
-    assertEquals(20, hostLoadManager.determineBatchSize().getHint());
+    assertEquals(200, hostLoadManager.determineBatchSize().getHint());
     assertFalse(hostLoadManager.shouldDelay());
   }
 
