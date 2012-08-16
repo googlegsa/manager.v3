@@ -42,6 +42,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -596,10 +597,29 @@ public class ServletUtil {
   }
 
   private static final Pattern PREPEND_CM_PATTERN =
-      Pattern.compile("\\bname\\b\\s*=\\s*[\"']");
+      Pattern.compile("<[^>]+\\bname\\s*=\\s*[\"']");
 
   private static final Pattern STRIP_CM_PATTERN =
-      Pattern.compile("(\\bname\\b\\s*=\\s*[\"'])CM_");
+      Pattern.compile("(<[^>]+\\bname\\s*=\\s*[\"'])CM_");
+
+  // The matching of '/*' is to remove any comments preceeding the CDATA start
+  // and end, as is commonly done in XHTML to remain compatible with old HTML
+  // browsers. There is no need to actually remove the comments, but this regex
+  // replaced code introduced in r1630 that did do the replacements, so the
+  // behavior is maintained here.
+  private static final Pattern CDATA_PATTERN =
+      Pattern.compile("/*<!\\[CDATA\\[(.*?)/*\\]\\]>", Pattern.DOTALL);
+
+  /**
+   * A highly-unlikely string to find in real data, used to mark the location
+   * that a CDATA section was removed. It currently includes a UUID generated on
+   * startup, to be a highly-random string.
+   */
+  private static final String CDATA_TEMPORARY_REPLACEMENT =
+      "#CdataReplacement-" + UUID.randomUUID() + "#";
+
+  private static final Pattern CDATA_TEMPORARY_REPLACEMENT_PATTERN =
+      Pattern.compile(Pattern.quote(CDATA_TEMPORARY_REPLACEMENT));
 
   /**
    * Given a String such as:
@@ -611,9 +631,15 @@ public class ServletUtil {
    * @param str String an XML string with PREFIX_CM as above
    * @return a result XML string without PREFIX_CM as above
    */
+  // TODO(ejona): Remove this method. It is not executed.
   public static String stripCmPrefix(String str) {
+    // TODO(ejona): Remove the temporary replacements. This code is only run
+    // after any CDATA sections have been removed.
+    List<String> saved = new ArrayList<String>();
+    str = temporaryReplaceCdata(str, saved);
     Matcher matcher = STRIP_CM_PATTERN.matcher(str);
     String result = matcher.replaceAll("$1");
+    result = undoTemporaryReplaceCdata(result, saved);
     return result;
   }
 
@@ -623,47 +649,79 @@ public class ServletUtil {
    * @param str String an XML string without PREFIX_CM as above
    * @return a result XML string with PREFIX_CM as above
    */
+  // TODO(ejona): Move this method onboard the GSA and remove it here, since it
+  // is never executed by the connector manager (there is a call to it, but that
+  // call isn't executed).
   public static String prependCmPrefix(String str) {
+    // TODO(ejona): Remove the temporary replacements after moving to GSA. This
+    // code is only run after any CDATA sections have been removed, but it is
+    // hard to tell due to calls to prependCmPrefix in
+    // ConnectorManagerGetServlet that are never executed.
+    List<String> saved = new ArrayList<String>();
+    str = temporaryReplaceCdata(str, saved);
     Matcher matcher = PREPEND_CM_PATTERN.matcher(str);
     String result = matcher.replaceAll("$0CM_");
+    result = undoTemporaryReplaceCdata(result, saved);
     return result;
   }
 
+  private static String temporaryReplaceCdata(String source,
+      List<String> savedCdata) {
+    StringBuffer sb = new StringBuffer(source.length());
+    Matcher m = CDATA_PATTERN.matcher(source);
+    String replacement = Matcher.quoteReplacement(CDATA_TEMPORARY_REPLACEMENT);
+    while (m.find()) {
+      savedCdata.add(m.group());
+      m.appendReplacement(sb, replacement);
+    }
+    m.appendTail(sb);
+    return sb.toString();
+  }
+
+  private static String undoTemporaryReplaceCdata(String source,
+      List<String> previouslySavedCdata) {
+    StringBuffer sb = new StringBuffer(source.length() * 2);
+    Matcher m = CDATA_TEMPORARY_REPLACEMENT_PATTERN.matcher(source);
+    int i;
+    for (i = 0; m.find(); i++) {
+      m.appendReplacement(sb,
+          Matcher.quoteReplacement(previouslySavedCdata.get(i)));
+    }
+    m.appendTail(sb);
+    if (previouslySavedCdata.size() != i) {
+      LOGGER.warning("Unexpected number of replacements. Bug!");
+    }
+    return sb.toString();
+  }
+
   private static final String XML_GREATER_THAN = "&gt;";
-  private static final Pattern CDATA_BEGIN_PATTERN =
-      Pattern.compile("/*\\Q<![CDATA[\\E");
+  // TODO(ejona): remove '/*', since it does nothing and is left over from old
+  // code.
   private static final Pattern CDATA_END_PATTERN =
       Pattern.compile("/*\\Q]]>\\E");
+  // TODO(ejona): remove '/*', since it does nothing and is left over from old
+  // code.
   private static final Pattern ESCAPED_CDATA_END_PATTERN =
       Pattern.compile("/*\\Q]]&gt;\\E");
 
   /**
-   * Removes any pairs of markers from the given snippet that are not allowed
-   * to be nested.
+   * Replaces any CDATA sections with the equivalent PCDATA section, properly
+   * handling escapes. This is helpful as Xalan incorrectly produces HTML with
+   * CDATA sections, which is mostly invalid for HTML documents.
    *
-   * @param formSnippet snippet of a form that may have markers in it that are
-   *        not allowed to be nested.
-   * @return the given formSnippet with all markers that are not allowed to be
-   *         nested removed.
+   * @param formSnippet snippet of a form that may have CDATA in it
+   * @return the given formSnippet without CDATA sections
    */
   public static String removeNestedMarkers(String formSnippet) {
-    StringBuffer result = new StringBuffer();
-    Matcher beginMatcher = CDATA_BEGIN_PATTERN.matcher(formSnippet);
-    while (beginMatcher.find()) {
-      // Look for a matching end marker.
-      Matcher endMatcher =
-          CDATA_END_PATTERN.matcher(formSnippet.substring(beginMatcher.end()));
-      if (endMatcher.find()) {
-        // We have a balanced hit.  Dump the matched begin marker and replace
-        // the matcher input with the remainder of the form without the
-        // matching end marker.
-        beginMatcher.appendReplacement(result, "");
-        formSnippet = endMatcher.replaceFirst("");
-        beginMatcher.reset(formSnippet);
-      }
+    StringBuffer sb = new StringBuffer(formSnippet.length());
+    Matcher m = CDATA_PATTERN.matcher(formSnippet);
+    while (m.find()) {
+      String cdataContent = m.group(1);
+      String pcdata = cdataContent.replace("&", "&amp;").replace("<", "&lt;");
+      m.appendReplacement(sb, Matcher.quoteReplacement(pcdata));
     }
-    beginMatcher.appendTail(result);
-    return result.toString();
+    m.appendTail(sb);
+    return sb.toString();
   }
 
   /**
