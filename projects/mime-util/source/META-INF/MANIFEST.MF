@@ -13,7 +13,7 @@ url: http://www.medsea.eu/mime-util/
 mode: development
 Bundle-Vendor: Medsea Business Solutions S.L.
 Build-Jdk: 1.6.0_10
-Bundle-Version: 2.1.3-G1
+Bundle-Version: 2.1.3-G2
 Bnd-LastModified: 1262673014099
 Bundle-ManifestVersion: 2
 Bundle-License: http://www.apache.org/licenses/LICENSE-2.0.txt
