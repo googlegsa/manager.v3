@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project name="TestConnectorA" default="TestConnectorA" basedir=".">
+
+  <!-- ========================= PROPERTIES ============================= -->
+  <property file="../version.properties"/>
+
+  <!-- Define Directories. -->
+  <property name="dist" value="dist" />
+  <property name="config" value="config" />
+
+  <property name="jar.dir"  value="${dist}/jar" />
+  <property name="jarfile"  value="${jar.dir}/testconnectorA.jar" />
+
+  <!-- =========================== TASKS =============================== -->
+  <include file="../svnbuild.xml" as="svn"/>
+
+  <target name="TestConnectorA" depends="init,jar">
+  </target>
+
+  <target name="init" depends="svn.svn-branch-version">
+    <mkdir dir="${dist}" />
+    <mkdir dir="${jar.dir}" />
+  </target>
+
+  <target name="jar" depends="init" description="TestConnectorA">
+    <tstamp />
+    <jar jarfile="${jarfile}">
+      <fileset dir="${config}"/>
+      <manifest>
+        <attribute name="Implementation-Title" value="TestConnectorA"/>
+        <attribute name="Implementation-Version"
+          value="${version} (build ${svn.branch.version} ${TODAY})"/>
+        <attribute name="Implementation-Vendor" value="Google Inc."/>
+      </manifest>
+    </jar>
+  </target>
+
+  <target name="clean" description="Deletes all build files.">
+    <delete dir="${dist}" />
+  </target>
+
+</project>
