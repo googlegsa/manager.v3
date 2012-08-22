@@ -115,6 +115,7 @@ public class DocumentSnapshotRepositoryMonitorManagerImpl
       }
     }
     threads.clear();
+    fileSystemMonitorsByName.clear();
     changeQueue.clear();
     this.isRunning = false;
   }

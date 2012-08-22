@@ -36,12 +36,21 @@ public class ServletUtilTest extends TestCase {
   private static final String CLEAR_KEY_ONE = "NotAPwd";
 
   public void testPrependCmPrefix() {
-    onePrependTest("foo name=\"bar\" bar", "foo name=\"CM_bar\" bar");
-    onePrependTest("name=\"bar\"", "name=\"CM_bar\"");
-    onePrependTest("name=\"bar\" name=\"baz\"", "name=\"CM_bar\" name=\"CM_baz\"");
-    onePrependTest("name='bar' name=\"baz\"", "name='CM_bar' name=\"CM_baz\"");
-    onePrependTest("name = 'bar'   name   =  \"baz\"",
-        "name = 'CM_bar'   name   =  \"CM_baz\"");
+    onePrependTest("<foo spam=\"bar\">", "<foo spam=\"bar\">");
+    onePrependTest("<foo bar=\"test\" name='bar'>",
+        "<foo bar=\"test\" name='CM_bar'>");
+    onePrependTest("<a name=\"bar\"><input name=\"baz\">",
+        "<a name=\"CM_bar\"><input name=\"CM_baz\">");
+    onePrependTest("<a name = 'bar' >  <input  name   =  \"baz\" >",
+        "<a name = 'CM_bar' >  <input  name   =  \"CM_baz\" >");
+    onePrependTest("<a name='bar'>&lt;input name=\"spam\">"
+        + "<a name='foo'>&lt;a name=\"eggs\"><a name='foo'>",
+        "<a name='CM_bar'>&lt;input name=\"spam\">"
+        + "<a name='CM_foo'>&lt;a name=\"eggs\"><a name='CM_foo'>");
+    onePrependTest("<a name='bar'><![CDATA[<input name=\"spam\">]]>"
+        + "<a name='foo'><![CDATA[<a name=\"eggs\">]]><a name='foo'>",
+        "<a name='CM_bar'><![CDATA[<input name=\"spam\">]]>"
+        + "<a name='CM_foo'><![CDATA[<a name=\"eggs\">]]><a name='CM_foo'>");
   }
 
   private void onePrependTest(String original, String expected) {
@@ -104,7 +113,7 @@ public class ServletUtilTest extends TestCase {
     assertEquals("Form changed as expected", expectedForm, obfuscateForm);
   }
 
-  public void testRemoveNestedMarkers() {
+  public void testConvertCdataSectionsToPcdata() {
     String formWithMarkers =
         "<script language=\"JavaScript\" type=\"text/javascript\">"
         + "//<![CDATA["
@@ -176,16 +185,18 @@ public class ServletUtilTest extends TestCase {
       + "<![CDATA["
       + "<![CDATA["
       + "  function foo() {"
-      + "    alert('foo');"
+      + "    alert('foo<&');"
       + "  }"
       + "]]>"
       + "]]>"
       + "</script>";
   String expectedBeginBeginEndEndMarkers =
     "<script language=\"JavaScript\" type=\"text/javascript\">"
+      + "&lt;![CDATA["
     + "  function foo() {"
-    + "    alert('foo');"
+    + "    alert('foo&lt;&amp;');"
     + "  }"
+      + "]]>"
     + "</script>";
   result = ServletUtil.removeNestedMarkers(beginBeginEndEndMarkers);
   assertEquals("Form with nested markers",

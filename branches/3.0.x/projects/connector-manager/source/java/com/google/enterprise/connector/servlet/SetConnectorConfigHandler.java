@@ -63,6 +63,10 @@ public class SetConnectorConfigHandler {
     // returned by the connector manager.", rather than the error status.
     configRes = new ConfigureResponse(null, null, null);
 
+    // TODO(ejona): Remove this block as all modern GSAs do not require the
+    // prefix to be added (and thus stripped here), so this code is never
+    // executed. In addition, it wouldn't behave as you would expect due to
+    // xmlBody's format.
     if (Context.getInstance().gsaAdminRequiresPrefix()) {
       xmlBody = ServletUtil.stripCmPrefix(xmlBody);
     }

@@ -87,6 +87,9 @@ public class DocPusherTest extends TestCase {
 
   @Override
   protected void setUp() throws Exception {
+    // MockFeedConnection also prints the XML it "sends".
+    System.out.println("\nTest Case: " + getName());
+
     // Set artificially low limits as test env only has 64MB of heap space.
     fsli = new FileSizeLimitInfo();
     fsli.setMaxFeedSize(1024 * 1024);
@@ -438,7 +441,6 @@ public class DocPusherTest extends TestCase {
       }
     };
 
-    System.out.println("\nTest Case: " + getName());
     DocPusher dpusher = new DocPusher(feedConnection, "junit", fsli, dfc, null);
     DocumentList documentList = qtm.startTraversal();
 
@@ -451,7 +453,6 @@ public class DocPusherTest extends TestCase {
     assertEquals(expectedXml, resultXML);
     gsaActualResponse = dpusher.getGsaResponse();
     assertEquals(gsaExpectedResponse, gsaActualResponse);
-    System.out.println("==================================");
   }
 
   /**
@@ -509,7 +510,6 @@ public class DocPusherTest extends TestCase {
 
     DocumentList documentList = qtm.startTraversal();
 
-    System.out.println("\nTest Case: " + getName());
     int i = 0;
     Document document = null;
     while ((document = documentList.nextDocument()) != null) {
@@ -527,7 +527,6 @@ public class DocPusherTest extends TestCase {
       System.out.println("Test " + i + " done\n");
       ++i;
     }
-    System.out.println("==================================");
   }
 
   /**
@@ -600,19 +599,68 @@ public class DocPusherTest extends TestCase {
   }
 
   /**
-   * Verify that case insensitivity is written to feed correctly.
+   * Tests that a principal with minimal attributes is written to the
+   * feed correctly.
    */
-  public void testCaseInsensitiveAcl() throws Exception {
+  public void testMinimalPrincipal() throws Exception {
+    testPrincipal(
+        new Principal(SpiConstants.PrincipalType.UNKNOWN, null, "John Doe"),
+        "<principal"
+        + " scope=\"user\" access=\"permit\">John Doe</principal>");
+  }
+
+  /**
+   * Tests that a principal with no domain is written to the feed correctly.
+   */
+  public void testUnqualifiedPrincipal() throws Exception {
+    testPrincipal(new Principal(SpiConstants.PrincipalType.UNQUALIFIED, null,
+            "John Doe"),
+        "<principal principal-type=\"unqualified\""
+        + " scope=\"user\" access=\"permit\">John Doe</principal>");
+  }
+
+  /**
+   * Tests that the principal namespace is written to the feed correctly.
+   */
+  public void testPrincipalNamespace() throws Exception {
+    testPrincipal(
+        new Principal(SpiConstants.PrincipalType.UNKNOWN, "Unknown Persons",
+            "John Doe"),
+        "<principal namespace=\"Unknown Persons\""
+        + " scope=\"user\" access=\"permit\">John Doe</principal>");
+  }
+
+  /**
+   * Tests that an empty namespace is ignored.
+   */
+  public void testPrincipalEmptyNamespace() throws Exception {
+    testPrincipal(
+        new Principal(SpiConstants.PrincipalType.UNKNOWN, "",
+            "John Doe"),
+        "<principal"
+        + " scope=\"user\" access=\"permit\">John Doe</principal>");
+  }
+
+  /**
+   * Tests that case-insensitivity is written to the feed correctly.
+   */
+  public void testCaseInsensitivePrincipal() throws Exception {
+    testPrincipal(
+        new Principal(SpiConstants.PrincipalType.UNKNOWN, null, "John Doe",
+            SpiConstants.CaseSensitivityType.EVERYTHING_CASE_INSENSITIVE),
+        "<principal case-sensitivity-type=\"everything-case-insensitive\""
+        + " scope=\"user\" access=\"permit\">John Doe</principal>");
+  }
+
+  /** Tests that a given principal is written to the feed correctly. */
+  public void testPrincipal(Principal principal, String expected)
+      throws Exception {
     Map<String, Object> props = getTestDocumentConfig();
-    props.put(SpiConstants.PROPNAME_ACLUSERS,
-        new Principal(SpiConstants.PrincipalType.UNQUALIFIED, null, "John Doe",
-          SpiConstants.CaseSensitivityType.EVERYTHING_CASE_INSENSITIVE));
+    props.put(SpiConstants.PROPNAME_ACLUSERS, principal);
     Document document = ConnectorTestUtils.createSimpleDocument(props);
 
     String resultXML = feedDocument(document, true);
-    assertStringContains("<principal principal-type=\"unqualified\""
-        + " case-sensitivity-type=\"everything-case-insensitive\""
-        + " scope=\"user\" access=\"permit\">John Doe</principal>", resultXML);
+    assertStringContains(expected, resultXML);
     assertStringContains("url=" + googleConnectorUrl("doc1"), resultXML);
   }
 
@@ -2379,7 +2427,6 @@ public class DocPusherTest extends TestCase {
     // Content is optional, and may be missing.  Missing content is replaced
     // with the default content, the title.
     String resultXML = feedDocument(doc);
-    System.out.println("\nTest Case: " + getName() + " output:\n" + resultXML);
     assertStringContains("<content encoding=\"base64binary\">", resultXML);
     assertStringContains(HTML_TITLE_ONLY_BASE64, resultXML);
   }
@@ -2401,7 +2448,6 @@ public class DocPusherTest extends TestCase {
     // Content is optional, and may be missing.  Missing content is replaced
     // with the default content, the title.
     String resultXML = feedDocument(doc);
-    System.out.println("\nTest Case: " + getName() + " output:\n" + resultXML);
     assertStringContains("<content encoding=\"base64binary\">", resultXML);
     assertStringContains(PDF_TITLE_ONLY_BASE64, resultXML);
   }
@@ -2421,7 +2467,6 @@ public class DocPusherTest extends TestCase {
     // Content is optional, and may be missing.  Missing content is replaced
     // with the default content, the title.
     String resultXML = feedDocument(doc);
-    System.out.println("\nTest Case: " + getName() + " output:\n" + resultXML);
     assertStringContains("<content encoding=\"base64binary\">", resultXML);
     assertStringContains(PDF_NO_TITLE_BASE64, resultXML);
   }

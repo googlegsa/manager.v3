@@ -31,6 +31,7 @@ import com.google.enterprise.connector.spi.DocumentAccessException;
 import com.google.enterprise.connector.spi.DocumentNotFoundException;
 import com.google.enterprise.connector.spi.MockConnector;
 import com.google.enterprise.connector.spi.MockRetriever;
+import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.util.SystemClock;
 
@@ -290,6 +291,23 @@ public class GetDocumentContentTest extends TestCase {
     assertEquals(-1L, lastModified);
   }
 
+  /** Test getContentType function against a ProductionManager. */
+  public void testGetContentTypeProductionManager() throws Exception {
+    patchRealProductionManager();
+    Manager manager = getProductionManager();
+    String contentType;
+
+    // Connector regular docids have lastModified.
+    contentType = GetDocumentContent.handleGetContentType(
+        createMockRequest(), manager, connectorName, docid);
+    assertEquals("text/plain", contentType);
+
+    // This Document has no mime type.
+    contentType = GetDocumentContent.handleGetContentType(createMockRequest(),
+        manager, connectorName, MockRetriever.DOCID_NO_MIMETYPE);
+    assertEquals(SpiConstants.DEFAULT_MIMETYPE, contentType);
+  }
+
   private void patchRealProductionManager() throws Exception {
     MockInstantiator instantiator =
         new MockInstantiator(new ThreadPool(5, new SystemClock()));
@@ -419,9 +437,9 @@ public class GetDocumentContentTest extends TestCase {
   }
 
   /**
-   * Test IsModifiedSince, where lastModified returns -1.
+   * Test IfModifiedSince, where lastModified returns -1.
    */
-  public void testDoGetIsModifiedSinceNoLastModified() throws Exception {
+  public void testDoGetIfModifiedSinceNoLastModified() throws Exception {
     patchRealProductionManager();
     String docid = MockRetriever.DOCID_NO_LASTMODIFIED;
     MockHttpServletRequest req = createMockRequest();
@@ -436,9 +454,9 @@ public class GetDocumentContentTest extends TestCase {
   }
 
   /**
-   * Test IsModifiedSince, where lastModified newer.
+   * Test IfModifiedSince, where lastModified newer.
    */
-  public void testDoGetIsModifiedSinceLastModified() throws Exception {
+  public void testDoGetIfModifiedSinceLastModified() throws Exception {
     patchRealProductionManager();
     MockHttpServletRequest req = createMockRequest();
     req.setParameter(ServletUtil.XMLTAG_CONNECTOR_NAME, connectorName);
@@ -451,9 +469,8 @@ public class GetDocumentContentTest extends TestCase {
     assertEquals(docid, res.getContentAsString());
   }
 
-
   /**
-   * Test IsModifiedSince, where unmodified.
+   * Test IfModifiedSince, where unmodified.
    */
   public void testDoGetUnModifiedSinceLastModified() throws Exception {
     patchRealProductionManager();
@@ -466,5 +483,38 @@ public class GetDocumentContentTest extends TestCase {
     new GetDocumentContent().doGet(req, res);
     assertEquals(304, res.getStatus());
     assertTrue(Strings.isNullOrEmpty(res.getContentAsString()));
+  }
+
+  /**
+   * Test ContentType.
+   */
+  public void testDoGetContentType() throws Exception {
+    patchRealProductionManager();
+    MockHttpServletRequest req = createMockRequest();
+    req.setParameter(ServletUtil.XMLTAG_CONNECTOR_NAME, connectorName);
+    req.setParameter(ServletUtil.QUERY_PARAM_DOCID, docid);
+    encodeQueryParameter(req);
+    MockHttpServletResponse res = new MockHttpServletResponse();
+    new GetDocumentContent().doGet(req, res);
+    assertEquals(200, res.getStatus());
+    assertEquals(docid, res.getContentAsString());
+    assertTrue(res.getContentType().contains("text/plain"));
+  }
+
+  /**
+   * Test ContentType, where document has no mime type property.
+   */
+  public void testDoGetContentTypeNoMimeType() throws Exception {
+    patchRealProductionManager();
+    String docid = MockRetriever.DOCID_NO_MIMETYPE;
+    MockHttpServletRequest req = createMockRequest();
+    req.setParameter(ServletUtil.XMLTAG_CONNECTOR_NAME, connectorName);
+    req.setParameter(ServletUtil.QUERY_PARAM_DOCID, docid);
+    encodeQueryParameter(req);
+    MockHttpServletResponse res = new MockHttpServletResponse();
+    new GetDocumentContent().doGet(req, res);
+    assertEquals(200, res.getStatus());
+    assertEquals(docid, res.getContentAsString());
+    assertTrue(res.getContentType().contains(SpiConstants.DEFAULT_MIMETYPE));
   }
 }
