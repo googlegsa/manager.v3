@@ -91,6 +91,8 @@ public class Context {
   public static final String FEED_CONTENTURL_PREFIX_PROPERTY_KEY =
       "feed.contenturl.prefix";
   public static final String FEED_CONTENTURL_SERVLET = "/getDocumentContent";
+  public static final String FEED_DISABLE_INHERITED_ACLS =
+      "feed.disable.inherited.acls";
 
   public static final String DEFAULT_JUNIT_CONTEXT_LOCATION =
       "testdata/mocktestdata/applicationContext.xml";
@@ -210,6 +212,13 @@ public class Context {
       + " and servlet to point back at this Connector Manager instance.\n"
       + " For example:\n"
       + " http://localhost:8080/connector-manager/getDocumentContent\n"
+      + "\n"
+      + " The 'feed.disable.inherited.acls' property is used to explicitly\n"
+      + " disable using ACLs with inheritance, even if the GSA appears to\n"
+      + " support the feature. This is necessary in some multibox scenarios\n"
+      + " where the GSA does not support ACL inheritance. The default is\n"
+      + " 'false'.\n"
+      + " feed.disable.inherited.acls=false\n"
       + "\n"
       + " The 'retriever.compression' property is used for content URL feed\n"
       + " content retrieval.  If 'true', document content retrieved using the\n"
@@ -764,13 +773,17 @@ public class Context {
           + " bean in context, using default.");
       traversalContext = new ProductionTraversalContext();
     }
-    // Lazily initialize supportsInheritedAcls, since it requires communicating
-    // with the GSA.
+    // Lazily initialize supportsInheritedAcls, since it usually requires
+    // communicating with the GSA.
     if (traversalContext instanceof SimpleTraversalContext) {
+      SimpleTraversalContext simpleContext =
+          (SimpleTraversalContext) traversalContext;
+      Properties props = getConnectorManagerProperties();
       GsaFeedConnection feeder = getGsaFeedConnection();
-      if (feeder != null) {
-        ((SimpleTraversalContext) traversalContext).setSupportsInheritedAcls(
-            feeder.supportsInheritedAcls());
+      if (Boolean.valueOf(props.getProperty(FEED_DISABLE_INHERITED_ACLS))) {
+        simpleContext.setSupportsInheritedAcls(false);
+      } else if (feeder != null) {
+        simpleContext.setSupportsInheritedAcls(feeder.supportsInheritedAcls());
       }
     }
     return traversalContext;
