@@ -105,12 +105,10 @@ public class DocumentSnapshotRepositoryMonitorManagerImpl
       DocumentSnapshotRepositoryMonitor
           monitor = fileSystemMonitorsByName.get(monitorName);
       if (null != monitor) {
-        LOG.fine("going to stop " + monitorName + " : " + repository.getName()
-            + " " + monitor);
         monitor.shutdown();
       }
       else {
-        LOG.fine("trying to stop non existent monitor thread for "
+        LOG.fine("Unable to stop non existent monitor thread for "
             + monitorName);
       }
     }
@@ -263,7 +261,7 @@ public class DocumentSnapshotRepositoryMonitorManagerImpl
         new DocumentSnapshotRepositoryMonitor(monitorName, repository,
             snapshotStore, changeQueue.newCallback(), DOCUMENT_SINK, startCp,
             documentSnapshotFactory);
-    LOG.fine("adding a new monitor for " + monitorName + " : " + monitor);
+    LOG.fine("Adding a new monitor for " + monitorName + ": " + monitor);
     fileSystemMonitorsByName.put(monitorName, monitor);
     return new Thread(monitor);
   }
