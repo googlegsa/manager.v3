@@ -433,8 +433,8 @@ public class DocumentSnapshotRepositoryMonitor implements Runnable {
   }
 
   public void shutdown() {
-    LOG.log(Level.WARNING, "Deasserting the monitor thread: " + name
-        + " @" + this);
+    LOG.log(Level.WARNING, "Shutdown the monitor thread " + name
+        + " @ " + this);
     isRunning = false;
   }
 }
