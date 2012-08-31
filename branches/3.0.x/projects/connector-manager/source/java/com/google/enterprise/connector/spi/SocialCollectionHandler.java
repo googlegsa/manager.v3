@@ -16,12 +16,24 @@ package com.google.enterprise.connector.spi;
 
 import com.google.enterprise.apis.client.GsaClient;
 import com.google.enterprise.apis.client.GsaEntry;
+import com.google.enterprise.connector.util.SslUtil;
 import com.google.gdata.util.AuthenticationException;
 import com.google.gdata.util.ServiceException;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.security.GeneralSecurityException;
+import java.security.cert.X509Certificate;
+import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 /**
  * SocialCollectionHandler initializes a social collection, which is a container
@@ -62,14 +74,57 @@ public final class SocialCollectionHandler {
       String password) throws RepositoryException {
     // add the url pattern to social_userprofile_collection and add it to
     // doNotFollowUrl in default_collection
+    SSLSocketFactory originalSocketFactory = null;
+    HostnameVerifier originalHostnameVerifier = null;
     try {
-      GsaClient client;
+      GsaClient client = null;
       try {
-        client = new GsaClient(gsahostAddr, port, user, password);
+        client = new GsaClient(
+            "https", gsahostAddr, port == 8000 ? 8443 : port, user, password);
       } catch (AuthenticationException eauth) {
-        LOGGER.severe("Could not authenticate with the GSA as administrator."
-            + " Please check the credentials");
-        throw new RepositoryException(eauth);
+        if (eauth.getCause() instanceof SSLException) {
+          client = null;
+          LOGGER.warning("SSL communication with Administration console "
+              + "failed!. Trying without certificate verification. Consider "
+              + "setting up certificates between connector manager and the GSA "
+              + " for secure communication.");
+          LOGGER.log(Level.FINE, "SSL error", eauth);
+        }
+      }
+
+      if (client == null) {
+        originalSocketFactory = SslUtil.setTrustingDefaultHttpsSocketFactory();
+        if (originalSocketFactory != null) {
+          originalHostnameVerifier = 
+              SslUtil.setTrustingDefaultHostnameVerifier();
+        }
+
+        try {
+          client = new GsaClient(
+              "https", gsahostAddr, port == 8000 ? 8443 : port, user, password);
+        } catch (AuthenticationException eauth) {
+          client = null;
+          LOGGER.warning("SSL communication with Administration "
+              + "console without certificate verification failed! Trying "
+              + "plaintext.");
+          LOGGER.log(Level.FINE, "SSL Error", eauth);
+          HttpsURLConnection.setDefaultSSLSocketFactory(originalSocketFactory);
+          HttpsURLConnection.setDefaultHostnameVerifier(
+              originalHostnameVerifier);
+          originalHostnameVerifier = null;
+          originalSocketFactory = null;
+        }
+      }
+
+      if (client == null) {
+        try {
+          client = new GsaClient(gsahostAddr, port, user, password);
+        } catch (AuthenticationException eauth) {
+          LOGGER.severe("Could not authenticate with the GSA as '" + user
+              + "' to create the social collection. Please check the "
+              + "credentials");
+          throw new RepositoryException(eauth);
+        }
       }
       GsaEntry collection = null;
       try {
@@ -117,7 +172,15 @@ public final class SocialCollectionHandler {
       throw new RepositoryException(exMal);
     } catch (IOException exIO) {
       throw new RepositoryException(exIO);
+    } finally {
+      if (originalSocketFactory != null) {
+        HttpsURLConnection.setDefaultSSLSocketFactory(originalSocketFactory);
+      }
+      if (originalHostnameVerifier != null) {
+        HttpsURLConnection.setDefaultHostnameVerifier(originalHostnameVerifier);
+      }
     }
+    LOGGER.info("Collection [" + collectionName + "] verified");
     return collectionName;
   }
 
@@ -168,19 +231,30 @@ public final class SocialCollectionHandler {
    * @param gsaAdmin userId for making gdata call to GSA
    * @param gsaAdminPassword password for making gdata call to GSA
    * @param collectionName name of the collection where user profiles will go.
-   * @throws RepositoryException
+   * @returns if social collection has been initialized successfully
    */
-  public static void initializeSocialCollection(String gsaHost, int gsaPort,
-      String gsaAdmin, String gsaAdminPassword, String collectionName)
-      throws RepositoryException {
+  public static boolean initializeSocialCollection(String gsaHost, int gsaPort,
+      String gsaAdmin, String gsaAdminPassword, String collectionName) {
     collectionName = getCollectionName(collectionName);
     if (!(validateCollectionName(collectionName))) {
-      throw new RepositoryException("Invalid collection name");
+      LOGGER.warning("Invalid collection name ["
+          + getCollectionName(collectionName) + "]"); 
+      return false;
     }
 
-    ensureUserProfileCollection(collectionName,
-        getSocialRegexp(collectionName), gsaHost, gsaPort, gsaAdmin,
-        gsaAdminPassword);
+    try {
+      ensureUserProfileCollection(collectionName,
+          getSocialRegexp(collectionName), gsaHost, gsaPort, gsaAdmin,
+          gsaAdminPassword);
+    } catch (RepositoryException e) {
+      LOGGER.warning("Collection could not be created. Please create"
+          + " collection [" + collectionName + "] with following definition ["
+          + SocialCollectionHandler.getSocialRegexp(collectionName)
+          + "] manually");
+      LOGGER.log(Level.FINE, "Collection creation error", e);
+      return false;
+    }
+    return true;
   }
 
   /**

@@ -56,6 +56,13 @@ public class SslUtil {
         }
       };
 
+  private static SSLSocketFactory getTrustingFactory()
+      throws GeneralSecurityException {
+    SSLContext sc = SSLContext.getInstance("SSL");
+    sc.init(null, trustAllCerts, null);
+    return sc.getSocketFactory();
+  }
+
   /**
    * Replaces the default {@code TrustManager} for this
    * connection with one that trusts all certificates, and the default
@@ -67,11 +74,39 @@ public class SslUtil {
    */
   public static void setTrustingHttpsOptions(HttpsURLConnection conn)
       throws GeneralSecurityException {
-    SSLContext sc = SSLContext.getInstance("SSL");
-    sc.init(null, trustAllCerts, null);
-    SSLSocketFactory factory = sc.getSocketFactory();
-    conn.setSSLSocketFactory(factory);
+    conn.setSSLSocketFactory(getTrustingFactory());
     conn.setHostnameVerifier(trustAllHosts);
+  }
+
+  /**
+   * Replaces the default SSLSocketFactory with one that doesn't verify
+   * certificates
+   * @return original socket factory
+   */
+  public static SSLSocketFactory setTrustingDefaultHttpsSocketFactory() {
+    SSLSocketFactory original = null;
+    SSLSocketFactory factory = null;
+    try {
+      original = HttpsURLConnection.getDefaultSSLSocketFactory();
+      factory = getTrustingFactory();
+    } catch (GeneralSecurityException e) {
+    }
+    if (factory != null) {
+      HttpsURLConnection.setDefaultSSLSocketFactory(factory);
+      return original;
+    } else {
+      return null;
+    }
+  }
+  /**
+   * Replaces the default HTTPS hostname verifier with one that trusts all
+   * hosts
+   * @return original hostname verifier
+   */
+  public static HostnameVerifier setTrustingDefaultHostnameVerifier() {
+    HostnameVerifier original = HttpsURLConnection.getDefaultHostnameVerifier();
+    HttpsURLConnection.setDefaultHostnameVerifier(trustAllHosts);
+    return original;
   }
 
   /** Prevents instantiation. */

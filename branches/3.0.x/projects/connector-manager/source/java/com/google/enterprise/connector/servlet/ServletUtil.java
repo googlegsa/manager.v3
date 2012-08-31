@@ -612,14 +612,14 @@ public class ServletUtil {
 
   /**
    * A highly-unlikely string to find in real data, used to mark the location
-   * that a CDATA section was removed. It currently includes a UUID generated on
-   * startup, to be a highly-random string.
+   * that a CDATA section or other section was removed. It currently includes a
+   * UUID generated on startup, to be a highly-random string.
    */
-  private static final String CDATA_TEMPORARY_REPLACEMENT =
-      "#CdataReplacement-" + UUID.randomUUID() + "#";
+  private static final String TEMPORARY_REPLACEMENT =
+      "#Replacement-" + UUID.randomUUID() + "#";
 
-  private static final Pattern CDATA_TEMPORARY_REPLACEMENT_PATTERN =
-      Pattern.compile(Pattern.quote(CDATA_TEMPORARY_REPLACEMENT));
+  private static final Pattern TEMPORARY_REPLACEMENT_PATTERN =
+      Pattern.compile(Pattern.quote(TEMPORARY_REPLACEMENT));
 
   /**
    * Given a String such as:
@@ -636,10 +636,10 @@ public class ServletUtil {
     // TODO(ejona): Remove the temporary replacements. This code is only run
     // after any CDATA sections have been removed.
     List<String> saved = new ArrayList<String>();
-    str = temporaryReplaceCdata(str, saved);
+    str = temporaryReplace(CDATA_PATTERN, str, saved);
     Matcher matcher = STRIP_CM_PATTERN.matcher(str);
     String result = matcher.replaceAll("$1");
-    result = undoTemporaryReplaceCdata(result, saved);
+    result = undoTemporaryReplace(result, saved);
     return result;
   }
 
@@ -658,37 +658,45 @@ public class ServletUtil {
     // hard to tell due to calls to prependCmPrefix in
     // ConnectorManagerGetServlet that are never executed.
     List<String> saved = new ArrayList<String>();
-    str = temporaryReplaceCdata(str, saved);
+    str = temporaryReplace(CDATA_PATTERN, str, saved);
     Matcher matcher = PREPEND_CM_PATTERN.matcher(str);
     String result = matcher.replaceAll("$0CM_");
-    result = undoTemporaryReplaceCdata(result, saved);
+    result = undoTemporaryReplace(result, saved);
     return result;
   }
 
-  private static String temporaryReplaceCdata(String source,
-      List<String> savedCdata) {
+  /**
+   * Temporarily remove strings matching {@code pattern} from {@code source},
+   * saving them in {@code saved}; a placeholder is put in {@code source} where
+   * each string used to be and then returned for later reversal. Only one
+   * temporary replacement can be occurring within {@code source} at a time, due
+   * to reusing the same placeholder; you must always {@link
+   * #undoTemporaryReplace} on the string before performing a different
+   * {@link #temporaryReplace}.
+   */
+  private static String temporaryReplace(Pattern pattern, String source,
+      List<String> saved) {
     StringBuffer sb = new StringBuffer(source.length());
-    Matcher m = CDATA_PATTERN.matcher(source);
-    String replacement = Matcher.quoteReplacement(CDATA_TEMPORARY_REPLACEMENT);
+    Matcher m = pattern.matcher(source);
+    String replacement = Matcher.quoteReplacement(TEMPORARY_REPLACEMENT);
     while (m.find()) {
-      savedCdata.add(m.group());
+      saved.add(m.group());
       m.appendReplacement(sb, replacement);
     }
     m.appendTail(sb);
     return sb.toString();
   }
 
-  private static String undoTemporaryReplaceCdata(String source,
-      List<String> previouslySavedCdata) {
+  private static String undoTemporaryReplace(String source,
+      List<String> previouslySaved) {
     StringBuffer sb = new StringBuffer(source.length() * 2);
-    Matcher m = CDATA_TEMPORARY_REPLACEMENT_PATTERN.matcher(source);
+    Matcher m = TEMPORARY_REPLACEMENT_PATTERN.matcher(source);
     int i;
     for (i = 0; m.find(); i++) {
-      m.appendReplacement(sb,
-          Matcher.quoteReplacement(previouslySavedCdata.get(i)));
+      m.appendReplacement(sb, Matcher.quoteReplacement(previouslySaved.get(i)));
     }
     m.appendTail(sb);
-    if (previouslySavedCdata.size() != i) {
+    if (previouslySaved.size() != i) {
       LOGGER.warning("Unexpected number of replacements. Bug!");
     }
     return sb.toString();
@@ -704,6 +712,9 @@ public class ServletUtil {
   private static final Pattern ESCAPED_CDATA_END_PATTERN =
       Pattern.compile("/*\\Q]]&gt;\\E");
 
+  private static final Pattern SCRIPT_PATTERN =
+      Pattern.compile("<script\\b.*?</script>", Pattern.DOTALL);
+
   /**
    * Replaces any CDATA sections with the equivalent PCDATA section, properly
    * handling escapes. This is helpful as Xalan incorrectly produces HTML with
@@ -713,11 +724,30 @@ public class ServletUtil {
    * @return the given formSnippet without CDATA sections
    */
   public static String removeNestedMarkers(String formSnippet) {
+    List<String> saved = new ArrayList<String>();
+    formSnippet = temporaryReplace(SCRIPT_PATTERN, formSnippet, saved);
+    for (int i = 0; i < saved.size(); i++) {
+      // Script sections should not have special characters escaped as entities,
+      // due to the history of HTML. Also note that we have the entire <script>
+      // snippet here, so escaping entities would completely trash the tags.
+      saved.set(i, removeCdata(saved.get(i), false));
+    }
+    String result = removeCdata(formSnippet, true);
+    result = undoTemporaryReplace(result, saved);
+    return result;
+  }
+
+  private static String removeCdata(String formSnippet, boolean escapeSpecial) {
     StringBuffer sb = new StringBuffer(formSnippet.length());
     Matcher m = CDATA_PATTERN.matcher(formSnippet);
     while (m.find()) {
       String cdataContent = m.group(1);
-      String pcdata = cdataContent.replace("&", "&amp;").replace("<", "&lt;");
+      String pcdata;
+      if (escapeSpecial) {
+        pcdata = cdataContent.replace("&", "&amp;").replace("<", "&lt;");
+      } else {
+        pcdata = cdataContent;
+      }
       m.appendReplacement(sb, Matcher.quoteReplacement(pcdata));
     }
     m.appendTail(sb);

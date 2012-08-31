@@ -145,6 +145,9 @@ public class DocumentSnapshotRepositoryMonitor implements Runnable {
   /* Contains a checkpoint confirmation from CM. */
   private MonitorCheckpoint guaranteeCheckpoint;
 
+  /* The monitor should exit voluntarily if set to false */
+  private volatile boolean isRunning = true;
+
   /**
    * Creates a DocumentSnapshotRepositoryMonitor that monitors the
    * Repository rooted at {@code root}.
@@ -203,7 +206,7 @@ public class DocumentSnapshotRepositoryMonitor implements Runnable {
         performExceptionRecovery();
       }
     } catch (InterruptedException ie) {
-      LOG.info("Repository Monitor " + name + " received stop signal.");
+      LOG.info("Repository Monitor " + name + " received stop signal. " + this);
     } finally {
       // Call NDC.remove() via reflection, if possible.
       invoke(ndcRemove);
@@ -296,6 +299,12 @@ public class DocumentSnapshotRepositoryMonitor implements Runnable {
       this.snapshotWriter = snapshotStore.openNewSnapshotWriter();
 
       for(DocumentSnapshot ss : query) {
+        if (false == isRunning) {
+          LOG.log(Level.INFO, "Exiting the monitor thread " + name
+              + " " + this);
+          throw new InterruptedException();
+        }
+
         if (Thread.currentThread().isInterrupted()) {
           throw new InterruptedException();
         }
@@ -421,5 +430,11 @@ public class DocumentSnapshotRepositoryMonitor implements Runnable {
   public void acceptGuarantee(MonitorCheckpoint cp) {
     snapshotStore.acceptGuarantee(cp);
     guaranteeCheckpoint = cp;
+  }
+
+  public void shutdown() {
+    LOG.log(Level.WARNING, "Shutdown the monitor thread " + name
+        + " @ " + this);
+    isRunning = false;
   }
 }
