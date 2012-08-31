@@ -63,30 +63,26 @@ public class SocialCollectionHandlerTest extends TestCase {
     Random random = new Random();
     String collectionName = SpiConstants.DEFAULT_USERPROFILE_COLLECTION
         + random.nextInt();
-    SocialCollectionHandler.initializeSocialCollection(gsaHost, gsaPort,
-        gsaAdmin, gsaAdminPassword, collectionName);
+    assertTrue(SocialCollectionHandler.initializeSocialCollection(gsaHost,
+        gsaPort, gsaAdmin, gsaAdminPassword, collectionName));
     assertNotNull(getCollection(collectionName));
   }
 
   public void testInitializeNull() throws Exception {
-    SocialCollectionHandler.initializeSocialCollection(gsaHost, gsaPort,
-        gsaAdmin, gsaAdminPassword, null);
+    assertTrue(SocialCollectionHandler.initializeSocialCollection(gsaHost,
+        gsaPort, gsaAdmin, gsaAdminPassword, null));
     assertNotNull(getCollection(SpiConstants.DEFAULT_USERPROFILE_COLLECTION));
   }
 
   public void testInitializeEmpty() throws Exception {
-    SocialCollectionHandler.initializeSocialCollection(gsaHost, gsaPort,
-        gsaAdmin, gsaAdminPassword, "");
+    assertTrue(SocialCollectionHandler.initializeSocialCollection(gsaHost,
+        gsaPort, gsaAdmin, gsaAdminPassword, ""));
     assertNotNull(getCollection(SpiConstants.DEFAULT_USERPROFILE_COLLECTION));
   }
 
   public void testInitializeAuthException() throws Exception {
-    try {
+    assertFalse(
       SocialCollectionHandler.initializeSocialCollection(gsaHost, gsaPort,
-          gsaAdmin, gsaAdminPassword + "x", "");
-      fail("Expected an exception");
-    } catch (RepositoryException e) {
-      //good;
-    }
+          gsaAdmin, gsaAdminPassword + "x", ""));
   }
 }

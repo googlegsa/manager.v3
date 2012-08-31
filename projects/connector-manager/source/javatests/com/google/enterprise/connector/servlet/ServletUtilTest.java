@@ -189,15 +189,18 @@ public class ServletUtilTest extends TestCase {
       + "  }"
       + "]]>"
       + "]]>"
-      + "</script>";
+      + "</script>"
+      + "<textarea><![CDATA[a<![CDATA[&<]]>b]]></textarea>";
   String expectedBeginBeginEndEndMarkers =
     "<script language=\"JavaScript\" type=\"text/javascript\">"
-      + "&lt;![CDATA["
+    + "<![CDATA["
     + "  function foo() {"
-    + "    alert('foo&lt;&amp;');"
+    + "    alert('foo<&');"
     + "  }"
-      + "]]>"
-    + "</script>";
+    + "]]>"
+    + "</script>"
+    // The 'b' comes before the ']]>', because CDATA sections cannot be nested.
+    + "<textarea>a&lt;![CDATA[&amp;&lt;b]]></textarea>";
   result = ServletUtil.removeNestedMarkers(beginBeginEndEndMarkers);
   assertEquals("Form with nested markers",
       expectedBeginBeginEndEndMarkers, result);
@@ -214,7 +217,8 @@ public class ServletUtilTest extends TestCase {
       + "    alert('foo');"
       + "  }"
       + "]]>"
-      + "</script>";
+      + "</script>"
+      + "<textarea><![CDATA[<xml>&lt;</xml>]]></textarea>";
   String expectedBeginEndBeginEndMarkers =
       "<script language=\"JavaScript\" type=\"text/javascript\">"
       + "  function foo() {"
@@ -223,7 +227,8 @@ public class ServletUtilTest extends TestCase {
       + "  function foo() {"
       + "    alert('foo');"
       + "  }"
-      + "</script>";
+      + "</script>"
+      + "<textarea>&lt;xml>&amp;lt;&lt;/xml></textarea>";
   result = ServletUtil.removeNestedMarkers(beginEndBeginEndMarkers);
   assertEquals("Form with repeating markers",
       expectedBeginEndBeginEndMarkers, result);
