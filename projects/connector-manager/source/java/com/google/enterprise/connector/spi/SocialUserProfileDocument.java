@@ -41,7 +41,7 @@ import javax.xml.parsers.ParserConfigurationException;
  * @author tapasnay
  * @since 3.0
  */
-final public class SocialUserProfileDocument implements Document {
+public class SocialUserProfileDocument implements Document {
   private static List<Value> getValueList(String value) {
     return Collections.singletonList(Value.getStringValue(value));
   }
