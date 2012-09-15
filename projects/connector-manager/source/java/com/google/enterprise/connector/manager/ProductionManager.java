@@ -95,13 +95,13 @@ public class ProductionManager implements Manager {
       // we need to check.
       if (authnManager != null) {
         if (LOGGER.isLoggable(Level.FINE)) {
-          LOGGER.fine("AUTHENTICATE: connector = " + connectorName + ", "
-                      + identity);
+          LOGGER.fine("AUTHENTICATE: " + identity);
         }
         AuthenticationResponse response = authnManager.authenticate(identity);
         if (LOGGER.isLoggable(Level.FINE)) {
-          LOGGER.fine("AUTHENTICATED: connector = " + connectorName + ", "
-                      + identity + ": " + response);
+          LOGGER.fine("AUTHENTICATION "
+              + (response.isValid() ? "SUCCEEDED" : "FAILED") + ": "
+              + identity + ": " + response);
         }
         return response;
       }
@@ -137,19 +137,17 @@ public class ProductionManager implements Manager {
         return null;
       }
       if (LOGGER.isLoggable(Level.FINE)) {
-        LOGGER.fine("AUTHORIZE: connector = " + connectorName + ", "
-                    + identity + ":  docids = " + docidList);
+        LOGGER.fine("AUTHORIZE: " + identity + ": docids = " + docidList);
       }
       Collection<AuthorizationResponse> results =
           authzManager.authorizeDocids(docidList, identity);
       if (LOGGER.isLoggable(Level.FINE)) {
-        LOGGER.fine("AUTHORIZED: connector = " + connectorName + ", "
-                    + identity + ": authorized " + results.size()
-                    + " of " + docidList.size() + " documents.");
+         LOGGER.fine("AUTHORIZATION: " + identity + ": authorized for "
+            + results.size() + " of " + docidList.size() + " documents.");
       }
       if (LOGGER.isLoggable(Level.FINEST)) {
         for (AuthorizationResponse response : results) {
-          LOGGER.finest("AUTHORIZED " + response.getDocid() + ": "
+          LOGGER.finest("AUTHORIZATION: " + response.getDocid() + ": "
                         + response.getStatus());
         }
       }
