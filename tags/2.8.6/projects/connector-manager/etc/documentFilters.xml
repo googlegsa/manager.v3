@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+<beans>
+  <!-- A document filter acts to transform the information retrieved from
+       its source document.  Typically document filters would add, remove,
+       or modify a document's properties, including the document content.
+       A document filter might even throw SkippedDocumentException to prevent
+       a document from being fed to the GSA.
+
+       DocumentFilterChain constructs a series of document filters. The filters
+       are constructed from a list of DocumentFilterFactory beans, and linked
+       together like pop-beads, each using the previous as its source document.
+  -->
+  <bean id="DocumentFilters"
+        class="com.google.enterprise.connector.util.filter.DocumentFilterChain">
+    <constructor-arg>
+      <list>
+      </list>
+    </constructor-arg>
+  </bean>
+</beans>

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project name="TestConnectorB" default="TestConnectorB" basedir=".">
+
+  <!-- ========================= PROPERTIES ============================= -->
+  <property name="version" value="1.0" />
+
+  <!-- Define Directories. -->
+  <property name="dist" value="dist" />
+  <property name="config" value="config" />
+
+  <property name="jar.dir"  value="${dist}/jar" />
+  <property name="jarfile"  value="${jar.dir}/testconnectorB.jar" />
+
+  <!-- =========================== TASKS =============================== -->
+  <target name="TestConnectorB" depends="init,jar">
+  </target>
+
+  <target name="init">
+    <mkdir dir="${dist}" />
+    <mkdir dir="${jar.dir}" />
+  </target>
+
+  <target name="jar" description="TestConnectorB">
+    <tstamp />
+    <jar jarfile="${jarfile}">
+      <fileset dir="${config}"/>
+      <manifest>
+        <attribute name="Implementation-Title" value="TestConnectorB"/>
+        <attribute name="Implementation-Version"
+          value="${version} (build ${svnversion}  ${TODAY})"/>
+        <attribute name="Implementation-Vendor" value="Google Inc."/>
+      </manifest>
+    </jar>
+  </target>
+
+  <target name="clean" description="Deletes all build files.">
+    <delete dir="${dist}" />
+  </target>
+
+</project>
