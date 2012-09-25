@@ -15,7 +15,6 @@
 package com.google.enterprise.connector.common;
 
 import com.google.enterprise.connector.pusher.XmlFeed;
-import com.google.enterprise.connector.spi.SpiConstants.FeedType;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -59,15 +58,13 @@ public class AlternateContentFilterInputStreamTest extends TestCase {
 
   /** Test XmlFeed Rollback. */
   public void testFeedRollback() throws Exception {
-    XmlFeed feed =
-        new XmlFeed("test", FeedType.CONTENT, 10000, null, null, false);
+    XmlFeed feed = new XmlFeed("test", XmlFeed.XML_FEED_INCREMENTAL, 10000, null);
     checkACIS(new BigInputStream(), feed, ALTERNATE_CONTENT);
   }
 
   /** Test No XmlFeed Rollback. */
   public void testNoFeedRollback() throws Exception {
-    XmlFeed feed =
-        new XmlFeed("test", FeedType.CONTENT, 10000, null, null, false);
+    XmlFeed feed = new XmlFeed("test", XmlFeed.XML_FEED_INCREMENTAL, 10000, null);
     checkACIS(new ByteArrayInputStream(CONTENT.getBytes()), feed, CONTENT);
   }
 
@@ -144,8 +141,7 @@ public class AlternateContentFilterInputStreamTest extends TestCase {
    */
   private void checkACISReadByte(InputStream source, InputStream alt,
       String expectedResult) throws Exception {
-    XmlFeed feed =
-        new XmlFeed("test", FeedType.CONTENT, 10000, null, null, false);
+    XmlFeed feed = new XmlFeed("test", XmlFeed.XML_FEED_INCREMENTAL, 10000, null);
     feed.reset(0);
     feed.write(PREFIX.getBytes());
     InputStream is = new AlternateContentFilterInputStream(source, alt, feed);

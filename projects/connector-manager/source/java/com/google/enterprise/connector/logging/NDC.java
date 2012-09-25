@@ -96,26 +96,6 @@ import java.util.EmptyStackException;
   }
 
   /**
-   * Append the supplied message to the current diagnostic context,
-   * if one exists.  If there is no current context, do nothing.
-   *
-   * @param message The new diagnostic context information to append
-   *        to the current context.
-   */
-  public static void append(String message) {
-    try {
-      String current = getContextStack().pop();
-      if (current.length() > 0) {
-        push(current + " " + message);
-      } else {
-        push(message);
-      }
-    } catch (EmptyStackException ignored) {
-      // Do nothing.
-    }
-  }
-
-  /**
    * Looks at the last diagnostic context at the top of the context
    * stack without removing it.
    *

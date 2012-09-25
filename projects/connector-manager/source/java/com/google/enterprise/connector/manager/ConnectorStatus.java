@@ -23,8 +23,6 @@ public class ConnectorStatus {
   private final String type;
   private final int status;
   private final String schedule;
-  private final String globalNamespace;
-  private final String localNamespace;
 
   /**
    * Primary constructor.
@@ -33,15 +31,12 @@ public class ConnectorStatus {
    * @param status the connector's status
    * @param schedule the connector's schedule
    */
-  public ConnectorStatus(String name, String type, int status, String schedule,
-                         String globalNamespace, String localNamespace) {
+  public ConnectorStatus(String name, String type, int status, String schedule) {
     super();
     this.name = name;
     this.type = type;
     this.status = status;
     this.schedule = (schedule == null) ? null : schedule.trim();
-    this.globalNamespace = globalNamespace;
-    this.localNamespace = localNamespace;
   }
 
   /**
@@ -76,26 +71,4 @@ public class ConnectorStatus {
     return schedule;
   }
 
-  /**
-   * Gets the global namespace
-   * @return the global namespace
-   */
-  public String getGlobalNamespace() {
-    return globalNamespace;
-  }
-
-  /**
-   * Gets the local namespace
-   * @return the local namespace
-   */
-  public String getLocalNamespace() {
-    return localNamespace;
-  }
-
-  @Override
-  public String toString() {
-    return "{ connector = " + name + ", type = " + type + ", status = " + status
-            + ", schedule = " + schedule + ", globalNamespace = "
-            + globalNamespace + ", localNamespace = " + localNamespace + " }";
-  }
 }

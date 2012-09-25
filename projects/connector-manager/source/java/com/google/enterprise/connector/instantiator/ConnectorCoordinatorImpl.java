@@ -19,18 +19,16 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Maps;
 import com.google.enterprise.connector.common.PropertiesUtils;
-import com.google.enterprise.connector.common.SecurityUtils;
 import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.database.ConnectorPersistentStoreFactory;
-import com.google.enterprise.connector.database.DocumentStore;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
-import com.google.enterprise.connector.pusher.DocumentAcceptorImpl;
 import com.google.enterprise.connector.pusher.PusherFactory;
 import com.google.enterprise.connector.scheduler.LoadManager;
 import com.google.enterprise.connector.scheduler.LoadManagerFactory;
 import com.google.enterprise.connector.scheduler.Schedule;
+import com.google.enterprise.connector.scheduler.ScheduleTimeInterval;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.ConfigureResponse;
@@ -39,14 +37,7 @@ import com.google.enterprise.connector.spi.ConnectorPersistentStore;
 import com.google.enterprise.connector.spi.ConnectorPersistentStoreAware;
 import com.google.enterprise.connector.spi.ConnectorShutdownAware;
 import com.google.enterprise.connector.spi.ConnectorType;
-import com.google.enterprise.connector.spi.Lister;
-import com.google.enterprise.connector.spi.RepositoryException;
-import com.google.enterprise.connector.spi.Retriever;
-import com.google.enterprise.connector.spi.TraversalContext;
-import com.google.enterprise.connector.spi.TraversalContextAware;
 import com.google.enterprise.connector.spi.TraversalManager;
-import com.google.enterprise.connector.spi.TraversalSchedule;
-import com.google.enterprise.connector.spi.TraversalScheduleAware;
 import com.google.enterprise.connector.traversal.BatchResult;
 import com.google.enterprise.connector.traversal.BatchResultRecorder;
 import com.google.enterprise.connector.traversal.BatchSize;
@@ -54,11 +45,11 @@ import com.google.enterprise.connector.traversal.QueryTraverser;
 import com.google.enterprise.connector.traversal.TraversalDelayPolicy;
 import com.google.enterprise.connector.traversal.Traverser;
 import com.google.enterprise.connector.util.Clock;
-import com.google.enterprise.connector.util.filter.DocumentFilterFactory;
+import com.google.enterprise.connector.database.DocumentStore;
 
 import java.io.File;
 import java.io.IOException;
-import java.sql.SQLException;
+import java.util.Calendar;
 import java.util.Locale;
 import java.util.Map;
 import java.util.logging.Level;
@@ -131,27 +122,6 @@ class ConnectorCoordinatorImpl implements
   private DocumentStore documentStore;
 
   /**
-   * The cached TraversalManager.
-   */
-  private TraversalManager traversalManager;
-  private boolean traversalEnabled;
-
-  /**
-   * The cached Lister.
-   */
-  private Lister lister;
-
-  /**
-   * The running Lister TaskHandle.
-   */
-  private TaskHandle listerHandle;
-
-  /**
-   * The cached Retriever.
-   */
-  private Retriever retriever;
-
-  /**
    * Constructs a ConnectorCoordinator for the named {@link Connector}.
    * The {@code Connector} may not yet have a concrete instance.
    *
@@ -180,7 +150,6 @@ class ConnectorCoordinatorImpl implements
     this.loadManager = loadManagerFactory.newLoadManager(name);
     this.connectorPersistentStoreFactory = connectorPersistentStoreFactory;
     this.documentStore = null;
-    this.traversalEnabled = true;
   }
 
   /**
@@ -282,107 +251,7 @@ class ConnectorCoordinatorImpl implements
   /* @Override */
   public synchronized TraversalManager getTraversalManager()
       throws ConnectorNotFoundException, InstantiatorException {
-    if (traversalManager == null && traversalEnabled) {
-      traversalManager = getConnectorInterfaces().getTraversalManager();
-      if (traversalManager == null) {
-        LOGGER.fine("Connector " + name + " has no TraversalManager.");
-        traversalEnabled = false;
-      } else {
-        setTraversalContext(traversalManager);
-        setTraversalSchedule(traversalManager, getSchedule());
-      }
-    }
-    return traversalManager;
-  }
-
-  /** If target is TraversalContextAware, set its traversalContext. */
-  private void setTraversalContext(Object target) {
-    if (target != null && target instanceof TraversalContextAware) {
-      TraversalContext traversalContext =
-          Context.getInstance().getTraversalContext();
-      try {
-        ((TraversalContextAware) target).setTraversalContext(traversalContext);
-      } catch (Exception e) {
-        LOGGER.log(Level.WARNING, "Unable to set TraversalContext", e);
-      }
-    }
-  }
-
-  /** If target is TraversalScheduleAware, set its traversalSchedule. */
-  private void setTraversalSchedule(Object target, Schedule schedule) {
-    if (target != null && target instanceof TraversalScheduleAware) {
-      try {
-        ((TraversalScheduleAware) target).setTraversalSchedule(schedule);
-      } catch (Exception e) {
-        LOGGER.log(Level.WARNING, "Unable to set TraversalSchedule", e);
-      }
-    }
-  }
-
-  /**
-   * Returns the {@link Lister} for the {@link Connector}
-   * instance.
-   *
-   * @return a Lister
-   * @throws InstantiatorException
-   */
-  public synchronized Lister getLister()
-      throws ConnectorNotFoundException, InstantiatorException {
-    if (lister == null) {
-      lister = getConnectorInterfaces().getLister();
-      setTraversalContext(lister);
-      setTraversalSchedule(lister, getSchedule());
-    }
-    return lister;
-  }
-
-  /** Start up the Lister for the connector, if this CM allows feeding. */
-  private synchronized void startLister() throws InstantiatorException {
-    if (Context.getInstance().isFeeding()) {
-      try {
-        Lister lister = getLister();
-        if (lister != null) {
-          LOGGER.fine("Starting Lister for connector " + name);
-          lister.setDocumentAcceptor(new DocumentAcceptorImpl(
-              name, pusherFactory, documentStore));
-          listerHandle = threadPool.submit(new CancelableLister(name, lister));
-        }
-      } catch (ConnectorNotFoundException e) {
-        throw new InstantiatorException("Connector not found " + name, e);
-      } catch (Exception e) {
-        LOGGER.log(Level.WARNING, "Failed to start Lister for connector "
-                   + name, e);
-      }
-    }
-  }
-
-  /** Stop the Lister for the connector. */
-  private synchronized void stopLister() {
-    if (listerHandle != null && !listerHandle.isDone()) {
-      LOGGER.fine("Stopping Lister for connector " + name);
-      listerHandle.cancel();
-    }
-  }
-
-  /**
-   * Return a {@link Retriever} that may be used to access content for the
-   * document identified by {@code docid}.  If the connector does not support
-   * the {@link Retriever} interface, {@code null} is returned.
-   *
-   * @return a {@link Retriever}, or {@code null} if none is available
-   * @throws ConnectorNotFoundException if this {@link ConnectorCoordinator}
-   *         does not exist.
-   * @throws InstantiatorException if unable to instantiate the requested
-   *         {@link Retriever}
-   */
-  /* @Override */
-  public Retriever getRetriever()
-      throws ConnectorNotFoundException, InstantiatorException {
-    if (retriever == null) {
-      retriever = getConnectorInterfaces().getRetriever();
-      setTraversalContext(retriever);
-    }
-    return retriever;
+    return getConnectorInterfaces().getTraversalManager();
   }
 
   /**
@@ -411,27 +280,16 @@ class ConnectorCoordinatorImpl implements
               getConnectorInstancePrototype(name, typeInfo));
         }
       } else {
-        if (LOGGER.isLoggable(Level.CONFIG)) {
-          LOGGER.config("GET POPULATED CONFIG FORM: locale = " + locale
-                        + ", configuration = "
-                        + SecurityUtils.getMaskedMap(config.getMap()));
-        }
         response =
             connectorType.getPopulatedConfigForm(config.getMap(), locale);
         if (response != null) {
-          return new ExtendedConfigureResponse(response, config);
+          return new ExtendedConfigureResponse(response, config.getXml());
         }
       }
       return response;
     } catch (Exception e) {
       throw new InstantiatorException("Failed to get configuration form", e);
     }
-  }
-
-  @Override
-  public DocumentFilterFactory getDocumentFilterFactory()
-      throws ConnectorNotFoundException {
-    return getInstanceInfo().getDocumentFilterFactory();
   }
 
   /**
@@ -452,18 +310,11 @@ class ConnectorCoordinatorImpl implements
       Schedule schedule = getInstanceInfo().getConnectorSchedule();
       if (schedule != null && schedule.isDisabled() &&
             schedule.getRetryDelayMillis() == -1 &&
-            schedule.nextScheduledInterval() != -1) {
+            !schedule.getTimeIntervals().isEmpty()) {
           schedule.setDisabled(false);
           getInstanceInfo().setConnectorSchedule(schedule);
       }
     }
-
-    // TODO: Remove this if we switch completely to JDBC PersistentStore.
-    // FileStore doesn't notice the deletion of a file that did not exist.
-    if (lister != null) {
-      connectorCheckpointChanged(null);
-    }
-
     // This must not be called while holding the lock.
     changeDetector.detect();
   }
@@ -511,20 +362,12 @@ class ConnectorCoordinatorImpl implements
    */
   /* @Override */
   public synchronized void connectorScheduleChanged(Schedule schedule) {
-    LOGGER.config("Schedule changed for connector " + name + ": " + schedule);
-
     // Refresh the cached Schedule.
     traversalSchedule = schedule;
 
     // Update the LoadManager with the new load.
     loadManager.setLoad(
         (schedule == null) ? EMPTY_SCHEDULE.getLoad() : schedule.getLoad());
-
-    // Let the traversal manager know the schedule changed.
-    setTraversalSchedule(traversalManager, schedule);
-
-    // Let the lister know the schedule changed.
-    setTraversalSchedule(lister, schedule);
 
     // New Schedule may alter DelayPolicy.
     delayTraversal(TraversalDelayPolicy.IMMEDIATE);
@@ -570,26 +413,16 @@ class ConnectorCoordinatorImpl implements
    */
   /* @Override */
   public void connectorCheckpointChanged(String checkpoint) {
+    // TODO: actually detect transition from non-null to null?
     // If checkpoint has been nulled, then traverse the repository from scratch.
     if (checkpoint == null) {
       synchronized(this) {
         // Halt any traversal in progress.
         resetBatch();
 
-        // Shut down any Lister.
-        stopLister();
-
         // Discard all content from the LocalDocumentStore for this connector.
         if (documentStore != null) {
           documentStore.delete();
-        }
-
-        try {
-          // Restart Lister.
-          startLister();
-        } catch (InstantiatorException e) {
-          LOGGER.log(Level.WARNING, "Failed to restart Lister for connector "
-                     + name, e);
         }
 
         // Kick off a restart immediately.
@@ -730,11 +563,6 @@ class ConnectorCoordinatorImpl implements
             }
           } else if (retryDelayMillis > 0) {
             traversalDelayEnd = clock.getTimeMillis() + retryDelayMillis;
-            LOGGER.fine("Delaying traversal for connector " + name + " "
-                        + ((retryDelayMillis < (120 * 1000))
-                            ? ((retryDelayMillis / 1000) + " seconds")
-                            : ((retryDelayMillis / (60 * 1000)) + " minutes"))
-                        + " after repository reveals no new content.");
           }
         } catch (ConnectorNotFoundException cnfe) {
           // Connector was deleted while processing the batch.  Don't take any
@@ -745,9 +573,6 @@ class ConnectorCoordinatorImpl implements
       case ERROR:
         traversalDelayEnd =
             clock.getTimeMillis() + Traverser.ERROR_WAIT_MILLIS;
-        LOGGER.info("Delaying traversal for connector " + name + " "
-                    + (Traverser.ERROR_WAIT_MILLIS / (60 * 1000))
-                    + " minutes after encountering an error.");
         break;
     }
   }
@@ -763,18 +588,8 @@ class ConnectorCoordinatorImpl implements
       return false;
     }
 
-    // If traversals are disabled, don't run.
-    if (!traversalEnabled) {
-      return false;
-    }
-
     // Are we already running? If so, we shouldn't run again.
     if (taskHandle != null && !taskHandle.isDone()) {
-      return false;
-    }
-
-    // If the traversal schedule is disabled, don't run.
-    if (getSchedule().isDisabled()) {
       return false;
     }
 
@@ -783,13 +598,41 @@ class ConnectorCoordinatorImpl implements
       return false;
     }
 
+    Schedule schedule = getSchedule();
+
+    // Don't run if traversals are disabled.
+    if (schedule.isDisabled()) {
+      return false;
+    }
+
     // Don't run if we have exceeded our configured host load.
     if (loadManager.shouldDelay()) {
       return false;
     }
 
-    // Run if we are within scheduled traversal interval.
-    return getSchedule().inScheduledInterval();
+    // OK to run if we are within one of the Schedule's traversal intervals.
+    Calendar now = Calendar.getInstance();
+    int hour = now.get(Calendar.HOUR_OF_DAY);
+    for (ScheduleTimeInterval interval : schedule.getTimeIntervals()) {
+      int startHour = interval.getStartTime().getHour();
+      int endHour = interval.getEndTime().getHour();
+      if (0 == endHour) {
+        endHour = 24;
+      }
+      if (endHour < startHour) {
+        // The traversal interval straddles midnight.
+        if ((hour >= startHour) || (hour < endHour)) {
+          return true;
+        }
+      } else {
+        // The traversal interval falls wholly within the day.
+        if ((hour >= startHour) && (hour < endHour)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 
   /**
@@ -805,12 +648,13 @@ class ConnectorCoordinatorImpl implements
     }
 
     BatchSize batchSize = loadManager.determineBatchSize();
-    if (batchSize.getHint() == 0) {
+    if (batchSize.getMaximum() == 0) {
       return false;
     }
 
     try {
-      TraversalManager traversalManager = getTraversalManager();
+      TraversalManager traversalManager =
+          getConnectorInterfaces().getTraversalManager();
       if (traversalManager == null) {
         return false;
       }
@@ -872,11 +716,6 @@ class ConnectorCoordinatorImpl implements
     taskHandle = null;
     currentBatchKey = null;
     interfaces = null;
-
-    // Discard cached interface instances.
-    traversalManager = null;
-    retriever = null;
-    traversalSchedule = null;
   }
 
   /**
@@ -886,15 +725,6 @@ class ConnectorCoordinatorImpl implements
    * @param delete {@code true} if the {@code Connector} will be deleted.
    */
   private void shutdownConnector(boolean delete) {
-    // Discard cached instances.
-    traversalManager = null;
-    retriever = null;
-    traversalSchedule = null;
-
-    // Shut down the Lister, if running.
-    stopLister();
-    lister = null;
-
     if (instanceInfo != null
         && instanceInfo.getConnector() instanceof ConnectorShutdownAware) {
       ConnectorShutdownAware csa =
@@ -1033,15 +863,10 @@ class ConnectorCoordinatorImpl implements
     Configuration newConfiguration = addGoogleProperties(config, connectorDir);
 
     // Validate the configuration.
-    if (LOGGER.isLoggable(Level.CONFIG)) {
-      LOGGER.config("VALIDATE CONFIG: Validating connector " + name
-          + ": locale = " + locale + ", " + newConfiguration);
-    }
-
-    ConfigureResponse response = validateConfig(connectorDir, newTypeInfo,
-                                                newConfiguration, locale);
+    ConfigureResponse response =
+        validateConfig(name, connectorDir, newTypeInfo, newConfiguration, locale);
     if (response != null) {
-      // If validateConfig() returns a non-null response with an error message,
+      // If validateConfig() returns a non-null response with an error message.
       // or populated config form, then consider it an invalid config that
       // needs to be corrected. Return the response so that the config form
       // may be redisplayed.
@@ -1056,11 +881,8 @@ class ConnectorCoordinatorImpl implements
       // but does include a configuration Map; then consider it a valid,
       // but possibly altered configuration and use it.
       if (response.getConfigData() != null) {
-        if (LOGGER.isLoggable(Level.CONFIG)) {
-          LOGGER.config("A modified configuration for connector " + name
-                        + " was returned: "
-                        + SecurityUtils.getMaskedMap(response.getConfigData()));
-        }
+        LOGGER.config("A modified configuration for connector " + name
+            + " was returned.");
         newConfiguration = new Configuration(response.getConfigData(), config);
       }
     }
@@ -1093,10 +915,6 @@ class ConnectorCoordinatorImpl implements
   /* @Override */
   public void connectorConfigurationChanged(TypeInfo newTypeInfo,
       Configuration config) throws InstantiatorException {
-    if (LOGGER.isLoggable(Level.CONFIG)) {
-      LOGGER.config("New configuration for connector " + name + ": " + config);
-    }
-
     File connectorDir = getConnectorDir(newTypeInfo);
 
     // We have an apparently valid configuration. Create a connector instance
@@ -1127,9 +945,6 @@ class ConnectorCoordinatorImpl implements
 
     // The load value in a Schedule is docs/minute.
     loadManager.setLoad(getSchedule().getLoad());
-
-    // Start up a Lister, if the Connector supports one.
-    startLister();
 
     // Allow newly modified connector to resume traversals immediately.
     delayTraversal(TraversalDelayPolicy.IMMEDIATE);
@@ -1176,15 +991,14 @@ class ConnectorCoordinatorImpl implements
   }
 
   /**
-   * Removes non-persistable "google" properties from the Configuration.
+   * Removes properties whose names start with "google" from the Configuration.
    */
   private Configuration removeGoogleProperties(Configuration config) {
     // Make a copy of the map with google* entries removed.
     Map<String, String> newConfig = Maps.newHashMap(
         Maps.filterKeys(config.getMap(), new Predicate<String>() {
             public boolean apply(String input) {
-              return !PropertiesUtils.GOOGLE_NONPERSISTABLE_PROPERTIES
-                      .contains(input);
+              return !input.startsWith("google");
             }
         }));
 
@@ -1192,34 +1006,26 @@ class ConnectorCoordinatorImpl implements
   }
 
   @SuppressWarnings("unchecked")
-  private void setDatabaseAccess(InstanceInfo instanceInfo)
-      throws InstantiatorException {
-    try {
-      if (connectorPersistentStoreFactory != null) {
-        Connector connector = instanceInfo.getConnector();
-        if (connector instanceof ConnectorPersistentStoreAware) {
-          ConnectorPersistentStore pstore =
+  private void setDatabaseAccess(InstanceInfo instanceInfo) {
+    if (connectorPersistentStoreFactory != null) {
+      Connector connector = instanceInfo.getConnector();
+      if (connector instanceof ConnectorPersistentStoreAware) {
+        ConnectorPersistentStore pstore =
             connectorPersistentStoreFactory.newConnectorPersistentStore(
-                 instanceInfo.getName(),
-                 instanceInfo.getTypeInfo().getConnectorTypeName(),
-                 instanceInfo.getTypeInfo().getConnectorType());
-          documentStore = (DocumentStore) pstore.getLocalDocumentStore();
-          LOGGER.config("Setting DatabasePersistentStore for connector " + name);
-          ((ConnectorPersistentStoreAware) connector).setDatabaseAccess(pstore);
-        }
+               instanceInfo.getName(),
+               instanceInfo.getTypeInfo().getConnectorTypeName(),
+               instanceInfo.getTypeInfo().getConnectorType());
+        documentStore = (DocumentStore) pstore.getLocalDocumentStore();
+        ((ConnectorPersistentStoreAware) connector).setDatabaseAccess(pstore);
       }
-    } catch (SQLException e) {
-      throw new InstantiatorException("Failed to set database access for "
-          + "connector " + instanceInfo.getName(), e);
     }
   }
 
-  private ConfigureResponse validateConfig(
+  private static ConfigureResponse validateConfig(String name,
       File connectorDir, TypeInfo typeInfo, Configuration config,
       Locale locale) throws InstantiatorException {
     ConnectorInstanceFactory factory =
-        new ConnectorInstanceFactory(name, typeInfo, config,
-                                     connectorPersistentStoreFactory);
+        new ConnectorInstanceFactory(name, typeInfo, config);
     try {
       return typeInfo.getConnectorType()
              .validateConfig(config.getMap(), locale, factory);
@@ -1267,8 +1073,6 @@ class ConnectorCoordinatorImpl implements
             + " for connector " + name);
       }
     } else {
-      LOGGER.finest("Making connector directory "
-                    + connectorDir.getAbsolutePath());
       if (!connectorDir.mkdirs()) {
         throw new InstantiatorException("Can not create "
             + "connector directory at " + connectorDir.getAbsolutePath()
@@ -1288,8 +1092,6 @@ class ConnectorCoordinatorImpl implements
   // Connector an opportunity to delete these files in a cleaner fashion.
   private static void removeConnectorDirectory(File connectorDir) {
     if (connectorDir.exists()) {
-      LOGGER.finest("Removing connector directory "
-                    + connectorDir.getAbsolutePath());
       if (!connectorDir.delete()) {
         LOGGER.warning("Failed to delete connector directory "
             + connectorDir.getPath()

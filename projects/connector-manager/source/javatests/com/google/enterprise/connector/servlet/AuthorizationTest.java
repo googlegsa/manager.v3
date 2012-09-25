@@ -17,6 +17,7 @@ package com.google.enterprise.connector.servlet;
 import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.manager.MockManager;
 
+import junit.framework.Assert;
 import junit.framework.TestCase;
 
 import java.io.PrintWriter;
@@ -80,7 +81,7 @@ public class AuthorizationTest extends TestCase {
           + "</ConnectorQuery>\n" + "</AuthorizationQuery>";
 
   /** Test invalid (empty) XML request. */
-  public void testInvalidRequest() throws Exception {
+  public void _testInvalidRequest() throws Exception {
     String expectedResult = "<CmResponse>\n" + "  <StatusId>"
          + ConnectorMessageCode.ERROR_PARSING_XML_REQUEST + "</StatusId>\n"
          + "</CmResponse>\n";
@@ -89,7 +90,7 @@ public class AuthorizationTest extends TestCase {
 
   /**
    */
-  public void testHandleDoPost1() {
+  public void _testHandleDoPost1() {
     String expectedResult =
         "<CmResponse>\n" + "  <AuthorizationResponse>\n" + "    <Answer>\n"
             + "      <Resource connectorname=\"connector1\">"
@@ -133,7 +134,7 @@ public class AuthorizationTest extends TestCase {
    * The connector name of one resource is null.  Any others should be
    * processed accordingly.
    */
-  public void testHandleDoPost2() {
+  public void _testHandleDoPost2() {
     String expectedBadDocumentResponse = "<CmResponse>\n"
       + "  <AuthorizationResponse>\n"
       + "    <Answer>\n"
@@ -162,7 +163,7 @@ public class AuthorizationTest extends TestCase {
   /**
    * docid does not exist.
    */
-  public void testHandleDoPost3() {
+  public void _testHandleDoPost3() {
     String expectedResult =
         "<CmResponse>\n" + "  <StatusId>"
             + ConnectorMessageCode.RESPONSE_NULL_DOCID + "</StatusId>\n"
@@ -173,7 +174,7 @@ public class AuthorizationTest extends TestCase {
   /**
    * The identity is null.
    */
-  public void testHandleDoPost4() {
+  public void _testHandleDoPost4() {
     String expectedResult =
         "<CmResponse>\n" + "  <StatusId>"
         + ConnectorMessageCode.RESPONSE_NULL_IDENTITY + "</StatusId>\n"
@@ -185,7 +186,7 @@ public class AuthorizationTest extends TestCase {
   /**
    * The resource is null.
    */
-  public void testHandleDoPost5() {
+  public void _testHandleDoPost5() {
     String expectedResult =
         "<CmResponse>\n" + "  <StatusId>"
             + ConnectorMessageCode.RESPONSE_NULL_RESOURCE + "</StatusId>\n"
@@ -234,7 +235,7 @@ public class AuthorizationTest extends TestCase {
   }
 
   /** Test Indeterminate response. */
-  public void testIndeterminateResponse() {
+  public void _testIndeterminateResponse() {
     String queryXml =
       "<AuthorizationQuery>\n" +
       "<ConnectorQuery>\n" +
@@ -274,7 +275,7 @@ public class AuthorizationTest extends TestCase {
   }
 
   /** Test empty query list. */
-  public void testEmptyQueryList() {
+  public void _testEmptyQueryList() {
     String queryXml =
       "<AuthorizationQuery>\n" +
       "</AuthorizationQuery>";
@@ -285,7 +286,7 @@ public class AuthorizationTest extends TestCase {
   }
 
   /** Test null response. */
-  public void testNullResponse() {
+  public void _testNullResponse() {
     String queryXml =
       "<AuthorizationQuery>\n" +
       "<ConnectorQuery>\n" +
@@ -301,7 +302,7 @@ public class AuthorizationTest extends TestCase {
   }
 
   /** Test XML escaped URL. */
-  public void testXmlEscapedUrl() {
+  public void _testXmlEscapedUrl() {
     String queryXml = "<AuthorizationQuery>\n"
         + "<ConnectorQuery>\n"
         + "  <Identity source=\"gsa\">CN=foo</Identity>\n"
@@ -406,7 +407,7 @@ public class AuthorizationTest extends TestCase {
   /**
    * The Identity is qualified by domain
    */
-  public void testHandleDoPostDomainQualifiedId() {
+  public void _testHandleDoPostDomainQualifiedId() {
     doTest(TEST_DOMAINSPECIFIC_IDENTITY, NON_AUTHN_EXPECTED_RESULT,
         false, null, null, null);
     doTest(TEST_DOMAINSPECIFIC_IDENTITY, USER1_EXPECTED_RESULT,
@@ -433,7 +434,7 @@ public class AuthorizationTest extends TestCase {
   /**
    * The Identity is qualified by domain
    */
-  public void testHandleDoPostPasswordId() {
+  public void _testHandleDoPostPasswordId() {
     doTest(TEST_PASSWORD_IDENTITY, NON_AUTHN_EXPECTED_RESULT,
         false, null, null, null);
     doTest(TEST_PASSWORD_IDENTITY, USER1_EXPECTED_RESULT,
@@ -517,7 +518,7 @@ public class AuthorizationTest extends TestCase {
   /**
    * Test the searchurl is passed in as the document authorization key.
    */
-  public void testSearchUrlAuthz() {
+  public void _testSearchUrlAuthz() {
     // The parser will be able to parse the first resource and it will be added
     // to the mapping and processed.  Once it hits the bad URL, however, it
     // will bail and set the overall status of the response to indicate the
@@ -560,11 +561,11 @@ public class AuthorizationTest extends TestCase {
             out);
     authorizationHandler.handleDoPost();
     out.flush();
-    String result = writer.toString();
-    out.close();
+    StringBuffer result = writer.getBuffer();
     LOGGER.info("Expected Response:\n" + expectedResult);
-    LOGGER.info("Actual Response:\n" + result);
-    assertEquals(StringUtils.normalizeNewlines(expectedResult),
-                 StringUtils.normalizeNewlines(result));
+    LOGGER.info("Actual Response:\n" + result.toString());
+    Assert.assertEquals(StringUtils.normalizeNewlines(expectedResult),
+        StringUtils.normalizeNewlines(result.toString()));
+    out.close();
   }
 }

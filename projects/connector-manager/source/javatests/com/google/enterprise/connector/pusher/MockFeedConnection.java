@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.  All Rights Reserved.
+// Copyright 2006-2008 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -37,9 +37,9 @@ public class MockFeedConnection implements FeedConnection {
   public MockFeedConnection() {
   }
 
-  /* @Override */
+  //@Override
   public String sendData(FeedData feedData)
-      throws FeedException, RepositoryException {
+      throws RepositoryException {
     try {
       ByteArrayOutputStream data = (XmlFeed) feedData;
       String dataStr = data.toString("UTF-8");
@@ -51,18 +51,13 @@ public class MockFeedConnection implements FeedConnection {
     return GsaFeedConnection.SUCCESS_RESPONSE;
   }
 
-  /* @Override */
+  //@Override
   public boolean isBacklogged() {
     return false;
   }
 
-  /* @Override */
+  //@Override
   public String getContentEncodings() {
     return "base64binary";
-  }
-
-  /* @Override */
-  public boolean supportsInheritedAcls() {
-    return true;
   }
 }

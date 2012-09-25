@@ -14,14 +14,11 @@
 
 package com.google.enterprise.connector.servlet;
 
-import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.instantiator.Configuration;
 import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.manager.MockManager;
-import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
-import com.google.enterprise.connector.persist.PersistentStoreException;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 
 import junit.framework.TestCase;
@@ -43,23 +40,12 @@ public class SetConnectorConfigHandlerTest extends TestCase {
   private String connectorType;
   private Map<String, String> configData;
   private String configXml;
-  private String globalNamespace;
-  private String localNamespace;
   private boolean update;
   private MockManager manager;
 
   @Override
   protected void setUp() {
     manager = new ConfigSavingManager();
-    globalNamespace = null;
-    localNamespace = null;
-  }
-
-  /** Test invalid configure xml element. */
-  public void testInvalidRequest() throws Exception {
-    SetConnectorConfigHandler hdl = new SetConnectorConfigHandler("", manager);
-    assertEquals(ConnectorMessageCode.ERROR_PARSING_XML_REQUEST,
-                 hdl.getStatus().getMessageId());
   }
 
   /** Test null connector name. */
@@ -117,34 +103,6 @@ public class SetConnectorConfigHandlerTest extends TestCase {
     configXml = "<?xml?><beans><bean id=\"NewConfigXML\"/></beans>";
     update = false;
     doTest();
-  }
-
-  /** Test set config with connectorInstance.xml */
-  public void testCreateConnectorWithConfigNamespaces() throws Exception {
-    language = "en";
-    connectorName = "connectorA";
-    connectorType = "documentum";
-    globalNamespace = "ThinkGlobally";
-    localNamespace = "ActLocally";
-    configData = new TreeMap<String, String>();
-    configData.put("name1", "valueA1");
-    configData.put("name2", "valueA2");
-    configData.put("name3", "valueA3");
-    configXml = "<?xml?><beans><bean id=\"NewConfigXML\"/></beans>";
-    update = false;
-
-    String xmlBody = setXMLBody();
-
-    configData.put(PropertiesUtils.GOOGLE_GLOBAL_NAMESPACE, globalNamespace);
-    configData.put(PropertiesUtils.GOOGLE_LOCAL_NAMESPACE, localNamespace);
-
-    SetConnectorConfigHandler hdl = doTest(xmlBody);
-    ConnectorMessageCode status = hdl.getStatus();
-    ConfigureResponse response = hdl.getConfigRes();
-    assertTrue("Status: Code=" + status.getMessageId() + "  Message="
-        + status.getMessage() + ((response == null) ? "" :
-        "  Response: Message=" + response.getMessage()),
-        status.isSuccess());
   }
 
   /** Test update configuration. */
@@ -227,39 +185,9 @@ public class SetConnectorConfigHandlerTest extends TestCase {
     doTest();
   }
 
-  /** Test setConnectorConfiguration throwing InstantiatorException. */
-  public void testInstantiatorException() throws Exception {
-    checkExceptionHandling(new InstantiatorException(getName()),
-                           ConnectorMessageCode.EXCEPTION_INSTANTIATOR);
-  }
-
-  /** Test setConnectorConfiguration throwing ConnectorNotFoundException. */
-  public void testConnectorNotFoundException() throws Exception {
-    checkExceptionHandling(new ConnectorNotFoundException(getName()),
-                           ConnectorMessageCode.EXCEPTION_CONNECTOR_NOT_FOUND);
-  }
-
-  /** Test setConnectorConfiguration throwing ConnectorExistsException. */
-  public void testConnectorExistsException() throws Exception {
-    checkExceptionHandling(new ConnectorExistsException(getName()),
-                           ConnectorMessageCode.EXCEPTION_CONNECTOR_EXISTS);
-  }
-
-  /** Test setConnectorConfiguration throwing PersistentStoreException. */
-  public void testPersistentStoreException() throws Exception {
-    checkExceptionHandling(new PersistentStoreException(getName()),
-                           ConnectorMessageCode.EXCEPTION_PERSISTENT_STORE);
-  }
-
-  /** Test setConnectorConfiguration throwing RuntimeException. */
-  public void testRuntimeException() throws Exception {
-    checkExceptionHandling(new RuntimeException(getName()),
-                           ConnectorMessageCode.EXCEPTION_THROWABLE);
-  }
-
-  private void checkExceptionHandling(Exception exception, int expectedCode)
-      throws Exception {
-    manager = new ExceptionalManager(exception);
+  /** Test setConnectorConfiguration throwing Exception. */
+  public void testSetConfigThrowsException() throws Exception {
+    manager = new ExceptionThrowingManager();
     language = "en";
     connectorName = "connectorA";
     connectorType = "documentum";
@@ -270,7 +198,8 @@ public class SetConnectorConfigHandlerTest extends TestCase {
     configXml = "<?xml?><beans><bean id=\"NewConfigXML\"/></beans>";
     update = false;
     SetConnectorConfigHandler hdl = doTest(setXMLBody());
-    assertEquals(expectedCode, hdl.getStatus().getMessageId());
+    assertEquals(ConnectorMessageCode.EXCEPTION_INSTANTIATOR,
+                 hdl.getStatus().getMessageId());
 
     // Avoid a bug in GSA that displays "No connector configuration
     // returned by the connector manager.", rather than the error status.
@@ -341,7 +270,6 @@ public class SetConnectorConfigHandlerTest extends TestCase {
       assertEquals(configData, config.getMap());
       if (configXml != null) {
         assertEquals(configXml, config.getXml());
-        assertEquals(configXml, hdl.getConfigXml());
       } else if (origConfig != null) {
         assertEquals(origConfig.getXml(), config.getXml());
       } else {
@@ -370,15 +298,6 @@ public class SetConnectorConfigHandlerTest extends TestCase {
       "  <" + ServletUtil.XMLTAG_UPDATE_CONNECTOR + ">" + update +
       "</" + ServletUtil.XMLTAG_UPDATE_CONNECTOR + ">\n";
 
-    if (globalNamespace != null) {
-       body += "  <" + ServletUtil.XMLTAG_GLOBAL_NAMESPACE + ">" +
-           globalNamespace + "</" + ServletUtil.XMLTAG_GLOBAL_NAMESPACE+ ">\n";
-    }
-    if (localNamespace != null) {
-       body += "  <" + ServletUtil.XMLTAG_LOCAL_NAMESPACE + ">" +
-           localNamespace + "</" + ServletUtil.XMLTAG_LOCAL_NAMESPACE+ ">\n";
-    }
-
     for (Map.Entry<String, String> entry : configData.entrySet()) {
       body += "  <" + ServletUtil.XMLTAG_PARAMETERS + " name=\""
           + entry.getKey() + "\" value=\"" + entry.getValue() + "\"/>\n";
@@ -404,8 +323,7 @@ public class SetConnectorConfigHandlerTest extends TestCase {
     /* @Override */
     public ConfigureResponse setConnectorConfiguration(String connectorName,
         Configuration configuration, String language, boolean update)
-        throws ConnectorNotFoundException, ConnectorExistsException,
-               PersistentStoreException, InstantiatorException {
+        throws InstantiatorException {
       ConfigureResponse response = super.setConnectorConfiguration(
         connectorName, configuration, language, update);
       if (response == null) {
@@ -429,42 +347,15 @@ public class SetConnectorConfigHandlerTest extends TestCase {
     }
   }
 
-  /**
-   * Throws either a RuntimeException, ConnectorNotFoundException,
-   * ConnectorExistsException, PersistentStoreException, InstantiatorException.
-   */
-  private static void throwException(Exception exception)
-    throws ConnectorNotFoundException, ConnectorExistsException,
-           PersistentStoreException, InstantiatorException {
-    if (exception instanceof ConnectorNotFoundException) {
-      throw (ConnectorNotFoundException) exception;
-    } else if (exception instanceof ConnectorExistsException) {
-      throw (ConnectorExistsException) exception;
-    } else if (exception instanceof InstantiatorException) {
-      throw (InstantiatorException) exception;
-    } else if (exception instanceof PersistentStoreException) {
-      throw (PersistentStoreException) exception;
-    } else if (exception instanceof RuntimeException) {
-      // RuntimeExceptions don't need to be declared.
-      throw (RuntimeException) exception;
-    }
-  }
-
   /** A MockManager that throws exception when setting configuration. */
-  private class ExceptionalManager extends MockManager {
-    private Exception exception;
-
-    public ExceptionalManager(Exception exception) {
-      this.exception = exception;
-    }
-
+  private class ExceptionThrowingManager extends MockManager {
     @Override
     public ConfigureResponse setConnectorConfiguration(String connectorName,
         Configuration configuration, String language, boolean update)
-        throws ConnectorNotFoundException, ConnectorExistsException,
-            PersistentStoreException, InstantiatorException {
-      throwException(exception);
-      return null;
+        throws InstantiatorException {
+      throw new InstantiatorException("setConnectorConfiguration: "
+          + ((update) ? "update" : "add") + " " + connectorName + " "
+          + configuration.toString());
     }
   }
 
@@ -472,7 +363,8 @@ public class SetConnectorConfigHandlerTest extends TestCase {
   private class FailConfigurationManager extends MockManager {
     @Override
     public ConfigureResponse setConnectorConfiguration(String connectorName,
-        Configuration configuration, String language, boolean update) {
+        Configuration configuration, String language, boolean update)
+        throws InstantiatorException {
       return new ConfigureResponse("setConnectorConfiguration: "
           + ((update) ? "update" : "add") + " " + connectorName + " "
           + configuration.toString(), null, null);

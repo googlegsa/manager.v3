@@ -22,8 +22,6 @@ import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.ConnectorType;
-import com.google.enterprise.connector.spi.Retriever;
-import com.google.enterprise.connector.util.filter.DocumentFilterFactory;
 
 import java.util.Locale;
 import java.util.Map;
@@ -59,22 +57,6 @@ public interface Instantiator {
    *         happens
    */
   public AuthorizationManager getAuthorizationManager(String connectorName)
-      throws ConnectorNotFoundException, InstantiatorException;
-
-  /**
-   * Return a {@link Retriever} that may be used to access content for the
-   * document identified by {@code docid}.  If the connector does not support
-   * the {@link Retriever} interface, {@code null} is returned.
-   *
-   * @param connectorName the String name of the connector from which to get the
-   *        Retriever
-   * @return a {@link Retriever}, or {@code null} if none is available
-   * @throws ConnectorNotFoundException to indicate that no connector of the
-   *         specified name is found
-   * @throws InstantiatorException if something bad, probably unrecoverable,
-   *         happens
-   */
-  public Retriever getRetriever(String connectorName)
       throws ConnectorNotFoundException, InstantiatorException;
 
   /**
@@ -208,18 +190,6 @@ public interface Instantiator {
    * @throws ConnectorNotFoundException if the named connector is not found
    */
   public Schedule getConnectorSchedule(String connectorName)
-      throws ConnectorNotFoundException;
-
-  /**
-   * Returns a connector's {@link DocumentFilterFactory}. Connectors may define
-   * a document filter specific to that connector instance.  This filter will
-   * be used in conjuction with the Connector Manager's document filter, and
-   * will act as the source for the Connector Manager's document filter.
-   *
-   * @return {@link DocumentFilterFactory} for the connector, or {@code null}
-   *         if the connector does not define a DocumentFilterFactory.
-   */
-  public DocumentFilterFactory getDocumentFilterFactory(String connectorName)
       throws ConnectorNotFoundException;
 
   /**

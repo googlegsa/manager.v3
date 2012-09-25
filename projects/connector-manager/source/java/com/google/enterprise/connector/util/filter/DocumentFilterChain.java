@@ -33,7 +33,7 @@ import java.util.List;
 public class DocumentFilterChain implements DocumentFilterFactory {
 
   // The list of factories used to construct the filter chain.
-  private final List<? extends DocumentFilterFactory> factories;
+  private final List<DocumentFilterFactory> factories;
 
   /**
    * Constructs an empty {@link DocumentFilterChain}. Documents will
@@ -50,7 +50,7 @@ public class DocumentFilterChain implements DocumentFilterFactory {
    *
    * @param factories a List of {@link DocumentFilterFactory}
    */
-  public DocumentFilterChain(List<? extends DocumentFilterFactory> factories) {
+  public DocumentFilterChain(List<DocumentFilterFactory> factories) {
     Preconditions.checkNotNull(factories);
     this.factories = factories;
   }

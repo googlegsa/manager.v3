@@ -73,6 +73,6 @@ public class StoreContext implements Comparable<StoreContext> {
 
   @Override
   public String toString() {
-    return "{ " + connectorName + ", " + typeName + " }";
+    return "{" + connectorName + ", " + typeName + "}";
   }
 }

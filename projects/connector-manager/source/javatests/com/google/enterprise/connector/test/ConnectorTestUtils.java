@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.
+// Copyright (C) 2006-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@ package com.google.enterprise.connector.test;
 
 import com.google.enterprise.connector.instantiator.Configuration;
 import com.google.enterprise.connector.servlet.ServletUtil;
-import com.google.enterprise.connector.spi.Principal;
 import com.google.enterprise.connector.spi.SimpleDocument;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.Value;
@@ -35,11 +34,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Logger;
 
 public class ConnectorTestUtils {
-  private static final Logger LOGGER =
-      Logger.getLogger(ConnectorTestUtils.class.getName());
 
   private ConnectorTestUtils() {
     // prevents instantiation
@@ -55,20 +51,6 @@ public class ConnectorTestUtils {
                                + ServletUtil.MANAGER_NAME);
     if (start >= 0) {
       buffer.delete(start, buffer.indexOf("\n", start) + 1);
-    }
-  }
-
-  /**
-   * Removes colspan="1" rowspan="1" attributes from processed
-   * XML form snippets.  These seem to be added by some Java
-   * DOM engines, but not others.
-   */
-  public static String removeColRowSpan(String str) {
-    if (str == null) {
-      return null;
-    } else {
-      return str.replaceAll(" colspan=\"1\"", "")
-                .replaceAll(" rowspan=\"1\"", "");
     }
   }
 
@@ -106,29 +88,19 @@ public class ConnectorTestUtils {
     compareMaps(expected.getMap(), config.getMap());
   }
 
-  public static boolean mkdirs(File file) {
-    if (file.exists() && file.isDirectory()) {
-      return true;
+  public static boolean deleteAllFiles(File dir) {
+    if(!dir.exists()) {
+        return true;
     }
-    boolean res = file.mkdirs();
-    if (!res) {
-      LOGGER.warning("Failed to create directory " + file.getPath());
-    }
-    return res;
-  }
-
-  public static boolean deleteAllFiles(File file) {
-    if (!file.exists()) {
-      return true;
-    }
-    if (file.isDirectory()) {
-      for (File f : file.listFiles()) {
-        deleteAllFiles(f);
-      }
-    }
-    boolean res = file.delete();
-    if (!res) {
-      LOGGER.warning("Failed to delete " + file.getPath());
+    boolean res = true;
+    if(dir.isDirectory()) {
+        File[] files = dir.listFiles();
+        for(int i = 0; i < files.length; i++) {
+            res &= deleteAllFiles(files[i]);
+        }
+        res = dir.delete(); // Delete dir itself.
+    } else {
+        res = dir.delete();
     }
     return res;
   }
@@ -169,7 +141,7 @@ public class ConnectorTestUtils {
       String docId) {
     Map<String, Object> props = new HashMap<String, Object>();
     Calendar cal = Calendar.getInstance();
-    cal.setTimeInMillis(3600 * 1000);
+    cal.setTimeInMillis(10 * 1000);
     props.put(SpiConstants.PROPNAME_LASTMODIFIED, cal);
     props.put(SpiConstants.PROPNAME_DOCID, docId);
     props.put(SpiConstants.PROPNAME_MIMETYPE, "text/plain");
@@ -185,49 +157,24 @@ public class ConnectorTestUtils {
    */
   public static SimpleDocument createSimpleDocument(Map<String,
       Object> props) {
-    return new SimpleDocument(createSpiProperties(props));
-  }
-
-  @SuppressWarnings("unchecked")
-  public static void addValueToList(Object obj, List<Value> list) {
-    if (obj instanceof List) {
-      for (Object listItem : (List<Object>) obj) {
-        addValueToList(listItem, list);
-      }
-    } else if (obj instanceof Value) {
-      list.add((Value) obj);
-    } else if (obj instanceof String) {
-      list.add(Value.getStringValue((String) obj));
-    } else if (obj instanceof Calendar) {
-      list.add(Value.getDateValue((Calendar) obj));
-    } else if (obj instanceof InputStream) {
-      list.add(Value.getBinaryValue((InputStream) obj));
-    } else if (obj instanceof Boolean) {
-      list.add(Value.getBooleanValue((Boolean) obj));
-    } else if (obj instanceof Long) {
-      list.add(Value.getLongValue((Long) obj));
-    } else if (obj instanceof Double) {
-      list.add(Value.getDoubleValue((Double) obj));
-    } else if (obj instanceof Principal) {
-      list.add(Value.getPrincipalValue((Principal) obj));
-    } else {
-      throw new AssertionError(obj);
-    }
-  }
-
-  /**
-   * Creates a properties map matching the SPI type, mapping String
-   * property names to {@code List<Value>}.
-   */
-  public static Map<String, List<Value>> createSpiProperties(
-      Map<String, Object> props) {
     Map<String, List<Value>> spiValues = new HashMap<String, List<Value>>();
     for (Map.Entry<String, Object> entry : props.entrySet()) {
       Object obj = entry.getValue();
+      Value val = null;
+      if (obj instanceof String) {
+        val = Value.getStringValue((String) obj);
+      } else if (obj instanceof Calendar) {
+        val = Value.getDateValue((Calendar) obj);
+      } else if (obj instanceof InputStream) {
+        val = Value.getBinaryValue((InputStream) obj);
+      } else {
+        throw new AssertionError(obj);
+      }
       List<Value> values = new ArrayList<Value>();
-      addValueToList(obj, values);
+      values.add(val);
       spiValues.put(entry.getKey(), values);
     }
-    return spiValues;
+    return new SimpleDocument(spiValues);
   }
+
 }

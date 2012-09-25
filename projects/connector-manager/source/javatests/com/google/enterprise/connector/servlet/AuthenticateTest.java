@@ -17,9 +17,8 @@ package com.google.enterprise.connector.servlet;
 import com.google.common.collect.ImmutableList;
 import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.manager.MockManager;
-import com.google.enterprise.connector.spi.Principal;
-import com.google.enterprise.connector.spi.SpiConstants;
 
+import junit.framework.Assert;
 import junit.framework.TestCase;
 
 import java.io.PrintWriter;
@@ -56,22 +55,6 @@ public class AuthenticateTest extends TestCase {
       "    </Success>\n" +
       "  </AuthnResponse>\n" +
       "</CmResponse>\n";
-    doTest(xmlBody, expectedResult, null, "fooUser", "fooPassword", null);
-  }
-
-  public void testEmptyBody() {
-    String xmlBody = "";
-    String expectedResult = "<CmResponse>\n  <StatusId>"
-        + ConnectorMessageCode.ERROR_PARSING_XML_REQUEST
-        + "</StatusId>\n</CmResponse>\n";
-    doTest(xmlBody, expectedResult, null, "fooUser", "fooPassword", null);
-  }
-
-  public void testNoCredentials() {
-    String xmlBody = "<AuthnRequest>\n</AuthnRequest>";
-    String expectedResult = "<CmResponse>\n  <StatusId>"
-        + ConnectorMessageCode.RESPONSE_EMPTY_NODE
-        + "</StatusId>\n</CmResponse>\n";
     doTest(xmlBody, expectedResult, null, "fooUser", "fooPassword", null);
   }
 
@@ -292,47 +275,6 @@ public class AuthenticateTest extends TestCase {
            makeGroups("staff", "wheel"));
   }
 
-  public void testGroupsWithNamespaces() {
-    String xmlBody =
-      "<AuthnRequest>\n" +
-      "  <Connectors>\n" +
-      "    <ConnectorName>connector1</ConnectorName>\n" +
-      "  </Connectors>\n" +
-      "  <Credentials>\n" +
-      "    <Username>fooUser</Username>\n" +
-      "    <Domain>connector1</Domain>\n" +
-      "  </Credentials>\n" +
-      "</AuthnRequest>";
-
-    String expectedResult =
-      "<CmResponse>\n" +
-      "  <AuthnResponse>\n" +
-      "    <Success ConnectorName=\"connector1\">\n" +
-      "      <Identity>fooUser</Identity>\n" +
-      /* TODO: Re-enable once the GSA supports principal-type attribute.
-      "      <Group principaltype=\"dn\" namespace=\"global\">staff</Group>\n" +
-      "      <Group principaltype=\"dn\" namespace=\"global\">wheel</Group>\n" +
-      * else */
-      "      <Group namespace=\"global\">staff</Group>\n" +
-      "      <Group namespace=\"global\">wheel</Group>\n" +
-      /* end TODO */
-      "      <Group principal-type=\"unqualified\" namespace=\"local\">wheel" +
-        "</Group>\n" +
-      "      <Group principal-type=\"unqualified\" namespace=\"local\">slo" +
-        "</Group>\n" +
-      "    </Success>\n" +
-      "  </AuthnResponse>\n" +
-      "</CmResponse>\n";
-
-    Collection<Principal> groups = ImmutableList.of(
-        new Principal(SpiConstants.PrincipalType.UNKNOWN, "global", "staff"),
-        new Principal(SpiConstants.PrincipalType.UNKNOWN, "global", "wheel"),
-        new Principal(SpiConstants.PrincipalType.UNQUALIFIED, "local", "wheel"),
-        new Principal(SpiConstants.PrincipalType.UNQUALIFIED, "local", "slo"));
-    doTest(xmlBody, expectedResult, "connector1", "fooUser", "fooPassword",
-           groups);
-  }
-
   private void doTestGroups(String xmlBody) {
     String expectedResult =
       "<CmResponse>\n" +
@@ -385,7 +327,7 @@ public class AuthenticateTest extends TestCase {
   }
 
   private void doTest(String xmlBody, String expectedResult, String domain,
-      String username, String password, Collection<?> groups) {
+      String username, String password, Collection<String> groups) {
     LOGGER.info("============== " + getName() + " ====================");
     LOGGER.info("xmlBody:\n" + xmlBody);
     MockManager manager = MockManager.getInstance();
@@ -395,11 +337,11 @@ public class AuthenticateTest extends TestCase {
     PrintWriter out = new PrintWriter(writer);
     Authenticate.handleDoPost(xmlBody, manager, out);
     out.flush();
-    String result = writer.toString();
-    out.close();
+    StringBuffer result = writer.getBuffer();
     LOGGER.info("expected result:\n" + expectedResult);
-    LOGGER.info("actual result:\n" + result);
-    assertEquals(StringUtils.normalizeNewlines(expectedResult),
-                 StringUtils.normalizeNewlines(result));
+    LOGGER.info("actual result:\n" + result.toString());
+    Assert.assertEquals(StringUtils.normalizeNewlines(expectedResult),
+        StringUtils.normalizeNewlines(result.toString()));
+    out.close();
   }
 }

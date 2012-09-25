@@ -62,8 +62,8 @@ public class BigEmptyDocumentFilterInputStream extends FilterInputStream {
     if (in == null) {
       throw new EmptyDocumentException();
     }
-    int bytesRead = super.read(b, off, (maxDocumentSize == Long.MAX_VALUE) ?
-        len : (int) Math.min(len, maxDocumentSize - currentDocumentSize + 1));
+    int bytesRead = super.read(b, off,
+        (int) Math.min(len, maxDocumentSize - currentDocumentSize + 1));
     if (bytesRead == -1) {
       if (currentDocumentSize == 0) {
         throw new EmptyDocumentException();

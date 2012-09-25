@@ -3,7 +3,7 @@
 <project name="TestConnectorA" default="TestConnectorA" basedir=".">
 
   <!-- ========================= PROPERTIES ============================= -->
-  <property file="../version.properties"/>
+  <property name="version" value="1.0" />
 
   <!-- Define Directories. -->
   <property name="dist" value="dist" />
@@ -13,24 +13,22 @@
   <property name="jarfile"  value="${jar.dir}/testconnectorA.jar" />
 
   <!-- =========================== TASKS =============================== -->
-  <include file="../svnbuild.xml" as="svn"/>
-
   <target name="TestConnectorA" depends="init,jar">
   </target>
 
-  <target name="init" depends="svn.svn-branch-version">
+  <target name="init">
     <mkdir dir="${dist}" />
     <mkdir dir="${jar.dir}" />
   </target>
 
-  <target name="jar" depends="init" description="TestConnectorA">
+  <target name="jar" description="TestConnectorA">
     <tstamp />
     <jar jarfile="${jarfile}">
       <fileset dir="${config}"/>
       <manifest>
         <attribute name="Implementation-Title" value="TestConnectorA"/>
         <attribute name="Implementation-Version"
-          value="${version} (build ${svn.branch.version} ${TODAY})"/>
+          value="${version} (build ${svnversion}  ${TODAY})"/>
         <attribute name="Implementation-Vendor" value="Google Inc."/>
       </manifest>
     </jar>

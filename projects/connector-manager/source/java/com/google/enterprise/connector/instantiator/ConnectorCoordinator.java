@@ -21,10 +21,8 @@ import com.google.enterprise.connector.scheduler.Schedule;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.ConfigureResponse;
-import com.google.enterprise.connector.spi.Retriever;
 import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.traversal.Traverser;
-import com.google.enterprise.connector.util.filter.DocumentFilterFactory;
 
 import java.util.Locale;
 
@@ -117,20 +115,6 @@ public interface ConnectorCoordinator {
    */
   @VisibleForTesting
   public TraversalManager getTraversalManager()
-      throws ConnectorNotFoundException, InstantiatorException;
-
-  /**
-   * Return a {@link Retriever} that may be used to access content for the
-   * document identified by {@code docid}.  If the connector does not support
-   * the {@link Retriever} interface, {@code null} is returned.
-   *
-   * @return a {@link Retriever}, or {@code null} if none is available
-   * @throws ConnectorNotFoundException if this {@link ConnectorCoordinator}
-   *         does not exist.
-   * @throws InstantiatorException if unable to instantiate the requested
-   *         {@link Retriever}
-   */
-  public Retriever getRetriever()
       throws ConnectorNotFoundException, InstantiatorException;
 
   /**
@@ -255,18 +239,6 @@ public interface ConnectorCoordinator {
    */
   public void setGDataConfig()
       throws ConnectorNotFoundException, InstantiatorException;
-
-  /**
-   * Returns a connector's {@link DocumentFilterFactory}. Connectors may define
-   * a document filter specific to that connector instance.  This filter will
-   * be used in conjuction with the Connector Manager's document filter, and
-   * will act as the source for the Connector Manager's document filter.
-   *
-   * @return {@link DocumentFilterFactory} for the connector, or {@code null}
-   *         if the connector does not define a DocumentFilterFactory.
-   */
-  public DocumentFilterFactory getDocumentFilterFactory()
-      throws ConnectorNotFoundException;
 
   /**
    * Starts running a batch for this {@link ConnectorCoordinator} if a batch is

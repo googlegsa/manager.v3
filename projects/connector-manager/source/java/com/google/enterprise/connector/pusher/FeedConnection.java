@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.
+// Copyright (C) 2006-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -57,23 +57,4 @@ public interface FeedConnection {
    */
   public String getContentEncodings();
 
-  /**
-   * Returns {@code true} if Documents may include full ACL support,
-   * specifically DENY users or groups, ACL inheritance, and ACL-only
-   * Documents.  Some earlier Search Appliance implementations do not
-   * support these features.
-   *
-   * @return {@code true} if Documents may include enhanced ACL support
-   *
-   * @see SecureDocument
-   * @see SpiConstants.AclInheritanceType
-   * @see SpiConstants.FeedType
-   * @see SpiConstants#PROPNAME_ACLINHERITFROM
-   * @see SpiConstants#PROPNAME_ACLINHERITANCETYPE
-   * @see SpiConstants#PROPNAME_ACLDENYGROUPS
-   * @see SpiConstants#PROPNAME_ACLDENYUSERS
-   *
-   * @since 3.0
-   */
-  boolean supportsInheritedAcls();
 }

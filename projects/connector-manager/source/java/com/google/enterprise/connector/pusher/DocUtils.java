@@ -14,9 +14,7 @@
 
 package com.google.enterprise.connector.pusher;
 
-import com.google.common.base.Strings;
 import com.google.enterprise.connector.spi.Document;
-import com.google.enterprise.connector.spi.Principal;
 import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.RepositoryDocumentException;
 import com.google.enterprise.connector.spi.RepositoryException;
@@ -26,7 +24,6 @@ import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.spi.SpiConstants.FeedType;
 import com.google.enterprise.connector.spiimpl.BinaryValue;
 import com.google.enterprise.connector.spiimpl.DateValue;
-import com.google.enterprise.connector.spiimpl.PrincipalValue;
 import com.google.enterprise.connector.spiimpl.ValueImpl;
 
 import java.io.ByteArrayInputStream;
@@ -74,13 +71,9 @@ public class DocUtils {
     Property scopeProp = document.findProperty(aclPropName);
     Value scopeVal = null;
     while ((scopeVal = scopeProp.nextValue()) != null) {
-      Principal principal = (scopeVal instanceof PrincipalValue)
-          ? ((PrincipalValue) scopeVal).getPrincipal()
-          : new Principal(scopeVal.toString().trim());
-      String aclScope = principal.getName();
-      if (Strings.isNullOrEmpty(aclScope)) {
+      String aclScope = scopeVal.toString().trim();
+      if (aclScope.length() == 0)
         continue;
-      }
       Property scopeRoleProp = null;
       if (SpiConstants.PROPNAME_ACLGROUPS.equals(aclPropName)) {
         scopeRoleProp = document.findProperty(
@@ -95,10 +88,7 @@ public class DocUtils {
         while ((roleVal = scopeRoleProp.nextValue()) != null) {
           String role = roleVal.toString().trim();
           if (role.length() > 0) {
-            acl.add(Value.getPrincipalValue(new Principal(
-                principal.getPrincipalType(),
-                principal.getNamespace(), aclScope + '=' + role,
-                principal.getCaseSensitivityType())));
+            acl.add(Value.getStringValue(aclScope + '=' + role));
           } else {
             // XXX: Empty role implies reader?
             acl.add(scopeVal);
@@ -244,7 +234,7 @@ public class DocUtils {
   }
 
   /**
-   * Return the appropriate {@link FeedType} for the supplied {@link Document}.
+   * Return the appropriate feed type for the supplied Document.
    * <p>
    * To support legacy settings without change, the logic goes like this:
    * <ol>
@@ -263,21 +253,32 @@ public class DocUtils {
    * Illegal values for feed type will be ignored and the default behavior will
    * be used.
    */
-  public static FeedType getFeedType(Document document)
+  public static String getFeedType(Document document)
       throws RepositoryException {
     FeedType feedType = null;
-    String feedTypeValue =
-        getOptionalString(document, SpiConstants.PROPNAME_FEEDTYPE);
+    String feedTypeValue = getOptionalString(document,
+        SpiConstants.PROPNAME_FEEDTYPE);
     if (feedTypeValue != null) {
       try {
-        return FeedType.valueOf(feedTypeValue.toUpperCase());
+        feedType = FeedType.valueOf(feedTypeValue);
       } catch (IllegalArgumentException iae) {
         LOGGER.warning("Illegal value for feedtype property: " + feedTypeValue);
       }
     }
-    // Have to go with default behavior.
-    String searchUrl =
-        getOptionalString(document, SpiConstants.PROPNAME_SEARCHURL);
-    return (searchUrl == null) ? FeedType.CONTENT : FeedType.WEB;
+    if (feedType == null) {
+      // Have to go with default behavior.
+      String searchUrl = getOptionalString(document,
+          SpiConstants.PROPNAME_SEARCHURL);
+      if (searchUrl == null) {
+        return XmlFeed.XML_FEED_INCREMENTAL;
+      } else {
+        return XmlFeed.XML_FEED_METADATA_AND_URL;
+      }
+    } else if (FeedType.CONTENT.equals(feedType)) {
+      return XmlFeed.XML_FEED_INCREMENTAL;
+    } else {
+      // Has to be WEB.
+      return XmlFeed.XML_FEED_METADATA_AND_URL;
+    }
   }
 }

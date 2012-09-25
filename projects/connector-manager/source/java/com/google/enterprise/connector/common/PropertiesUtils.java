@@ -1,4 +1,4 @@
-// Copyright 2008 Google Inc.
+// Copyright (C) 2008-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,7 +14,6 @@
 
 package com.google.enterprise.connector.common;
 
-import com.google.common.collect.ImmutableSet;
 import com.google.enterprise.connector.instantiator.EncryptedPropertyPlaceholderConfigurer;
 
 import java.io.BufferedInputStream;
@@ -30,7 +29,6 @@ import java.util.logging.Logger;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.Properties;
 
 public class PropertiesUtils {
@@ -38,20 +36,11 @@ public class PropertiesUtils {
   private static final Logger LOGGER =
       Logger.getLogger(PropertiesUtils.class.getName());
 
-  // Non-persistable special google properties.
+  public static final String GOOGLE_CONNECTOR_NAME = "googleConnectorName";
   public static final String GOOGLE_CONNECTOR_WORK_DIR =
       "googleConnectorWorkDir";
   public static final String GOOGLE_WORK_DIR = "googleWorkDir";
   public static final String GOOGLE_FEED_HOST = "googleFeedHost";
-  public static final String GOOGLE_CONNECTOR_NAME = "googleConnectorName";
-
-  public static final Set<String> GOOGLE_NONPERSISTABLE_PROPERTIES =
-      ImmutableSet.of(GOOGLE_CONNECTOR_WORK_DIR, GOOGLE_WORK_DIR,
-                      GOOGLE_FEED_HOST, GOOGLE_CONNECTOR_NAME);
-
-  // Persistable special google properties.
-  public static final String GOOGLE_GLOBAL_NAMESPACE = "googleGlobalNamespace";
-  public static final String GOOGLE_LOCAL_NAMESPACE = "googleLocalNamespace";
   public static final String GOOGLE_PROPERTIES_VERSION =
       "googlePropertiesVersion";
   public static final int GOOGLE_PROPERTIES_VERSION_NUMBER = 3;
@@ -271,9 +260,7 @@ public class PropertiesUtils {
    */
   public static Properties copy(Properties sourceProperties) {
     Properties props = new Properties();
-    if (sourceProperties != null) {
-      props.putAll(sourceProperties);
-    }
+    props.putAll(sourceProperties);
     return props;
   }
 

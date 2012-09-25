@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.  All Rights Reserved.
+// Copyright 2006-2008 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,56 +17,33 @@ package com.google.enterprise.connector.servlet;
 import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
 
+import junit.framework.Assert;
 import junit.framework.TestCase;
-
-import org.springframework.mock.web.MockHttpServletRequest;
-import org.springframework.mock.web.MockHttpServletResponse;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
 /**
  * Tests TestConnectivity servlet class.
+ *
  */
 public class TestConnectivityTest extends TestCase {
 
   /**
    * Test method for
-   * {@link TestConnectivity#doGet(HttpServletRequest, HttpServletResponse)}.
-   */
-  public void testDoGet() throws Exception {
-    MockHttpServletRequest req = new MockHttpServletRequest("GET",
-        "/connector-manager/testConnectivity");
-    MockHttpServletResponse res = new MockHttpServletResponse();
-    new TestConnectivity().doGet(req, res);
-    checkResponse(new StringBuffer(res.getContentAsString()), true);
-  }
-
-  /**
-   * Test method for {@link TestConnectivity#handleDoGet(java.io.PrintWriter)}.
+   * {@link com.google.enterprise.connector.servlet.TestConnectivity#handleDoGet(java.io.PrintWriter)}.
    */
   public void testHandleDoGet() {
-    checkHandleDoGet(false);
-    checkHandleDoGet(true);
-  }
-
-  private void checkHandleDoGet(boolean reqIsFeedHost) {
+    String expectedResult = ServletUtil.XML_SIMPLE_RESPONSE;
     StringWriter writer = new StringWriter();
     PrintWriter out = new PrintWriter(writer);
-    TestConnectivity.handleDoGet(out, reqIsFeedHost);
+    TestConnectivity.handleDoGet(out);
     out.flush();
-    checkResponse(writer.getBuffer(), reqIsFeedHost);
+    StringBuffer result = writer.getBuffer();
+    ConnectorTestUtils.removeManagerVersion(result);
+    Assert.assertEquals(StringUtils.normalizeNewlines(expectedResult),
+        StringUtils.normalizeNewlines(result.toString()));
     out.close();
   }
 
-  private void checkResponse(StringBuffer response, boolean reqIsFeedHost) {
-    String expectedResponse = "<CmResponse>\n"
-        + "  <StatusCode>" + ((reqIsFeedHost)? "0" : "5501") + "</StatusCode>\n"
-        + "  <StatusId>0</StatusId>\n"
-        + "</CmResponse>\n";
-
-    ConnectorTestUtils.removeManagerVersion(response);
-    assertEquals(StringUtils.normalizeNewlines(expectedResponse),
-        StringUtils.normalizeNewlines(response.toString()));
-  }
 }

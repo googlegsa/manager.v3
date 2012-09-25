@@ -80,24 +80,4 @@ public interface TraversalContext {
    * @since 2.4
    */
   long traversalTimeLimitSeconds();
-
-  /**
-   * Returns {@code true} if Documents may include full ACL support,
-   * specifically DENY users or groups, ACL inheritance, and ACL-only
-   * Documents.  Some earlier Search Appliance implementations do not
-   * support these features.
-   *
-   * @return {@code true} if Documents may include enhanced ACL support
-   *
-   * @see SecureDocument
-   * @see SpiConstants.AclInheritanceType
-   * @see SpiConstants.FeedType
-   * @see SpiConstants#PROPNAME_ACLINHERITFROM
-   * @see SpiConstants#PROPNAME_ACLINHERITANCETYPE
-   * @see SpiConstants#PROPNAME_ACLDENYGROUPS
-   * @see SpiConstants#PROPNAME_ACLDENYUSERS
-   *
-   * @since 3.0
-   */
-  boolean supportsInheritedAcls();
 }

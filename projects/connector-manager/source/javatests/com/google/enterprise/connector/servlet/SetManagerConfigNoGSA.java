@@ -81,22 +81,10 @@ public class SetManagerConfigNoGSA extends HttpServlet {
 
     LOG.info(writer.getBuffer().toString());
     res.setContentType(ServletUtil.MIMETYPE_XML);
-
-    // Get the URL for the Connector Manager servlet context.
-    StringBuffer requestUrl = req.getRequestURL();
-    int index = requestUrl.indexOf(req.getServletPath());
-    if (index > 0) {
-      requestUrl.setLength(index);
-    }
-    if (requestUrl.charAt(requestUrl.length() - 1) == '/') {
-      requestUrl.setLength(requestUrl.length() - 1);
-    }
-    String webappUrl = requestUrl.toString();
-
     PrintWriter out = res.getWriter();
     Manager manager = Context.getInstance().getManager();
     SetManagerConfigHandler handler = new SetManagerConfigHandler(
-        manager, writer.getBuffer().toString(), webappUrl);
+        manager, writer.getBuffer().toString());
     ServletUtil.writeResponse(out, handler.getStatus());
     out.close();
   }

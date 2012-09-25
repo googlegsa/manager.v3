@@ -25,55 +25,43 @@ import java.util.zip.Deflater;
  * Test for CompressedFilterInputStream
  */
 public class CompressedFilterInputStreamTest extends TestCase {
-  // Size of CompressedFilterInputStream buffer for testing.
-  private static final int BUFF_SIZE = 8192;
-
   private static byte[] emptyInput = new byte[0];
   private static byte[] tinyInput = new byte[]{'a'};
   private static byte[] smallInput = new byte[]{ 'a', 'b', 'c', 'd' };
-  private static byte[] mediumInput =
-      ( " Google's indices consist of information that has been"
-      + " identified, indexed and compiled through an automated"
-      + " process with no advance review by human beings. Given"
-      + " the enormous volume of web site information added,"
-      + " deleted, and changed on a frequent basis, Google cannot"
-      + " and does not screen anything made available through its"
-      + " indices. For each web site reflected in Google's"
-      + " indices, if either (i) a site owner restricts access to"
-      + " his or her web site or (ii) a site is taken down from"
-      + " the web, then, upon receipt of a request by the site"
-      + " owner or a third party in the second instance, Google"
-      + " would consider on a case-by-case basis requests to"
-      + " remove the link to that site from its indices. However,"
-      + " if the operator of the site does not take steps to"
-      + " prevent it, the automatic facilities used to create"
-      + " the indices are likely to find that site and index it"
-      + " again in a relatively short amount of time.").getBytes();
-  private static byte[] largeInput;
+  private static byte[] mediumInput;
   private static byte[] bigInput;
+  private static final String mediumString =
+      " Google's indices consist of information that has been" +
+      " identified, indexed and compiled through an automated" +
+      " process with no advance review by human beings. Given" +
+      " the enormous volume of web site information added," +
+      " deleted, and changed on a frequent basis, Google cannot" +
+      " and does not screen anything made available through its" +
+      " indices. For each web site reflected in Google's" +
+      " indices, if either (i) a site owner restricts access to" +
+      " his or her web site or (ii) a site is taken down from" +
+      " the web, then, upon receipt of a request by the site" +
+      " owner or a third party in the second instance, Google" +
+      " would consider on a case-by-case basis requests to" +
+      " remove the link to that site from its indices. However," +
+      " if the operator of the site does not take steps to" +
+      " prevent it, the automatic facilities used to create" +
+      " the indices are likely to find that site and index it" +
+      " again in a relatively short amount of time.";
 
   private static byte[] emptyExpected;
   private static byte[] tinyExpected;
   private static byte[] smallExpected;
   private static byte[] mediumExpected;
-  private static byte[] largeExpected;
   private static byte[] bigExpected;
 
   @Override
   protected void setUp() throws Exception {
+    mediumInput = mediumString.getBytes();
 
-    // Make an input exactly the size of the CompressedFilterInputStream
+    // Make an input larger than the CompressionFilterInputStream
     // internal buffer.
-    int len = BUFF_SIZE;
-    largeInput = new byte[len];
-    for (int i = 0; i < len; i++) {
-      largeInput[i] = (byte) Math.round(Math.random());
-    }
-
-    // Make an input larger than the CompressedFilterInputStream
-    // internal buffer.  Large enough to test first full buffer,
-    // subsequent full buffer(s), final partial buffer.
-    len = 2 * BUFF_SIZE + 69;
+    int len = 1024 * 1024;
     bigInput = new byte[len];
     for (int i = 0; i < len; i++) {
       bigInput[i] = (byte) Math.round(Math.random());
@@ -84,7 +72,6 @@ public class CompressedFilterInputStreamTest extends TestCase {
     tinyExpected = compress(tinyInput);
     smallExpected = compress(smallInput);
     mediumExpected = compress(mediumInput);
-    largeExpected = compress(largeInput);
     bigExpected = compress(bigInput);
 
     input = mediumInput;
@@ -94,7 +81,7 @@ public class CompressedFilterInputStreamTest extends TestCase {
   /* Return a compressed version of the input. */
   private static byte[] compress(byte[] input) {
     Deflater deflater = new Deflater();
-    byte[] compressed = new byte[Math.max(BUFF_SIZE, input.length * 4)];
+    byte[] compressed = new byte[Math.max(8192, input.length * 4)];
     deflater.setInput(input);
     deflater.finish();
     int len = deflater.deflate(compressed);
@@ -133,14 +120,12 @@ public class CompressedFilterInputStreamTest extends TestCase {
     checkRead(tinyInput, tinyExpected);
     checkRead(smallInput, smallExpected);
     checkRead(mediumInput, mediumExpected);
-    checkRead(largeInput, largeExpected);
     checkRead(bigInput, bigExpected);
   }
 
   private void checkRead(byte[] input, byte[] expected) throws IOException {
     ByteArrayInputStream bais = new ByteArrayInputStream(input);
-    CompressedFilterInputStream is =
-        new CompressedFilterInputStream(bais, BUFF_SIZE);
+    CompressedFilterInputStream is = new CompressedFilterInputStream(bais);
     int val = -1;
     byte[] result = new byte[expected.length];
     int index = 0;
@@ -160,14 +145,12 @@ public class CompressedFilterInputStreamTest extends TestCase {
     checkReadArray(tinyInput, tinyExpected);
     checkReadArray(smallInput, smallExpected);
     checkReadArray(mediumInput, mediumExpected);
-    checkReadArray(largeInput, largeExpected);
     checkReadArray(bigInput, bigExpected);
   }
 
   private void checkReadArray(byte[] input, byte[] expected) throws IOException {
     ByteArrayInputStream bais = new ByteArrayInputStream(input);
-    CompressedFilterInputStream is =
-        new CompressedFilterInputStream(bais, BUFF_SIZE);
+    CompressedFilterInputStream is = new CompressedFilterInputStream(bais);
     byte[] result = new byte[expected.length];
 
     int total = 0;

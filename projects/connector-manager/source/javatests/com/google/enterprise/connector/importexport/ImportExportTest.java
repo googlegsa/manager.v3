@@ -97,17 +97,6 @@ public class ImportExportTest extends TestCase {
     coordinator.setConnectorState("checkpoint");
   }
 
-  // Test empty Connector Instance list.
-  public void testNoConnectors() throws Exception {
-    ImportExportConnectorList connectors =
-        fromXmlString("<ConnectorInstances></ConnectorInstances>");
-    assertNotNull(connectors);
-    assertTrue(connectors.isEmpty());
-    connectors = fromXmlString("<ConnectorInstances>\n</ConnectorInstances>\n");
-    assertNotNull(connectors);
-    assertTrue(connectors.isEmpty());
-  }
-
   // Tests the correct construction of List<ImportExportConnector> from
   // an existing installation.
   public final void testGetConnectors() throws Exception {
@@ -215,7 +204,7 @@ public class ImportExportTest extends TestCase {
     assertFalse(schedule.isDisabled());
     assertTrue((schedule.getLoad() == 100));
     assertTrue((schedule.getRetryDelayMillis() == 300000));
-    assertEquals("0-0", schedule.getTimeIntervals());
+    assertEquals("0-0", schedule.getTimeIntervalsAsString());
 
     coordinator = ccm.get("connector-02");
     config = coordinator.getConnectorConfiguration();
@@ -226,7 +215,7 @@ public class ImportExportTest extends TestCase {
     assertFalse(schedule.isDisabled());
     assertTrue((schedule.getLoad() == 100));
     assertTrue((schedule.getRetryDelayMillis() == 300000));
-    assertEquals("0-0", schedule.getTimeIntervals());
+    assertEquals("0-0", schedule.getTimeIntervalsAsString());
   }
 
   // Tests that imported connectors over an existing installation
@@ -269,7 +258,7 @@ public class ImportExportTest extends TestCase {
     assertFalse(schedule.isDisabled());
     assertTrue((schedule.getLoad() == 100));
     assertTrue((schedule.getRetryDelayMillis() == 300000));
-    assertEquals("0-0", schedule.getTimeIntervals());
+    assertEquals("0-0", schedule.getTimeIntervalsAsString());
 
     coordinator = ccm.get("connector-02");
     config = coordinator.getConnectorConfiguration();
@@ -280,7 +269,7 @@ public class ImportExportTest extends TestCase {
     assertFalse(schedule.isDisabled());
     assertTrue((schedule.getLoad() == 100));
     assertTrue((schedule.getRetryDelayMillis() == 300000));
-    assertEquals("0-0", schedule.getTimeIntervals());
+    assertEquals("0-0", schedule.getTimeIntervalsAsString());
   }
 
   // Test that connectors not in the import set are not removed on import
@@ -331,7 +320,7 @@ public class ImportExportTest extends TestCase {
     assertFalse(schedule.isDisabled());
     assertTrue((schedule.getLoad() == 100));
     assertTrue((schedule.getRetryDelayMillis() == 300000));
-    assertEquals("0-0", schedule.getTimeIntervals());
+    assertEquals("0-0", schedule.getTimeIntervalsAsString());
 
     coordinator = ccm.get("connector-02");
     config = coordinator.getConnectorConfiguration();
@@ -342,7 +331,7 @@ public class ImportExportTest extends TestCase {
     assertFalse(schedule.isDisabled());
     assertTrue((schedule.getLoad() == 100));
     assertTrue((schedule.getRetryDelayMillis() == 300000));
-    assertEquals("0-0", schedule.getTimeIntervals());
+    assertEquals("0-0", schedule.getTimeIntervalsAsString());
   }
 
   // Test that connectors not in the import set are removed on import.
@@ -392,7 +381,7 @@ public class ImportExportTest extends TestCase {
     assertFalse(schedule.isDisabled());
     assertTrue((schedule.getLoad() == 100));
     assertTrue((schedule.getRetryDelayMillis() == 300000));
-    assertEquals("0-0", schedule.getTimeIntervals());
+    assertEquals("0-0", schedule.getTimeIntervalsAsString());
 
     coordinator = ccm.get("connector-02");
     config = coordinator.getConnectorConfiguration();
@@ -403,7 +392,7 @@ public class ImportExportTest extends TestCase {
     assertFalse(schedule.isDisabled());
     assertTrue((schedule.getLoad() == 100));
     assertTrue((schedule.getRetryDelayMillis() == 300000));
-    assertEquals("0-0", schedule.getTimeIntervals());
+    assertEquals("0-0", schedule.getTimeIntervalsAsString());
   }
 
   private static ImportExportConnectorList fromXmlString(String xmlString) {

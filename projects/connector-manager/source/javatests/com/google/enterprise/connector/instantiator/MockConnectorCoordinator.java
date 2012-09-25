@@ -24,7 +24,6 @@ import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.Connector;
 import com.google.enterprise.connector.spi.ConnectorShutdownAware;
 import com.google.enterprise.connector.spi.RepositoryException;
-import com.google.enterprise.connector.spi.Retriever;
 import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.traversal.BatchResult;
 import com.google.enterprise.connector.traversal.BatchResultRecorder;
@@ -32,7 +31,6 @@ import com.google.enterprise.connector.traversal.BatchSize;
 import com.google.enterprise.connector.traversal.BatchTimeout;
 import com.google.enterprise.connector.traversal.TraversalStateStore;
 import com.google.enterprise.connector.traversal.Traverser;
-import com.google.enterprise.connector.util.filter.DocumentFilterFactory;
 import com.google.enterprise.connector.util.SystemClock;
 
 import java.util.Locale;
@@ -57,7 +55,7 @@ class MockConnectorCoordinator implements ConnectorCoordinator {
 
   private final StoreContext storeContext;
   private final ThreadPool threadPool;
-  private final String typeName;
+  private String typeName;
 
   // Batch context
   TaskHandle taskHandle;
@@ -67,7 +65,6 @@ class MockConnectorCoordinator implements ConnectorCoordinator {
       PersistentStore persistentStore, StoreContext storeContext,
       ThreadPool threadPool) {
     this.name = name;
-    this.typeName = name;
     this.interfaces = connectorInterfaces;
     this.traverser = traverser;
     this.hostLoadManager = new HostLoadManager(null, null, new SystemClock());
@@ -78,10 +75,8 @@ class MockConnectorCoordinator implements ConnectorCoordinator {
     this.threadPool = threadPool;
   }
 
-  private void cancelBatch() {
-    if (taskHandle != null && !taskHandle.isDone()) {
-      taskHandle.cancel();
-    }
+   private void cancelBatch() {
+     throw new UnsupportedOperationException();
   }
 
   public boolean exists() {
@@ -102,16 +97,11 @@ class MockConnectorCoordinator implements ConnectorCoordinator {
     return interfaces.getAuthorizationManager();
   }
 
-  /* @Override */
-  public Retriever getRetriever() throws InstantiatorException {
-    return interfaces.getRetriever();
-  }
-
-  public synchronized ConfigureResponse getConfigForm(Locale locale) {
+   public synchronized ConfigureResponse getConfigForm(Locale locale) {
     throw new UnsupportedOperationException();
   }
 
-  public synchronized Configuration getConnectorConfiguration() {
+   public synchronized Configuration getConnectorConfiguration() {
     return persistentStore.getConnectorConfiguration(storeContext);
   }
 
@@ -168,11 +158,6 @@ class MockConnectorCoordinator implements ConnectorCoordinator {
     }
   }
 
-  @Override
-  public DocumentFilterFactory getDocumentFilterFactory() {
-    return null;
-  }
-
   public synchronized boolean startBatch() {
 
     if (taskHandle != null && !taskHandle.isDone()) {
@@ -181,7 +166,7 @@ class MockConnectorCoordinator implements ConnectorCoordinator {
     taskHandle = null;
 
     BatchSize batchSize = hostLoadManager.determineBatchSize();
-    if (batchSize.getHint() == 0) {
+    if (batchSize.getMaximum() == 0) {
       return false;
     }
 

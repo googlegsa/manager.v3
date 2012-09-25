@@ -1,4 +1,4 @@
-// Copyright 2011 Google Inc.
+// Copyright 2006 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,15 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.connector.spi;
+package com.google.enterprise.connector.scheduler;
 
 /**
- * A {@link Session} should implement this optional interface if it allows
- * {@link Lister} feed documents.
+ * A time used for schedules.
  */
-public interface ListerAware {
-  /**
-   * Return a {@link Lister} that may be used to supply documents for indexing.
-   */
-   public Lister getLister() throws RepositoryException;
+public class ScheduleTime {
+  private int hour;  // value from 0-23
+
+  public ScheduleTime(int hour) {
+    this.hour = hour;
+  }
+
+  public int getHour() {
+    return hour;
+  }
+
+  public void setHour(int hour) {
+    this.hour = hour;
+  }
 }

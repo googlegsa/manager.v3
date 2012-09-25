@@ -14,40 +14,43 @@
 
 package com.google.enterprise.connector.traversal;
 
-import com.google.common.base.Preconditions;
-
 /**
- * Holder for the desired batch size.
+ * Holder for the desired and maximum batch size.
  */
-/* Historically this held more data.  It is now a single value. */
 public class BatchSize {
   private final int hint;
+  private final int maximum;
 
   /**
-   * Constructs a new {@link BatchSize} with a hint of 0.
+   * Constructs a new {@link BatchSize} with a hint and maximum of 0.
    */
   public BatchSize() {
-    this(0);
+    this(0, 0);
   }
 
   /**
    * Constructs a new {@link BatchSize}, containing an optimal batch size
-   * ({@code batchHint}) number of items to return in a
+   * ({@code batchHint}), and a maximum batch size ({@code batchMaxium})
+   * number of items to return in a
    * {@link com.google.enterprise.connector.spi.DocumentList DocumentList}.
    *<p>
    * Connectors should try to return an optimal size batch to stay within
    * the host load limit.  The hint acts as a suggestion; the connector
    * may choose to return a {@code DocumentList} that contains fewer documents
    * or more documents than the hint.  The {@link Traverser} will iterate over
-   * the {@code DocumentList} until it is exhausted or the
-   * {@code traversalTimeLimit} expires.
+   * the {@code DocumentList} until it is exhausted, the {@code batchMaximum}
+   * number of documents are returned, or the {@code traversalTimeLimit}
+   * expires.
    *
    * @param batchHint optimal number of documents to return in this batch.
+   * @param batchMaximum maximum number of documents to return in this batch.
    */
-  public BatchSize(int batchHint) {
-    Preconditions.checkArgument(batchHint >= 0,
-                                "Batch Size cannot be negative.");
+  public BatchSize(int batchHint, int batchMaximum) {
+    if (batchHint < 0 || batchMaximum < 0 || batchMaximum < batchHint) {
+      throw new IllegalArgumentException("Batch Size cannot be negative.");
+    }
     this.hint = batchHint;
+    this.maximum = batchMaximum;
   }
 
   /**
@@ -63,8 +66,41 @@ public class BatchSize {
     return hint;
   }
 
+  /**
+   * Returns the maximal traversal batch size.
+   * Connectors should try to return an optimal size batch to stay within
+   * the host load limit.  The {@link Traverser} will not process more than
+   * {@code batchMaximum} items from the batch.
+   *
+   * @return the optimal number of documents to return in this batch.
+   */
+  public int getMaximum() {
+    return maximum;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    }
+    if ((obj == null) || (getClass() != obj.getClass())) {
+      return false;
+    }
+    BatchSize other = (BatchSize) obj;
+    return ((hint == other.hint) && (maximum == other.maximum));
+  }
+
+  @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + hint;
+    result = prime * result + maximum;
+    return result;
+  }
+
   @Override
   public String toString() {
-    return "BatchSize: hint = " + hint;
+    return "BatchSize: hint = " + hint + " maximum = " + maximum;
   }
 }

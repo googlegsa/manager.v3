@@ -51,14 +51,8 @@ public class BigEmptyDocumentFilterInputStreamTest extends TestCase {
 
   /** Test empty source InputStream. */
   public void testEmptySourceInputStream() throws Exception {
-    checkEmptySourceInputStream(1000);
-    checkEmptySourceInputStream(Long.MAX_VALUE);
-  }
-
-  /** Test empty source InputStream. */
-  private void checkEmptySourceInputStream(long maxSize) throws Exception {
     InputStream is = new BigEmptyDocumentFilterInputStream(
-        new ByteArrayInputStream("".getBytes()), maxSize);
+        new ByteArrayInputStream("".getBytes()), 1000);
     try {
       is.read();
       fail("Expected EmptyDocumentException");
@@ -69,7 +63,7 @@ public class BigEmptyDocumentFilterInputStreamTest extends TestCase {
     }
 
     is = new BigEmptyDocumentFilterInputStream(
-        new ByteArrayInputStream("".getBytes()), maxSize);
+        new ByteArrayInputStream("".getBytes()), 1000);
     try {
       byte[] buffer = new byte[100];
       is.read(buffer);
@@ -83,14 +77,8 @@ public class BigEmptyDocumentFilterInputStreamTest extends TestCase {
 
   /** Test not-empty but not too big source InputStream. */
   public void testNonEmptySourceInputStream() throws Exception {
-    checkNonEmptySourceInputStream(1000);
-    checkNonEmptySourceInputStream(Long.MAX_VALUE);
-  }
-
-  /** Test not-empty but not too big source InputStream. */
-  private void checkNonEmptySourceInputStream(long maxSize) throws Exception {
     InputStream is = new BigEmptyDocumentFilterInputStream(
-        new ByteArrayInputStream("abc".getBytes()), maxSize);
+        new ByteArrayInputStream("abc".getBytes()), 1000);
     int ch = is.read();
     assertEquals('a', ch);
     ch = is.read();
@@ -102,16 +90,16 @@ public class BigEmptyDocumentFilterInputStreamTest extends TestCase {
     is.close();
 
     is = new BigEmptyDocumentFilterInputStream(
-        new ByteArrayInputStream("abcde".getBytes()), maxSize);
+        new ByteArrayInputStream("abcde".getBytes()), 1000);
     byte[] buffer = new byte[3];
     int bytesRead = is.read(buffer);
-    assertEquals(3, bytesRead);
+    assertEquals(bytesRead, 3);
     assertEquals("abc", new String(buffer, 0, bytesRead));
     bytesRead = is.read(buffer);
-    assertEquals(2, bytesRead);
+    assertEquals(bytesRead, 2);
     assertEquals("de", new String(buffer, 0, bytesRead));
     bytesRead = is.read(buffer);
-    assertEquals(1, -bytesRead);
+    assertEquals(bytesRead, -1);
     is.close();
   }
 
@@ -141,7 +129,7 @@ public class BigEmptyDocumentFilterInputStreamTest extends TestCase {
         new ByteArrayInputStream("abc".getBytes()), 10);
     byte[] buffer = new byte[10];
     int bytesRead = is.read(buffer);
-    assertEquals(3, bytesRead);
+    assertEquals(bytesRead, 3);
     assertEquals("abc", new String(buffer, 0, bytesRead));
     bytesRead = is.read(buffer);
     assertEquals(-1, bytesRead);
@@ -165,7 +153,7 @@ public class BigEmptyDocumentFilterInputStreamTest extends TestCase {
     try {
       byte[] buffer = new byte[3];
       int bytesRead = is.read(buffer);
-      assertEquals(3, bytesRead);
+      assertEquals(bytesRead, 3);
       assertEquals("abc", new String(buffer, 0, bytesRead));
       bytesRead = is.read(buffer);
       fail("Expected BigDocumentException");

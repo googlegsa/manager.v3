@@ -60,7 +60,7 @@ public class GetConfigForm extends HttpServlet {
     res.setCharacterEncoding("UTF-8");
     PrintWriter out = res.getWriter();
 
-    NDC.pushAppend("Config " + connectorTypeName);
+    NDC.push("Config " + connectorTypeName);
     try {
       String language = req.getParameter(ServletUtil.QUERY_PARAM_LANG);
       if (language == null || language.length() < 1) {
@@ -73,7 +73,7 @@ public class GetConfigForm extends HttpServlet {
 
     } finally {
       out.close();
-      NDC.pop();
+      NDC.clear();
     }
   }
 

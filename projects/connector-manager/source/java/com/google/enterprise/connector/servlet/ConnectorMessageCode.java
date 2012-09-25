@@ -81,7 +81,6 @@ public class ConnectorMessageCode {
   // Specific success message codes - 5500-5599
   public static final int FIRST_SUCCESS_MESSAGE_CODE = 5500;
   public static final int SUCCESS_RESTART_TRAVERSAL = 5500;
-  public static final int REQUESTOR_IS_NOT_FEED_HOST = 5501;
   public static final int LAST_SUCCESS_MESSAGE_CODE = 5599;
 
   /** A code with no message in the translation bundle, for testing. */
@@ -150,24 +149,16 @@ public class ConnectorMessageCode {
   }
 
   public boolean isSuccess() {
-    return isSuccess(messageId);
+    return (messageId == SUCCESS);
   }
-
-  public static boolean isSuccess(int messageId) {
-    return (messageId == SUCCESS || isSuccessMessage(messageId));
-  }
-
+  
   public boolean isSuccessMessage() {
-    return isSuccessMessage(messageId);
-  }
-
-  public static boolean isSuccessMessage(int messageId) {
     return (messageId >= FIRST_SUCCESS_MESSAGE_CODE &&
             messageId <= LAST_SUCCESS_MESSAGE_CODE);
   }
 
   public boolean hasMessage() {
-    return (messageId != SUCCESS && message != null && message.length() > 1);
+    return (!isSuccess() && message != null && message.length() > 1);
   }
 
   public int getMessageId() {

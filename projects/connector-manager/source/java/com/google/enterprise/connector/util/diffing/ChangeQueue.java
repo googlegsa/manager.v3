@@ -19,7 +19,6 @@ import com.google.common.annotations.VisibleForTesting;
 import java.sql.Timestamp;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 /**
@@ -227,6 +226,7 @@ public class ChangeQueue implements ChangeSource {
     this.introduceDelayAfterEveryScan = introduceDelayAfterEachScan;
   }
   
+  
   public ChangeQueue(QueuePropertyFetcher propertyFetcher,
       CrawlActivityLogger activityLogger) {
     this(propertyFetcher.getQueueSize(),
@@ -244,18 +244,11 @@ public class ChangeQueue implements ChangeSource {
   }
 
   /**
-   * Gets the next available change from the ChangeQueue.  Will wait up to
-   * 1/4 second for a change to appear if none is immediately available.
-   *
    * @return the next available change, or {@code null} if no changes are
    *         available
    */
   public Change getNextChange() {
-    try {
-      return pendingChanges.poll(250L, TimeUnit.MILLISECONDS);
-    } catch (InterruptedException ie) {
-      return null;
-    }
+    return pendingChanges.poll();
   }
 
   /** Empties the queue of all pending changes. */

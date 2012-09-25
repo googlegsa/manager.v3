@@ -31,7 +31,6 @@ public class SimpleTraversalContext implements TraversalContext {
   private long maxDocumentSize = Long.MAX_VALUE;
   private Set<String> mimeTypeSet = null;
   private long traversalTimeLimitSeconds = 30 * 60;
-  private boolean supportsInheritedAcls = false;
 
   public synchronized void setMaxDocumentSize(long maxDocumentSize) {
     validateArgument("maxDocumentSize", maxDocumentSize);
@@ -45,11 +44,6 @@ public class SimpleTraversalContext implements TraversalContext {
   public synchronized void setTraversalTimeLimitSeconds(long limit) {
     validateArgument("traversalTimeLimitSeconds", limit);
     this.traversalTimeLimitSeconds = limit;
-  }
-
-  public synchronized void setSupportsInheritedAcls(
-      boolean supportsInheritedAcls) {
-    this.supportsInheritedAcls = supportsInheritedAcls;
   }
 
   private void validateArgument(String property, long value) {
@@ -82,10 +76,5 @@ public class SimpleTraversalContext implements TraversalContext {
   /* @Override */
   public synchronized long traversalTimeLimitSeconds() {
     return traversalTimeLimitSeconds;
-  }
-
-  /* @Override */
-  public synchronized boolean supportsInheritedAcls() {
-    return supportsInheritedAcls;
   }
 }

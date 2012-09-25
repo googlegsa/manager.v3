@@ -107,33 +107,4 @@ public class RemoteAddressFilter {
     }
     return false;
   }
-
-  /**
-   * Determine whether the supplied {@code remoteAddr} is the configured
-   * Feed Host.
-   *
-   * @param remoteAddr the IP address of the servlet's caller.
-   * @return {@code true} if the caller is the Feed Host,
-   *         {@code false} otherwise.
-   */
-  public boolean isFeedHost(String remoteAddr) {
-    try {
-      InetAddress caller = InetAddress.getByName(remoteAddr);
-      if (onboard) {
-        // If onboard, localhost is feed host.
-        return caller.isLoopbackAddress() ||
-               caller.equals(InetAddress.getLocalHost());
-      }
-      String gsaHost = Context.getInstance().getGsaFeedHost();
-      InetAddress[] gsaAddrs = InetAddress.getAllByName(gsaHost);
-      for (int i = 0; i < gsaAddrs.length; i++) {
-        if (caller.equals(gsaAddrs[i])) {
-          return true;  // The GSA Feed Host is the caller.
-        }
-      }
-    } catch (UnknownHostException uhe) {
-      // Unknown host - fall through to fail.
-    }
-    return false;
-  }
 }

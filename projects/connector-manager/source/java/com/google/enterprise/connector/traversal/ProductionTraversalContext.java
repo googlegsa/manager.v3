@@ -14,7 +14,7 @@
 
 package com.google.enterprise.connector.traversal;
 
-import com.google.enterprise.connector.spi.SimpleTraversalContext;
+import com.google.enterprise.connector.spi.TraversalContext;
 
 import java.util.Set;
 
@@ -26,25 +26,47 @@ import java.util.Set;
  * This class is quasi-immutable - in practice it is initialized by
  * the setters during connector manager start up and never changes afterwards.
  */
-public class ProductionTraversalContext extends SimpleTraversalContext {
+public class ProductionTraversalContext implements TraversalContext {
+  /**
+   * Default number of seconds for a traversal to run before exiting
+   * (30 minutes).
+   */
+  public final static long DEFAULT_TRAVERSAL_TIME_LIMIT_SECONDS = 30 * 60;
+
+  private FileSizeLimitInfo fileSizeLimitInfo = new FileSizeLimitInfo();
   private MimeTypeMap mimeTypeMap = new MimeTypeMap();
+  private long traversalTimeLimitSeconds = DEFAULT_TRAVERSAL_TIME_LIMIT_SECONDS;
 
   public synchronized void setFileSizeLimitInfo(
       FileSizeLimitInfo fileSizeLimitInfo) {
-    setMaxDocumentSize(fileSizeLimitInfo.maxDocumentSize());
+    this.fileSizeLimitInfo = fileSizeLimitInfo;
   }
 
   public synchronized void setMimeTypeMap(MimeTypeMap mimeTypeMap) {
     this.mimeTypeMap = mimeTypeMap;
   }
 
-  /* @Override */
+  public synchronized long maxDocumentSize() {
+    return fileSizeLimitInfo.maxDocumentSize();
+  }
+
   public synchronized int mimeTypeSupportLevel(String mimeType) {
     return mimeTypeMap.mimeTypeSupportLevel(mimeType);
   }
 
-  /* @Override */
   public synchronized String preferredMimeType(Set<String> mimeTypes) {
     return mimeTypeMap.preferredMimeType(mimeTypes);
+  }
+
+  public synchronized long traversalTimeLimitSeconds() {
+    return traversalTimeLimitSeconds;
+  }
+
+  public synchronized void setTraversalTimeLimitSeconds(long limit) {
+    if (limit < 0) {
+      throw new IllegalArgumentException(
+          "Illegal value for traversalTimeLimitSeconds " + limit);
+    }
+    this.traversalTimeLimitSeconds = limit;
   }
 }

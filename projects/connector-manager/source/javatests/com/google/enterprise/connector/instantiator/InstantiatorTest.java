@@ -374,9 +374,9 @@ public class InstantiatorTest extends TestCase {
               + " must match newTraverser = " + newTraversalManager);
         }
 
-        // Sleep for a bit, allowing the test thread time
+        // Sleep for a few seconds, allowing the test thread time
         // to update the connector.
-        Thread.sleep(200);
+        Thread.sleep(3 * 1000);
 
         // Get the Traverser for our connector instance.
         // It should be a new traverser reflecting the updated connector.
@@ -446,7 +446,7 @@ public class InstantiatorTest extends TestCase {
 
     // Sleep for a bit, allowing the child to fetch the connector interface.
     try {
-      Thread.sleep(100);
+      Thread.sleep(1000);
     } catch (InterruptedException ie) {
       fail("Unexpected thread interruption.");
     }

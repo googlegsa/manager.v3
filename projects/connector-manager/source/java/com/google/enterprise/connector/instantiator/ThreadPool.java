@@ -149,20 +149,16 @@ public class ThreadPool {
   }
 
   /**
-   * Submit a {@link Cancelable} for execution and return a
+   * Submit a {@link TimedCancelable} for execution and return a
    * {@link TaskHandle} for the running task or null if the task has not been
    * accepted. After {@link ThreadPool#shutdown(boolean, long)} returns this
    * will always return null.
    */
-  public TaskHandle submit(Cancelable cancelable) {
+  public TaskHandle submit(TimedCancelable cancelable) {
     if (isShutdown) {
       return null;
     }
-    if (cancelable instanceof TimedCancelable && maximumTaskLifeMillis != 0L) {
-      return getInstance().submit((TimedCancelable) cancelable);
-    } else {
-      return getInstance().submit(cancelable);
-    }
+    return getInstance().submit(cancelable);
   }
 
   /**
@@ -279,26 +275,6 @@ public class ThreadPool {
         // production with a 30 minute timeout this should never happen.
         timeoutTask.setTaskHandle(handle);
         return handle;
-      } catch (RejectedExecutionException re) {
-        if (!executor.isShutdown()) {
-          LOGGER.log(Level.SEVERE, "Unable to execute task", re);
-        }
-        return null;
-      }
-    }
-
-    /**
-     * Submit a {@link Cancelable} for execution and return a
-     * {@link TaskHandle} for the running task or null if the task has not been
-     * accepted. After {@link LazyThreadPool#shutdown(boolean, long)} returns
-     * this will always return null.
-     */
-    TaskHandle submit(Cancelable cancelable) {
-      try {
-        // taskFuture is used to cancel 'cancelable' and to determine if
-        // 'cancelable' is done.
-        Future<?> taskFuture = completionService.submit(cancelable, null);
-        return new TaskHandle(cancelable, taskFuture, clock.getTimeMillis());
       } catch (RejectedExecutionException re) {
         if (!executor.isShutdown()) {
           LOGGER.log(Level.SEVERE, "Unable to execute task", re);

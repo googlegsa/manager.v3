@@ -15,7 +15,6 @@
 package com.google.enterprise.connector.servlet;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.instantiator.Configuration;
 import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.logging.NDC;
@@ -63,10 +62,6 @@ public class SetConnectorConfigHandler {
     // returned by the connector manager.", rather than the error status.
     configRes = new ConfigureResponse(null, null, null);
 
-    // TODO(ejona): Remove this block as all modern GSAs do not require the
-    // prefix to be added (and thus stripped here), so this code is never
-    // executed. In addition, it wouldn't behave as you would expect due to
-    // xmlBody's format.
     if (Context.getInstance().gsaAdminRequiresPrefix()) {
       xmlBody = ServletUtil.stripCmPrefix(xmlBody);
     }
@@ -92,7 +87,7 @@ public class SetConnectorConfigHandler {
       // Unfortunately, we cannot do this for existing connectors.
       connectorName = connectorName.toLowerCase();
     }
-    NDC.append(connectorName);
+    NDC.pushAppend(connectorName);
 
     language = XmlParseUtil.getFirstElementByTagName(
         root, ServletUtil.QUERY_PARAM_LANG);
@@ -107,19 +102,6 @@ public class SetConnectorConfigHandler {
     // that a Connector *must* have configuration properties.
     if (configData.isEmpty()) {
       status.setMessageId(ConnectorMessageCode.RESPONSE_NULL_CONFIG_DATA);
-    }
-
-    // Extract Global and Local Namespaces and add them to the configuration
-    // properties.
-    String nameSpace = XmlParseUtil.getFirstElementByTagName(
-        root, ServletUtil.XMLTAG_GLOBAL_NAMESPACE);
-    if (nameSpace != null) {
-      configData.put(PropertiesUtils.GOOGLE_GLOBAL_NAMESPACE, nameSpace);
-    }
-    nameSpace = XmlParseUtil.getFirstElementByTagName(
-        root, ServletUtil.XMLTAG_LOCAL_NAMESPACE);
-    if (nameSpace != null) {
-      configData.put(PropertiesUtils.GOOGLE_LOCAL_NAMESPACE, nameSpace);
     }
 
     // Extract the connectorInstance.xml, if present.
@@ -171,6 +153,7 @@ public class SetConnectorConfigHandler {
       status.setMessageId(ConnectorMessageCode.EXCEPTION_THROWABLE);
       LOGGER.log(Level.WARNING, "", t);
     }
+    NDC.pop();
   }
 
   ConnectorMessageCode getStatus() {

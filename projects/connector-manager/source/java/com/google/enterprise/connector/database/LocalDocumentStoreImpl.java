@@ -127,8 +127,6 @@ public class LocalDocumentStoreImpl implements DocumentStore {
     // Verify that the connector instance table exists.
     tableName =
         database.makeTableName(getResource("table.name.prefix"), connectorName);
-    LOGGER.finer("Verifying Document Store Table " + tableName
-                 + " for connector " + connectorName);
     String[] ddl = resourceBundle.getStringArray("table.create.ddl");
     if (ddl != null) {
       Object[] params = { tableName };
@@ -187,8 +185,8 @@ public class LocalDocumentStoreImpl implements DocumentStore {
       connection = database.getConnectionPool().getConnection();
       statement = connection.createStatement();
       statement.executeUpdate(query);
-      LOGGER.finer("Deleted Document Store Table " + tableName
-                   + " for connector " + connectorName);
+      LOGGER.fine("Deleted Document Store Table " + tableName
+                  + " for connector " + connectorName);
       // Force re-initialization.
       resourceBundle = null;
     } catch (SQLException e) {
@@ -248,11 +246,7 @@ public class LocalDocumentStoreImpl implements DocumentStore {
       String query = MessageFormat.format(singleDocumentQuery, params);
       ResultSet resultSet = statement.executeQuery(query);
       if (resultSet.next()) {
-        StoredDocument document = makeDocument(resultSet);
-        logDocument("Retrieved document: ", document.getProperties());
-        return document;
-      } else if (LOGGER.isLoggable(Level.FINEST)) {
-        LOGGER.finest("Document not found: " + docid);
+        return makeDocument(resultSet);
       }
     } catch (SQLException e) {
       LOGGER.log(Level.WARNING, "Failed to retrieve document " + docid
@@ -318,13 +312,13 @@ public class LocalDocumentStoreImpl implements DocumentStore {
     // H2 will hold 10K ResultSet rows in memory before spilling to disk.
     private static final int BATCH_SIZE = 10000;
     private String lastDocid;
-    private StoredDocument[] documents;
+    private Document[] documents;
     private int currentDoc;
     private int numDocs;
 
     public DocumentIterator(String docid) {
       init();
-      documents = new StoredDocument[BATCH_SIZE];
+      documents = new Document[BATCH_SIZE];
       currentDoc = 0;
       numDocs = 0;
       // Oracle considers empty-string to be NULL and therefore not comparable;
@@ -343,11 +337,9 @@ public class LocalDocumentStoreImpl implements DocumentStore {
     /* @Override */
     public synchronized Document next() throws NoSuchElementException {
       if (hasNext()) {
-        StoredDocument document = documents[currentDoc];
-        // Allow the document to be garbage collected once the client is
-        // finished with it.
+        Document document = documents[currentDoc];
+        // Allow the document to be reapped once the client is finished with it.
         documents[currentDoc++] = null;
-        logDocument("Retrieved document: ", document.getProperties());
         return document;
       } else {
         throw new NoSuchElementException();
@@ -397,16 +389,10 @@ public class LocalDocumentStoreImpl implements DocumentStore {
           if (numDocs > 0) {
             lastDocid = getDocId(documents[numDocs - 1]);
           }
-          if (LOGGER.isLoggable(Level.FINER)) {
-            LOGGER.finer("Retrieved " + numDocs + " documents from Document "
-                         + "Store Table " + tableName + " for connector "
-                         + connectorName);
-          }
         }
       } catch (SQLException e) {
-        LOGGER.log(Level.WARNING, "Failed to retrieve documents from Document"
-                   + " Store Table " + tableName + " for connector "
-                   + connectorName, e);
+        LOGGER.log(Level.WARNING, "Failed to retrieve documents: "
+                   + " for connector " + connectorName, e);
       } finally {
         try {
           if (statement != null) {
@@ -442,7 +428,7 @@ public class LocalDocumentStoreImpl implements DocumentStore {
    * @param resultSet a {@link ResultSet}
    * @return a {@link Document}
    */
-  private StoredDocument makeDocument(ResultSet resultSet)
+  private Document makeDocument(ResultSet resultSet)
       throws SQLException {
     ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
     for (String propertyName : SpiConstants.PERSISTABLE_ATTRIBUTES.keySet()) {
@@ -455,34 +441,12 @@ public class LocalDocumentStoreImpl implements DocumentStore {
     return new StoredDocument(builder.build());
   }
 
-  /** Log details of the document properties for the caller. */
-  private void logDocument(String message, Map<String, String> props) {
-    if (LOGGER.isLoggable(Level.FINEST)) {
-      StackTraceElement caller;
-      int i = 2;
-      // Skip over synthetic methods.
-      do {
-        caller = Thread.currentThread().getStackTrace()[i++];
-      } while (caller.getMethodName().startsWith("access$"));
-      LOGGER.logp(Level.FINEST, caller.getClassName(), caller.getMethodName(),
-                  message + props.get(SpiConstants.PROPNAME_DOCID));
-      for (String name : props.keySet()) {
-        LOGGER.logp(Level.FINEST, caller.getClassName(), caller.getMethodName(),
-                    "Property: " + name + " = \"" + props.get(name) + "\"");
-      }
-    }
-  }
-
   /** A Document implementation representing a Document in the DocumentStore. */
   private class StoredDocument implements Document {
     private final ImmutableMap<String, String> properties;
 
     public StoredDocument(ImmutableMap<String, String> properties) {
       this.properties = properties;
-    }
-
-    public Map<String, String> getProperties() {
-      return properties;
     }
 
     /* @Override */
@@ -578,10 +542,6 @@ public class LocalDocumentStoreImpl implements DocumentStore {
       String docid = getDocId(document);
       Preconditions.checkState((docid.length() > 0), "DocID must not be null or empty");
 
-      if (LOGGER.isLoggable(Level.FINEST)) {
-        LOGGER.finest("Pending add document: " + getDocId(document));
-      }
-
       // Remember all the persistable attributes for this document.
       Map<String, String> properties = documents.get(docid);
       if (properties == null) {
@@ -621,11 +581,6 @@ public class LocalDocumentStoreImpl implements DocumentStore {
       }
       builder.setLength(builder.length() - 1);
 
-      if (LOGGER.isLoggable(Level.FINER)) {
-        LOGGER.finer("Committing " + documents.size() + " pending documents: ( "
-                    + builder.toString() + " )");
-      }
-
       Object[] params = { tableName, builder.toString() };
       String query = MessageFormat.format(batchDocumentsQuery, params);
       Statement statement = connection.createStatement(
@@ -635,7 +590,6 @@ public class LocalDocumentStoreImpl implements DocumentStore {
         while (resultSet.next()) {
           // Update existing document.
           Map<String, String> properties = documents.remove(resultSet.getString(5));
-          logDocument("Updating document: ", properties);
           resultSet.updateTimestamp(1, new Timestamp(clock.getTimeMillis()));
           updateValue(resultSet, 2, properties, SpiConstants.PROPNAME_FEEDID);
           updateValue(resultSet, 3, properties, SpiConstants.PROPNAME_SNAPSHOT);
@@ -648,7 +602,6 @@ public class LocalDocumentStoreImpl implements DocumentStore {
           resultSet.updateRow();
         }
         for (Map<String, String> properties : documents.values()) {
-          logDocument("Inserting document: ", properties);
           // Insert new document.
           resultSet.moveToInsertRow();
           resultSet.updateTimestamp(1, new Timestamp(clock.getTimeMillis()));
@@ -727,8 +680,6 @@ public class LocalDocumentStoreImpl implements DocumentStore {
      */
     synchronized void cancel() {
       if (documents != null) {
-        LOGGER.finer("Discarding " + documents.size()
-                     + " uncommitted pending documents.");
         documents.clear();
         close();
       }

@@ -402,35 +402,6 @@ public class CheckpointAndChangeQueueTest extends TestCase {
     assertTrue(1 == persistDir.listFiles().length);
   }
 
-  /**
-   * Regression test for NPE being thrown if persistDir does not exist
-   * in call to clean().
-   */
-  public void testCleanPersistDirNotExist() throws Exception {
-    final int NUM_RESUME_CALLS = 20;
-    ChangeSource changeSource = new MockChangeSource(NUM_RESUME_CALLS * 3);
-    CheckpointAndChangeQueue q = new CheckpointAndChangeQueue(changeSource,
-        persistDir, internalFactory, clientFactory);
-    q.setMaximumQueueSize(2);
-    q.start(null);
-    assertTrue(persistDir.exists());
-    assertTrue(1 >= persistDir.listFiles().length);
-
-    // A call to clean() should delete the persistDir and all its files. 
-    q.clean();
-    assertFalse(persistDir.exists());
-    assertNull(persistDir.listFiles());
-
-    // A subsequent call to clean() should not throw NullPointerException.
-    q.clean();
-    assertFalse(persistDir.exists());
-    assertNull(persistDir.listFiles());
-
-    // Recreate persistDir for the benefit of tearDown().
-    q.ensurePersistDirExists();
-    assertTrue(persistDir.exists());
-  }
-
   public void testTooManyRecoveryFiles() throws IOException {
     ChangeSource changeSource = new MockChangeSource(6);
     CheckpointAndChangeQueue q = new CheckpointAndChangeQueue(changeSource,

@@ -97,7 +97,7 @@ import org.springframework.beans.BeansException;
  * <p>To set the feed logging level:
  * <br><pre>  http://[cm_host_addr]/connector-manager/setFeedLogLevel?level=[level]</pre>
  * <br>where [level] is one of the previously defined logging levels.  For
- * feed logs, the recommended levels are {@code OFF} and {@code ALL}.
+ * feed logs, the recommended levels are {@code OFF} and {@code ON} (or {@code ALL}).
  * <p>For instance:
  * <br><pre>  http://[cm_host_addr]/connector-manager/setFeedLogLevel?level=ALL</pre>
  */
@@ -145,10 +145,7 @@ public class LogLevel extends HttpServlet {
       return;
     }
 
-    res.setContentType(ServletUtil.MIMETYPE_XML);
-    PrintWriter out = res.getWriter();
-
-    NDC.pushAppend("Support");
+    NDC.push("Support");
     try {
       // Are we setting the Level for Connector logs or Feed logs?
       LogLevelHandler handler;
@@ -158,52 +155,41 @@ public class LogLevel extends HttpServlet {
         handler = new ConnectorLogLevelHandler();
       }
 
-      handleDoPost(req.getServletPath(), handler, req.getParameter("level"),
-                   out);
+      res.setContentType(ServletUtil.MIMETYPE_XML);
+      PrintWriter out = res.getWriter();
 
-    } finally {
-      out.close();
-      NDC.pop();
-    }
-  }
+      try {
+        // Fetch the desired log level from the request.
+        String logLevel = req.getParameter("level");
 
-  /**
-   * Sets Logging levels for connectors and feeds.
-   *
-   * @param servletName the name of the servlet
-   * @param handler a LogLevelHandler
-   * @param logLevel new logging Level
-   * @param out a PrintWriter
-   * @throws IOException
-   */
-  // TODO: This extracted method is now testable, so write some tests.
-  private void handleDoPost(String servletName, LogLevelHandler handler,
-      String logLevel, PrintWriter out) throws IOException {
-    try {
-      // Set the logging level, if one was specified.
-      if (!Strings.isNullOrEmpty(logLevel)) {
-        Level level = getLevelByName(logLevel.toUpperCase());
-        LOGGER.config("Setting " + handler.getName()
-                      + " Logging level to " + level.getName());
-        handler.getLogger().setLevel(level);
-        handler.persistLevel(level);
+        // Set the logging level, if one was specified.
+        if (!Strings.isNullOrEmpty(logLevel)) {
+          Level level = getLevelByName(logLevel.toUpperCase());
+          LOGGER.config("Setting " + handler.getName()
+              + " Logging level to " + level.getName());
+          handler.getLogger().setLevel(level);
+          handler.persistLevel(level);
+        }
+
+        // Return Status of the current logging level for the handler.
+        ServletUtil.writeRootTag(out, false);
+        ServletUtil.writeMessageCode(out, new ConnectorMessageCode());
+        String currentLevel = handler.getLogger().getLevel().getName();
+        ServletUtil.writeXMLElement(out, 1, ServletUtil.XMLTAG_LEVEL,
+                                    currentLevel);
+        ServletUtil.writeXMLElement(out, 1, ServletUtil.XMLTAG_INFO,
+            handler.getName() + " Logging level is " + currentLevel);
+        ServletUtil.writeRootTag(out, true);
+      } catch (ConnectorManagerException cme) {
+        LOGGER.log(Level.WARNING, cme.getMessage(), cme);
+        ServletUtil.writeResponse(out, new ConnectorMessageCode(
+            ConnectorMessageCode.EXCEPTION_HTTP_SERVLET, cme.getMessage(),
+            null));
+      } finally {
+        out.close();
       }
-
-      // Return Status of the current logging level for the handler.
-      ServletUtil.writeRootTag(out, false);
-      ServletUtil.writeMessageCode(out, new ConnectorMessageCode());
-      String currentLevel = getLogLevel(handler.getLogger()).getName();
-      ServletUtil.writeXMLElement(out, 1, ServletUtil.XMLTAG_LEVEL,
-                                  currentLevel);
-      ServletUtil.writeXMLElement(out, 1, ServletUtil.XMLTAG_INFO,
-          handler.getName() + " Logging level is " + currentLevel);
-      ServletUtil.writeRootTag(out, true);
-    } catch (ConnectorManagerException e) {
-      LOGGER.log(Level.WARNING, e.getMessage(), e);
-      // TODO: These should really be new ConnectorMessageCodes
-      ServletUtil.writeResponse(out, new ConnectorMessageCode(
-          ConnectorMessageCode.EXCEPTION_HTTP_SERVLET,
-          servletName + " - " + e.getMessage()));
+    } finally {
+      NDC.clear();
     }
   }
 
@@ -270,7 +256,6 @@ public class LogLevel extends HttpServlet {
    */
   private static class ConnectorLogLevelHandler implements LogLevelHandler {
     private final String LOGGER_NAME = ""; // root logger
-    Context context = Context.getInstance();
 
     /* @Override */
     public String getName() {
@@ -284,31 +269,16 @@ public class LogLevel extends HttpServlet {
 
     /* @Override */
     public void persistLevel(Level level) throws ConnectorManagerException {
-      File confFile = new File(new File(context.getCommonDirPath(), "classes"),
-                               "logging.properties");
-      if (!persistLevel(level, confFile)) {
-        String filename = System.getProperty("java.util.logging.config.file");
-        if (!Strings.isNullOrEmpty(filename)) {
-          persistLevel(level, new File(filename));
-        }
-      }
-    }
-
-    /** Returns true if Level was successfully persisted. */
-    private boolean persistLevel(Level level, File confFile)
-        throws ConnectorManagerException {
-      if (confFile.canRead() && confFile.canWrite()) {
+      String filename = System.getProperty("java.util.logging.config.file");
+      if (!Strings.isNullOrEmpty(filename)) {
         try {
+          File confFile = new File(filename);
           Properties props = loadProperties(confFile);
           props.setProperty(LOGGER_NAME + ".level", level.getName());
           storeProperties(confFile, props);
         } catch (IOException e) {
-          throw new ConnectorManagerException(
-              "Failed to save logging properties", e);
+          throw new ConnectorManagerException("Failed to save logging properties", e);
         }
-        return true;
-      } else {
-        return false;
       }
     }
 

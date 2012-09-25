@@ -26,25 +26,18 @@ import com.google.enterprise.connector.database.DocumentStore;
 public interface Pusher {
 
   /**
-   * Status indicating the readiness of the Pusher.
-   */
-  public static enum PusherStatus {
-    OK, LOW_MEMORY, LOCAL_FEED_BACKLOG, GSA_FEED_BACKLOG, DISABLED;
-  }
-
-  /**
    * Takes an spi Document and pushes it along, presumably to the GSA Feed.
    *
    * @param document A Document
    * @param documentStore {@link DocumentStore} for recording document
    *        status.  Optional - may be {@code null}.
-   * @return PusherStatus. If OK, Pusher may accept more documents.
+   * @return true if Pusher may accept more documents, false otherwise.
    * @throws RepositoryException if transient error accessing the Repository
    * @throws RepositoryDocumentException if fatal error accessing the Document
    * @throws FeedException if a transient Feed error occurs in the Pusher
    * @throws PushException if a transient error occurs in the Pusher
    */
-  public PusherStatus take(Document document, DocumentStore documentStore)
+  public boolean take(Document document, DocumentStore documentStore)
       throws PushException, FeedException, RepositoryException;
 
   /**
@@ -65,15 +58,4 @@ public interface Pusher {
    * Cancels a feed.  Discard any accumulated feed data.
    */
   public void cancel();
-
-  /**
-   * Gets the current pusher status.
-   *
-   * @return the current PusherStatus
-   * @throws RepositoryException if transient error accessing the Repository
-   * @throws FeedException if a transient Feed error occurs in the Pusher
-   * @throws PushException if a transient error occurs in the Pusher
-   */
-  public PusherStatus getPusherStatus()
-      throws PushException, FeedException, RepositoryException;
 }

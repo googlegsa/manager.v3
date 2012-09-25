@@ -25,10 +25,7 @@ import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.connector.spi.AuthorizationResponse;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.ConnectorType;
-import com.google.enterprise.connector.spi.Document;
-import com.google.enterprise.connector.spi.RepositoryException;
 
-import java.io.InputStream;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -59,13 +56,12 @@ public interface Manager {
    * @param feederGateHost The GSA host expressed as a String
    * @param feederGatePort The GSA feeder gate HTTP port number
    * @param feederGateSecurePort The GSA feeder gate HTTP port number
-   * @param connectorManagerUrl URL string for the Connector Manager servlet
    * @throws PersistentStoreException If there was a problem storing the
    *         configuration
    */
   public void setConnectorManagerConfig(String feederGateProtocol,
-      String feederGateHost, int feederGatePort, int feederGateSecurePort,
-      String connectorManagerUrl) throws PersistentStoreException;
+      String feederGateHost, int feederGatePort, int feederGateSecurePort)
+      throws PersistentStoreException;
 
   /**
    * Returns a list of connector types that this manager knows about.
@@ -203,32 +199,6 @@ public interface Manager {
       List<String> docidList, AuthenticationIdentity identity);
 
   /**
-   * Return an {@code InputStream} that may be used to access content for the
-   * document identified by {@code docid}.
-   *
-   * @param connectorName
-   * @param docid the document identifier
-   * @return an InputStream for the document content, or {@code null} if
-   *         document content is not available.
-   */
-  public InputStream getDocumentContent(String connectorName, String docid)
-      throws ConnectorNotFoundException, InstantiatorException,
-             RepositoryException;
-
-  /**
-   * Return a {@link Document} that contains meta-data for the
-   * document identified by {@code docid}, but not the actual content.
-   *
-   * @param connectorName
-   * @param docid the document identifier
-   * @return a {@link Document} containing the document meta-data,
-   *         or {@code null} if document content is not available.
-   */
-  public Document getDocumentMetaData(String connectorName, String docid)
-      throws ConnectorNotFoundException, InstantiatorException,
-             RepositoryException;
-
-  /**
    * Set schedule for a given Connector.
    *
    * @param connectorName
@@ -241,8 +211,8 @@ public interface Manager {
   public void setSchedule(String connectorName, String schedule)
       throws ConnectorNotFoundException, PersistentStoreException;
 
-  /**
-   * Remove the named connector.
+  /*
+   * Remove a connector for a given Connector.
    *
    * @param connectorName
    * @throws ConnectorNotFoundException If the named connector is not known to

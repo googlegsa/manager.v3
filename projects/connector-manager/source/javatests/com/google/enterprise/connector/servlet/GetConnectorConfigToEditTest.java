@@ -21,7 +21,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.instantiator.Configuration;
 import com.google.enterprise.connector.instantiator.Instantiator;
@@ -156,23 +155,23 @@ public class GetConnectorConfigToEditTest extends TestCase {
         + "  <StatusId>0</StatusId>\n"
         + "  <ConfigureResponse>\n"
         + "    <FormSnippet><![CDATA[<tr>\n"
-        + "<td>Username</td>\n"
-        + "<td><input name=\"Username\""
+        + "<td colspan=\"1\" rowspan=\"1\">Username</td>\n"
+        + "<td colspan=\"1\" rowspan=\"1\"><input name=\"Username\""
         + " type=\"text\" value=\" &quot;>bob>&amp;<alice;'\"></td>\n"
         + "</tr>\n"
         + "<tr>\n"
-        + "<td>Password</td>\n"
-        + "<td><input name=\"Password\""
+        + "<td colspan=\"1\" rowspan=\"1\">Password</td>\n"
+        + "<td colspan=\"1\" rowspan=\"1\"><input name=\"Password\""
         + " type=\"password\" value=\"****************\"></td>\n"
         + "</tr>\n"
         + "<tr>\n"
-        + "<td>Color</td>\n"
-        + "<td><input name=\"Color\""
+        + "<td colspan=\"1\" rowspan=\"1\">Color</td>\n"
+        + "<td colspan=\"1\" rowspan=\"1\"><input name=\"Color\""
         + " type=\"text\" value=\" &quot;>bob>&amp;<alice;'\"></td>\n"
         + "</tr>\n"
         + "<tr>\n"
-        + "<td>RepositoryFile</td>\n"
-        + "<td><input name=\"RepositoryFile\""
+        + "<td colspan=\"1\" rowspan=\"1\">RepositoryFile</td>\n"
+        + "<td colspan=\"1\" rowspan=\"1\"><input name=\"RepositoryFile\""
         + " type=\"text\" value=\"MockRepositoryEventLog1.txt\"></td>\n"
         + "</tr>\n"
         + "]]></FormSnippet>\n"
@@ -220,23 +219,23 @@ public class GetConnectorConfigToEditTest extends TestCase {
         + "  <StatusId>0</StatusId>\n"
         + "  <ConfigureResponse>\n"
         + "    <FormSnippet><![CDATA[<tr>\n"
-        + "<td>Username</td>\n"
-        + "<td><input name=\"Username\""
+        + "<td colspan=\"1\" rowspan=\"1\">Username</td>\n"
+        + "<td colspan=\"1\" rowspan=\"1\"><input name=\"Username\""
         + " type=\"text\" value=\" &quot;>bob>&amp;<alice;'\"></td>\n"
         + "</tr>\n"
         + "<tr>\n"
-        + "<td>Password</td>\n"
-        + "<td><input name=\"Password\""
+        + "<td colspan=\"1\" rowspan=\"1\">Password</td>\n"
+        + "<td colspan=\"1\" rowspan=\"1\"><input name=\"Password\""
         + " type=\"password\" value=\"****************\"></td>\n"
         + "</tr>\n"
         + "<tr>\n"
-        + "<td>Color</td>\n"
-        + "<td><input name=\"Color\""
+        + "<td colspan=\"1\" rowspan=\"1\">Color</td>\n"
+        + "<td colspan=\"1\" rowspan=\"1\"><input name=\"Color\""
         + " type=\"text\" value=\" &quot;>bob>&amp;<alice;'\"></td>\n"
         + "</tr>\n"
         + "<tr>\n"
-        + "<td>RepositoryFile</td>\n"
-        + "<td><input name=\"RepositoryFile\""
+        + "<td colspan=\"1\" rowspan=\"1\">RepositoryFile</td>\n"
+        + "<td colspan=\"1\" rowspan=\"1\"><input name=\"RepositoryFile\""
         + " type=\"text\" value=\"MockRepositoryEventLog1.txt\"></td>\n"
         + "</tr>\n"
         + "]]></FormSnippet>\n"
@@ -277,12 +276,12 @@ public class GetConnectorConfigToEditTest extends TestCase {
     // be parsed and make sure the reserved XML properties are preserved.
     GetConnectorConfigToEdit.handleDoGet(connectorName, "en", manager, out);
     out.flush();
-    String result = writer.toString();
+    StringBuffer result = writer.getBuffer();
     out.close();
-    LOGGER.info("Expected Response:\n" + expectedResult);
-    LOGGER.info("Actual Response:\n" + result);
-    assertEquals(StringUtils.normalizeNewlines(expectedResult),
-                 ConnectorTestUtils.removeColRowSpan(
-                 StringUtils.normalizeNewlines(result)));
+    LOGGER.info("Result:\n" + result.toString());
+    LOGGER.info("ExpectedResult:\n" + expectedResult);
+
+    assertEquals (StringUtils.normalizeNewlines(expectedResult),
+                  StringUtils.normalizeNewlines(result.toString()));
   }
 }

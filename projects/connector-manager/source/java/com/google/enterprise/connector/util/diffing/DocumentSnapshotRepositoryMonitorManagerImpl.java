@@ -98,22 +98,6 @@ public class DocumentSnapshotRepositoryMonitorManagerImpl
     this.checkpointAndChangeQueue = checkpointAndChangeQueue;
   }
 
-  private void flagAllMonitorsToStop() {
-    for (SnapshotRepository<? extends DocumentSnapshot> repository
-        : repositories) {
-      String monitorName = makeMonitorNameFromStartPath(repository.getName());
-      DocumentSnapshotRepositoryMonitor
-          monitor = fileSystemMonitorsByName.get(monitorName);
-      if (null != monitor) {
-        monitor.shutdown();
-      }
-      else {
-        LOG.fine("Unable to stop non existent monitor thread for "
-            + monitorName);
-      }
-    }
-  }
-
   /* @Override */
   public synchronized void stop() {
     for (Thread thread : threads) {
@@ -131,11 +115,6 @@ public class DocumentSnapshotRepositoryMonitorManagerImpl
       }
     }
     threads.clear();
-
-    /* in case thread.interrupt doesn't stop monitors */
-    flagAllMonitorsToStop();
-
-    fileSystemMonitorsByName.clear();
     changeQueue.clear();
     this.isRunning = false;
   }
@@ -261,7 +240,6 @@ public class DocumentSnapshotRepositoryMonitorManagerImpl
         new DocumentSnapshotRepositoryMonitor(monitorName, repository,
             snapshotStore, changeQueue.newCallback(), DOCUMENT_SINK, startCp,
             documentSnapshotFactory);
-    LOG.fine("Adding a new monitor for " + monitorName + ": " + monitor);
     fileSystemMonitorsByName.put(monitorName, monitor);
     return new Thread(monitor);
   }

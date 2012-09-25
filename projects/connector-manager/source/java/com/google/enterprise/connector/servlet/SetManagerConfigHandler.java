@@ -29,31 +29,28 @@ import java.util.logging.Logger;
 
 /**
  * Handler class for SetManagerConfig servlet class.
+ *
  */
 public class SetManagerConfigHandler {
   private static final Logger LOGGER =
-      Logger.getLogger(SetManagerConfigHandler.class.getName());
+    Logger.getLogger(SetManagerConfigHandler.class.getName());
 
   private ConnectorMessageCode status = new ConnectorMessageCode();
   private String feederGateProtocol = null;
   private String feederGateHost = null;
   private int feederGatePort = 0;
   private int feederGateSecurePort = Context.GSA_FEED_SECURE_PORT_INVALID;
-  private final String connectorManagerUrl;
 
-  /**
-   * Reads from a request input XML string.
+  /*
+   * Reads from a request input XML string
    *
    * @param manager Manager
    * @param xmlBody String Input XML body string.
-   * @param connectorManagerUrl URL string for the Connector Manager servlet
    */
-  public SetManagerConfigHandler(Manager manager, String xmlBody,
-                                 String connectorManagerUrl) {
+  public SetManagerConfigHandler(Manager manager, String xmlBody) {
     this.status = new ConnectorMessageCode();
-    this.connectorManagerUrl = connectorManagerUrl;
     Element root = XmlParseUtil.parseAndGetRootElement(
-        xmlBody, ServletUtil.XMLTAG_MANAGER_CONFIG);
+      xmlBody, ServletUtil.XMLTAG_MANAGER_CONFIG);
     if (root == null) {
       this.status = new ConnectorMessageCode(
           ConnectorMessageCode.ERROR_PARSING_XML_REQUEST);
@@ -118,28 +115,22 @@ public class SetManagerConfigHandler {
         if (feederGateSecurePort != Context.GSA_FEED_SECURE_PORT_INVALID) {
           message += "; feederGateSecurePort=" + feederGateSecurePort;
         }
-        LOGGER.warning(message);
-        this.status = new ConnectorMessageCode(
-            ConnectorMessageCode.ATTEMPT_TO_CHANGE_LOCKED_CONNECTOR_MANAGER);
-        return;
-      }
+      LOGGER.warning(message);
+      this.status = new ConnectorMessageCode(
+          ConnectorMessageCode.ATTEMPT_TO_CHANGE_LOCKED_CONNECTOR_MANAGER);
+      return;
+    }
     }
 
     // If we get here, update the manager configuration.
     try {
       manager.setConnectorManagerConfig(this.feederGateProtocol,
-          this.feederGateHost, this.feederGatePort, this.feederGateSecurePort,
-          this.connectorManagerUrl);
+          this.feederGateHost, this.feederGatePort, this.feederGateSecurePort);
     } catch (PersistentStoreException e) {
       this.status = new ConnectorMessageCode(
           ConnectorMessageCode.EXCEPTION_PERSISTENT_STORE);
       LOGGER.log(Level.WARNING, ServletUtil.LOG_EXCEPTION_PERSISTENT_STORE, e);
     }
-  }
-
-  /** For the unit tests. */
-  String getConnectorManagerUrl() {
-    return connectorManagerUrl;
   }
 
   /** For the unit tests. */

@@ -51,16 +51,8 @@
  * <p/>
  * Document filters are configured in the Connector Manager's
  * {@code documentFilters.xml} file, located in the web application's
- * {@code WEB-INF} directory.  Document filters defined here will be applied
- * to all documents across all connector instances hosted by the Connector
- * Manager.
- * <p/>
- * Document filters may also be configured for individual connector instances
- * in a connector's {@code connectorInstance.xml} (Advanced Configuration)
- * or {@code connectorDefaults.xml} file.  Connector-specific document filters
- * will be applied before the Connector Manager's global document filters.
- * <p/>
- * For example, a filter chain might be configured as follows: <pre><code>
+ * {@code WEB-INF} directory.  For example, a filter chain
+ * might be configured as follows: <pre><code>
    &lt;bean id="DocumentFilters"
          class="com.google.enterprise.connector.util.filter.DocumentFilterChain"&gt;
      &lt;constructor-arg&gt;

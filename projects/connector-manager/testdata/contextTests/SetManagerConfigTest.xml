@@ -12,15 +12,6 @@
     <property name="location" ref="ApplicationContextProperties"/>
   </bean>
 
-  <bean id="FeedConnection"
-        class="com.google.enterprise.connector.pusher.MockFeedConnection">
-  </bean>
-
-  <bean id="PusherFactory"
-        class="com.google.enterprise.connector.pusher.DocPusherFactory">
-    <constructor-arg ref="FeedConnection" />
-  </bean>
-
   <bean id="Manager"
         class="com.google.enterprise.connector.manager.MockManager">
   </bean>

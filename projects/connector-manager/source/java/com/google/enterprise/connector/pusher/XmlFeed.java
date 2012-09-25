@@ -14,44 +14,26 @@
 
 package com.google.enterprise.connector.pusher;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
-import com.google.common.base.Strings;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Sets;
 import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.spi.Document;
-import com.google.enterprise.connector.spi.Principal;
 import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.RepositoryDocumentException;
 import com.google.enterprise.connector.spi.RepositoryException;
-import com.google.enterprise.connector.spi.SimpleProperty;
 import com.google.enterprise.connector.spi.SpiConstants;
-import com.google.enterprise.connector.spi.SpiConstants.AclAccess;
-import com.google.enterprise.connector.spi.SpiConstants.AclScope;
-import com.google.enterprise.connector.spi.SpiConstants.DocumentType;
-import com.google.enterprise.connector.spi.SpiConstants.FeedType;
 import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.spi.XmlUtils;
 import com.google.enterprise.connector.spi.SpiConstants.ActionType;
-import com.google.enterprise.connector.spiimpl.PrincipalValue;
 import com.google.enterprise.connector.spiimpl.ValueImpl;
 import com.google.enterprise.connector.util.UniqueIdGenerator;
 import com.google.enterprise.connector.util.UuidGenerator;
-import com.google.enterprise.connector.util.filter.AbstractDocumentFilter;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -64,34 +46,12 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
       Logger.getLogger(XmlFeed.class.getName());
 
   private final String dataSource;
-  private final FeedType feedType;
+  private final String feedType;
   private final int maxFeedSize;
   private final Appendable feedLogBuilder;
   private final String feedId;
 
-  /**
-   * The prefix that will be used for contentUrl generation.
-   * The prefix should include protocol, host and port, web app,
-   * and servlet to point back at this Connector Manager instance.
-   * For example:
-   * {@code http://localhost:8080/connector-manager/getDocumentContent}
-   */
-  private final String contentUrlPrefix;
-
-  /** If true, ACLs support inheritance and deny; otherwise legacy ACLs. */
-  private final boolean supportsInheritedAcls;
-
-  private static Predicate<String> aclPredicate = new Predicate<String>() {
-    public boolean apply(String input) {
-      return (input.startsWith(SpiConstants.ACL_PROPNAME_PREFIX) ||
-              input.startsWith(SpiConstants.GROUP_ROLES_PROPNAME_PREFIX) ||
-              input.startsWith(SpiConstants.USER_ROLES_PROPNAME_PREFIX));
-    }
-  };
-
   private static UniqueIdGenerator uniqueIdGenerator = new UuidGenerator();
-  private static StripAclDocumentFilter stripAclDocumentFilter =
-      new StripAclDocumentFilter();
 
   private boolean isClosed;
   private int recordCount;
@@ -99,19 +59,11 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
   private static Set<String> propertySkipSet;
 
   static {
-    // TODO: What about action, contenturl, displayurl, ispublic,
-    // securitytoken, searchurl? Should we have an explicit opt-in
-    // list of google: properties instead an opt-out list?
     propertySkipSet = new HashSet<String>();
-    propertySkipSet.add(SpiConstants.PROPNAME_ACLINHERITFROM_DOCID);
-    propertySkipSet.add(SpiConstants.PROPNAME_ACLINHERITFROM_FEEDTYPE);
     propertySkipSet.add(SpiConstants.PROPNAME_CONTENT);
     propertySkipSet.add(SpiConstants.PROPNAME_DOCID);
-    propertySkipSet.add(SpiConstants.PROPNAME_DOCUMENTTYPE);
-    propertySkipSet.add(SpiConstants.PROPNAME_FEEDTYPE);
     propertySkipSet.add(SpiConstants.PROPNAME_LOCK);
     propertySkipSet.add(SpiConstants.PROPNAME_PAGERANK);
-    propertySkipSet.add(SpiConstants.PROPNAME_OVERWRITEACLS);
   }
 
   // Strings for XML tags.
@@ -138,23 +90,17 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
   private static final String XML_PAGERANK = "pagerank";
   private static final String XML_NAME = "name";
   private static final String XML_ENCODING = "encoding";
-  private static final String XML_OVERWRITEACLS = "overwrite-acls";
 
+  // public static final String XML_FEED_FULL = "full";
+  public static final String XML_FEED_METADATA_AND_URL = "metadata-and-url";
+  public static final String XML_FEED_INCREMENTAL = "incremental";
   public static final String XML_BASE64BINARY = "base64binary";
   public static final String XML_BASE64COMPRESSED = "base64compressed";
 
   private static final String CONNECTOR_AUTHMETHOD = "httpbasic";
 
-  private static final String XML_ACL = "acl";
-  private static final String XML_TYPE = "inheritance-type";
-  private static final String XML_INHERIT_FROM = "inherit-from";
-  private static final String XML_PRINCIPAL = "principal";
-  private static final String XML_SCOPE = "scope";
-  private static final String XML_ACCESS = "access";
-
-  public XmlFeed(String dataSource, FeedType feedType, int maxFeedSize,
-      Appendable feedLogBuilder, String contentUrlPrefix,
-      boolean supportsInheritedAcls) throws IOException {
+  public XmlFeed(String dataSource, String feedType, int maxFeedSize,
+                 Appendable feedLogBuilder) throws IOException {
     super(maxFeedSize);
     this.maxFeedSize = maxFeedSize;
     this.dataSource = dataSource;
@@ -163,13 +109,11 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
     this.recordCount = 0;
     this.isClosed = false;
     this.feedId = uniqueIdGenerator.uniqueId();
-    this.contentUrlPrefix = contentUrlPrefix;
-    this.supportsInheritedAcls = supportsInheritedAcls;
     String prefix = xmlFeedPrefix(dataSource, feedType);
     write(prefix.getBytes(XML_DEFAULT_ENCODING));
   }
 
-  @VisibleForTesting
+  // Package private for use by testing.
   static void setUniqueIdGenerator(UniqueIdGenerator idGenerator) {
     uniqueIdGenerator = idGenerator;
   }
@@ -205,10 +149,10 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
   }
 
   /**
-   * Set the count of records in this feed.
+   * Bumps the count of records stored in this feed.
    */
-  public synchronized void setRecordCount(int count) {
-    recordCount = count;
+  public synchronized void incrementRecordCount() {
+    recordCount++;
   }
 
   /**
@@ -226,6 +170,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
       throws RepositoryException, IOException {
     // Build an XML feed record for the document.
     xmlWrapRecord(document, contentStream, contentEncoding);
+    recordCount++;
   }
 
   /*
@@ -233,9 +178,9 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
    */
 
   /**
-   * Return the {@link FeedType} for all records in this Feed.
+   * Return the feed type for all records in this Feed.
    */
-  public FeedType getFeedType() {
+  public String getFeedType() {
     return feedType;
   }
 
@@ -316,7 +261,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
    * @param feedType The type of feed.
    * @return XML feed header string.
    */
-  private static String xmlFeedPrefix(String dataSource, FeedType feedType) {
+  private static String xmlFeedPrefix(String dataSource, String feedType) {
     // Build prefix.
     StringBuffer prefix = new StringBuffer();
     prefix.append(XML_START).append('\n');
@@ -326,7 +271,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
     prefix.append(dataSource);
     prefix.append(XmlUtils.xmlWrapEnd(XML_DATASOURCE));
     prefix.append(XmlUtils.xmlWrapStart(XML_FEEDTYPE));
-    prefix.append(feedType.toLegacyString());
+    prefix.append(feedType);
     prefix.append(XmlUtils.xmlWrapEnd(XML_FEEDTYPE));
     prefix.append(XmlUtils.xmlWrapEnd(XML_HEADER));
     prefix.append(XmlUtils.xmlWrapStart(XML_GROUP)).append('\n');
@@ -354,37 +299,23 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
    */
   private void xmlWrapRecord(Document document, InputStream contentStream,
       String contentEncoding) throws RepositoryException, IOException {
-    if (supportsInheritedAcls) {
-      String docType = DocUtils.getOptionalString(document,
-          SpiConstants.PROPNAME_DOCUMENTTYPE);
-      if (docType != null
-          && DocumentType.findDocumentType(docType) == DocumentType.ACL) {
-        xmlWrapAclRecord(document);
-        recordCount++;
-        return;
-      }
-    }
-    xmlWrapDocumentRecord(document, contentStream, contentEncoding);
-    recordCount++;
-  }
-
-  /*
-   * Generate the record tag for the xml data.
-   *
-   * @throws IOException only from Appendable, and that can't really
-   *         happen when using StringBuilder.
-   */
-  private void xmlWrapDocumentRecord(Document document, InputStream contentStream,
-      String contentEncoding) throws RepositoryException, IOException {
 
     boolean metadataAllowed = true;
-    boolean contentAllowed = (feedType == FeedType.CONTENT &&
+    boolean contentAllowed = (!XML_FEED_METADATA_AND_URL.equals(feedType) &&
                               contentStream != null);
 
     StringBuilder prefix = new StringBuilder();
     prefix.append("<").append(XML_RECORD);
 
-    String searchUrl = getRecordUrl(document, DocumentType.RECORD);
+    String searchUrl = DocUtils.getOptionalString(document,
+        SpiConstants.PROPNAME_SEARCHURL);
+    if (searchUrl != null) {
+      validateSearchUrl(searchUrl);
+    } else {
+      // Fabricate a URL from the docid.
+      searchUrl = constructGoogleConnectorUrl(
+          DocUtils.getRequiredString(document, SpiConstants.PROPNAME_DOCID));
+    }
     XmlUtils.xmlAppendAttr(XML_URL, searchUrl, prefix);
 
     String displayUrl = DocUtils.getOptionalString(document,
@@ -453,14 +384,8 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
       LOGGER.log(Level.WARNING, "Illegal value for ispublic property."
           + " Treat as a public doc", e);
     }
-
     prefix.append(">\n");
     if (metadataAllowed) {
-      if (supportsInheritedAcls && hasAclProperties(document)) {
-        xmlWrapAclRecord(prefix, document);
-        // Prevent ACLs from showing up in metadata.
-        document = stripAclDocumentFilter.newDocumentFilter(document);
-      }
       xmlWrapMetadata(prefix, document);
     }
 
@@ -500,207 +425,6 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
   }
 
   /**
-   * Constructs the URL for the given doc id, feed type and URL.
-   *
-   * @throws RepositoryDocumentException if searchUrl is invalid.
-   */
-  private String getOrConstructUrl(Document document, String urlProperty,
-      String docidProperty, FeedType feedType, DocumentType documentType)
-      throws RepositoryException, RepositoryDocumentException {
-    String recordUrl = DocUtils.getOptionalString(document, urlProperty);
-    if (recordUrl != null) {
-      if (documentType != DocumentType.ACL) {
-        validateUrl(recordUrl, urlProperty);
-      }
-    } else {
-      String docId = DocUtils.getOptionalString(document, docidProperty);
-      if (docId != null) {
-        // Fabricate a URL from the docid and feedType.
-        recordUrl = constructUrl(docId, feedType);
-      }
-    }
-    return recordUrl;
-  }
-
-  /**
-   * Constructs the record URL for the given doc id, feed type and search URL.
-   *
-   * @throws RepositoryDocumentException if searchUrl is invalid.
-   */
-  private String getRecordUrl(Document document, DocumentType documentType)
-      throws RepositoryException, RepositoryDocumentException {
-    String url = getOrConstructUrl(document, SpiConstants.PROPNAME_SEARCHURL,
-        SpiConstants.PROPNAME_DOCID, feedType, documentType);
-    if (url == null) {
-      throw new RepositoryDocumentException(
-          "Document has neither property " + SpiConstants.PROPNAME_DOCID
-          + " nor property " + SpiConstants.PROPNAME_SEARCHURL);
-    }
-    return url;
-  }
-
-  /**
-   * Constructs the record URL for the inherited ACL document.
-   *
-   * @return inheritFrom URL, or null if there is none.
-   */
-  private String getInheritFromUrl(Document document)
-      throws RepositoryException, RepositoryDocumentException {
-    return getOrConstructUrl(document, SpiConstants.PROPNAME_ACLINHERITFROM,
-        SpiConstants.PROPNAME_ACLINHERITFROM_DOCID,
-        getInheritFromFeedType(document), DocumentType.ACL);
-  }
-
-  /**
-   * Determines the FeedType for the inherited ACL document.
-   * The FeedType comes from (in order):
-   *   1. SpiConstants.PROPNAME_ACLINHERITFROM_FEEDTYPE
-   *   2. SpiConstants.PROPNAME_FEEDTYPE
-   *   3. FeedType of this XmlFeed
-   *
-   * @return the FeedType for the inherited ACL document
-   */
-  private FeedType getInheritFromFeedType(Document document)
-      throws RepositoryException, RepositoryDocumentException {
-    String feedType = DocUtils.getOptionalString(document,
-        SpiConstants.PROPNAME_ACLINHERITFROM_FEEDTYPE);
-    if (feedType == null) {
-      feedType = DocUtils.getOptionalString(document,
-          SpiConstants.PROPNAME_FEEDTYPE);
-    }
-    return (feedType == null) ? this.feedType : FeedType.findFeedType(feedType);
-  }
-
-  /**
-   * Returns true if the document exposes any acl properties, false otherwise.
-   */
-  private static boolean hasAclProperties(Document document)
-      throws RepositoryException {
-    return Iterables.any(document.getPropertyNames(), aclPredicate);
-  }
-
-  /*
-   * Generate the record tag for the ACL xml data, appending to {@code aclBuff}.
-   */
-  private void xmlWrapAclRecord(StringBuilder aclBuff, Document acl)
-      throws IOException, RepositoryException {
-    String inheritFrom = getInheritFromUrl(acl);
-    String inheritanceType = DocUtils.getOptionalString(acl,
-        SpiConstants.PROPNAME_ACLINHERITANCETYPE);
-
-    aclBuff.append("<").append(XML_ACL);
-    String docType = DocUtils.getOptionalString(acl,
-        SpiConstants.PROPNAME_DOCUMENTTYPE);
-    if (docType != null
-        && DocumentType.findDocumentType(docType) == DocumentType.ACL) {
-      // Only specify the URL if this is a stand-alone ACL.
-      XmlUtils.xmlAppendAttr(XML_URL, getRecordUrl(acl, DocumentType.ACL),
-          aclBuff);
-    }
-    if (!Strings.isNullOrEmpty(inheritanceType)) {
-      XmlUtils.xmlAppendAttr(XML_TYPE, inheritanceType, aclBuff);
-    }
-
-    if (!Strings.isNullOrEmpty(inheritFrom)) {
-      XmlUtils.xmlAppendAttr(XML_INHERIT_FROM, inheritFrom, aclBuff);
-    }
-    aclBuff.append(">\n");
-
-    // add principal info
-    getPrincipalXml(acl, aclBuff);
-    XmlUtils.xmlAppendEndTag(XML_ACL, aclBuff);
-  }
-
-  /*
-   * Generate the record tag for the ACL xml data.
-   */
-  private void xmlWrapAclRecord(Document acl) throws IOException,
-      RepositoryException {
-    StringBuilder aclBuff = new StringBuilder();
-    xmlWrapAclRecord(aclBuff, acl);
-
-    write(aclBuff.toString().getBytes(XML_DEFAULT_ENCODING));
-
-    if (feedLogBuilder != null) {
-      try {
-        feedLogBuilder.append(aclBuff);
-      } catch (IOException e) {
-        // This won't happen with StringBuffer or StringBuilder.
-        LOGGER.log(Level.WARNING, "Exception while constructing feed log:", e);
-      }
-    }
-  }
-
-  /*
-   * Generate the ACL principal XML data.
-   */
-  private void getPrincipalXml(Document acl, StringBuilder buff)
-      throws IOException, RepositoryException {
-    Property property;
-
-    property = acl.findProperty(SpiConstants.PROPNAME_ACLUSERS);
-    if (property != null) {
-      wrapAclPrincipal(buff, property, AclScope.USER, AclAccess.PERMIT);
-    }
-
-    property = acl.findProperty(SpiConstants.PROPNAME_ACLGROUPS);
-    if (property != null) {
-      wrapAclPrincipal(buff, property, AclScope.GROUP, AclAccess.PERMIT);
-    }
-
-    property = acl.findProperty(SpiConstants.PROPNAME_ACLDENYUSERS);
-    if (property != null) {
-      wrapAclPrincipal(buff, property, AclScope.USER, AclAccess.DENY);
-    }
-
-    property = acl.findProperty(SpiConstants.PROPNAME_ACLDENYGROUPS);
-    if (property != null) {
-      wrapAclPrincipal(buff, property, AclScope.GROUP, AclAccess.DENY);
-    }
-  }
-
-  /*
-   * Wrap the ACL principal info as XML data.
-   */
-  private static void wrapAclPrincipal(StringBuilder buff, Property property,
-      AclScope scope, AclAccess access)
-      throws RepositoryException, IOException {
-    ValueImpl value;
-    while ((value = (ValueImpl) property.nextValue()) != null) {
-      Principal principal = (value instanceof PrincipalValue)
-          ? ((PrincipalValue) value).getPrincipal()
-          : new Principal(value.toString().trim());
-      if (!Strings.isNullOrEmpty(principal.getName())) {
-        buff.append("<").append(XML_PRINCIPAL);
-        if (principal.getPrincipalType() ==
-            SpiConstants.PrincipalType.UNQUALIFIED) {
-          // UNQUALIFIED is a special-case on the GSA to allow us to prevent the
-          // GSA from mistakeningly finding a domain in the principal name.
-          XmlUtils.xmlAppendAttr(ServletUtil.XMLTAG_PRINCIPALTYPE_ATTRIBUTE,
-              SpiConstants.PrincipalType.UNQUALIFIED.toString(), buff);
-        }
-        if (!Strings.isNullOrEmpty(principal.getNamespace())) {
-          XmlUtils.xmlAppendAttr(ServletUtil.XMLTAG_NAMESPACE_ATTRIBUTE,
-                                 principal.getNamespace(), buff);
-        }
-        // The GSA's default is EVERYTHING_CASE_SENSITIVE. No need to send the
-        // attribute when it is the default.
-        if (principal.getCaseSensitivityType()
-            != SpiConstants.CaseSensitivityType.EVERYTHING_CASE_SENSITIVE) {
-          XmlUtils.xmlAppendAttr(
-              ServletUtil.XMLTAG_CASESENSITIVITYTYPE_ATTRIBUTE,
-              principal.getCaseSensitivityType().toString(), buff);
-        }
-        XmlUtils.xmlAppendAttr(XML_SCOPE, scope.toString(), buff);
-        XmlUtils.xmlAppendAttr(XML_ACCESS, access.toString(), buff);
-        buff.append(">");
-        XmlUtils.xmlAppendAttrValue(principal.getName(), buff);
-        XmlUtils.xmlAppendEndTag(XML_PRINCIPAL, buff);
-      }
-    }
-  }
-
-  /**
    * Wrap the metadata and append it to the string buffer. Empty metadata
    * properties are not appended.
    *
@@ -712,44 +436,19 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
    */
   private void xmlWrapMetadata(StringBuilder buf, Document document)
       throws RepositoryException, IOException {
-    boolean overwriteAcls = DocUtils.getOptionalBoolean(document,
-        SpiConstants.PROPNAME_OVERWRITEACLS, true);
-    buf.append('<').append(XML_METADATA);
-    if (!overwriteAcls) {
-      XmlUtils.xmlAppendAttr(XML_OVERWRITEACLS,
-          Value.getBooleanValue(false).toString(), buf);
-    }
-    buf.append(">\n");
+    XmlUtils.xmlAppendStartTag(XML_METADATA, buf);
+    buf.append("\n");
 
     // Add all the metadata supplied by the Connector.
     Set<String> propertyNames = document.getPropertyNames();
     if ((propertyNames == null) || propertyNames.isEmpty()) {
       LOGGER.log(Level.WARNING, "Property names set is empty");
     } else {
-      // Sort property names so that metadata is written in a canonical form.
-      // The GSA's metadata change detection logic depends on the metadata to be
-      // in the same order each time in order to prevent reindexing.
-      propertyNames = new TreeSet<String>(propertyNames);
       for (String name : propertyNames) {
         Property property = null;
-        // Possibly manufacture an ACLINHERITFROM property from
-        // ACLINHERITFROM_DOCID and ACLINHERITFROM_FEEDTYPE.
-        // TODO: All this ACL property munging should really be
-        // done in a DocumentFilter.
-        if (SpiConstants.PROPNAME_ACLINHERITFROM_DOCID.equals(name) &&
-            (DocUtils.getOptionalString(document,
-                SpiConstants.PROPNAME_ACLINHERITFROM) == null)) {
-          property = new SimpleProperty(
-              Value.getStringValue(getInheritFromUrl(document)));
-          wrapOneProperty(buf, SpiConstants.PROPNAME_ACLINHERITFROM, property);
-          continue;
-        }
         if (propertySkipSet.contains(name) ||
             name.startsWith(SpiConstants.USER_ROLES_PROPNAME_PREFIX) ||
             name.startsWith(SpiConstants.GROUP_ROLES_PROPNAME_PREFIX)) {
-          if (LOGGER.isLoggable(Level.FINEST)) {
-            logOneProperty(document, name);
-          }
           continue;
         }
         if (SpiConstants.PROPNAME_ACLGROUPS.equals(name) ||
@@ -781,9 +480,6 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
       Property property) throws RepositoryException, IOException {
     ValueImpl value = null;
     while ((value = (ValueImpl) property.nextValue()) != null) {
-      if (LOGGER.isLoggable(Level.FINEST)) {
-        LOGGER.finest("PROPERTY: " + name + " = \"" + value.toString() + "\"");
-      }
       String valString = value.toFeedXml();
       if (valString != null && valString.length() > 0) {
         buf.append("<").append(XML_META);
@@ -791,44 +487,6 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
         XmlUtils.xmlAppendAttr(XML_CONTENT, valString, buf);
         buf.append("/>\n");
       }
-    }
-  }
-
-  /**
-   * Log the given Property's values.  This is called for
-   * the small set of document properties that are not simply
-   * added to the feed via wrapOneProperty().
-   */
-  private void logOneProperty(Document document, String name)
-      throws RepositoryException, IOException {
-    if (SpiConstants.PROPNAME_CONTENT.equals(name)) {
-      LOGGER.finest("PROPERTY: " + name + " = \"...content...\"");
-    } else {
-      Property property = document.findProperty(name);
-      if (property != null) {
-        ValueImpl value = null;
-        while ((value = (ValueImpl) property.nextValue()) != null) {
-          LOGGER.finest("PROPERTY: " + name + " = \"" + value.toString()
-                        + "\"");
-        }
-      }
-    }
-  }
-
-  /**
-   * Form either a Google connector URL or a Content URL, based on
-   * feed type.
-   */
-  private String constructUrl(String docid, FeedType feedType) {
-    switch (feedType) {
-      case CONTENTURL:
-        return constructContentUrl(docid);
-      case CONTENT:
-        return constructGoogleConnectorUrl(docid);
-      case WEB:
-        return docid;
-      default:
-        throw new AssertionError(feedType);
     }
   }
 
@@ -841,68 +499,30 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
   private String constructGoogleConnectorUrl(String docid) {
     StringBuilder buf = new StringBuilder(ServletUtil.PROTOCOL);
     buf.append(dataSource);
-    buf.append(".localhost").append(ServletUtil.DOCID);
+    buf.append(".localhost/doc?docid=");
     buf.append(docid);
     return buf.toString();
   }
 
   /**
-   * Form a Content URL.
+   * Verify that a supplied search URL is at least syntactically valid.
    *
-   * @param docid
-   * @return the contentUrl
+   * @param searchUrl
+   * @throws RepositoryDocumentException if searchUrl is invalid.
    */
-  private String constructContentUrl(String docid) {
-    Preconditions.checkState(!Strings.isNullOrEmpty(contentUrlPrefix),
-                             "contentUrlPrefix must not be null or empty");
-    StringBuilder buf = new StringBuilder(contentUrlPrefix);
-    ServletUtil.appendQueryParam(buf, ServletUtil.XMLTAG_CONNECTOR_NAME,
-                                 dataSource);
-    ServletUtil.appendQueryParam(buf, ServletUtil.QUERY_PARAM_DOCID, docid);
-    return buf.toString();
-  }
-
-  /**
-   * Verify that a supplied URL is at least syntactically valid.
-   *
-   * @param url the URL to validate
-   * @param description description of the URL
-   * @throws RepositoryDocumentException if the URL is invalid
-   */
-  private static void validateUrl(String url, String description)
+  private static void validateSearchUrl(String searchUrl)
       throws RepositoryDocumentException {
-    // Check that this looks like a URL.
+    // check that this looks like a URL
     try {
       // The GSA supports SMB URLs, but Java does not.
-      if (url != null && url.startsWith("smb:")) {
-        new URL(null, url, SmbURLStreamHandler.getInstance());
+      if (searchUrl != null && searchUrl.startsWith("smb:")) {
+        new URL(null, searchUrl, SmbURLStreamHandler.getInstance());
       } else {
-        new URL(url);
+        new URL(searchUrl);
       }
     } catch (MalformedURLException e) {
       throw new RepositoryDocumentException(
-          "Supplied " + description + " URL " + url + " is malformed.", e);
-    }
-  }
-
-  /**
-   * A DocumentFilter that strips all ACL properties from the Document's
-   * Properties, since the ACLs are being sent in a separate tag from generic
-   * metadata.
-   */
-  private static class StripAclDocumentFilter extends AbstractDocumentFilter {
-    private static Predicate<String> predicate = Predicates.not(aclPredicate);
-
-    @Override
-    public Set<String> getPropertyNames(Document source)
-        throws RepositoryException {
-      return Sets.filter(source.getPropertyNames(), predicate);
-    }
-
-    @Override
-    public Property findProperty(Document source, String name)
-        throws RepositoryException {
-      return (predicate.apply(name)) ? source.findProperty(name) : null;
+          "Supplied search url " + searchUrl + " is malformed.", e);
     }
   }
 }

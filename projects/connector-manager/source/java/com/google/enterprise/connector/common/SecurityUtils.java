@@ -14,9 +14,6 @@
 
 package com.google.enterprise.connector.common;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * Security related utility methods.
  */
@@ -28,24 +25,5 @@ public class SecurityUtils {
    */
   public static boolean isKeySensitive(String key) {
     return key.toLowerCase().indexOf("password") != -1;
-  }
-
-  /**
-   * Gets a copy of the map with password property values masked.
-   *
-   * @param original a property map
-   * @return a copy of the map with password property values
-   *         replaced by the string "[...]"
-   */
-  public static Map<String, String> getMaskedMap(Map<String, String> original) {
-    if (original == null) {
-      return null;
-    }
-    HashMap<String, String> copy = new HashMap<String, String>();
-    for (Map.Entry<String, String> entry : original.entrySet()) {
-      String key = entry.getKey();
-      copy.put(key, (isKeySensitive(key) ? "[...]" : entry.getValue()));
-    }
-    return copy;
   }
 }

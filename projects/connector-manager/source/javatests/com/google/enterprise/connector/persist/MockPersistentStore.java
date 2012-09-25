@@ -62,11 +62,6 @@ public class MockPersistentStore implements PersistentStore {
       result = 17 * result + property.hashCode();
       return result;
     }
-
-    @Override
-    public String toString() {
-      return "{ context=" + context + ", property=" + property + " }";
-    }
   }
 
   private static class StoreEntry {
@@ -76,11 +71,6 @@ public class MockPersistentStore implements PersistentStore {
     public StoreEntry(Object object, Stamp stamp) {
       this.object = object;
       this.stamp = stamp;
-    }
-
-    @Override
-    public String toString() {
-      return "{ value=" + object + ", stamp=" + stamp + " }";
     }
   }
 
@@ -198,11 +188,6 @@ public class MockPersistentStore implements PersistentStore {
   /* @Override */
   public void removeConnectorSchedule(StoreContext context) {
     removeObject(context, SCHEDULE);
-  }
-
-  @Override
-  public synchronized String toString() {
-    return "MockPersistentStore = " + storeMap.toString();
   }
 
   /**

@@ -28,13 +28,7 @@ import com.google.enterprise.connector.spi.AuthorizationResponse;
 import com.google.enterprise.connector.spi.AuthorizationResponse.Status;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.ConnectorType;
-import com.google.enterprise.connector.spi.Document;
-import com.google.enterprise.connector.spi.SpiConstants;
-import com.google.enterprise.connector.test.ConnectorTestUtils;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -63,18 +57,12 @@ public class MockManager implements Manager {
   private static final String CONNECTOR2 = "connector2";
   private static final String CONNECTOR3 = "connector3";
   private static final String CONNECTOR4 = "connector4";
-  private static final String CONNECTOR5 = "connector5";
-  public static final String CONNECTOR6 = "connector6";
-
-  public static final String CONNECTOR6_SPECIAL_CHAR_DOCID
-      = "AaZz09-_.~`=/?+';\\/\"!@#$%^&*()[]{}ëこんにちは世界\u0001";
-  public static final String CONNECTOR6_SUCCESS = "success";
 
   private boolean shouldVerifyIdentity;
   private String domain;
   private String username;
   private String password;
-  private Collection<?> groups;
+  private Collection<String> groups;
 
   /** Stand-in for the manager.locked property. */
   private boolean isLocked = false;
@@ -187,6 +175,7 @@ public class MockManager implements Manager {
     if (CONNECTOR3.equals(connectorName)) {
       if (permit) {
         for (String docid : docidList) {
+          LOGGER.info("Docid: " + docid + "  permit: " + permit);//DEBUGGING
           if (permit) {
             results.add(new AuthorizationResponse(permit, docid));
           }
@@ -195,63 +184,6 @@ public class MockManager implements Manager {
       }
     }
     return results;
-  }
-
-  /* @Override */
-  public InputStream getDocumentContent(String connectorName, String docid)
-      throws ConnectorNotFoundException {
-    try {
-      if (CONNECTOR1.equals(connectorName)) {
-        return new ByteArrayInputStream(docid.getBytes("UTF-8"));
-      }
-      if (CONNECTOR2.equals(connectorName)) {
-        return null;  // no content
-      }
-      if (CONNECTOR5.equals(connectorName)) {
-        return new ByteArrayInputStream(docid.getBytes("UTF-8"));
-      }
-      if (CONNECTOR6.equals(connectorName)) {
-        if (CONNECTOR6_SPECIAL_CHAR_DOCID.equals(docid)) {
-          return new ByteArrayInputStream(
-              CONNECTOR6_SUCCESS.getBytes("UTF-8"));
-        } else {
-          return null;
-        }
-      }
-    } catch (UnsupportedEncodingException e) {
-      // UTF-8 is always supported.
-      throw new AssertionError(e);
-    }
-    throw new ConnectorNotFoundException("Connector not found: "
-                                         + connectorName);
-  }
-
-  /* @Override */
-  public Document getDocumentMetaData(String connectorName, String docid)
-      throws ConnectorNotFoundException {
-    if (CONNECTOR1.equals(connectorName) || CONNECTOR6.equals(connectorName)) {
-      Map<String, Object> props =
-          ConnectorTestUtils.createSimpleDocumentBasicProperties(docid);
-      props.remove(SpiConstants.PROPNAME_CONTENT);
-      return ConnectorTestUtils.createSimpleDocument(props);
-    }
-    if (CONNECTOR2.equals(connectorName)) {
-      Map<String, Object> props =
-          ConnectorTestUtils.createSimpleDocumentBasicProperties(docid);
-      props.remove(SpiConstants.PROPNAME_CONTENT);
-      props.remove(SpiConstants.PROPNAME_LASTMODIFIED);
-      props.remove(SpiConstants.PROPNAME_MIMETYPE);
-      return ConnectorTestUtils.createSimpleDocument(props);
-    }
-    if (CONNECTOR5.equals(connectorName)) {
-      Map<String, Object> props =
-          ConnectorTestUtils.createSimpleDocumentBasicProperties(docid);
-      props.remove(SpiConstants.PROPNAME_CONTENT);
-      props.put(SpiConstants.PROPNAME_ISPUBLIC, false);
-      return ConnectorTestUtils.createSimpleDocument(props);
-    }
-    throw new ConnectorNotFoundException("Connector not found: "
-                                         + connectorName);
   }
 
   /* @Override */
@@ -312,7 +244,7 @@ public class MockManager implements Manager {
     String type = "Documentum";
     int status = 0;
     String schedule = connectorName + ":100:0:0-0";
-    return new ConnectorStatus(name, type, status, schedule, null, null);
+    return new ConnectorStatus(name, type, status, schedule);
   }
 
   /* @Override */
@@ -329,9 +261,8 @@ public class MockManager implements Manager {
 
   /* @Override */
   public ConfigureResponse setConnectorConfiguration(String connectorName,
-      Configuration configuration, String language, boolean update)
-      throws ConnectorNotFoundException, ConnectorExistsException,
-             PersistentStoreException, InstantiatorException {
+        Configuration configuration, String language, boolean update)
+        throws InstantiatorException {
     LOGGER.info("setConnectorConfig() connectorName: " + connectorName);
     LOGGER.info("setConnectorConfig() update: " + update);
     LOGGER.info("configData: ");
@@ -348,13 +279,13 @@ public class MockManager implements Manager {
     return null;
   }
 
+  final Properties managerConfig = new Properties();
+
   /* @Override */
   public Configuration getConnectorConfiguration(String connectorName)
       throws ConnectorNotFoundException {
     return new Configuration("Mock", new HashMap<String, String>(), null);
   }
-
-  final Properties managerConfig = new Properties();
 
   /* @Override */
   public Properties getConnectorManagerConfig() {
@@ -363,8 +294,7 @@ public class MockManager implements Manager {
 
   /* @Override */
   public void setConnectorManagerConfig(String feederGateProtocol,
-      String feederGateHost, int feederGatePort, int feederGateSecurePort,
-      String connectorManagerUrl) {
+      String feederGateHost, int feederGatePort, int feederGateSecurePort) {
     if (!Strings.isNullOrEmpty(feederGateProtocol)) {
       managerConfig.put(Context.GSA_FEED_PROTOCOL_PROPERTY_KEY,
           feederGateProtocol);
@@ -379,16 +309,12 @@ public class MockManager implements Manager {
       managerConfig.put(Context.GSA_FEED_SECURE_PORT_PROPERTY_KEY,
           String.valueOf(feederGateSecurePort));
     }
-    if (!Strings.isNullOrEmpty(connectorManagerUrl)) {
-      managerConfig.put(Context.FEED_CONTENTURL_PREFIX_PROPERTY_KEY,
-          connectorManagerUrl + Context.FEED_CONTENTURL_SERVLET);
-    }
+
     isLocked = true;
   }
 
   /* @Override */
-  public void setSchedule(String connectorName, String schedule)
-      throws ConnectorNotFoundException, PersistentStoreException {
+  public void setSchedule(String connectorName, String schedule) {
     // do nothing
   }
 
@@ -402,8 +328,7 @@ public class MockManager implements Manager {
   }
 
   /* @Override */
-  public void restartConnectorTraversal(String connectorName)
-      throws ConnectorNotFoundException, InstantiatorException {
+  public void restartConnectorTraversal(String connectorName) {
     // do nothing;
   }
 
@@ -422,7 +347,7 @@ public class MockManager implements Manager {
   }
 
   public void setExpectedIdentity(String domain, String username,
-      String password, Collection<?> groups) {
+      String password, Collection<String> groups) {
     this.domain = domain;
     this.username = username;
     this.password = password;

@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.
+// Copyright (C) 2006-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.manager.MockManager;
 
+import junit.framework.Assert;
 import junit.framework.TestCase;
 
 import java.io.PrintWriter;
@@ -62,13 +63,15 @@ public class RemoveConnectorTest extends TestCase {
     Manager manager = MockManager.getInstance();
     StringWriter writer = new StringWriter();
     PrintWriter out = new PrintWriter(writer);
-    RemoveConnector.handleDoGet(connectorName, manager, out);
+    RemoveConnector.handleDoGet(
+        connectorName, manager, out);
     out.flush();
-    String result = writer.toString();
+    StringBuffer result = writer.getBuffer();
+    LOGGER.info(result.toString());
+    LOGGER.info(expectedResult);
+    Assert.assertEquals(StringUtils.normalizeNewlines(expectedResult),
+        StringUtils.normalizeNewlines(result.toString()));
     out.close();
-    LOGGER.info("Expected Response:\n" + expectedResult);
-    LOGGER.info("Actual Response:\n" + result);
-    assertEquals(StringUtils.normalizeNewlines(expectedResult),
-                 StringUtils.normalizeNewlines(result));
   }
+
 }

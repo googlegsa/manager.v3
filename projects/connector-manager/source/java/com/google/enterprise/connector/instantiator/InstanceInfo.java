@@ -14,7 +14,6 @@
 
 package com.google.enterprise.connector.instantiator;
 
-import com.google.common.collect.Lists;
 import com.google.enterprise.connector.common.PropertiesException;
 import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.manager.Context;
@@ -22,8 +21,6 @@ import com.google.enterprise.connector.persist.PersistentStore;
 import com.google.enterprise.connector.persist.StoreContext;
 import com.google.enterprise.connector.scheduler.Schedule;
 import com.google.enterprise.connector.spi.Connector;
-import com.google.enterprise.connector.util.filter.DocumentFilterChain;
-import com.google.enterprise.connector.util.filter.DocumentFilterFactory;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.MutablePropertyValues;
@@ -34,20 +31,14 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Map;
 import java.util.Properties;
-import java.util.logging.Logger;
 
 /**
  * Container for info about a Connector Instance. Instantiable only through a
  * static factory that uses Spring.
  */
 final class InstanceInfo {
-  private static final Logger LOGGER =
-      Logger.getLogger(InstanceInfo.class.getName());
-
   private static PersistentStore store;
 
   private final TypeInfo typeInfo;
@@ -55,7 +46,6 @@ final class InstanceInfo {
   private final String connectorName;
   private final StoreContext storeContext;
   private final Connector connector;
-  private final DocumentFilterFactory documentFilterFactory;
 
   /**
    * Constructs a InstanceInfo with no backing Connector instance.
@@ -119,22 +109,9 @@ final class InstanceInfo {
       if (config == null) {
         throw new NullConfigurationException();
       }
-      DefaultListableBeanFactory beanFactory = new DefaultListableBeanFactory();
-      this.connector = makeConnectorWithSpring(connectorName, typeInfo, config,
-                                               beanFactory);
-      try {
-        this.documentFilterFactory = getDocumentFilterFactory(beanFactory);
-        if (this.documentFilterFactory != null) {
-          LOGGER.config("Connector " + connectorName + " has document filters: "
-                        + this.documentFilterFactory.toString());
-        }
-      } catch (BeansException e) {
-        throw new InstanceInfoException("Failed to load document filters for"
-                                        + " connector " + connectorName, e);
-      }
+      this.connector = makeConnectorWithSpring(connectorName, typeInfo, config);
     } else {
       this.connector = null;
-      this.documentFilterFactory = null;
     }
   }
 
@@ -183,22 +160,7 @@ final class InstanceInfo {
    */
   static Connector makeConnectorWithSpring(String connectorName,
       TypeInfo typeInfo, Configuration config) throws InstanceInfoException {
-    return makeConnectorWithSpring(connectorName, typeInfo, config,
-                                   new DefaultListableBeanFactory());
-  }
-
-  /**
-   * Construct a new Connector Instance based upon the connectorInstance
-   * and connectorDefaults bean definitions.
-   *
-   * @param connectorName the name of the Connector instance.
-   * @param typeInfo the Connector's prototype.
-   * @param config connector Configuration.
-   * @param factory DefaultListableBeanFactory used to create the connector.
-   */
-  private static Connector makeConnectorWithSpring(String connectorName,
-      TypeInfo typeInfo, Configuration config,
-      DefaultListableBeanFactory factory) throws InstanceInfoException {
+    Context context = Context.getInstance();
     String name = connectorName;
     Resource prototype = null;
     if (config.getXml() != null) {
@@ -209,6 +171,7 @@ final class InstanceInfo {
       prototype = typeInfo.getConnectorInstancePrototype();
     }
 
+    DefaultListableBeanFactory factory = new DefaultListableBeanFactory();
     XmlBeanDefinitionReader beanReader = new XmlBeanDefinitionReader(factory);
     Resource defaults = typeInfo.getConnectorDefaultPrototype();
     try {
@@ -227,7 +190,6 @@ final class InstanceInfo {
       }
     }
 
-    Context context = Context.getInstance();
     EncryptedPropertyPlaceholderConfigurer cfg = null;
     try {
         cfg = (EncryptedPropertyPlaceholderConfigurer) context.getBean(
@@ -297,55 +259,6 @@ final class InstanceInfo {
     public String getFilename() {
       return filename;
     }
-  }
-
-  /**
-   * Looks for {@link DocumentFilterFactory} beans in the connector's
-   * bean factory. 
-   *
-   * @param beanFactory DefaultListableBeanFactory used to create the connector.
-   * @return {@link DocumentFilterFactory} for the connector, or {@code null}
-   *         if the connector does not define a DocumentFilterFactory.
-   */
-  private static DocumentFilterFactory getDocumentFilterFactory(
-      DefaultListableBeanFactory beanFactory) throws BeansException {
-    @SuppressWarnings("unchecked") Collection<DocumentFilterFactory> filters =
-        beanFactory.getBeansOfType(DocumentFilterFactory.class).values();
-    if (filters == null || filters.size() == 0) {
-      // No filters defined.
-      return null;
-    } else if (filters.size() == 1) {
-      // If there is just one, return it.
-      return filters.iterator().next();
-    }
-
-    // More than one filter is defined.  Look for a single DocumentFilterChain,
-    // which hopefully encapsulates the rest.
-    @SuppressWarnings("unchecked") Collection<DocumentFilterChain> chains =
-        beanFactory.getBeansOfType(DocumentFilterChain.class).values();
-    if (chains == null || chains.size() == 0) {
-      // No chains defined, so I'll make one.  But the order of the filters
-      // should be considered random.
-      return new DocumentFilterChain(Lists.newArrayList(filters));
-    } else if (chains.size() == 1) {
-      // If there is just one, return it.
-      return chains.iterator().next();
-    } else {
-      // More than one filter chain is defined???  I will allow it, but...
-      return new DocumentFilterChain(Lists.newArrayList(chains));
-    }
-  }
-
-  /**
-   * Returns a connector's {@link DocumentFilterFactory}. Connectors may define
-   * a document filter specific to that connector instance.  This filter will
-   * be used in conjuction with the Connector Manager's document filter, and
-   * will act as the source for the Connector Manager's document filter.
-   *
-   * @return {@link DocumentFilterFactory} for the connector
-   */
-  public DocumentFilterFactory getDocumentFilterFactory() {
-    return documentFilterFactory;
   }
 
   /**

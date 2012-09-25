@@ -14,15 +14,12 @@
 
 package com.google.enterprise.connector.database;
 
-import com.google.common.base.Preconditions;
 import com.google.enterprise.connector.spi.ConnectorType;
 import com.google.enterprise.connector.spi.ConnectorPersistentStore;
 import com.google.enterprise.connector.spi.LocalDatabase;
 import com.google.enterprise.connector.spi.LocalDocumentStore;
 import com.google.enterprise.connector.util.database.JdbcDatabase;
 import com.google.enterprise.connector.util.database.LocalDatabaseImpl;
-
-import java.sql.SQLException;
 
 /**
  * Factory used to construct {@link ConnectorPersistentStore} instances for
@@ -39,7 +36,6 @@ public class ConnectorPersistentStoreFactory {
    *        {@link LocalDatabase} instances.
    */
   public ConnectorPersistentStoreFactory(JdbcDatabase jdbcDatabase) {
-    Preconditions.checkNotNull(jdbcDatabase, "jdbcDatabase must not be null");
     this.jdbcDatabase = jdbcDatabase;
   }
 
@@ -53,14 +49,10 @@ public class ConnectorPersistentStoreFactory {
    */
   public ConnectorPersistentStore newConnectorPersistentStore(
       String connectorName, String connectorTypeName,
-      ConnectorType connectorType) throws SQLException {
-    // If I can successfully establish a Connection to the database,
-    // assume the JdbcDatabase is functional.
-    jdbcDatabase.getDataSource().getConnection().close();
-
+      ConnectorType connectorType) {
     return new ConnectorPersistentStoreImpl(
         new LocalDatabaseImpl(jdbcDatabase, connectorTypeName, connectorType),
-        null /* new LocalDocumentStoreImpl(jdbcDatabase, connectorName) */);
+        null);
   }
 
   private class ConnectorPersistentStoreImpl

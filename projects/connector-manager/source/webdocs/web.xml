@@ -73,37 +73,6 @@
     </description>
   </context-param>
 
-  <listener>
-    <listener-class>com.google.enterprise.connector.servlet.StartUp</listener-class>
-  </listener>
-
-  <!-- Set up the Servlet Logging Filter -->
-  <filter>
-    <filter-name>ServletLoggingFilter</filter-name>
-    <filter-class>com.google.enterprise.connector.servlet.ServletLoggingFilter</filter-class>
-  </filter>
-  <filter-mapping>
-    <filter-name>ServletLoggingFilter</filter-name>
-    <url-pattern>/*</url-pattern>
-  </filter-mapping>
-
-  <filter>
-    <filter-name>DocumentContentHostnameSecurity</filter-name>
-    <filter-class>com.google.enterprise.connector.servlet.HostnameSecurity</filter-class>
-    <init-param>
-      <param-name>allowedHostsConfigName</param-name>
-      <param-value>retriever.allowedHosts</param-value>
-    </init-param>
-    <init-param>
-      <param-name>useClientCertificateSecurityConfigName</param-name>
-      <param-value>retriever.useClientCertificateSecurity</param-value>
-    </init-param>
-  </filter>
-  <filter-mapping>
-    <filter-name>DocumentContentHostnameSecurity</filter-name>
-    <url-pattern>/getDocumentContent</url-pattern>
-  </filter-mapping>
-
 
   <!-- Define servlets that are included in the Connector Manager application -->
 
@@ -210,6 +179,12 @@
   </servlet>
 
   <servlet>
+    <servlet-name>StartUp</servlet-name>
+    <servlet-class>com.google.enterprise.connector.servlet.StartUp</servlet-class>
+    <load-on-startup>1</load-on-startup>
+  </servlet>
+
+  <servlet>
     <servlet-name>GetConnectorConfigToEdit</servlet-name>
     <servlet-class>com.google.enterprise.connector.servlet.GetConnectorConfigToEdit</servlet-class>
   </servlet>
@@ -217,11 +192,6 @@
   <servlet>
     <servlet-name>RemoveConnector</servlet-name>
     <servlet-class>com.google.enterprise.connector.servlet.RemoveConnector</servlet-class>
-  </servlet>
-
-  <servlet>
-    <servlet-name>GetDocumentContent</servlet-name>
-    <servlet-class>com.google.enterprise.connector.servlet.GetDocumentContent</servlet-class>
   </servlet>
 
   <!-- Define servlet mappings -->
@@ -353,6 +323,11 @@
   </servlet-mapping>
 
   <servlet-mapping>
+    <servlet-name>StartUp</servlet-name>
+    <url-pattern>/startUp</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
     <servlet-name>GetConnectorConfigToEdit</servlet-name>
     <url-pattern>/getConnectorConfigToEdit</url-pattern>
   </servlet-mapping>
@@ -360,11 +335,6 @@
   <servlet-mapping>
     <servlet-name>RemoveConnector</servlet-name>
     <url-pattern>/removeConnector</url-pattern>
-  </servlet-mapping>
-
-  <servlet-mapping>
-    <servlet-name>GetDocumentContent</servlet-name>
-    <url-pattern>/getDocumentContent</url-pattern>
   </servlet-mapping>
 
 </web-app>

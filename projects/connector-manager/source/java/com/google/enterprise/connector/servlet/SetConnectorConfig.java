@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.
+// Copyright (C) 2006 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 
 package com.google.enterprise.connector.servlet;
 
@@ -30,7 +31,7 @@ public class SetConnectorConfig extends ConnectorManagerServlet {
   @Override
   protected void processDoPost(
       String xmlBody, Manager manager, PrintWriter out) {
-    NDC.append("Config");
+    NDC.push("Config");
     try {
       SetConnectorConfigHandler handler =
           new SetConnectorConfigHandler(xmlBody, manager);
@@ -38,6 +39,7 @@ public class SetConnectorConfig extends ConnectorManagerServlet {
           handler.getStatus(), handler.getConfigRes(), handler.isUpdate());
     } finally {
       out.close();
+      NDC.pop();
     }
   }
 }

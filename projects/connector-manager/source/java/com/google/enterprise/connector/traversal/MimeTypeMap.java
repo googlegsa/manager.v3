@@ -14,8 +14,6 @@
 
 package com.google.enterprise.connector.traversal;
 
-import com.google.common.annotations.VisibleForTesting;
-
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -68,7 +66,7 @@ public class MimeTypeMap {
    * @param mimeTypes Set of mime types that are preferred.
    */
   public void setPreferredMimeTypes(Set<String> mimeTypes) {
-    LOGGER.config("Setting preferred mime types to " + mimeTypes);
+    LOGGER.config("Setting preferred mime types to " + mimeTypes.toString());
     initMimeTypes(mimeTypes, 8);
   }
 
@@ -81,7 +79,7 @@ public class MimeTypeMap {
    * @param mimeTypes Set of mime types that are preferred.
    */
   public void setSupportedMimeTypes(Set<String> mimeTypes) {
-    LOGGER.config("Setting supported mime types to " + mimeTypes);
+    LOGGER.config("Setting supported mime types to " + mimeTypes.toString());
     initMimeTypes(mimeTypes, 4);
   }
 
@@ -96,7 +94,7 @@ public class MimeTypeMap {
    * @param mimeTypes Set of mime types that are not indexable.
    */
   public void setUnsupportedMimeTypes(Set<String> mimeTypes) {
-    LOGGER.config("Setting unsupported mime types to " + mimeTypes);
+    LOGGER.config("Setting unsupported mime types to " + mimeTypes.toString());
     initMimeTypes(mimeTypes, -1);
   }
 
@@ -108,7 +106,7 @@ public class MimeTypeMap {
    * @param mimeTypes Set of mime types that should not be fed.
    */
   public void setExcludedMimeTypes(Set<String> mimeTypes) {
-    LOGGER.config("Setting excluded mime types to " + mimeTypes);
+    LOGGER.config("Setting excluded mime types to " + mimeTypes.toString());
     // -5 is for historical reasons, as Excluded was added after Unsupported.
     initMimeTypes(mimeTypes, -5);
   }
@@ -121,8 +119,7 @@ public class MimeTypeMap {
    * level +/- 1, accordingly.  Content types sans subtypes are preferred
    * least of all, so their support level is adjusted by -2.
    */
-  @VisibleForTesting
-  void initMimeTypes(Set<String> mimeTypes, int supportLevel) {
+  private void initMimeTypes(Set<String> mimeTypes, int supportLevel) {
     if (mimeTypes == null || mimeTypes.size() == 0)
       return;
 
@@ -141,16 +138,13 @@ public class MimeTypeMap {
 
     // Add the mimetypes to the map.  We adjust the support levels
     // slightly to prefer "vnd." subtypes over others, and prefer
-    // any other subtype over "x-" subtypes.  Rank */plain below
-    // possibly more specific types.
-    // Content types sans subtypes are ranked below all others.
+    // any other subtype over "x-" subtypes.  Content types sans
+    // subtypes are ranked below all others.
     for (Iterator<String> i = mimeTypes.iterator(); i.hasNext(); ) {
       String mimeType = i.next().trim().toLowerCase();
       if (mimeType.indexOf('/') < 0) {
         typeMap.put(mimeType, level0);
       } else if (mimeType.startsWith("x-") || (mimeType.indexOf("/x-") > 0)) {
-        typeMap.put(mimeType, level1);
-      } else if (mimeType.endsWith("/plain")) {
         typeMap.put(mimeType, level1);
       } else if (mimeType.indexOf("/vnd.") > 0) {
         typeMap.put(mimeType, level3);

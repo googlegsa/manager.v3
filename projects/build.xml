@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <project name="google-enterprise-connector-manager" default="everything" basedir=".">
 
   <!-- ========================= PROPERTIES ============================= -->
@@ -15,20 +14,21 @@
 
   <!-- =========================== TASKS =============================== -->
 
-  <include file="svnbuild.xml" as="svn"/>
-
   <target name="clean" depends="clean-all" />
 
-  <target name="clean-all" depends="prebuild">
+  <target name="clean-all">
     <ant dir="${connector-manager.dir}" target="clean" />
     <ant dir="${test-connectorA.dir}" target="clean" />
     <ant dir="${test-connectorB.dir}" target="clean" />
   </target>
 
   <target name="prebuild">
-    <antversion property="antversion" atleast="1.8" />
-    <fail unless="antversion"
-          message="This project requires ant version 1.8.0 or newer."/>
+    <exec executable="svnversion" spawn="false"
+      failifexecutionfails="false"
+      dir="${basedir}"
+      outputproperty="svnversion">
+      <arg line="."/>
+    </exec>
   </target>
 
   <target name="connector-manager" depends="prebuild">
@@ -79,50 +79,48 @@
   </target>
 
   <target name="download-connector-manager"
-          depends="connector-manager-war-prod,spi-javadoc,make-downloads-dir,svn.svn-branch-version">
-    <property name="downloads.prefix" value="connector-manager-${svn.branch}"/>
+          depends="connector-manager-war-prod,spi-javadoc,make-downloads-dir">
     <copy file="${trunk.dir}/COPYING" tofile="${trunk.dir}/LICENSE"/>
-    <tar destfile="${downloads.dir}/${downloads.prefix}.tar"
+    <tar destfile="${downloads.dir}/connector-manager-${version}.tar"
          longfile="gnu">
       <tarfileset dir="${connector-manager.dir}/dist/connector-manager"
-        prefix="${downloads.prefix}">
+        prefix="connector-manager-${version}">
         <include name="connector-manager.war"/>
       </tarfileset>
-      <tarfileset dir="${trunk.dir}" prefix="${downloads.prefix}">
+      <tarfileset dir="${trunk.dir}" prefix="connector-manager-${version}">
         <include name="LICENSE"/>
         <include name="README"/>
         <include name="RELEASE_NOTES"/>
       </tarfileset>
       <tarfileset dir="${connector-manager.dir}/source/scripts" includes="*"
-         prefix="${downloads.prefix}/Scripts"/>
+         prefix="connector-manager-${version}/Scripts"/>
     </tar>
-    <gzip zipfile="${downloads.dir}/${downloads.prefix}.tar.gz"
-      src="${downloads.dir}/${downloads.prefix}.tar"/>
-    <delete file="${downloads.dir}/${downloads.prefix}.tar"/>
-    <zip destfile="${downloads.dir}/${downloads.prefix}.zip">
+    <gzip zipfile="${downloads.dir}/connector-manager-${version}.tar.gz"
+      src="${downloads.dir}/connector-manager-${version}.tar"/>
+    <delete file="${downloads.dir}/connector-manager-${version}.tar"/>
+    <zip destfile="${downloads.dir}/connector-manager-${version}.zip">
       <zipfileset dir="${connector-manager.dir}/dist/connector-manager"
-        includes="connector-manager.war" prefix="${downloads.prefix}"/>
+        includes="connector-manager.war"
+        prefix="connector-manager-${version}"/>
       <zipfileset dir="${trunk.dir}" includes="LICENSE,README,RELEASE_NOTES"
-        prefix="${downloads.prefix}"/>
+        prefix="connector-manager-${version}"/>
       <zipfileset dir="${connector-manager.dir}/source/scripts" includes="*"
-        prefix="${downloads.prefix}/Scripts"/>
+        prefix="connector-manager-${version}/Scripts"/>
     </zip>
-    <checksum algorithm="SHA-1"
-              file="${downloads.dir}/${downloads.prefix}.tar.gz"/>
-    <checksum algorithm="SHA-1"
-              file="${downloads.dir}/${downloads.prefix}.zip"/>
-    <tar destfile="${downloads.dir}/${downloads.prefix}-src.tar"
+    <checksum file="${downloads.dir}/connector-manager-${version}.tar.gz"/>
+    <checksum file="${downloads.dir}/connector-manager-${version}.zip"/>
+    <tar destfile="${downloads.dir}/connector-manager-${version}-src.tar"
          longfile="gnu">
-      <tarfileset dir="." prefix="${downloads.prefix}-src">
+      <tarfileset dir="." prefix="connector-manager-${version}-src">
         <include name="build.xml"/>
       </tarfileset>
-      <tarfileset dir="${trunk.dir}" prefix="${downloads.prefix}-src">
+      <tarfileset dir="${trunk.dir}" prefix="connector-manager-${version}-src">
         <include name="LICENSE"/>
         <include name="README"/>
         <include name="RELEASE_NOTES"/>
       </tarfileset>
       <tarfileset dir="${connector-manager.dir}"
-        prefix="${downloads.prefix}-src/${connector-manager.dir}">
+        prefix="connector-manager-${version}-src/${connector-manager.dir}">
         <include name="build.xml"/>
         <include name="doc/**/*"/>
         <include name="etc/**/*"/>
@@ -133,7 +131,7 @@
         <include name=".project"/>
       </tarfileset>
       <tarfileset dir="${test-connectorA.dir}"
-        prefix="${downloads.prefix}-src/${test-connectorA.dir}">
+        prefix="connector-manager-${version}-src/${test-connectorA.dir}">
         <include name="config/**/*"/>
         <include name="source/**/*"/>
         <include name="build.xml"/>
@@ -141,7 +139,7 @@
         <include name=".project"/>
       </tarfileset>
       <tarfileset dir="${test-connectorB.dir}"
-        prefix="${downloads.prefix}-src/${test-connectorB.dir}">
+        prefix="connector-manager-${version}-src/${test-connectorB.dir}">
         <include name="config/**/*"/>
         <include name="source/**/*"/>
         <include name="build.xml"/>
@@ -149,31 +147,29 @@
         <include name=".project"/>
       </tarfileset>
     </tar>
-    <gzip zipfile="${downloads.dir}/${downloads.prefix}-src.tar.gz"
-      src="${downloads.dir}/${downloads.prefix}-src.tar"/>
-    <delete file="${downloads.dir}/${downloads.prefix}-src.tar"/>
-    <zip destfile="${downloads.dir}/${downloads.prefix}-src.zip">
-      <zipfileset dir="." includes="build.xml" prefix="${downloads.prefix}-src"/>
-      <zipfileset dir="${trunk.dir}" prefix="${downloads.prefix}-src"
+    <gzip zipfile="${downloads.dir}/connector-manager-${version}-src.tar.gz"
+      src="${downloads.dir}/connector-manager-${version}-src.tar"/>
+    <delete file="${downloads.dir}/connector-manager-${version}-src.tar"/>
+    <zip destfile="${downloads.dir}/connector-manager-${version}-src.zip">
+      <zipfileset dir="." includes="build.xml" prefix="connector-manager-${version}-src"/>
+      <zipfileset dir="${trunk.dir}" prefix="connector-manager-${version}-src"
         includes="LICENSE,README,RELEASE_NOTES" />
       <zipfileset dir="${connector-manager.dir}"
         includes="build.xml,doc/**/*,etc/**/*,
         source/**/*,testdata/**/*,third-party/**/*,
         .classpath,.project"
-        prefix="${downloads.prefix}-src/${connector-manager.dir}"/>
+        prefix="connector-manager-${version}-src/${connector-manager.dir}"/>
       <zipfileset dir="${test-connectorA.dir}"
         includes="config/**/,source/**/,build.xml
         .classpath,.project"
-        prefix="${downloads.prefix}-src/${test-connectorA.dir}"/>
+        prefix="connector-manager-${version}-src/${test-connectorA.dir}"/>
       <zipfileset dir="${test-connectorB.dir}"
         includes="config/**/,source/**/,build.xml
         .classpath,.project"
-        prefix="${downloads.prefix}-src/${test-connectorB.dir}"/>
+        prefix="connector-manager-${version}-src/${test-connectorB.dir}"/>
     </zip>
-    <checksum algorithm="SHA-1"
-              file="${downloads.dir}/${downloads.prefix}-src.tar.gz"/>
-    <checksum algorithm="SHA-1"
-              file="${downloads.dir}/${downloads.prefix}-src.zip"/>
+    <checksum file="${downloads.dir}/connector-manager-${version}-src.tar.gz"/>
+    <checksum file="${downloads.dir}/connector-manager-${version}-src.zip"/>
     <delete file="${trunk.dir}/LICENSE"/>
   </target>
 

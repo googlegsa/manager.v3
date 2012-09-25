@@ -18,7 +18,6 @@ import com.google.enterprise.connector.pusher.FeedConnection;
 import com.google.enterprise.connector.traversal.BatchResult;
 import com.google.enterprise.connector.traversal.BatchSize;
 import com.google.enterprise.connector.traversal.FileSizeLimitInfo;
-import com.google.enterprise.connector.traversal.TraversalDelayPolicy;
 import com.google.enterprise.connector.util.Clock;
 
 import java.util.LinkedList;
@@ -39,28 +38,19 @@ public class HostLoadManager implements LoadManager {
   private static final long MINUTE_IN_MILLIS = 60 * 1000L;
 
   /**
-   * The batch size as calculated by the last call to determineBatchSize().
+   * Cache containing the last few {@link BatchResult} traversal results for
+   * the connector.  The results returned by recent traversals are used to
+   * calculate the optimum size for the next traversal batch to maintain the
+   * configured host load.
    */
-  private int lastBatchSize;
-
-  /**
-   * The last recorded {@link BatchResult} traversal result for the connector.
-   * The result returned by the previous traversal is used to calculate the
-   * optimum size for the next traversal batch to maintain the configured
-   * host load.
-   */
-  private BatchResult lastBatchResult;
+  private final LinkedList<BatchResult> batchResults = new LinkedList<BatchResult>();
 
   /**
    * The optimal number of documents for each Traversal to return.
-   * Small batches (<100) incur significant per batch overhead, and may
-   * backlog feed processing on the GSA.
+   * Small batches (<100) incur significant per batch overhead.
    * Large batches may consume excessive local and Repository resources.
    */
   private int batchSize = 500;
-
-  /** The smallest allowed batch size. */
-  private int minBatchSize;
 
   /**
    * Number of milliseconds used to measure the feed rate.
@@ -77,12 +67,7 @@ public class HostLoadManager implements LoadManager {
   /**
    * The load is the target number of documents per period to process.
    */
-  private int load = 500;
-
-  /**
-   * The target traversal rate, based upon the load and the period.
-   */
-  private float rate;
+  private int load = 1000;
 
   /**
    * Used for timing throughput.
@@ -114,7 +99,6 @@ public class HostLoadManager implements LoadManager {
     this.feedConnection = feedConnection;
     this.fileSizeLimit = fileSizeLimit;
     this.clock = clock;
-    seedLoad();
   }
 
   /**
@@ -124,9 +108,7 @@ public class HostLoadManager implements LoadManager {
    */
   /* @Override */
   public void setLoad(int load) {
-    LOGGER.fine("Setting host load to " + load);
     this.load = load;
-    seedLoad();
   }
 
   /**
@@ -136,10 +118,7 @@ public class HostLoadManager implements LoadManager {
    */
   /* @Override */
   public void setPeriod(int periodInSeconds) {
-    LOGGER.fine("Setting load measurement period to " + periodInSeconds
-                + " seconds");
     periodInMillis = periodInSeconds * 1000L;
-    seedLoad();
   }
 
   /**
@@ -148,22 +127,6 @@ public class HostLoadManager implements LoadManager {
   /* @Override */
   public void setBatchSize(int batchSize) {
     this.batchSize = batchSize;
-    LOGGER.fine("Setting the maximum batch size to " + batchSize);
-    seedLoad();
-  }
-
-  /**
-   * Sets the target traversal rate, based upon the configured load and period,
-   * and seeds the lastBatchRequest().
-   */
-  private void seedLoad() {
-    minBatchSize = Math.min(load, batchSize);
-    LOGGER.fine("Setting the minimum batch size to " + batchSize);
-
-    rate = ((float) load) / periodInMillis;
-    lastBatchSize = Math.min(load, batchSize);
-    lastBatchResult = new BatchResult(TraversalDelayPolicy.IMMEDIATE,
-                                      lastBatchSize, 0L, periodInMillis);
   }
 
   /**
@@ -175,8 +138,70 @@ public class HostLoadManager implements LoadManager {
   /* @Override */
   public void recordResult(BatchResult batchResult) {
     if (batchResult.getCountProcessed() > 0) {
-      lastBatchResult = batchResult;
+      batchResults.add(0, batchResult);
     }
+  }
+
+  /**
+   * Determine the approximate number of documents processed in the supplied
+   * batch during the specified period.
+   *
+   * @param r a BatchResult
+   * @param periodStart the start of the time period in question.
+   * @return number of documents traversed in the minute.
+   */
+  private int getNumDocsTraversedInPeriod(BatchResult r, long periodStart) {
+    long periodEnd = periodStart + periodInMillis;
+    if (r.getEndTime() <= periodStart || r.getStartTime() >= periodEnd) {
+      return 0;
+    }
+    long start = (r.getStartTime() < periodStart) ? periodStart : r.getStartTime();
+    long end = (r.getEndTime() > periodEnd) ? periodEnd : r.getEndTime();
+    return (int)(r.getCountProcessed() * (end - start)) / r.getElapsedTime();
+  }
+
+  /**
+   * Small struct holding the number of docs processed in each
+   * of the previous two periods.
+   */
+  private class RecentDocs {
+    // Number of documents processed during the current minute.
+    public final int docsThisPeriod;
+
+    // Number of documents processed during the previous minute.
+    public final int docsPrevPeriod;
+
+    public RecentDocs(int docsThisPeriod, int docsPrevPeriod) {
+      this.docsThisPeriod = docsThisPeriod;
+      this.docsPrevPeriod = docsPrevPeriod;
+    }
+  }
+
+  /**
+   * Determine the number of documents traversed since the start
+   * of the current traversal period (minute) and during the previous
+   * traversal period.
+   *
+   * @return number of documents traversed in this minute and the previous minute
+   */
+  private RecentDocs getNumDocsTraversedRecently() {
+    int numDocs = 0;
+    int prevNumDocs = 0;
+    long thisPeriod = (clock.getTimeMillis() / periodInMillis) * periodInMillis;
+    long prevPeriod = thisPeriod - periodInMillis;
+    if (batchResults.size() > 0) {
+      ListIterator<BatchResult> iter = batchResults.listIterator();
+      while (iter.hasNext()) {
+        BatchResult r = iter.next();
+        numDocs += getNumDocsTraversedInPeriod(r, thisPeriod);
+        prevNumDocs += getNumDocsTraversedInPeriod(r, prevPeriod);
+        if (r.getEndTime() < prevPeriod) {
+          // This is an old result.  We don't need it any more.
+          iter.remove();
+        }
+      }
+    }
+    return new RecentDocs(numDocs, prevNumDocs);
   }
 
   /**
@@ -184,24 +209,39 @@ public class HostLoadManager implements LoadManager {
    * number is based on the max feed rate for the connector instance as well
    * as the load determined based on recently recorded results.
    *
-   * @return BatchSize hint to the number of documents the traverser
+   * @return BatchSize hint and constraint to the number of documents traverser
    *         should traverse
    */
   /* @Override */
   public BatchSize determineBatchSize() {
-    BatchRequest batchReq = getBatchRequest();
+    int maxDocsPerPeriod = load;
+    RecentDocs traversed  = getNumDocsTraversedRecently();
+    int remainingDocsToTraverse = maxDocsPerPeriod - traversed.docsThisPeriod;
+
+    // If the connector grossly exceeded the target load during the last period,
+    // try to balance it out with a reduced batch size this period.
+    if (traversed.docsPrevPeriod > (maxDocsPerPeriod + maxDocsPerPeriod/10)) {
+      remainingDocsToTraverse -= traversed.docsPrevPeriod - maxDocsPerPeriod;
+    }
+
     if (LOGGER.isLoggable(Level.FINEST)) {
-      LOGGER.finest(batchReq.toString());
+      LOGGER.finest("maxDocsPerPeriod = " + maxDocsPerPeriod
+          + "  docsTraversedThisPeriod = " + traversed.docsThisPeriod
+          + "  docsTraversedPreviousPeriod = " + traversed.docsPrevPeriod
+          + "  remainingDocsToTraverse = " + remainingDocsToTraverse);
     }
-    // If the delay time hasn't expired, batch size is 0.
-    // However, if there is less that 100ms left, just let it go.
-    if ((batchReq.delay == 0) ||
-        (lastBatchResult.getEndTime() + batchReq.delay <
-         clock.getTimeMillis() + 100)) {
-      lastBatchSize = batchReq.batchSize;
-      return new BatchSize(batchReq.batchSize);
+
+    if (remainingDocsToTraverse > 0) {
+      int hint = Math.min(batchSize, remainingDocsToTraverse);
+      // Allow the connector to return up to twice as much as we
+      // ask for, even if it exceeds the load target.  However,
+      // connectors that grossly exceed the batchSize, may be
+      // penalized next time around to maintain an average load.
+      int max =  Math.max(hint * 2, remainingDocsToTraverse);
+      return new BatchSize(hint, max);
+    } else {
+      return new BatchSize();
     }
-    return new BatchSize();
   }
 
   /**
@@ -212,12 +252,20 @@ public class HostLoadManager implements LoadManager {
    */
   /* @Override */
   public boolean shouldDelay() {
-    BatchRequest batchReq = getBatchRequest();
+    // Has the connector exceeded its maximum number of documents per minute?
+    int maxDocsPerPeriod = load;
+    RecentDocs traversed  = getNumDocsTraversedRecently();
+    int remainingDocsToTraverse = maxDocsPerPeriod - traversed.docsThisPeriod;
 
-    // If the delay time hasn't expired, continue delay.
-    // However, if there is less that 100ms left, just let it go.
-    if ((lastBatchResult.getEndTime() + batchReq.delay) >=
-        clock.getTimeMillis() + 100) {
+    // If the connector grossly exceeded the target load during the last period,
+    // try to balance it out with a reduced batch size this period.
+    if (traversed.docsPrevPeriod > (maxDocsPerPeriod + maxDocsPerPeriod/10)) {
+      remainingDocsToTraverse -= traversed.docsPrevPeriod - maxDocsPerPeriod;
+    }
+
+    // Avoid asking for tiny batches if we are near the load limit.
+    int min = Math.min((maxDocsPerPeriod / 10), 20);
+    if (remainingDocsToTraverse <= min) {
       return true;
     }
 
@@ -251,42 +299,5 @@ public class HostLoadManager implements LoadManager {
     }
 
     return false;
-  }
-
-  /**
-   * Calculate the batch size for the next traversal batch.
-   * This uses the throughput of the previous traversal batch and
-   * the previously determined batch size to determine a batch
-   * size and a delay that will keep the traversal rate at or
-   * below the configured load.
-   */
-  private BatchRequest getBatchRequest() {
-    int count = lastBatchResult.getCountProcessed();
-    int time = lastBatchResult.getElapsedTime();
-    float lastRate = ((float) count) / time;
-    int newBatchSize = (int)(lastBatchSize * rate / lastRate);
-    if (lastRate < 0.85F * rate) {
-      return new BatchRequest(0, Math.min(batchSize, newBatchSize));
-    } else if (lastRate > 1.15F * rate) {
-      int delay = (int) (count * periodInMillis / load - time);
-      return new BatchRequest(delay, Math.max(minBatchSize, newBatchSize));
-    } else {
-      return new BatchRequest(0, lastBatchSize);
-    }
-  }
-
-  private static class BatchRequest {
-    public final int delay;
-    public final int batchSize;
-
-    BatchRequest(int delay, int batchSize) {
-      this.delay = delay;
-      this.batchSize = batchSize;
-    }
-
-    public String toString() {
-      return ((delay == 0) ? "no delay" : "delay = " + delay)
-          + ", batchSize = " + batchSize;
-    }
   }
 }

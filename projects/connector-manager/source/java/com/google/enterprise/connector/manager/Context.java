@@ -22,10 +22,8 @@ import com.google.enterprise.connector.instantiator.Instantiator;
 import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.instantiator.SpringInstantiator;
 import com.google.enterprise.connector.instantiator.ThreadPool;
-import com.google.enterprise.connector.pusher.DocPusherFactory;
 import com.google.enterprise.connector.pusher.GsaFeedConnection;
 import com.google.enterprise.connector.scheduler.TraversalScheduler;
-import com.google.enterprise.connector.spi.SimpleTraversalContext;
 import com.google.enterprise.connector.spi.TraversalContext;
 import com.google.enterprise.connector.traversal.ProductionTraversalContext;
 import com.google.enterprise.connector.util.database.JdbcDatabase;
@@ -82,17 +80,11 @@ public class Context {
 
   public static final String GSA_ADMIN_REQUIRES_PREFIX_KEY =
       "gsa.admin.requiresPrefix";
-  public static final Boolean GSA_ADMIN_REQUIRES_PREFIX_DEFAULT =
-      Boolean.FALSE;
-
   public static final String TEED_FEED_FILE_PROPERTY_KEY = "teedFeedFile";
   public static final String MANAGER_LOCKED_PROPERTY_KEY = "manager.locked";
 
-  public static final String FEED_CONTENTURL_PREFIX_PROPERTY_KEY =
-      "feed.contenturl.prefix";
-  public static final String FEED_CONTENTURL_SERVLET = "/getDocumentContent";
-  public static final String FEED_DISABLE_INHERITED_ACLS =
-      "feed.disable.inherited.acls";
+  public static final Boolean GSA_ADMIN_REQUIRES_PREFIX_DEFAULT =
+      Boolean.FALSE;
 
   public static final String DEFAULT_JUNIT_CONTEXT_LOCATION =
       "testdata/mocktestdata/applicationContext.xml";
@@ -207,45 +199,6 @@ public class Context {
       + " For example:\n"
       + "   feed.document.size.limit=31457280\n"
       + "\n"
-      + " The 'feed.contenturl.prefix' property is used for contentUrl generation.\n"
-      + " The prefix should include protocol, host and port, web app,\n"
-      + " and servlet to point back at this Connector Manager instance.\n"
-      + " For example:\n"
-      + " http://localhost:8080/connector-manager/getDocumentContent\n"
-      + "\n"
-      + " The 'feed.disable.inherited.acls' property is used to explicitly\n"
-      + " disable using ACLs with inheritance, even if the GSA appears to\n"
-      + " support the feature. This is necessary in some multibox scenarios\n"
-      + " where the GSA does not support ACL inheritance. The default is\n"
-      + " 'false'.\n"
-      + " feed.disable.inherited.acls=false\n"
-      + "\n"
-      + " The 'retriever.compression' property is used for content URL feed\n"
-      + " content retrieval.  If 'true', document content retrieved using the\n"
-      + " content URL will be gzip compressed (if the requesting client\n"
-      + " supports compression).  If 'false', content is returned\n"
-      + " uncompressed.  Compression may benefit architectures with slow\n"
-      + " network communications between the GSA and the Connector Manager\n"
-      + " (such as a WAN).  However, use of compression may cause excessive\n"
-      + " CPU load on both the GSA and the Connector Manager. The default\n"
-      + " value is 'false'.\n"
-      + " retriever.compression=false\n"
-      + "\n"
-      + " Whether to use client certificates for authentication instead of\n"
-      + " relying on IP addresses. When you enable this option, your servlet\n"
-      + " container must be running HTTPS, otherwise there is no way for the\n"
-      + " client to provide a client certificate. The default is 'false'.\n"
-      + " retriever.useClientCertificateSecurity=false\n"
-      + "\n"
-      + " This is a comma-delimited list of additional hosts to allow to\n"
-      + " retrieve documents. If in client certificate security mode, the\n"
-      + " Common Name of the Subject of the provided client certificate is\n"
-      + " checked against this list. When not in client certificate security\n"
-      + " mode, these hosts are resolved to IPs at startup and the client's\n"
-      + " IP is checked against those IPs. gsa.feed.host is implicitly in\n"
-      + " the list. The default is empty.\n"
-      + " retriever.allowedHosts=\n"
-      + "\n"
       + " The 'feed.backlog.*' properties are used to throttle back the\n"
       + " document feed if the GSA has fallen behind processing outstanding\n"
       + " feed items.  The Connector Manager periodically polls the GSA,\n"
@@ -301,8 +254,8 @@ public class Context {
       + " intervals or never are probably sufficient.  For clustered\n"
       + " deployments with a shared configuration store, 60 to 300 seconds\n"
       + " is probably sufficient.  The default configuration change\n"
-      + " detection interval is 15 minutes (900 seconds).\n"
-      + " config.change.detect.interval=900\n"
+      + " detection interval is -1 (never).\n"
+      + " config.change.detect.interval=60\n"
       + "\n"
       + "The 'jdbc.datasource.*' properties specify JDBC configuration\n"
       + "required to access external databases.  By default, the\n"
@@ -393,13 +346,6 @@ public class Context {
     LOGGER.config("Traversal and Feeds are "
         + ((feeding) ? "enabled." : "disabled."));
     this.isFeeding = feeding;
-  }
-
-  /**
-   * @return feeding to feed or not to feed
-   */
-  public boolean isFeeding() {
-    return this.isFeeding;
   }
 
   public static Context getInstance() {
@@ -773,19 +719,6 @@ public class Context {
           + " bean in context, using default.");
       traversalContext = new ProductionTraversalContext();
     }
-    // Lazily initialize supportsInheritedAcls, since it usually requires
-    // communicating with the GSA.
-    if (traversalContext instanceof SimpleTraversalContext) {
-      SimpleTraversalContext simpleContext =
-          (SimpleTraversalContext) traversalContext;
-      Properties props = getConnectorManagerProperties();
-      GsaFeedConnection feeder = getGsaFeedConnection();
-      if (Boolean.valueOf(props.getProperty(FEED_DISABLE_INHERITED_ACLS))) {
-        simpleContext.setSupportsInheritedAcls(false);
-      } else if (feeder != null) {
-        simpleContext.setSupportsInheritedAcls(feeder.supportsInheritedAcls());
-      }
-    }
     return traversalContext;
   }
 
@@ -991,31 +924,29 @@ public class Context {
   }
 
   public void setConnectorManagerConfig(String feederGateProtocol,
-      String feederGateHost, int feederGatePort, int feederGateSecurePort,
-      String connectorManagerUrl) throws InstantiatorException {
+      String feederGateHost, int feederGatePort, int feederGateSecurePort)
+      throws InstantiatorException {
     initApplicationContext();
-    setConnectorManagerConfig(feederGateProtocol, feederGateHost,
-        feederGatePort, feederGateSecurePort, getGsaFeedConnection(),
-        connectorManagerUrl);
-  }
 
-  private GsaFeedConnection getGsaFeedConnection() {
+    GsaFeedConnection feeder;
     try {
-      return (GsaFeedConnection)
+      feeder = (GsaFeedConnection)
         applicationContext.getBean("FeedConnection", GsaFeedConnection.class);
     } catch (BeansException be) {
       // The configured FeedConnection isn't a GSA, so it doesn't care
       // about the GSA host and port.
       LOGGER.config("The FeedConnection is not to a GSA: " + be.getMessage());
-      return null;
+      feeder = null;
     }
+
+    setConnectorManagerConfig(feederGateProtocol, feederGateHost,
+        feederGatePort, feederGateSecurePort, feeder);
   }
 
   @VisibleForTesting
   void setConnectorManagerConfig(String feederGateProtocol,
       String feederGateHost, int feederGatePort, int feederGateSecurePort,
-      GsaFeedConnection feeder, String connectorManagerUrl)
-      throws InstantiatorException {
+      GsaFeedConnection feeder) throws InstantiatorException {
     // Update the feed host and port in the CM properties file.
     String propFileName = getPropFileName();
     File propFile = getPropFile(propFileName);
@@ -1063,11 +994,6 @@ public class Context {
       props.put(GSA_FEED_PROTOCOL_PROPERTY_KEY, feederGateProtocol);
     }
 
-    if (!Strings.isNullOrEmpty(connectorManagerUrl)) {
-      props.put(FEED_CONTENTURL_PREFIX_PROPERTY_KEY,
-                connectorManagerUrl + FEED_CONTENTURL_SERVLET);
-    }
-
     // Lock down the manager at this point.
     props.put(MANAGER_LOCKED_PROPERTY_KEY, Boolean.TRUE.toString());
     try {
@@ -1090,8 +1016,6 @@ public class Context {
         + GSA_FEED_VALIDATE_CERTIFICATE_PROPERTY_KEY + "="
         + validateCertificate + "; "
         + GSA_FEED_SECURE_PORT_PROPERTY_KEY + "=" + feederGateSecurePort + "; "
-        + FEED_CONTENTURL_PREFIX_PROPERTY_KEY + "="
-        + props.getProperty(FEED_CONTENTURL_PREFIX_PROPERTY_KEY) + "; " 
         + MANAGER_LOCKED_PROPERTY_KEY + "="
         + props.getProperty(MANAGER_LOCKED_PROPERTY_KEY));
 
@@ -1112,16 +1036,6 @@ public class Context {
         feeder.setValidateCertificate(validateCertificate);
       } catch (MalformedURLException e) {
         throw new InstantiatorException("Invalid GSA Feed specification", e);
-      }
-    }
-
-    // Notify DocPusherFactory of new contentUrlPrefix.
-    if (!Strings.isNullOrEmpty(connectorManagerUrl)) {
-      DocPusherFactory pusherFactory =
-          (DocPusherFactory) getBean("PusherFactory", DocPusherFactory.class);
-      if (pusherFactory != null) {
-        pusherFactory.setContentUrlPrefix(
-            props.getProperty(FEED_CONTENTURL_PREFIX_PROPERTY_KEY));
       }
     }
 

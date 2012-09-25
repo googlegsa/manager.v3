@@ -76,13 +76,4 @@ public class SimpleAuthenticationIdentity implements AuthenticationIdentity {
     this.username = username;
     this.password = password;
   }
-
-  /**
-   * Returns a loggable string representation of this identity. The
-   * string MUST NOT include the password.
-   */
-  @Override
-  public String toString() {
-    return "{ domain = " + domain + ", username = " + username + " }";
-  }
 }

@@ -25,7 +25,7 @@ public class AuthenticationResponse {
 
   private final boolean valid;
   private final String data;
-  private final Collection<?> groups;
+  private final Collection<String> groups;
 
   /**
    * Makes an {@code AuthenticationResponse}.
@@ -39,11 +39,6 @@ public class AuthenticationResponse {
 
   /**
    * Makes an {@code AuthenticationResponse}.
-   * The supplied {@code Collection} of groups may be either:
-   * <ul>
-   * <li>{@code Collection<String>} for a simple collection of group names</li>
-   * <li>{@code Collection<Principal>} for groups with namespaces</li>
-   * </ul>
    *
    * @param valid  indicates that authentication was successful (valid)
    * @param data   Reserved for future use.  May be set but will be ignored.
@@ -51,7 +46,7 @@ public class AuthenticationResponse {
    * @since 2.6.10
    */
   public AuthenticationResponse(boolean valid, String data,
-                                Collection<?> groups) {
+                                Collection<String> groups) {
     this.valid = valid;
     this.data = data;
     this.groups = groups;
@@ -77,23 +72,11 @@ public class AuthenticationResponse {
 
   /**
    * Gets the groups to which the user belongs.
-   * The returned {@code Collection} of groups is either:
-   * <ul>
-   * <li>{@code Collection<String>} for a simple collection of group names</li>
-   * <li>{@code Collection<Principal>} for groups with namespaces</li>
-   * </ul>
-   * </ul>
    *
    * @return {@code Collection} of group names - may be {@code null}
    * @since 2.6.10
    */
-  public Collection<?> getGroups() {
+  public Collection<String> getGroups() {
     return groups;
-  }
-
-  @Override
-  public String toString() {
-    return "{ valid = " + valid + ", groups = " + groups
-           + ", data = " + data + " }";
   }
 }

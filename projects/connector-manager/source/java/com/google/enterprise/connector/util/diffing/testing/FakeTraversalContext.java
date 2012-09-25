@@ -14,7 +14,6 @@
 
 package com.google.enterprise.connector.util.diffing.testing;
 
-import com.google.enterprise.connector.spi.SimpleTraversalContext;
 import com.google.enterprise.connector.spi.TraversalContext;
 
 import java.util.Arrays;
@@ -24,9 +23,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * Fake TraversalContext that implements the functions needed for testing.
  */
-/* TODO: Deprecate this in favor of SimpleTraversalContext. */
-public class FakeTraversalContext extends SimpleTraversalContext {
+public class FakeTraversalContext  implements TraversalContext {
   public static final long DEFAULT_MAXIMUM_DOCUMENT_SIZE = 3000000L;
+  private final long maxDocumentSize;
+
   public static final String TAR_DOT_GZ_EXTENSION = "tar.gz";
   private static final String TAR_DOT_GZ_MIME_TYPE = "application/x-gzip";
 
@@ -37,16 +37,17 @@ public class FakeTraversalContext extends SimpleTraversalContext {
   }
 
   public FakeTraversalContext(long maxDocumentSize) {
-    setMaxDocumentSize(maxDocumentSize);
-    setSupportsInheritedAcls(true);
-    setTraversalTimeLimitSeconds(120);
+    this.maxDocumentSize = maxDocumentSize;
+  }
+
+  public long maxDocumentSize() {
+    return maxDocumentSize;
   }
 
   public void allowAllMimeTypes(boolean newValue) {
     allowAllMimeTypes.set(newValue);
   }
 
-  /* @Override */
   public int mimeTypeSupportLevel(String mimeType) {
     if (allowAllMimeTypes.get()) {
       return 1;
@@ -60,7 +61,6 @@ public class FakeTraversalContext extends SimpleTraversalContext {
   /**
    * Returns lexically first provided mime type.
    */
-  /* @Override */
   public String preferredMimeType(Set<String> mimeTypes) {
     if (mimeTypes.size() < 1) {
       throw new IllegalArgumentException("mimeTypes must have at least 1 entry");
@@ -68,5 +68,9 @@ public class FakeTraversalContext extends SimpleTraversalContext {
     String[] mta = mimeTypes.toArray(new String[mimeTypes.size()]);
     Arrays.sort(mta);
     return mta[0];
+  }
+
+  public long traversalTimeLimitSeconds() {
+    return 120;
   }
 }

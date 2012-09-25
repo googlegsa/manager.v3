@@ -44,21 +44,6 @@ public class ExtendedConfigureResponse extends ConfigureResponse {
   }
 
   /**
-   * Constructor that builds an {@link ExtendedConfigureResponse} from a
-   * {@link ConfigureResponse} and a Configuration.
-   *
-   * @param response a {@link ConfigureResponse}
-   * @param configuration a {@link Configuration}
-   */
-  public ExtendedConfigureResponse(ConfigureResponse response,
-                                   Configuration configuration) {
-    super(response.getMessage(), response.getFormSnippet(),
-          (response.getConfigData() != null) ? response.getConfigData()
-                                             : configuration.getMap());
-    this.configXml = configuration.getXml();
-  }
-
-  /**
    * Gets the config XML.
    *
    * @return the config XML - may be {@code null} or empty

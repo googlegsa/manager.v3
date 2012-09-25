@@ -18,6 +18,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.enterprise.connector.common.AlternateContentFilterInputStream;
 import com.google.enterprise.connector.common.BigEmptyDocumentFilterInputStream;
 import com.google.enterprise.connector.common.CompressedFilterInputStream;
+import com.google.enterprise.connector.common.EmptyDocumentException;
 import com.google.enterprise.connector.database.DocumentStore;
 import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.manager.Context;
@@ -27,7 +28,6 @@ import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.RepositoryDocumentException;
 import com.google.enterprise.connector.spi.SimpleProperty;
 import com.google.enterprise.connector.spi.SpiConstants;
-import com.google.enterprise.connector.spi.SpiConstants.FeedType;
 import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.traversal.FileSizeLimitInfo;
 import com.google.enterprise.connector.util.Base64FilterInputStream;
@@ -90,23 +90,9 @@ public class DocPusher implements Pusher {
   private final DocumentFilterFactory documentFilterFactory;
 
   /**
-   * The prefix that will be used for contentUrl generation.
-   * The prefix should include protocol, host and port, web app,
-   * and servlet to point back at this Connector Manager instance.
-   * For example:
-   * {@code http://localhost:8080/connector-manager/getDocumentContent}
-   */
-  private final String contentUrlPrefix;
-
-  /**
    * Encoding method to use for Document content.
    */
-  private final String contentEncoding;
-
-  /**
-   * Indicates whether the FeedConnection supports ACL inheritance and deny.
-   */
-  private final boolean supportsInheritedAcls;
+  private String contentEncoding;
 
   /**
    * The Connector name that is the dataSource for this Feed.
@@ -158,18 +144,14 @@ public class DocPusher implements Pusher {
    *        and feed size.
    * @param documentFilterFactory a {@link DocumentFilterFactory} that creates
    *        document processing filters.
-   * @param contentUrlPrefix the prefix that will be used for Feed contentUrl
-   *        generation.
    */
   public DocPusher(FeedConnection feedConnection, String connectorName,
                    FileSizeLimitInfo fileSizeLimitInfo,
-                   DocumentFilterFactory documentFilterFactory,
-                   String contentUrlPrefix) {
+                   DocumentFilterFactory documentFilterFactory) {
     this.feedConnection = feedConnection;
     this.connectorName = connectorName;
     this.fileSizeLimit = fileSizeLimitInfo;
     this.documentFilterFactory = documentFilterFactory;
-    this.contentUrlPrefix = contentUrlPrefix;
 
     // Check to see if the GSA supports compressed content feeds.
     String supportedEncodings =
@@ -177,9 +159,6 @@ public class DocPusher implements Pusher {
     this.contentEncoding =
         (supportedEncodings.indexOf(XmlFeed.XML_BASE64COMPRESSED) >= 0) ?
         XmlFeed.XML_BASE64COMPRESSED : XmlFeed.XML_BASE64BINARY;
-
-    // Check to see if the GSA supports ACL inheritance and deny.
-    this.supportsInheritedAcls = feedConnection.supportsInheritedAcls();
 
     // Initialize background feed submission.
     this.submissions = new LinkedList<FutureTask<String>>();
@@ -214,18 +193,17 @@ public class DocPusher implements Pusher {
    * @throws RepositoryDocumentException if fatal Document problem
    * @throws RepositoryException if transient Repository problem
    */
-  /* @Override */
-  public PusherStatus take(Document document, DocumentStore documentStore)
+  public boolean take(Document document, DocumentStore documentStore)
       throws PushException, FeedException, RepositoryException {
     if (feedSender.isShutdown()) {
-      return PusherStatus.DISABLED;
+      throw new IllegalStateException("Pusher is shut down");
     }
     checkSubmissions();
 
     // Apply any configured Document filters to the document.
     document = documentFilterFactory.newDocumentFilter(document);
 
-    FeedType feedType;
+    String feedType;
     try {
       feedType = DocUtils.getFeedType(document);
     } catch (RuntimeException e) {
@@ -237,8 +215,7 @@ public class DocPusher implements Pusher {
     // All feeds in a feed file must be of the same type.
     // If the feed would change type, send the feed off to the GSA
     // and start a new one.
-    // TODO: Fix this check to allow ACLs in any type feed.
-    if (xmlFeed != null && !feedType.isCompatible(xmlFeed.getFeedType())) {
+    if ((xmlFeed != null) && (feedType != xmlFeed.getFeedType())) {
       if (LOGGER.isLoggable(Level.FINE)) {
         LOGGER.fine("A new feedType, " + feedType + ", requires a new feed for "
             + connectorName + ". Closing feed and sending to GSA.");
@@ -261,23 +238,18 @@ public class DocPusher implements Pusher {
 
     boolean isThrowing = false;
     int resetPoint = xmlFeed.size();
-    int resetCount = xmlFeed.getRecordCount();
     InputStream contentStream = null;
     try {
-      if (LOGGER.isLoggable(Level.FINER)) {
-        LOGGER.log(Level.FINER, "DOCUMENT: Adding document with docid={0} and "
-            + "searchurl={1} from connector {2} to feed.", new Object[] {
-            DocUtils.getOptionalString(document, SpiConstants.PROPNAME_DOCID),
-            DocUtils.getOptionalString(document,
-              SpiConstants.PROPNAME_SEARCHURL),
-            connectorName});
-      }
-
       // Add this document to the feed.
       contentStream = getContentStream(document, feedType);
       xmlFeed.addRecord(document, contentStream, contentEncoding);
       if (documentStore != null) {
         documentStore.storeDocument(document);
+      }
+      if (LOGGER.isLoggable(Level.FINER)) {
+        LOGGER.finer("Document "
+            + DocUtils.getRequiredString(document, SpiConstants.PROPNAME_DOCID)
+            + " from connector " + connectorName + " added to feed.");
       }
 
       // If the feed is full, send it off to the GSA.
@@ -287,27 +259,38 @@ public class DocPusher implements Pusher {
               + xmlFeed.size() + " bytes. Closing feed and sending to GSA.");
         }
         submitFeed();
-        return getPusherStatus();
+
+        // If we are running low on memory, don't start another feed -
+        // tell the Traverser to finish this batch.
+        if (lowMemory()) {
+          return false;
+        }
+
+        // If the number of feeds waiting to be sent has backed up,
+        // tell the Traverser to finish this batch.
+        if ((checkSubmissions() > 10) || feedConnection.isBacklogged()) {
+          return false;
+        }
       }
 
       // Indicate that this Pusher may accept more documents.
-      return PusherStatus.OK;
+      return true;
 
     } catch (OutOfMemoryError me) {
-      resetFeed(resetPoint, resetCount);
+      xmlFeed.reset(resetPoint);
       throw new PushException("Out of memory building feed, retrying.", me);
     } catch (RuntimeException e) {
-      resetFeed(resetPoint, resetCount);
+      xmlFeed.reset(resetPoint);
       LOGGER.log(Level.WARNING,
           "Rethrowing RuntimeException as RepositoryDocumentException", e);
       throw new RepositoryDocumentException(e);
     } catch (RepositoryDocumentException rde) {
       // Skipping this document, remove it from the feed.
-      resetFeed(resetPoint, resetCount);
+      xmlFeed.reset(resetPoint);
       throw rde;
     } catch (IOException ioe) {
       LOGGER.log(Level.SEVERE, "IOException while reading: skipping", ioe);
-      resetFeed(resetPoint, resetCount);
+      xmlFeed.reset(resetPoint);
       Throwable t = ioe.getCause();
       isThrowing = true;
       if (t != null && (t instanceof RepositoryException)) {
@@ -330,12 +313,6 @@ public class DocPusher implements Pusher {
     }
   }
 
-  /** Rolls back a feed to the reset point. */
-  private void resetFeed(int resetPoint, int resetCount) {
-    xmlFeed.reset(resetPoint);
-    xmlFeed.setRecordCount(resetCount);
-  }
-
   /**
    * Finish a feed.  No more documents are anticipated.
    * If there is an outstanding feed file, submit it to the GSA.
@@ -344,7 +321,6 @@ public class DocPusher implements Pusher {
    * @throws FeedException if transient Feed problem
    * @throws RepositoryException
    */
-  /* @Override */
   public void flush() throws PushException, FeedException, RepositoryException {
     checkSubmissions();
     if (!feedSender.isShutdown()) {
@@ -369,7 +345,6 @@ public class DocPusher implements Pusher {
   /**
    * Cancels any feed being constructed.  Any accumulated feed data is lost.
    */
-  /* @Override */
   public void cancel() {
     // Discard any feed under construction.
     if (xmlFeed != null) {
@@ -381,32 +356,6 @@ public class DocPusher implements Pusher {
     }
     // Cancel any feeds under asynchronous submission.
     feedSender.shutdownNow();
-  }
-
-  /* @Override */
-  public PusherStatus getPusherStatus()
-      throws PushException, FeedException, RepositoryException {
-    // Is Pusher shutdown?
-    if (feedSender.isShutdown()) {
-      return PusherStatus.DISABLED;
-    }
-
-    // If we are running low on memory, don't start another feed -
-    // tell the Traverser to finish this batch.
-    if (lowMemory()) {
-      return PusherStatus.LOW_MEMORY;
-    }
-
-    // If the number of feeds waiting to be sent has backed up,
-    // tell the Traverser to finish this batch.
-    if (checkSubmissions() > 10) {
-      return PusherStatus.LOCAL_FEED_BACKLOG;
-    } else if (feedConnection.isBacklogged()) {
-      return PusherStatus.GSA_FEED_BACKLOG;
-    }
-
-    // Indicate that this Pusher may accept more documents.
-    return PusherStatus.OK;
   }
 
   /**
@@ -473,7 +422,7 @@ public class DocPusher implements Pusher {
    *
    * @param feedType
    */
-  private void startNewFeed(FeedType feedType) throws PushException {
+  private void startNewFeed(String feedType) throws PushException {
     // Allocate a buffer to construct the feed log.
     try {
       if (FEED_LOGGER.isLoggable(FEED_LOG_LEVEL) && feedLog == null) {
@@ -490,8 +439,7 @@ public class DocPusher implements Pusher {
     int feedSize = (int) fileSizeLimit.maxFeedSize();
     try {
       try {
-        xmlFeed = new XmlFeed(connectorName, feedType, feedSize, feedLog,
-                              contentUrlPrefix, supportsInheritedAcls);
+        xmlFeed = new XmlFeed(connectorName, feedType, feedSize, feedLog);
       } catch (OutOfMemoryError me) {
         // We shouldn't even have gotten this far under a low memory condition.
         // However, try to allocate a tiny feed buffer.  It should fill up on
@@ -501,8 +449,7 @@ public class DocPusher implements Pusher {
             + " sized feed - retrying with a much smaller feed allocation.");
         feedSize = 1024;
         try {
-          xmlFeed = new XmlFeed(connectorName, feedType, feedSize, feedLog,
-                                contentUrlPrefix, supportsInheritedAcls);
+          xmlFeed = new XmlFeed(connectorName, feedType, feedSize, feedLog);
         } catch (OutOfMemoryError oome) {
           throw new OutOfMemoryError(
                "Unable to allocate feed buffer for connector " + connectorName);
@@ -637,10 +584,10 @@ public class DocPusher implements Pusher {
   /**
    * Return an InputStream for the Document's content.
    */
-  private InputStream getContentStream(Document document, FeedType feedType)
+  private InputStream getContentStream(Document document, String feedType)
       throws RepositoryException {
     InputStream contentStream = null;
-    if (feedType == FeedType.CONTENT) {
+    if (!feedType.equals(XmlFeed.XML_FEED_METADATA_AND_URL)) {
       InputStream encodedContentStream = getEncodedStream(
           new BigEmptyDocumentFilterInputStream(
               DocUtils.getOptionalStream(document,

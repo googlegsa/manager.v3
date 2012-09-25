@@ -187,28 +187,6 @@ public class SpiConstants {
   public static final String PROPNAME_ISPUBLIC = "google:ispublic";
 
   /**
-   * Identifies a single-valued Boolean property. When this property is
-   * {@code false}, ACLs will not be explicitly cleared if no ACL is provided.
-   * This is to allow a Connector to send the ACLs for a Document as a separate
-   * ACL Document. If this property is missing or {@code true}, the default
-   * behavior of always specifying an empty ACL if no ACL is provided is used.
-   * <p/>
-   * Value: google:overwriteacls
-   *
-   * @since 3.0
-   */
-  public static final String PROPNAME_OVERWRITEACLS = "google:overwriteacls";
-
-  /**
-   * The prefix for the ACL property names.
-   * <p/>
-   * Value: "google:acl"
-   *
-   * @since 3.0
-   */
-  public static final String ACL_PROPNAME_PREFIX = "google:acl";
-
-  /**
    * Identifies a multiple-valued String property that gives the list of group
    * ACL Scope IDs that are permitted {@link RoleType#READER RoleType.READER}
    * access to this document. If either of the {@link #PROPNAME_ACLGROUPS} or
@@ -264,89 +242,6 @@ public class SpiConstants {
    * Value: google:aclusers
    */
   public static final String PROPNAME_ACLUSERS = "google:aclusers";
-
-  /**
-   * Identifies a multiple-valued String property that gives the list of
-   * groups that are denied access to this document. For details, see
-   * the {@link #PROPNAME_ACLGROUPS}.
-   * <p/>
-   * Value: google:acldenygroups
-   *
-   * @since 3.0
-   */
-  public static final String PROPNAME_ACLDENYGROUPS = "google:acldenygroups";
-
-  /**
-   * Identifies a multiple-valued String property that gives the list of
-   * users that are denied access to this document. For details, see
-   * the {@link #PROPNAME_ACLGROUPS}.
-   * <p/>
-   * Value: google:acldenyusers
-   *
-   * @since 3.0
-   */
-  // TODO: clarify the behavior of and support for roles in DENY ACEs
-  public static final String PROPNAME_ACLDENYUSERS = "google:acldenyusers";
-
-  /**
-   * Identifies a single-valued InheritanceType property. This value is
-   * used to identify the ACL inheritance when no specific ACL principal is
-   * specified.
-   * <p/>
-   * Value: google:aclinheritancetype
-   *
-   * @since 3.0
-   */
-  public static final String PROPNAME_ACLINHERITANCETYPE =
-      "google:aclinheritancetype";
-
-  /**
-   * Identifies a single-valued String property. This value is
-   * used to identify the document URL from which the ACL is inherited from.
-   * <p/>
-   * This property takes precedence over values specified by
-   * {@link #PROPNAME_ACLINHERITFROM_DOCID} and
-   * {@link #PROPNAME_ACLINHERITFROM_FEEDTYPE}.
-   * <p/>
-   * Value: google:aclinheritfrom
-   *
-   * @since 3.0
-   */
-  public static final String PROPNAME_ACLINHERITFROM = "google:aclinheritfrom";
-
-  /**
-   * Identifies a single-valued String property. This value is used to identify
-   * the document ID from which the ACL is inherited from.
-   * <p/>
-   * If the document from which the ACL is inherited from was fed using a
-   * different {@link FeedType} than this document, then
-   * {@link #PROPNAME_ACLINHERITFROM_FEEDTYPE} should also be specified.
-   * <p/>
-   * This property is ignored if {@link #PROPNAME_ACLINHERITFROM} is also
-   * specified.
-   * <p/>
-   * Value: google:aclinheritfrom:docid
-   *
-   * @since 3.0
-   */
-  public static final String PROPNAME_ACLINHERITFROM_DOCID =
-      "google:aclinheritfrom:docid";
-
-  /**
-   * Identifies a single-valued String property. This value is used to identify
-   * the {@link FeedType} of document from which the ACL is inherited from.
-   * If unspecified, the {@code FeedType} of the inheriting ACL is used.
-   * <p/>
-   * This property should be specified in conjunction with
-   * {@link #PROPNAME_ACLINHERITFROM_DOCID}, and will be ignored if
-   * {@link #PROPNAME_ACLINHERITFROM} is also specified.
-   * <p/>
-   * Value: google:aclinheritfrom:feedtype
-   *
-   * @since 3.0
-   */
-  public static final String PROPNAME_ACLINHERITFROM_FEEDTYPE =
-      "google:aclinheritfrom:feedtype";
 
   /**
    * Prefix added to the front of the group ACL Scope ID when creating a group
@@ -455,80 +350,12 @@ public class SpiConstants {
   public static final String PROPNAME_PAGERANK = "google:pagerank";
 
   /**
-   * Identifies a single-valued {@link #DocumentType} property that,
-   * if present, will be used to determine the object type for this
-   * document.
-   * <p/>
-   * If this property is not set, the document type will be {@code RECORD}.
-   * <p/>
-   * Value: google:documenttype
-   *
-   * @since 3.0
-   */
-  public static final String PROPNAME_DOCUMENTTYPE = "google:documenttype";
-
-  /**
    * Enum for the list of possible feed types.
    *
    * @since 2.4.2
    */
   public enum FeedType {
-    CONTENT, WEB, CONTENTURL;
-
-    /**
-     * @return The enum matching the given {@code tag}, or
-     *         {@code null} if a match is not found.
-     */
-    public static FeedType findFeedType(String tag) {
-      try {
-        return Enum.valueOf(FeedType.class, tag.toUpperCase());
-      } catch (IllegalArgumentException e) {
-        // Not found, return null.
-        return null;
-      }
-    }
-
-    /**
-     * @param other a FeedType
-     * @return {@code true} if the other FeedType may exist in the same
-     *         feed file as this FeedType
-     * @since 3.0
-     */
-    public boolean isCompatible(FeedType other) {
-      return (this == other || (this != CONTENT && other != CONTENT));
-    }
-
-    /**
-     * @return a legacy feed type string
-     * @since 3.0
-     */
-    public String toLegacyString() {
-      return (this == CONTENT) ? "incremental" : "metadata-and-url";
-    }
-  }
-
-  /**
-   * Enum for the list of possible document types. A {@code RECORD} is
-   * an ordinary document, which may also have ACL properties. An
-   * {@code ACL} is a stand-alone ACL with no document properties.
-   *
-   * @since 3.0
-   */
-  public enum DocumentType {
-    RECORD, ACL;
-
-    /**
-     * @return The enum matching the given {@code tag}, or
-     *         {@code null} if a match is not found.
-     */
-    public static DocumentType findDocumentType(String tag) {
-      try {
-        return Enum.valueOf(DocumentType.class, tag.toUpperCase());
-      } catch (IllegalArgumentException e) {
-        // Not found, return null.
-        return null;
-      }
-    }
+    CONTENT, WEB
   }
 
   /**
@@ -770,122 +597,5 @@ public class SpiConstants {
         put(PROPNAME_PERSISTED_CUSTOMDATA_1, "custom1").
         put(PROPNAME_PERSISTED_CUSTOMDATA_2, "custom2").
         build();
-  }
-
-  /**
-   * Name of the default user profile collection.
-   *
-   * @since 3.0
-   */
-  public static final String DEFAULT_USERPROFILE_COLLECTION =
-      "_google_social_userprofile_collection";
-
-  /**
-   * Enum for the list of possible inheritance types.
-   *
-   * @since 3.0
-   */
-  public enum AclInheritanceType {
-    PARENT_OVERRIDES("parent-overrides"), CHILD_OVERRIDES("child-overrides"),
-    AND_BOTH_PERMIT("and-both-permit");
-
-    private final String tag;
-
-    private AclInheritanceType(String tag) {
-      this.tag = tag;
-    }
-
-    @Override
-    public String toString() {
-      return tag;
-    }
-  }
-
-  /**
-   * Enum for the list of possible ACL scope values.
-   *
-   * @since 3.0
-   */
-  public enum AclScope {
-    USER("user"), GROUP("group");
-
-    private final String tag;
-
-    private AclScope(String tag) {
-      this.tag = tag;
-    }
-
-    @Override
-    public String toString() {
-      return tag;
-    }
-  }
-
-  /**
-   * Enum for the list of possible ACL access values.
-   *
-   * @since 3.0
-   */
-  public enum AclAccess {
-    PERMIT("permit"), DENY("deny");
-
-    private final String tag;
-
-    private AclAccess(String tag) {
-      this.tag = tag;
-    }
-
-    @Override
-    public String toString() {
-      return tag;
-    }
-  }
-
-  /**
-   * Enum for the types of Principals.
-   *
-   * @since 3.0
-   */
-  public enum PrincipalType {
-    /** The type is not known. The GSA will guess what the domain is. */
-    UNKNOWN("unknown"),
-    /** There is no domain. The GSA will not guess the domain. */
-    UNQUALIFIED("unqualified"),
-    ;
-
-    private final String tag;
-
-    private PrincipalType(String tag) {
-      this.tag = tag;
-    }
-
-    @Override
-    public String toString() {
-      return tag;
-    }
-  }
-
-  /**
-   * Enum for the possible case sensitivity rules.
-   *
-   * @since 3.0
-   */
-  public enum CaseSensitivityType {
-    /** All strings are case sensitive. */
-    EVERYTHING_CASE_SENSITIVE("everything-case-sensitive"),
-    /** All strings are case insensitive. */
-    EVERYTHING_CASE_INSENSITIVE("everything-case-insensitive"),
-    ;
-
-    private final String tag;
-
-    private CaseSensitivityType(String tag) {
-      this.tag = tag;
-    }
-
-    @Override
-    public String toString() {
-      return tag;
-    }
   }
 }

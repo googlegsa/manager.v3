@@ -14,16 +14,17 @@
 
 package com.google.enterprise.connector.scheduler;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.enterprise.connector.spi.TraversalSchedule;
-
-import java.util.Calendar;
-import java.util.TreeSet;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A traversal schedule.
  */
-public class Schedule implements TraversalSchedule {
+/*
+ * TODO: Implement equals and hashCode, rather than forcing string
+ * comparisons in the tests?
+ */
+public class Schedule {
 
   private static int defaultRetryDelayMillis = (5 * 60 * 1000);
 
@@ -31,8 +32,7 @@ public class Schedule implements TraversalSchedule {
   private boolean disabled;
   private int load;
   private int retryDelayMillis; // maximum of ~24 days
-  private String timeIntervals;
-  private ScheduleTimeInterval[] scheduleIntervals;
+  private List<ScheduleTimeInterval> timeIntervals;
 
   /*
    * TODO: Either formalize the versions of serialized {@code Schedule} strings,
@@ -61,7 +61,7 @@ public class Schedule implements TraversalSchedule {
    * Construct an empty, disabled Schedule.
    */
   public Schedule() {
-    this(null, true, 0, -1, null);
+    this(null, true, 0, -1, (List<ScheduleTimeInterval>) null);
   }
 
 
@@ -76,6 +76,21 @@ public class Schedule implements TraversalSchedule {
    */
   public Schedule(String connectorName, boolean disabled, int load,
       int retryDelayMillis, String timeIntervals) {
+    this(connectorName, disabled, load, retryDelayMillis,
+         parseTimeIntervals(timeIntervals));
+  }
+
+  /**
+   * Set schedule for a given Connector.
+   *
+   * @param connectorName
+   * @param disabled true if this schedule is currently disabled
+   * @param load The hostload (in docs per minute) as an integer
+   * @param retryDelayMillis Time to wait before next traversal (milliseconds)
+   * @param timeIntervals Time intervals in the format of {1-2,3-8}
+   */
+  public Schedule(String connectorName, boolean disabled, int load,
+      int retryDelayMillis, List<ScheduleTimeInterval> timeIntervals) {
     this.connectorName = connectorName;
     this.load = load;
     this.disabled = disabled;
@@ -115,7 +130,7 @@ public class Schedule implements TraversalSchedule {
   public static String toLegacyString(String scheduleStr) {
     Schedule schedule = new Schedule(scheduleStr);
     return (schedule.connectorName + ":" + schedule.load + ":"
-            + schedule.getTimeIntervals());
+            + schedule.getTimeIntervalsAsString());
   }
 
   /**
@@ -156,7 +171,7 @@ public class Schedule implements TraversalSchedule {
         strs = schedule.trim().split(":", 3);
         intervals = strs[2];
       }
-      setTimeIntervals(intervals);
+      setTimeIntervals(parseTimeIntervals(intervals));
     } catch(Exception e) {
       throw new IllegalArgumentException("Invalid schedule string format: \""
                                          + schedule + "\"");
@@ -164,49 +179,33 @@ public class Schedule implements TraversalSchedule {
   }
 
   /**
-   * Parse a string of time intervals.  The returned structure is designed for
-   * fast processing by {@link nextScheduledInterval()}.
+   * Parse a string of time intervals.
    *
-   * @param intervals String of the form e.g. "1-2:3-5:14-18" etc.
-   * @return a non-null array of ScheduleTimeInterval objects ordered by start
-   *         time
+   * @param intervals String of the form: "1-2:3-5:14-18" etc.
+   * @return List of ScheduleTimeInterval objects
    */
-  private static ScheduleTimeInterval[] parseTimeIntervals(String intervals) {
-    if (intervals.length() == 0) {
-      return new ScheduleTimeInterval[0];
+  private static List<ScheduleTimeInterval> parseTimeIntervals(
+      String intervals) {
+    if (intervals == null || (intervals.trim().length() == 0)) {
+      return null;
     }
-    TreeSet<ScheduleTimeInterval> timeIntervals =
-        new TreeSet<ScheduleTimeInterval> ();
-    for (String interval : intervals.trim().split(":")) {
-      String[] startEndTime = interval.split("-");
-      int startTime = Integer.parseInt(startEndTime[0]);
-      int endTime = Integer.parseInt(startEndTime[1]);
-      if (endTime == 0) {
-        endTime = 24;
-      } else if (startTime == endTime) {
-        // Legacy disabled schedule, e.g. "1-1".
-        continue;
-      }
-      if (endTime < startTime) {
-        // Interval wraps midnight, split it in two.
-        timeIntervals.add(new ScheduleTimeInterval(0, endTime));
-        timeIntervals.add(new ScheduleTimeInterval(startTime, 24));
-      } else {
-        timeIntervals.add(new ScheduleTimeInterval(startTime, endTime));
-      }
+    String[] strs = intervals.trim().split(":");
+    List<ScheduleTimeInterval> timeIntervals =
+      new ArrayList<ScheduleTimeInterval> (strs.length);
+    for (int i = 0; i < strs.length; i++) {
+      String[] strs2 = strs[i].split("-");
+      String startTime = strs2[0];
+      String endTime = strs2[1];
+      ScheduleTime t1 = new ScheduleTime(Integer.parseInt(startTime));
+      ScheduleTime t2 = new ScheduleTime(Integer.parseInt(endTime));
+      ScheduleTimeInterval interval = new ScheduleTimeInterval(t1, t2);
+      timeIntervals.add(interval);
     }
-    if (!timeIntervals.isEmpty()) {
-      // Add the first interval for tomorrow to the end of the list
-      // for the benefit of nextScheduledInterval.
-      ScheduleTimeInterval first = timeIntervals.first();
-      timeIntervals.add(new ScheduleTimeInterval(first.startTime + 24,
-                                                 first.endTime + 24));
-    }
-    return timeIntervals.toArray(new ScheduleTimeInterval[0]);
+    return timeIntervals;
   }
 
   /**
-   * @return String of the form: e.g. "connector1:500:30000:1-2:3-5"
+   * @return String of the form: e.g. "connector1:1-2:3-5"
    */
   @Override
   public String toString() {
@@ -217,7 +216,7 @@ public class Schedule implements TraversalSchedule {
     buf.append(connectorName);
     buf.append(":" + load);
     buf.append(":" + retryDelayMillis);
-    buf.append(":" + getTimeIntervals());
+    buf.append(":" + getTimeIntervalsAsString());
     return buf.toString();
   }
 
@@ -227,11 +226,6 @@ public class Schedule implements TraversalSchedule {
 
   public void setConnectorName(String connectorName) {
     this.connectorName = connectorName;
-  }
-
-  /* @Override */
-  public int getTraversalRate() {
-    return getLoad();
   }
 
   public int getLoad() {
@@ -246,16 +240,27 @@ public class Schedule implements TraversalSchedule {
     return retryDelayMillis;
   }
 
-  /* @Override */
-  public int getRetryDelay() {
-    return retryDelayMillis / 1000;
-  }
-
   public void setRetryDelayMillis(int retryDelayMillis) {
     this.retryDelayMillis = retryDelayMillis;
   }
 
-  /* @Override */
+  public List<ScheduleTimeInterval> getTimeIntervals() {
+    return timeIntervals;
+  }
+
+  public void setTimeIntervals(List<ScheduleTimeInterval> timeIntervals) {
+    // If we have a null List, make it an empty one.
+    if (timeIntervals == null) {
+      this.timeIntervals = new ArrayList<ScheduleTimeInterval>(0);
+    } else {
+      this.timeIntervals = timeIntervals;
+    }
+  }
+
+  public void setTimeIntervals(String timeIntervals) {
+    setTimeIntervals(parseTimeIntervals(timeIntervals));
+  }
+
   public boolean isDisabled() {
     return disabled;
   }
@@ -264,116 +269,22 @@ public class Schedule implements TraversalSchedule {
     this.disabled = disabled;
   }
 
-  public void setTimeIntervals(String timeIntervals) {
-    this.timeIntervals = (timeIntervals == null) ? "" : timeIntervals.trim();
-    this.scheduleIntervals = parseTimeIntervals(this.timeIntervals);
-  }
-
   /**
    * @return String of the form: e.g. "1-2:3-5",
    *         or empty string if Schedule has no timeIntervals.
    */
-  public String getTimeIntervals() {
-    return timeIntervals;
-  }
-
-  /**
-   * Return {@code true} if the current time is within a scheduled traversal
-   * interval; {@code false} otherwise.
-   */
-  /* @Override */
-  public boolean inScheduledInterval() {
-    return nextScheduledInterval(Calendar.getInstance()) == 0;
-  }
-
-  /**
-   * Returns the number of seconds until the next scheduled traversal interval.
-   * A return value of 0 (zero) indicates the current time is within a scheduled
-   * traversal interval.  A returned value of -1 indicates there is no next
-   * traversal interval.
-   */
-  /* @Override */
-  public int nextScheduledInterval() {
-    return nextScheduledInterval(Calendar.getInstance());
-  }
-
-  @VisibleForTesting
-  int nextScheduledInterval(Calendar now) {
-    int hour = now.get(Calendar.HOUR_OF_DAY);
-    for (ScheduleTimeInterval interval : scheduleIntervals) {
-      if ((hour >= interval.startTime) && (hour < interval.endTime)) {
-        return 0;
-      } else if (hour < interval.startTime) {
-        return
-            (interval.startTime - hour) * 3600 - now.get(Calendar.MINUTE) * 60;
+  public String getTimeIntervalsAsString() {
+    StringBuilder buf = new StringBuilder();
+    for (ScheduleTimeInterval interval : timeIntervals) {
+      ScheduleTime startTime = interval.getStartTime();
+      ScheduleTime endTime = interval.getEndTime();
+      if (buf.length() > 0) {
+        buf.append(":");
       }
+      buf.append(startTime.getHour());
+      buf.append("-");
+      buf.append(endTime.getHour());
     }
-    return -1;
-  }
-
-  /**
-   * Return {@code true} if this Schedule would allow traversals to run
-   * at this time; {@code false} otherwise.
-   */
-  /* @Override */
-  public boolean shouldRun() {
-    return !isDisabled() && inScheduledInterval();
-  }
-
-  /**
-   * Returns a hash code value for the object.
-   *
-   * @return a hash code value for this object
-   */
-  @Override
-  public int hashCode() {
-    return toString().hashCode();
-  }
-
-  /**
-   * Indicates whether some other object is "equal to" this one.
-   *
-   * @return {@code true} if this object is the same as the {@code obj}
-   *         argument; {@code false} otherwise
-   */
-  @Override
-  public boolean equals(Object obj) {
-    if (this == obj) {
-      return true;
-    }
-    if (obj == null) {
-      return false;
-    }
-    if (getClass() != obj.getClass()) {
-      return false;
-    }
-    Schedule other = (Schedule) obj;
-    return toString().equals(other.toString());
-  }
-
-  /**
-   * An interval of time used for schedules.
-   */
-  private static class ScheduleTimeInterval
-      implements Comparable<ScheduleTimeInterval> {
-    public final int startTime;
-    public final int endTime;
-
-    public ScheduleTimeInterval(int startTime, int endTime) {
-      this.startTime = startTime;
-      this.endTime = endTime;
-    }
-
-    /* @Override */
-    public int compareTo(ScheduleTimeInterval o) {
-      if (o == null) {
-        return 1;
-      }
-      int compare = startTime - o.startTime;
-      if (compare == 0) {
-        compare = endTime - o.endTime;
-      }
-      return compare;
-    }
+    return buf.toString();
   }
 }

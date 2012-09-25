@@ -47,16 +47,6 @@
         <!-- The default time zone for Date values of fed Documents. -->
         <prop key="feed.timezone"></prop>
 
-        <!-- The default content URL prefix. -->
-        <prop key="feed.contenturl.prefix"></prop>
-
-        <!-- The default content URL compression. -->
-        <prop key="retriever.compression">false</prop>
-
-        <prop key="retriever.useClientCertificateSecurity">false</prop>
-        <prop key="retriever.allowedHosts"></prop>
-
-
         <!-- Feed logging configuration.
              TODO: [Issue 163] These should be moved to logging.properties.
         -->
@@ -82,11 +72,9 @@
              Values <= 0 imply never.  For stand-alone deployments,
              never or long intervals are probably sufficient.  For
              clustered deployments with a shared configuration store,
-             60 - 300 seconds is probably sufficient.  The default
-             value of 15 minutes is intended to try to recover from
-             transient connector instantiation problems.
+             60 - 300 seconds is probably sufficient.
         -->
-        <prop key="config.change.detect.interval">900</prop>
+        <prop key="config.change.detect.interval">0</prop>
 
         <!-- JDBC DataSource configuration. -->
         <prop key="jdbc.datasource.type">EmbeddedH2</prop>
@@ -157,26 +145,6 @@
     <property name="arguments">
       <list>
         <value>${feed.timezone}</value>
-      </list>
-    </property>
-  </bean>
-
-  <bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
-    <property name="staticMethod"
-              value="com.google.enterprise.connector.servlet.GetDocumentContent.setUseCompression"/>
-    <property name="arguments">
-      <list>
-        <value>${retriever.compression}</value>
-      </list>
-    </property>
-  </bean>
-
-  <bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
-    <property name="staticMethod"
-              value="com.google.enterprise.connector.servlet.GetDocumentContent.setFeedConnection"/>
-    <property name="arguments">
-      <list>
-        <ref bean="FeedConnection"/>
       </list>
     </property>
   </bean>
@@ -360,13 +328,14 @@
   -->
   <!-- This PersistentStore implementation stores the information
        in the configured JDBC accessible database.
-  -->
   <alias name="${jdbc.datasource.type}PersistentStore" alias="PersistentStore"/>
+  -->
 
   <!-- This Persistent Store implementation stores the information
        in files in the Connector instance directory.
-  <alias name="FilePersistentStore" alias="PersistentStore"/>
   -->
+  <alias name="FilePersistentStore" alias="PersistentStore"/>
+
   <bean id="FilePersistentStore" lazy-init="true"
         class="com.google.enterprise.connector.persist.FileStore">
     <property name="typeMap" ref="TypeMap"/>
@@ -409,32 +378,11 @@
     <constructor-arg index="1" ref="Clock"/>
   </bean>
 
-  <bean id="InternalDocumentFilters"
-        class="com.google.enterprise.connector.util.filter.DocumentFilterChain">
-    <constructor-arg>
-      <list>
-        <ref bean="DocumentFilters"/>
-        <!-- These filters are required for correctness, so we apply them last.
-        -->
-        <bean class="com.google.enterprise.connector.pusher.AclDocumentFilter">
-          <constructor-arg index="0" ref="FeedConnection"/>
-        </bean>
-      </list>
-    </constructor-arg>
-  </bean>
-
-  <bean id="DocumentFilterFactoryFactory"
-        class="com.google.enterprise.connector.instantiator.DocumentFilterFactoryFactoryImpl">
-    <constructor-arg index="0" ref="InternalDocumentFilters"/>
-    <constructor-arg index="1" ref="ConnectorCoordinatorMap"/>
-  </bean>
-
   <bean id="PusherFactory"
         class="com.google.enterprise.connector.pusher.DocPusherFactory">
     <constructor-arg index="0" ref="FeedConnection" />
     <constructor-arg index="1" ref="FileSizeLimitInfo"/>
-    <constructor-arg index="2" ref="DocumentFilterFactoryFactory"/>
-    <property name="contentUrlPrefix" value="${feed.contenturl.prefix}"/>
+    <constructor-arg index="2" ref="DocumentFilters"/>
   </bean>
 
   <bean id="LoadManagerFactory"
@@ -493,7 +441,6 @@
   <bean id="Manager"
         class="com.google.enterprise.connector.manager.ProductionManager">
     <property name="instantiator" ref="Instantiator"/>
-    <property name="documentFilterFactoryFactory" ref="DocumentFilterFactoryFactory"/>
   </bean>
 
   <bean id="TraversalScheduler"
@@ -512,16 +459,6 @@
     <property name="arguments">
       <list>
         <value>${traversal.poll.interval}</value>
-      </list>
-    </property>
-  </bean>
-
-  <bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
-    <property name="staticMethod"
-              value="com.google.enterprise.connector.util.MimeTypeDetector.setTraversalContext"/>
-    <property name="arguments">
-      <list>
-        <ref bean="TraversalContext"/>
       </list>
     </property>
   </bean>
@@ -661,7 +598,7 @@
         <value>application/vnd.ms-excel.sheet.macroEnabled.12</value>
         <value>application/vnd.ms-excel.sheet.12</value>
         <value>application/vnd.ms-htmlhelp</value>
-	      <value>application/vnd.ms-outlook</value>
+	<value>application/vnd.ms-outlook</value>
         <value>application/mspowerpoint</value>
         <value>application/powerpoint</value>
         <value>application/vnd.ms-powerpoint</value>

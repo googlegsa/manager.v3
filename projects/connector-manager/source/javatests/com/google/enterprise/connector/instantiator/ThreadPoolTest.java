@@ -1,4 +1,4 @@
-// Copyright 2009 Google Inc.
+// Copyright 2009 Google Inc. 
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,7 +14,8 @@
 
 package com.google.enterprise.connector.instantiator;
 
-import com.google.enterprise.connector.util.testing.AdjustableClock;
+import com.google.enterprise.connector.util.Clock;
+import com.google.enterprise.connector.util.SystemClock;
 
 import junit.framework.TestCase;
 
@@ -34,17 +35,13 @@ public class ThreadPoolTest extends TestCase {
    */
   public static final int DEFAULT_TASK_LIFE_SECS = 60;
 
-  AdjustableClock clock;
-
-  @Override
-  protected void setUp() throws Exception {
-    clock = new AdjustableClock();
-  }
+  private Clock clock = new SystemClock(); // TODO: use a mock clock?
 
   // TODO(strellis): Add test of cancel timer popping during submit - after the
   // timer is running and before the task is running.
   public void testRunOne() throws Exception {
-    ThreadPool threadPool = new ThreadPool(DEFAULT_TASK_LIFE_SECS, clock);
+    ThreadPool threadPool = new ThreadPool(DEFAULT_TASK_LIFE_SECS,
+        clock /* TODO: Use mock clock? */);
     BlockingQueue<Object> runningQ = new ArrayBlockingQueue<Object>(10);
     BlockingQueue<Object> stoppingQ = new ArrayBlockingQueue<Object>(10);
     CancelableTask task = new BlockingQueueCancelable(runningQ, stoppingQ);
@@ -60,7 +57,8 @@ public class ThreadPoolTest extends TestCase {
 
   public void testRunMany() throws Exception {
     final int count = 103;
-    ThreadPool threadPool = new ThreadPool(DEFAULT_TASK_LIFE_SECS, clock);
+    ThreadPool threadPool = new ThreadPool(DEFAULT_TASK_LIFE_SECS,
+        clock /* TODO: Use mock clock? */);
     BlockingQueue<Object> taskRunningQ = new ArrayBlockingQueue<Object>(count);
     BlockingQueue<Object> taskStoppingQ = new ArrayBlockingQueue<Object>(count);
     List<CancelableTask> tasks = new ArrayList<CancelableTask>();
@@ -83,7 +81,8 @@ public class ThreadPoolTest extends TestCase {
     final int count = 103;
     BlockingQueue<Object> taskRunningQ = new ArrayBlockingQueue<Object>(count);
     BlockingQueue<Object> taskCanceledQ = new ArrayBlockingQueue<Object>(count);
-    ThreadPool threadPool = new ThreadPool(DEFAULT_TASK_LIFE_SECS, clock);
+    ThreadPool threadPool = new ThreadPool(DEFAULT_TASK_LIFE_SECS,
+        clock /* TODO: Use mock clock? */);
     List<CancelableTask> tasks = new ArrayList<CancelableTask>();
     List<TaskHandle> handles = new ArrayList<TaskHandle>();
     for (int ix = 0; ix < count; ix++) {
@@ -108,7 +107,8 @@ public class ThreadPoolTest extends TestCase {
 
   public void testTimeoutHung() throws Exception {
     BlockingQueue<Object> taskRunningQ = new ArrayBlockingQueue<Object>(10);
-    ThreadPool threadPool = new ThreadPool(DEFAULT_TASK_LIFE_SECS, clock);
+    ThreadPool threadPool = new ThreadPool(DEFAULT_TASK_LIFE_SECS,
+        clock /* TODO: Use mock clock? */);
     HangingCancelable task = new HangingCancelable(taskRunningQ);
     TaskHandle handle = threadPool.submit(task);
     take(1, taskRunningQ);
@@ -124,7 +124,9 @@ public class ThreadPoolTest extends TestCase {
     final int count = 9;
     BlockingQueue<Object> taskRunningQ = new ArrayBlockingQueue<Object>(count);
     BlockingQueue<Object> taskCanceledQ = new ArrayBlockingQueue<Object>(count);
-    ThreadPool threadPool = new ThreadPool(DEFAULT_TASK_LIFE_SECS, clock);
+    ThreadPool threadPool = new ThreadPool(DEFAULT_TASK_LIFE_SECS,
+        clock /* TODO: Use mock clock? */);
+
     List<CancelableTask> tasks = new ArrayList<CancelableTask>();
     List<TaskHandle> handles = new ArrayList<TaskHandle>();
     for (int ix = 0; ix < count; ix++) {
@@ -144,7 +146,8 @@ public class ThreadPoolTest extends TestCase {
 
   public void testShutdownWithHung() throws Exception {
     BlockingQueue<Object> taskRunningQ = new ArrayBlockingQueue<Object>(10);
-    ThreadPool threadPool = new ThreadPool(DEFAULT_TASK_LIFE_SECS, clock);
+    ThreadPool threadPool = new ThreadPool(DEFAULT_TASK_LIFE_SECS,
+        clock /* TODO: Use mock clock? */);
     HangingCancelable task = new HangingCancelable(taskRunningQ);
     TaskHandle handle = threadPool.submit(task);
     take(1, taskRunningQ);
@@ -159,7 +162,8 @@ public class ThreadPoolTest extends TestCase {
   }
 
   public void testSubmitAfterShutdown() throws Exception {
-    ThreadPool threadPool = new ThreadPool(DEFAULT_TASK_LIFE_SECS, clock);
+    ThreadPool threadPool = new ThreadPool(DEFAULT_TASK_LIFE_SECS,
+        clock /* TODO: Use mock clock? */);
     threadPool.shutdown(true, 10);
     BlockingQueue<Object> runningQ = new ArrayBlockingQueue<Object>(10);
     BlockingQueue<Object> stoppingQ = new ArrayBlockingQueue<Object>(10);
@@ -172,10 +176,10 @@ public class ThreadPoolTest extends TestCase {
 
   public void testTimeToLiveWithHungBatch() throws Exception {
     BlockingQueue<Object> taskRunningQ = new ArrayBlockingQueue<Object>(10);
-    ThreadPool threadPool = new ThreadPool(SHORT_TASK_LIFE_SECS, clock);
+    ThreadPool threadPool = new ThreadPool(SHORT_TASK_LIFE_SECS,
+        clock /* TODO: Use mock clock? */);
     HangingCancelable task = new HangingCancelable(taskRunningQ);
     TaskHandle taskHandel = threadPool.submit(task);
-    clock.adjustTime((3 + SHORT_TASK_LIFE_SECS) * 1000L);
     take(1, taskRunningQ);
     verifyCompleted(taskHandel);
     assertFalse(task.isExiting());
@@ -187,7 +191,9 @@ public class ThreadPoolTest extends TestCase {
     final int count = 2;
     BlockingQueue<Object> taskRunningQ = new ArrayBlockingQueue<Object>(count);
     BlockingQueue<Object> taskCanceledQ = new ArrayBlockingQueue<Object>(count);
-    ThreadPool threadPool = new ThreadPool(SHORT_TASK_LIFE_SECS, clock);
+    ThreadPool threadPool = new ThreadPool(SHORT_TASK_LIFE_SECS,
+        clock /* TODO: Use mock clock? */);
+
     List<VerifyInterruptedCancelable> tasks =
         new ArrayList<VerifyInterruptedCancelable>();
     List<TaskHandle> handles = new ArrayList<TaskHandle>();
@@ -208,7 +214,7 @@ public class ThreadPoolTest extends TestCase {
   private void assertIsExiting(boolean expect,
       List<VerifyInterruptedCancelable> tasks) throws InterruptedException{
     for (VerifyInterruptedCancelable task : tasks) {
-      long timeToGiveUp = clock.getTimeMillis() + 1200;
+      long timeToGiveUp = clock.getTimeMillis() + 3000;
       while (clock.getTimeMillis() < timeToGiveUp) {
         if (task.isExiting() == expect) {
           return;
@@ -221,7 +227,7 @@ public class ThreadPoolTest extends TestCase {
 
   private void verifyCompleted(TaskHandle taskHandle)
       throws InterruptedException {
-    long timeToGiveUp = clock.getTimeMillis() + 2100;
+    long timeToGiveUp = clock.getTimeMillis() + 3000;
     while (clock.getTimeMillis() < timeToGiveUp) {
       if (taskHandle.isDone()) {
         return;
@@ -253,20 +259,7 @@ public class ThreadPoolTest extends TestCase {
    */
   private void take(int count, BlockingQueue<?> q)
       throws InterruptedException {
-    take(count, q, 2050);
-  }
-
-  /**
-   * Take a value from a queue. For debugging purposes the timeout can be set
-   * with the system property "TAKE_WAIT_MILLIS".
-   * @param count
-   * @param q
-   * @param timeout
-   * @throws InterruptedException
-   */
-  private void take(int count, BlockingQueue<?> q, long timeout)
-      throws InterruptedException {
-    long timeoutMillis = Long.getLong("TAKE_WAIT_MILLIS", timeout);
+    long timeoutMillis = Long.getLong("TAKE_WAIT_MILLIS", 2000);
     for (int ix = 0; ix < count; ix++) {
       Object result = q.poll(timeoutMillis, TimeUnit.MILLISECONDS);
       if (result == null) {
@@ -372,7 +365,7 @@ public class ThreadPoolTest extends TestCase {
       try {
         taskRunningQ.add(this);
         while (true) {
-          Thread.sleep(10000);
+          Thread.sleep(100000);
         }
       } catch (InterruptedException ie) {
         // Expected

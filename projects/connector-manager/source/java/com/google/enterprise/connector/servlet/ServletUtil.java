@@ -16,7 +16,6 @@ package com.google.enterprise.connector.servlet;
 
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 
 import com.google.enterprise.connector.common.JarUtils;
 import com.google.enterprise.connector.common.SecurityUtils;
@@ -32,17 +31,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -79,16 +70,12 @@ public class ServletUtil {
 
   public static final String PROTOCOL = "googleconnector://";
   public static final String DOCID = "/doc?docid=";
-  public static final String QUERY_PARAM_DOCID = "docid";
 
   public static final String QUERY_PARAM_LANG = "Lang";
   public static final String DEFAULT_LANGUAGE = "en";
 
   public static final String XMLTAG_RESPONSE_ROOT = "CmResponse";
-  /* StatusId is deprecated, replaced by StatusCode. */
-  @Deprecated
   public static final String XMLTAG_STATUSID = "StatusId";
-  public static final String XMLTAG_STATUS_CODE = "StatusCode";
   public static final String XMLTAG_STATUS_MESSAGE = "StatusMsg";
   public static final String XMLTAG_STATUS_PARAMS = "CMParams";
   public static final String XMLTAG_STATUS_PARAM_ORDER = "Order";
@@ -130,8 +117,6 @@ public class ServletUtil {
   public static final String XMLTAG_CONNECTOR_CONFIG_XML = "ConnectorConfigXml";
   public static final String XMLTAG_UPDATE_CONNECTOR = "Update";
   public static final String XMLTAG_PARAMETERS = "Param";
-  public static final String XMLTAG_GLOBAL_NAMESPACE = "GlobalNamespace";
-  public static final String XMLTAG_LOCAL_NAMESPACE = "LocalNamespace";
 
   public static final String XMLTAG_AUTHN_REQUEST = "AuthnRequest";
   public static final String XMLTAG_AUTHN_CREDENTIAL = "Credentials";
@@ -147,10 +132,6 @@ public class ServletUtil {
   public static final String XMLTAG_GROUP = "Group";
   public static final String XMLTAG_DOMAIN_ATTRIBUTE = "domain";
   public static final String XMLTAG_PASSWORD_ATTRIBUTE = "password";
-  public static final String XMLTAG_NAMESPACE_ATTRIBUTE = "namespace";
-  public static final String XMLTAG_PRINCIPALTYPE_ATTRIBUTE = "principal-type";
-  public static final String XMLTAG_CASESENSITIVITYTYPE_ATTRIBUTE =
-      "case-sensitivity-type";
   public static final String XMLTAG_RESOURCE = "Resource";
   public static final String XMLTAG_CONNECTOR_NAME_ATTRIBUTE = "connectorname";
   public static final String XMLTAG_AUTHZ_RESPONSE = "AuthorizationResponse";
@@ -194,6 +175,9 @@ public class ServletUtil {
       "Exception: throwable";
   public static final String LOG_EXCEPTION_CONNECTOR_MANAGER =
       "Exception: general";
+
+  public static final String XML_SIMPLE_RESPONSE =
+      "<CmResponse>\n" + "  <StatusId>0</StatusId>\n" + "</CmResponse>\n";
 
   public static final String DEFAULT_FORM =
     "<tr><td>Username</td><td>\n" +
@@ -293,29 +277,10 @@ public class ServletUtil {
    * @param out where PrintWriter to be written to
    * @param statusId int
    */
-  @SuppressWarnings("deprecation")
-  public static void writeStatusId(PrintWriter out, int statusId) {
+  public static void writeStatusId(PrintWriter out,
+                                   int statusId) {
     writeXMLElement(out, 1, ServletUtil.XMLTAG_STATUSID,
         Integer.toString(statusId));
-  }
-
-  /**
-   * Write a StatusCode response to a PrintWriter.
-   *
-   * @param out where PrintWriter to be written to
-   * @param statusId int
-   */
-  // TODO: Merge this method with writeStatusId (requires test fixes
-  // and much better GSA response handling tests).
-  @SuppressWarnings("deprecation")
-  public static void writeStatusCode(PrintWriter out, int statusCode) {
-    writeXMLElement(out, 1, ServletUtil.XMLTAG_STATUS_CODE,
-        Integer.toString(statusCode));
-
-    // TODO: Remove this when XMLTAG_STATUSID is fully deprecated.
-    writeXMLElement(out, 1, ServletUtil.XMLTAG_STATUSID, Integer.toString(
-        (ConnectorMessageCode.isSuccessMessage(statusCode)) ?
-        ConnectorMessageCode.SUCCESS : statusCode));
   }
 
   /**
@@ -460,77 +425,6 @@ public class ServletUtil {
   }
 
   /**
-   * Append a query parameter to a URL.
-   *
-   * @param url an Appendable with URL under contruction
-   * @param paramName the name of the query parameter
-   * @param paramValue the value of the query parameter
-   */
-  public static void appendQueryParam(StringBuilder url, String paramName,
-                                      String paramValue) {
-    // TODO: Use java.net.URI instead of URLEncoder. Better we should write our
-    // own RFC 3986 compliant encoder instead.
-    if (!Strings.isNullOrEmpty(paramValue)) {
-      try {
-        url.append(((url.indexOf("?") == -1) ? '?' : '&'));
-        url.append(URLEncoder.encode(paramName, "UTF-8")).append('=');
-        url.append(URLEncoder.encode(paramValue, "UTF-8"));
-      } catch (UnsupportedEncodingException ignored) {
-        // Can't happen with UTF-8.
-      }
-    }
-  }
-
-  /**
-   * Parse an un-decoded query string into its parts, correctly taking into
-   * account {@code charset}. {@code queryString} should be commonly obtained
-   * from {@code HttpServletRequest.getQueryString}.
-   *
-   * @param queryString encoded parameter string
-   * @return fully-decoded parameter values
-   */
-  public static Map<String, List<String>> parseQueryString(String queryString) {
-    if (Strings.isNullOrEmpty(queryString)) {
-      return Collections.emptyMap();
-    }
-    Map<String, List<String>> parsedParams
-        = new HashMap<String, List<String>>();
-    for (String param : queryString.split("&")) {
-      String[] parts = param.split("=", 2);
-      String key = parts[0];
-      String value = parts.length == 2 ? parts[1] : "";
-      try {
-        key = URLDecoder.decode(key, "UTF-8");
-        value = URLDecoder.decode(value, "UTF-8");
-      } catch (UnsupportedEncodingException ex) {
-        // UTF-8 is always supported.
-        throw new AssertionError(ex);
-      }
-      List<String> values = parsedParams.get(key);
-      if (values == null) {
-        values = new ArrayList<String>();
-        parsedParams.put(key, values);
-      }
-      values.add(value);
-    }
-    return parsedParams;
-  }
-
-  /**
-   * Get the first parameter in the list, or {@code null} if there are no values
-   * for the parameter.
-   *
-   * @param params parameters returned from {@link #parseQueryString}
-   * @param param parameter to retrieve first value
-   * @return first value of {@code param}, or {@code null}
-   */
-  public static String getFirstParameter(Map<String, List<String>> params,
-      String param) {
-    List<String> values = params.get(param);
-    return values == null ? null : values.get(0);
-  }
-
-  /**
    * Tries to normalize a pathname, as if relative to the context.
    * Absolute paths are allowed (unlike traditional web-app behaviour).
    * file: URLs are allowed as well and are treated like absolute paths.
@@ -597,29 +491,10 @@ public class ServletUtil {
   }
 
   private static final Pattern PREPEND_CM_PATTERN =
-      Pattern.compile("<[^>]+\\bname\\s*=\\s*[\"']");
+      Pattern.compile("\\bname\\b\\s*=\\s*[\"']");
 
   private static final Pattern STRIP_CM_PATTERN =
-      Pattern.compile("(<[^>]+\\bname\\s*=\\s*[\"'])CM_");
-
-  // The matching of '/*' is to remove any comments preceeding the CDATA start
-  // and end, as is commonly done in XHTML to remain compatible with old HTML
-  // browsers. There is no need to actually remove the comments, but this regex
-  // replaced code introduced in r1630 that did do the replacements, so the
-  // behavior is maintained here.
-  private static final Pattern CDATA_PATTERN =
-      Pattern.compile("/*<!\\[CDATA\\[(.*?)/*\\]\\]>", Pattern.DOTALL);
-
-  /**
-   * A highly-unlikely string to find in real data, used to mark the location
-   * that a CDATA section or other section was removed. It currently includes a
-   * UUID generated on startup, to be a highly-random string.
-   */
-  private static final String TEMPORARY_REPLACEMENT =
-      "#Replacement-" + UUID.randomUUID() + "#";
-
-  private static final Pattern TEMPORARY_REPLACEMENT_PATTERN =
-      Pattern.compile(Pattern.quote(TEMPORARY_REPLACEMENT));
+      Pattern.compile("(\\bname\\b\\s*=\\s*[\"'])CM_");
 
   /**
    * Given a String such as:
@@ -631,15 +506,9 @@ public class ServletUtil {
    * @param str String an XML string with PREFIX_CM as above
    * @return a result XML string without PREFIX_CM as above
    */
-  // TODO(ejona): Remove this method. It is not executed.
   public static String stripCmPrefix(String str) {
-    // TODO(ejona): Remove the temporary replacements. This code is only run
-    // after any CDATA sections have been removed.
-    List<String> saved = new ArrayList<String>();
-    str = temporaryReplace(CDATA_PATTERN, str, saved);
     Matcher matcher = STRIP_CM_PATTERN.matcher(str);
     String result = matcher.replaceAll("$1");
-    result = undoTemporaryReplace(result, saved);
     return result;
   }
 
@@ -649,109 +518,47 @@ public class ServletUtil {
    * @param str String an XML string without PREFIX_CM as above
    * @return a result XML string with PREFIX_CM as above
    */
-  // TODO(ejona): Move this method onboard the GSA and remove it here, since it
-  // is never executed by the connector manager (there is a call to it, but that
-  // call isn't executed).
   public static String prependCmPrefix(String str) {
-    // TODO(ejona): Remove the temporary replacements after moving to GSA. This
-    // code is only run after any CDATA sections have been removed, but it is
-    // hard to tell due to calls to prependCmPrefix in
-    // ConnectorManagerGetServlet that are never executed.
-    List<String> saved = new ArrayList<String>();
-    str = temporaryReplace(CDATA_PATTERN, str, saved);
     Matcher matcher = PREPEND_CM_PATTERN.matcher(str);
     String result = matcher.replaceAll("$0CM_");
-    result = undoTemporaryReplace(result, saved);
     return result;
-  }
-
-  /**
-   * Temporarily remove strings matching {@code pattern} from {@code source},
-   * saving them in {@code saved}; a placeholder is put in {@code source} where
-   * each string used to be and then returned for later reversal. Only one
-   * temporary replacement can be occurring within {@code source} at a time, due
-   * to reusing the same placeholder; you must always {@link
-   * #undoTemporaryReplace} on the string before performing a different
-   * {@link #temporaryReplace}.
-   */
-  private static String temporaryReplace(Pattern pattern, String source,
-      List<String> saved) {
-    StringBuffer sb = new StringBuffer(source.length());
-    Matcher m = pattern.matcher(source);
-    String replacement = Matcher.quoteReplacement(TEMPORARY_REPLACEMENT);
-    while (m.find()) {
-      saved.add(m.group());
-      m.appendReplacement(sb, replacement);
-    }
-    m.appendTail(sb);
-    return sb.toString();
-  }
-
-  private static String undoTemporaryReplace(String source,
-      List<String> previouslySaved) {
-    StringBuffer sb = new StringBuffer(source.length() * 2);
-    Matcher m = TEMPORARY_REPLACEMENT_PATTERN.matcher(source);
-    int i;
-    for (i = 0; m.find(); i++) {
-      m.appendReplacement(sb, Matcher.quoteReplacement(previouslySaved.get(i)));
-    }
-    m.appendTail(sb);
-    if (previouslySaved.size() != i) {
-      LOGGER.warning("Unexpected number of replacements. Bug!");
-    }
-    return sb.toString();
   }
 
   private static final String XML_GREATER_THAN = "&gt;";
-  // TODO(ejona): remove '/*', since it does nothing and is left over from old
-  // code.
+  private static final Pattern CDATA_BEGIN_PATTERN =
+      Pattern.compile("/*\\Q<![CDATA[\\E");
   private static final Pattern CDATA_END_PATTERN =
       Pattern.compile("/*\\Q]]>\\E");
-  // TODO(ejona): remove '/*', since it does nothing and is left over from old
-  // code.
   private static final Pattern ESCAPED_CDATA_END_PATTERN =
       Pattern.compile("/*\\Q]]&gt;\\E");
 
-  private static final Pattern SCRIPT_PATTERN =
-      Pattern.compile("<script\\b.*?</script>", Pattern.DOTALL);
-
   /**
-   * Replaces any CDATA sections with the equivalent PCDATA section, properly
-   * handling escapes. This is helpful as Xalan incorrectly produces HTML with
-   * CDATA sections, which is mostly invalid for HTML documents.
+   * Removes any pairs of markers from the given snippet that are not allowed
+   * to be nested.
    *
-   * @param formSnippet snippet of a form that may have CDATA in it
-   * @return the given formSnippet without CDATA sections
+   * @param formSnippet snippet of a form that may have markers in it that are
+   *        not allowed to be nested.
+   * @return the given formSnippet with all markers that are not allowed to be
+   *         nested removed.
    */
   public static String removeNestedMarkers(String formSnippet) {
-    List<String> saved = new ArrayList<String>();
-    formSnippet = temporaryReplace(SCRIPT_PATTERN, formSnippet, saved);
-    for (int i = 0; i < saved.size(); i++) {
-      // Script sections should not have special characters escaped as entities,
-      // due to the history of HTML. Also note that we have the entire <script>
-      // snippet here, so escaping entities would completely trash the tags.
-      saved.set(i, removeCdata(saved.get(i), false));
-    }
-    String result = removeCdata(formSnippet, true);
-    result = undoTemporaryReplace(result, saved);
-    return result;
-  }
-
-  private static String removeCdata(String formSnippet, boolean escapeSpecial) {
-    StringBuffer sb = new StringBuffer(formSnippet.length());
-    Matcher m = CDATA_PATTERN.matcher(formSnippet);
-    while (m.find()) {
-      String cdataContent = m.group(1);
-      String pcdata;
-      if (escapeSpecial) {
-        pcdata = cdataContent.replace("&", "&amp;").replace("<", "&lt;");
-      } else {
-        pcdata = cdataContent;
+    StringBuffer result = new StringBuffer();
+    Matcher beginMatcher = CDATA_BEGIN_PATTERN.matcher(formSnippet);
+    while (beginMatcher.find()) {
+      // Look for a matching end marker.
+      Matcher endMatcher =
+          CDATA_END_PATTERN.matcher(formSnippet.substring(beginMatcher.end()));
+      if (endMatcher.find()) {
+        // We have a balanced hit.  Dump the matched begin marker and replace
+        // the matcher input with the remainder of the form without the
+        // matching end marker.
+        beginMatcher.appendReplacement(result, "");
+        formSnippet = endMatcher.replaceFirst("");
+        beginMatcher.reset(formSnippet);
       }
-      m.appendReplacement(sb, Matcher.quoteReplacement(pcdata));
     }
-    m.appendTail(sb);
-    return sb.toString();
+    beginMatcher.appendTail(result);
+    return result.toString();
   }
 
   /**

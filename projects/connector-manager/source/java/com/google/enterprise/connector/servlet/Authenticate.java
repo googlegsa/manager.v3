@@ -14,15 +14,12 @@
 
 package com.google.enterprise.connector.servlet;
 
-import com.google.common.base.Strings;
 import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.manager.ConnectorStatus;
 import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
-import com.google.enterprise.connector.spi.Principal;
 import com.google.enterprise.connector.spi.SimpleAuthenticationIdentity;
-import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.XmlUtils;
 import com.google.enterprise.connector.util.XmlParseUtil;
 
@@ -31,7 +28,6 @@ import org.w3c.dom.NodeList;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Level;
@@ -48,8 +44,9 @@ public class Authenticate extends ConnectorManagerServlet {
   @Override
   protected void processDoPost(
       String xmlBody, Manager manager, PrintWriter out) {
-    NDC.append("AuthN");
+    NDC.push("AuthN");
     handleDoPost(xmlBody, manager, out);
+    NDC.pop();
   }
 
   /**
@@ -97,13 +94,12 @@ public class Authenticate extends ConnectorManagerServlet {
 
     String username = XmlParseUtil.getFirstElementByTagName(
       (Element) credList.item(0), ServletUtil.XMLTAG_AUTHN_USERNAME);
-    String domain = XmlParseUtil.getFirstElementByTagName(
-        (Element) credList.item(0), ServletUtil.XMLTAG_AUTHN_DOMAIN);
-    NDC.append(Strings.isNullOrEmpty(domain) ? username
-               : (domain + "/" + username));
+    NDC.pushAppend(username);
 
     String password = XmlParseUtil.getOptionalElementByTagName(
         (Element) credList.item(0), ServletUtil.XMLTAG_AUTHN_PASSWORD);
+    String domain = XmlParseUtil.getFirstElementByTagName(
+        (Element) credList.item(0), ServletUtil.XMLTAG_AUTHN_DOMAIN);
     for (ConnectorStatus connector : manager.getConnectorStatuses()) {
       String connectorName = connector.getName();
       if (requestedConnectors != null &&
@@ -128,29 +124,11 @@ public class Authenticate extends ConnectorManagerServlet {
           XmlUtils.xmlAppendStartTag(ServletUtil.XMLTAG_IDENTITY, out);
           XmlUtils.xmlAppendAttrValue(username, out);
           XmlUtils.xmlAppendEndTag(ServletUtil.XMLTAG_IDENTITY, out);
-
-          // Add any returned groups that the user may belong to.
           if (response.getGroups() != null) {
-            for (Object item : response.getGroups()) {
-              Principal group = (item instanceof String) ?
-                  new Principal((String) item) : (Principal) item;
+            for (String group : response.getGroups()) {
               out.append(ServletUtil.indentStr(3));
-              out.append('<').append(ServletUtil.XMLTAG_GROUP);
-              if (group.getPrincipalType() ==
-                  SpiConstants.PrincipalType.UNQUALIFIED) {
-                // UNQUALIFIED is a special-case on the GSA to allow us to
-                // prevent the GSA from mistakeningly finding a domain in the
-                // principal name.
-                XmlUtils.xmlAppendAttr(
-                    ServletUtil.XMLTAG_PRINCIPALTYPE_ATTRIBUTE,
-                    SpiConstants.PrincipalType.UNQUALIFIED.toString(), out);
-              }
-              if (!Strings.isNullOrEmpty(group.getNamespace())) {
-                XmlUtils.xmlAppendAttr(ServletUtil.XMLTAG_NAMESPACE_ATTRIBUTE,
-                    group.getNamespace(), out);
-              }
-              out.append('>');
-              XmlUtils.xmlAppendAttrValue(group.getName(), out);
+              XmlUtils.xmlAppendStartTag(ServletUtil.XMLTAG_GROUP, out);
+              XmlUtils.xmlAppendAttrValue(group, out);
               XmlUtils.xmlAppendEndTag(ServletUtil.XMLTAG_GROUP, out);
             }
           }
@@ -169,6 +147,7 @@ public class Authenticate extends ConnectorManagerServlet {
     }
     ServletUtil.writeXMLTag(out, 1, ServletUtil.XMLTAG_AUTHN_RESPONSE, true);
     ServletUtil.writeRootTag(out, true);
+    NDC.pop();
     return;
   }
 }
