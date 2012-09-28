@@ -55,7 +55,7 @@ You generally will not need to build these and they are not built from the defau
 
 == Verify that the Connector Manager Builds ==
 
-Use a shell or command window and change directory into the {{{google-enterprise-connector-manager/projects}}} directory.  Run "ant" in that directory.  There should be no errors reported.  A common cause of problems here is not copying the `jcr-1.0.jar` to the proper place, using an old version of `ant`, or not having a Java 5 or 6 JDK on the path.
+Use a shell or command window and change directory into the {{{google-enterprise-connector-manager/projects}}} directory.  Run "ant" in that directory.  There should be no errors reported.  A common cause of problems here is not copying the `jcr-1.0.jar` to the proper place, using an old version of `ant` (ant version 1.8 or later is required), or not having a Java 5 or 6 JDK on the path.
 
 Useful build targets are:
 
