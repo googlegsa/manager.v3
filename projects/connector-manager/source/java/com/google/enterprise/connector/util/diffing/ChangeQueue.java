@@ -205,6 +205,11 @@ public class ChangeQueue implements ChangeSource {
     public boolean hasEnqueuedAtLeastOneChangeThisPass() {
       return changeCount > 0;
     }
+
+    /* @Override */
+    public void passPausing(int sleepms) throws InterruptedException {
+      Thread.sleep(sleepms);
+    }
   }
 
   /**

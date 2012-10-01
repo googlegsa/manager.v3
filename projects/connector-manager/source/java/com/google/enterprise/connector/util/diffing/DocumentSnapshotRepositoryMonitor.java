@@ -16,6 +16,8 @@ package com.google.enterprise.connector.util.diffing;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.enterprise.connector.spi.RepositoryException;
+import com.google.enterprise.connector.spi.TraversalSchedule;
+import com.google.enterprise.connector.spi.TraversalScheduleAware;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -57,6 +59,7 @@ import java.util.logging.Logger;
 public class DocumentSnapshotRepositoryMonitor implements Runnable {
   private static final Logger LOG = Logger.getLogger(
       DocumentSnapshotRepositoryMonitor.class.getName());
+  private volatile TraversalSchedule traversalSchedule;
 
   /*
    * Gross hack uses Java Reflection to setup and teardown NDC logging context.
@@ -116,6 +119,8 @@ public class DocumentSnapshotRepositoryMonitor implements Runnable {
     public void passComplete(MonitorCheckpoint mcp) throws InterruptedException;
 
     public boolean hasEnqueuedAtLeastOneChangeThisPass();
+
+    public void passPausing(int sleepms) throws InterruptedException;
   }
 
   /** Directory that contains snapshots. */
@@ -216,7 +221,17 @@ public class DocumentSnapshotRepositoryMonitor implements Runnable {
   private void tryToRunForever() throws InterruptedException {
     try {
       while (true) {
-        doOnePass();
+        if (traversalSchedule == null || traversalSchedule.shouldRun()) {
+          // Start traversal
+          doOnePass();
+        }
+        else {
+          LOG.finest("Currently out of traversal widow.  " +
+              "Sleeping for 15 minutes.");
+          // TODO(nashi): caluculate when it should wake up while
+          // handling TraversalScheduleAware events properly.
+          callback.passPausing(15*60*1000);
+        }
       }
     } catch (SnapshotWriterException e) {
       String msg = "Failed to write to snapshot file: " + snapshotWriter.getPath();
@@ -432,9 +447,22 @@ public class DocumentSnapshotRepositoryMonitor implements Runnable {
     guaranteeCheckpoint = cp;
   }
 
+  @VisibleForTesting
+  public void testTraversalSchedule()
+      throws NullPointerException, InterruptedException {
+    tryToRunForever();
+  }
   public void shutdown() {
     LOG.log(Level.WARNING, "Shutdown the monitor thread " + name
         + " @ " + this);
     isRunning = false;
+  }
+
+  /* @Override */
+  public synchronized void setTraversalSchedule(TraversalSchedule
+      traversalSchedule) {
+    this.traversalSchedule = traversalSchedule;
+    LOG.log(Level.INFO, "Traversal schedule for " + name + " is changed to: " +
+        traversalSchedule.toString());
   }
 }
