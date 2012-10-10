@@ -148,7 +148,7 @@ Once this is done, you can build the install files that need to be copied over t
   * So the new SVN structure will become
     * trunk
     * branches
-    * 2.8.x
+      * 2.8.x
     * tags
       * builds
         * 2.8.0-RC1
@@ -159,7 +159,7 @@ Once this is done, you can build the install files that need to be copied over t
   *  So the SVN structure will become
     *  trunk
     *  branches
-    *  2.8.x
+      *  2.8.x
     *  tags
       *  builds
          *  2.8.0-RC1
