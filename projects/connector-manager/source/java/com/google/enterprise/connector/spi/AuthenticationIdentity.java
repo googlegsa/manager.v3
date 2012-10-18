@@ -18,6 +18,9 @@ package com.google.enterprise.connector.spi;
  * Interface for the {@code identity} parameter of the
  * {@link AuthenticationManager#authenticate AuthenticationManager.authenticate}
  * method.
+ *
+ * If an implementation overrides the {# toString} method, it should
+ * not include the password in the returned string.
  */
 public interface AuthenticationIdentity {
 

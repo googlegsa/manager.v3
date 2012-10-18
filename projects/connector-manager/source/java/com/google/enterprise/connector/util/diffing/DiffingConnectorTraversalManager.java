@@ -19,6 +19,8 @@ import com.google.enterprise.connector.spi.DocumentList;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.TraversalContext;
 import com.google.enterprise.connector.spi.TraversalContextAware;
+import com.google.enterprise.connector.spi.TraversalSchedule;
+import com.google.enterprise.connector.spi.TraversalScheduleAware;
 import com.google.enterprise.connector.spi.TraversalManager;
 
 import java.io.IOException;
@@ -31,7 +33,7 @@ import java.util.logging.Logger;
  * @since 2.8
  */
 public class DiffingConnectorTraversalManager implements TraversalManager,
-    TraversalContextAware {
+    TraversalContextAware, TraversalScheduleAware {
   private static final Logger LOG = Logger.getLogger(
       DiffingConnectorTraversalManager.class.getName());
   private final DocumentSnapshotRepositoryMonitorManager
@@ -138,6 +140,12 @@ public class DiffingConnectorTraversalManager implements TraversalManager,
     if (isActive()) {
       this.traversalContextManager.setTraversalContext(traversalContext);
     }
+  }
+
+  /* @Override */
+  public synchronized void setTraversalSchedule(TraversalSchedule
+      traversalSchedule) {
+    snapshotRepositoryMonitorManager.setTraversalSchedule(traversalSchedule);
   }
 
   public synchronized void deactivate() {
