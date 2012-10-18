@@ -231,7 +231,7 @@ public final class SocialCollectionHandler {
    * @param gsaAdmin userId for making gdata call to GSA
    * @param gsaAdminPassword password for making gdata call to GSA
    * @param collectionName name of the collection where user profiles will go.
-   * @returns if social collection has been initialized successfully
+   * @return {@code true} if social collection has been initialized successfully
    */
   public static boolean initializeSocialCollection(String gsaHost, int gsaPort,
       String gsaAdmin, String gsaAdminPassword, String collectionName) {
