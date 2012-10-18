@@ -360,13 +360,14 @@
   -->
   <!-- This PersistentStore implementation stores the information
        in the configured JDBC accessible database.
-  -->
   <alias name="${jdbc.datasource.type}PersistentStore" alias="PersistentStore"/>
+  -->
 
   <!-- This Persistent Store implementation stores the information
        in files in the Connector instance directory.
-  <alias name="FilePersistentStore" alias="PersistentStore"/>
   -->
+  <alias name="FilePersistentStore" alias="PersistentStore"/>
+
   <bean id="FilePersistentStore" lazy-init="true"
         class="com.google.enterprise.connector.persist.FileStore">
     <property name="typeMap" ref="TypeMap"/>
