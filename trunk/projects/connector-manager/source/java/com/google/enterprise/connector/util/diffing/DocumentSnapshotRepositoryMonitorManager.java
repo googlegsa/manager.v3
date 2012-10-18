@@ -16,6 +16,7 @@ package com.google.enterprise.connector.util.diffing;
 
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.TraversalSchedule;
+import com.google.enterprise.connector.spi.TraversalScheduleAware;
 
 import java.util.Map;
 
