@@ -11,66 +11,6 @@ issues and work-arounds.
 Web Site: http://code.google.com/p/google-enterprise-connector-manager/
 
 
-Release 3.0.2, 17 October 2012
-==============================
-
-Introduction
-------------
-This is a patch release that fixes a few small problems discovered in the
-the previous release. Users of previous releases are encouraged to upgrade.
-
-Summary of Changes
-------------------
-Fix Issue 7166051: Deny HTTP HEAD requests from legacy authorization, which
-                   would always permit access to secure documents.
-
-Fix Issues 7312517, 7343328: Multiple cases of NullPointerException
-                   thrown from the diffing connector SnapshotStore.
-
-Fix Issue 7343330: BasicChecksumGenerator.getDigest() throws NullPointerException.
-
-Fix Issue 7369686: Diffing connectors ignore the configured schedule intervals.
-                   Diffing connectors would continue to run, consuming 
-                   resources and traversing the repositories when outside
-                   of a scheduled traversal interval.
-
-
-Release 3.0.0, 13 September 2012
-================================
-
-Introduction
-------------
-This is a patch release that fixes a few small problems discovered in the
-the previous release. Users of previous releases are encouraged to upgrade.
-
-Summary of Changes
-------------------
-Fix Issue 4765123: Set a logging context in the diffing package. This provides
-                   more informative logging from the various diffing connector
-                   threads.
-
-Fix Issue 6299907: Connector Manager restart resets the logging level.
-
-Fix Issue 6441063: Set the feed.contenturl.prefix advanced configuration
-                   property when Connector Manager is registered with the GSA.
-
-Fix Issue 6449767: Initial diffing connector snapshot fails in Java 7.
-
-Fix Issue 6861210: Diffing fileSystemMonitorsByName is not cleared when
-                   DocumentSnapshotRepositoryMonitorManagerImpl is stopped.
-
-Fix Issue 6867242: Diffing connector may leak DocumentSnapshotRepositoryMonitor
-                   threads when toggling "Disable traversal" check box and the
-                   connector may go into inconsistent state. 
-
-Fix Issue 6942176: CheckpointAndChangeQueue throws NullPointerException.
-
-Fix Issue 6996468: Provide advanced configuration option to not use inherited
-                   ACLs with GSA v7.0.  This is provided as a workaround for
-                   GSA issue 6969557, where inherited ACLs do not work correctly
-                   with Distributed Crawl and Serve.
-
-
 Release 2.8.6, 5 May 2012
 =========================
 

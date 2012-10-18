@@ -15,7 +15,6 @@
 package com.google.enterprise.connector.util.diffing.testing;
 
 import com.google.common.base.Preconditions;
-import com.google.enterprise.connector.spi.TraversalSchedule;
 import com.google.enterprise.connector.util.diffing.ChangeSource;
 import com.google.enterprise.connector.util.diffing.CheckpointAndChangeQueue;
 import com.google.enterprise.connector.util.diffing.DocumentHandleFactory;
@@ -134,9 +133,5 @@ public class FakeDocumentSnapshotRepositoryMonitorManager
   /* @Override */
   public void acceptGuarantees(Map<String, MonitorCheckpoint> guarantees) {
     guaranteeCount.incrementAndGet();
-  }
-
-  /* @Override */
-  public void setTraversalSchedule(TraversalSchedule traversalSchedule) {
   }
 }

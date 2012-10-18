@@ -149,13 +149,10 @@ public class SnapshotStore {
   static private SortedSet<Long> getExistingSnapshots(File snapshotDirectory) {
     TreeSet<Long> result =
         new TreeSet<Long>(Ordering.<Long>natural().reverse());
-    File[] files = snapshotDirectory.listFiles();
-    if (files != null) {
-      for (File f : files) {
-        Matcher m = SNAPSHOT_PATTERN.matcher(f.getName());
-        if (m.matches()) {
-          result.add(Long.valueOf(m.group(1)));
-        }
+    for (File f : snapshotDirectory.listFiles()) {
+      Matcher m = SNAPSHOT_PATTERN.matcher(f.getName());
+      if (m.matches()) {
+        result.add(Long.valueOf(m.group(1)));
       }
     }
     return result;
@@ -283,9 +280,6 @@ public class SnapshotStore {
         for (long k = 0; k < checkpoint.getOffset2(); ++k) {
           handleInterrupt();
           DocumentSnapshot rec = part1.read();
-          if (rec == null) {
-            break;
-          }
           writer.write(rec);
         }
       } finally {

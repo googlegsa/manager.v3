@@ -332,7 +332,7 @@ public class GetDocumentContentTest extends TestCase {
     assertEquals(403, res.getStatus());
   }
 
-  /** Test ProductionManager getDocumentContent should deny HEAD from SecMgr. */
+  /** Test ProductionManager getDocumentContent should deny SecMgr. */
   public void testGetDocumentContentHeadFromSecMgr() throws Exception {
     patchRealProductionManager();
     MockHttpServletRequest req = new MockHttpServletRequest("HEAD",
@@ -344,36 +344,6 @@ public class GetDocumentContentTest extends TestCase {
     new GetDocumentContent().service(req, res);
     assertEquals(403, res.getStatus());
   }
-
-  /** Test ProductionManager getDocumentContent should deny Legacy Headrequest.
-      Cookie based Authn will generate a GET with Range:0-0 */
-  public void testGetDocumentContentCookieHeadRequest() throws Exception {
-    patchRealProductionManager();
-    MockHttpServletRequest req = createMockRequest();
-    req.setParameter(ServletUtil.XMLTAG_CONNECTOR_NAME, connectorName);
-    req.setParameter(ServletUtil.QUERY_PARAM_DOCID, docid);
-    req.addHeader("User-Agent", "gsa-crawler");
-    req.addHeader("Range", "0-0");
-    MockHttpServletResponse res = new MockHttpServletResponse();
-    new GetDocumentContent().service(req, res);
-    assertEquals(403, res.getStatus());
-  }
-
-
-  /** Test ProductionManager getDocumentContent should deny
-      Legacy Headrequest. */
-  public void testGetDocumentContentHeadRequest() throws Exception {
-    patchRealProductionManager();
-    MockHttpServletRequest req = new MockHttpServletRequest("HEAD",
-        "/connector-manager/getDocumentContent");
-    req.setParameter(ServletUtil.XMLTAG_CONNECTOR_NAME, connectorName);
-    req.setParameter(ServletUtil.QUERY_PARAM_DOCID, docid);
-    req.addHeader("User-Agent", "gsa-crawler");
-    MockHttpServletResponse res = new MockHttpServletResponse();
-    new GetDocumentContent().service(req, res);
-    assertEquals(403, res.getStatus());
-  }
-
 
   /** Test requiring GSA to use authentication for private doc. */
   public void testHttpBasicWithoutCredentials() throws Exception {

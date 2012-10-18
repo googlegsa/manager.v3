@@ -145,16 +145,10 @@ public class GetDocumentContent extends HttpServlet {
       Manager manager) throws IOException {
     // The servlet relies on proper security to be handled by a filter.
 
-    if ("SecMgr".equals(req.getHeader("User-Agent")) || 
-        req.getHeader("Range") != null ||
-        "HEAD".equals(req.getMethod())) {
-      // GSA does a GET with Range:0-0 to simulate head request.
-      // Assume that a "HEAD" request to check authz is being performed
-      // due to presence of Range header.
-      // We don't support authz by hr so we always issue deny.
-      // TODO(ejona): Remove checking for Range header and HEAD once 
-      // Legacy Authz is removed from supported GSA versions.
-      LOGGER.finest("RETRIEVER: Head request denied");
+    if ("SecMgr".equals(req.getHeader("User-Agent"))) {
+      // Assume that the SecMgr is performing a "HEAD" request to check authz.
+      // We don't support this, so we always issue deny.
+      LOGGER.finest("RETRIEVER: SecMgr request denied");
       res.sendError(HttpServletResponse.SC_FORBIDDEN);
       return;
     }
