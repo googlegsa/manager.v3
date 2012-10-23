@@ -272,7 +272,7 @@ public class ChangeQueue implements ChangeSource {
   }
 
   @VisibleForTesting
-  public long getSleepInterval() {
+  long getSleepInterval() {
     return this.sleepInterval;
   }
 
