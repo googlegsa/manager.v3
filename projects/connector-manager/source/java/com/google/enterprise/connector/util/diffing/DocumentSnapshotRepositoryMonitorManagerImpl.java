@@ -320,7 +320,6 @@ public class DocumentSnapshotRepositoryMonitorManagerImpl
 
     this.traversalSchedule = traversalSchedule;
 
-    LOG.finest("Setting delay to " + traversalSchedule.getRetryDelay() + " secs.");
     changeQueue.setSleepInterval(traversalSchedule.getRetryDelay() * 1000);
 
     for (SnapshotRepository<? extends DocumentSnapshot> repository
