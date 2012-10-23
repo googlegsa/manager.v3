@@ -1,4 +1,4 @@
-// Copyright 2009 Google Inc.
+// Copyright 2012 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,11 +15,9 @@
 package com.google.enterprise.connector.util.diffing;
 
 import com.google.enterprise.connector.spi.TraversalSchedule;
-import com.google.enterprise.connector.util.diffing.ChangeQueue;
-import com.google.enterprise.connector.util.diffing.ChangeQueue.DefaultCrawlActivityLogger;
 
-import java.sql.Timestamp;
 import java.util.ArrayList;
+
 import junit.framework.TestCase;
 
 /**
@@ -47,33 +45,33 @@ public class DocumentSnapshotRepositoryMonitorManagerImplTest extends TestCase {
     }
   
     /** Returns the target traversal rate in documents per minute. */
-    /* @Override */
+    @Override
     public int getTraversalRate() {
       return load;
     }
   
     /** Returns the number of seconds to delay after finding no new content. */
-    /* @Override */
+    @Override
     public int getRetryDelay() {
       return retryDelay;
     }
   
     /** Returns {@code true} if the traversal schedule is disabled. */
-    /* @Override */
+    @Override
     public boolean isDisabled() {
       return isDisabled;
     }
   
     /**
-     * Returns {@code true} if the current time is within a scheduled travesal
+     * Returns {@code true} if the current time is within a scheduled traversal
      * interval.
      */
-    /* @Override */
+    @Override
     public boolean inScheduledInterval() {
       return inInterval;
     }
   
-    /* @Override */
+    @Override
     public int nextScheduledInterval() {
       return -1;
     }
@@ -82,23 +80,28 @@ public class DocumentSnapshotRepositoryMonitorManagerImplTest extends TestCase {
      * Returns {@code true} if traversals could run at this time,
      * equivalent to <pre>!isDisabled() && inScheduledInterval()</pre>.
      */
-    /* @Override */
+    @Override
     public boolean shouldRun() {
       return !isDisabled() && inScheduledInterval();
     }
   }
 
+  /**
+   * This test verifies that the monitor manager can change sleepInterval
+   * in {@link ChangeQueue} through setTraversalSchedule.
+   */
   public void testSetTraversalSchedule() {
     ChangeQueue queue;
     queue = new ChangeQueue(10, 0L, null);
 
     DocumentSnapshotRepositoryMonitorManagerImpl manager =
         new DocumentSnapshotRepositoryMonitorManagerImpl(
-            new ArrayList<SnapshotRepository<? extends DocumentSnapshot>>(), null, null, null,
-            queue, null);
+            new ArrayList<SnapshotRepository<? extends DocumentSnapshot>>(),
+            null, null, null, queue, null);
 
     assertEquals(0, queue.getSleepInterval());
-    manager.setTraversalSchedule(new MockTraversalSchedule(500, 8074, false, false));
+    manager.setTraversalSchedule(new MockTraversalSchedule(500, 8074,
+        false, false));
     assertEquals(8074000, queue.getSleepInterval());
   }
 }
