@@ -271,6 +271,11 @@ public class ChangeQueue implements ChangeSource {
     this.sleepInterval = sleepInterval;
   }
 
+  @VisibleForTesting
+  public long getSleepInterval() {
+    return this.sleepInterval;
+  }
+
   /** Empties the queue of all pending changes. */
   void clear() {
     pendingChanges.clear();
