@@ -317,7 +317,12 @@ public class DocumentSnapshotRepositoryMonitorManagerImpl
   /* @Override */
   public synchronized void setTraversalSchedule(TraversalSchedule
       traversalSchedule) {
+
     this.traversalSchedule = traversalSchedule;
+
+    LOG.finest("Setting delay to " + traversalSchedule.getRetryDelay() + " secs.");
+    changeQueue.setSleepInterval(traversalSchedule.getRetryDelay() * 1000);
+
     for (SnapshotRepository<? extends DocumentSnapshot> repository
         : repositories) {
       String monitorName = makeMonitorNameFromStartPath(repository.getName());
