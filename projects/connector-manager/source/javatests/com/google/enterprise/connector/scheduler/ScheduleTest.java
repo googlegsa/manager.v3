@@ -140,6 +140,11 @@ public class ScheduleTest extends TestCase {
   }
 
   public void testGettersAndSetters() throws Exception {
+    // Test static setters/getters first.
+    Schedule.setDefaultRetryDelaySecs(20);
+    assertEquals(20000, Schedule.defaultRetryDelayMillis());
+
+    // Now test the instance setters/getters.
     Schedule schedule = new Schedule();
 
     schedule.setConnectorName("connector1");
@@ -153,9 +158,6 @@ public class ScheduleTest extends TestCase {
     schedule.setLoad(2000);
     assertEquals(2000, schedule.getLoad());
     assertEquals(2000, schedule.getTraversalRate());
-
-    schedule.setDefaultRetryDelaySecs(20);
-    assertEquals(20000, schedule.defaultRetryDelayMillis());
 
     schedule.setRetryDelayMillis(30000);
     assertEquals(30000, schedule.getRetryDelayMillis());

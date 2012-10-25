@@ -57,9 +57,13 @@ public class JdbcDataSourceFactory {
 
     // If the DataSource implementation class can not be found on the
     // classpath, then return a disabled stub in its place.
-    Class clazz;
+    DataSource dataSource;
     try {
-      clazz = Class.forName(className);
+      dataSource = (DataSource) Class.forName(className).newInstance();
+    } catch (ClassCastException cce) {
+      LOGGER.warning(description + " JDBC DataSource implementation not a valid"
+                     + " DataSource? Creating a disabled stub in its place.");
+      return new FakeDataSource(description);
     } catch (ClassNotFoundException cnfe) {
       LOGGER.warning(description + " JDBC DataSource implementation not found."
                      + " Creating a disabled stub in its place.");
@@ -70,7 +74,6 @@ public class JdbcDataSourceFactory {
       return new FakeDataSource(description);
     }
 
-    DataSource dataSource = (DataSource) clazz.newInstance();
     LOGGER.config(description + " JDBC DataSource created: " + dataSource);
     return dataSource;
   }

@@ -77,7 +77,8 @@ public class DocumentSnapshotRepositoryMonitor implements Runnable {
   @SuppressWarnings("unchecked")
   private static void initNdcLogging() {
     try {
-      Class ndc = Class.forName("com.google.enterprise.connector.logging.NDC");
+      Class<?> ndc =
+          Class.forName("com.google.enterprise.connector.logging.NDC");
       ndcPush = ndc.getMethod("push", String.class);
       ndcRemove = ndc.getMethod("remove", (Class []) null);
     } catch (LinkageError ignored) {
