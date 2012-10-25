@@ -620,7 +620,7 @@ public class ServletUtilTest extends TestCase {
         (URLClassLoader) ServletUtil.class.getClassLoader();
     Class<URLClassLoader> clazz = URLClassLoader.class;
     // Since the addURL() method is protected need to use reflection.
-    Method method = clazz.getDeclaredMethod("addURL", new Class[] {URL.class});
+    Method method = clazz.getDeclaredMethod("addURL", URL.class);
     method.setAccessible(true);
     method.invoke(sysClassLoader, new Object[] {u});
   }

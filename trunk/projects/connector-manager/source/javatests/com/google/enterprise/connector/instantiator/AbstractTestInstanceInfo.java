@@ -113,7 +113,8 @@ public abstract class AbstractTestInstanceInfo extends TestCase {
    */
   protected Connector fromConfigurationTest(String connectorName,
       String connectorDir, TypeInfo typeInfo, Configuration configuration,
-      Class expectedException, String expectedMessage) throws Exception {
+      Class<? extends Exception> expectedException, String expectedMessage)
+      throws Exception {
     try {
       Connector connector =
           newInstance(connectorName, connectorDir, typeInfo, configuration);
@@ -150,8 +151,9 @@ public abstract class AbstractTestInstanceInfo extends TestCase {
    * @return the Connector instance.
    */
   protected Connector fromDirectoryTest(String connectorName,
-      String connectorDir, String resourceName, Class expectedException,
-      String expectedMessage) throws Exception {
+      String connectorDir, String resourceName,
+      Class<? extends Exception> expectedException, String expectedMessage)
+      throws Exception {
     TypeInfo typeInfo = makeTypeInfo(resourceName);
     Configuration configuration =
         readConfiguration(connectorName, connectorDir, typeInfo);

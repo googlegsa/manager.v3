@@ -207,7 +207,7 @@ public class EncryptPassword extends AbstractCommandLineApp {
         if (console == null) {
           throw new UnsupportedOperationException("No Console");
         }
-        Class<?>[] paramTypes = new Class[] { String.class, Object[].class };
+        Class<?>[] paramTypes = new Class<?>[] { String.class, Object[].class };
         readPassword = console.getClass().getMethod("readPassword", paramTypes);
       } catch (NoSuchMethodException e) {
         throw new UnsupportedOperationException("Not Java 6");

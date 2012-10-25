@@ -20,7 +20,7 @@ import com.google.enterprise.connector.instantiator.TypeMap;
 import com.google.enterprise.connector.manager.Context;
 
 import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.OptionBuilder;
+import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 
 import java.io.FileOutputStream;
@@ -72,13 +72,10 @@ public class DumpConnectors extends AbstractCommandLineApp {
   public Options getOptions() {
     Options options = super.getOptions();
     options.addOption("l", "list", false, "List available connectors.");
-    options.addOption(OptionBuilder.withLongOpt("connector")
-                      .hasArg()
-                      .withArgName("connector_name")
-                      .withDescription("Connector to export.")
-                      .create('c'));
+    Option o = new Option("c", "connector_name", true, "Connector to export.");
+    o.setArgName("connector_name");
+    options.addOption(o);
     return options;
-
   }
 
   @Override

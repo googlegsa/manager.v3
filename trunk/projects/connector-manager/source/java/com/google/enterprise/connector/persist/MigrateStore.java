@@ -21,7 +21,7 @@ import com.google.enterprise.connector.instantiator.TypeMap;
 import com.google.enterprise.connector.manager.Context;
 
 import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.OptionBuilder;
+import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
@@ -79,11 +79,9 @@ public class MigrateStore extends AbstractCommandLineApp {
     options.addOption("l", "list", false, "List available PersistentStores.");
     options.addOption("f", "force", false,
         "Overwrite existing data in destination PersistentStore.");
-    options.addOption(OptionBuilder.withLongOpt("connector")
-                      .hasArg()
-                      .withArgName("connector_name")
-                      .withDescription("Connector to migrate.")
-                      .create('c'));
+    Option o = new Option("c", "connector_name", true, "Connector to migrate.");
+    o.setArgName("connector_name");
+    options.addOption(o);
     return options;
   }
 
