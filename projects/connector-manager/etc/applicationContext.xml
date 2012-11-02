@@ -478,7 +478,7 @@
   <bean id="ChangeDetectorTask"
         class="com.google.enterprise.connector.instantiator.ChangeDetectorTask">
     <constructor-arg index="0" ref="ChangeDetector"/>
-    <constructor-arg index="1" value="0"/>
+    <constructor-arg index="1" value="1"/>
     <constructor-arg index="2" value="${config.change.detect.interval}"/>
   </bean>
 
