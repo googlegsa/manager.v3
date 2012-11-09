@@ -479,7 +479,7 @@
   <bean id="ChangeDetectorTask"
         class="com.google.enterprise.connector.instantiator.ChangeDetectorTask">
     <constructor-arg index="0" ref="ChangeDetector"/>
-    <constructor-arg index="1" value="0"/>
+    <constructor-arg index="1" value="1"/>
     <constructor-arg index="2" value="${config.change.detect.interval}"/>
   </bean>
 
@@ -661,6 +661,7 @@
         <value>application/vnd.openxmlformats-officedocument.spreadsheetml.sheet</value>
         <value>application/vnd.ms-excel.sheet.macroEnabled.12</value>
         <value>application/vnd.ms-excel.sheet.12</value>
+        <value>application/vnd.ms-excel.12</value>
         <value>application/vnd.ms-htmlhelp</value>
 	      <value>application/vnd.ms-outlook</value>
         <value>application/mspowerpoint</value>
@@ -669,6 +670,7 @@
         <value>application/vnd.openxmlformats-officedocument.presentationml.presentation</value>
         <value>application/vnd.ms-powerpoint.presentation.macroEnabled.12</value>
         <value>application/vnd.ms-powerpoint.presentation.12</value>
+        <value>application/vnd.ms-powerpoint.12</value>
         <value>application/vnd.ms-project</value>
         <value>application/x-project</value>
         <value>application/x-mspublisher</value>
@@ -677,6 +679,7 @@
         <value>application/vnd.openxmlformats-officedocument.wordprocessingml.document</value>
         <value>application/vnd.ms-word.document.macroEnabled.12</value>
         <value>application/vnd.ms-word.document.12</value>
+        <value>application/vnd.ms-word.12</value>
         <value>application/vnd.ms-works</value>
         <value>application/mswrite</value>
         <value>application/x-mswrite</value>

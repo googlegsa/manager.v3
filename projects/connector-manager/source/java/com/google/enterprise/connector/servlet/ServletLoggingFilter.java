@@ -88,11 +88,12 @@ public class ServletLoggingFilter implements Filter {
         servletPath = builder.substring(i);
 
         // Log request Attributes.
-        Enumeration names = req.getAttributeNames();
-        if (names.hasMoreElements()) {
+        @SuppressWarnings("unchecked") Enumeration<String> attrNames =
+            req.getAttributeNames();
+        if (attrNames.hasMoreElements()) {
           builder.append(" attrs = { ");
-          while(names.hasMoreElements()) {
-            String name = (String) names.nextElement();
+          while (attrNames.hasMoreElements()) {
+            String name = attrNames.nextElement();
             builder.append(name).append('=').append(req.getAttribute(name));
             builder.append(", ");
           }
@@ -101,11 +102,12 @@ public class ServletLoggingFilter implements Filter {
         }
 
         // Log the request Parameters.
-        names = req.getParameterNames();
-        if (names.hasMoreElements()) {
+        @SuppressWarnings("unchecked") Enumeration<String> paramNames =
+            req.getParameterNames();
+        if (paramNames.hasMoreElements()) {
           builder.append(" params = { ");
-          while(names.hasMoreElements()) {
-            String name = (String) names.nextElement();
+          while (paramNames.hasMoreElements()) {
+            String name = paramNames.nextElement();
             builder.append(name).append('=').append(req.getParameter(name));
             builder.append(", ");
           }
