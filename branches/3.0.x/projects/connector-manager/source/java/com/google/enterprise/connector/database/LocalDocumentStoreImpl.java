@@ -589,7 +589,7 @@ public class LocalDocumentStoreImpl implements DocumentStore {
         documents.put(docid, properties);
       }
 
-      Set propNames = document.getPropertyNames();
+      Set<String> propNames = document.getPropertyNames();
       for (String propertyName : SpiConstants.PERSISTABLE_ATTRIBUTES.keySet()) {
         if (propNames.contains(propertyName)) {
           String value = Value.getSingleValueString(document, propertyName);

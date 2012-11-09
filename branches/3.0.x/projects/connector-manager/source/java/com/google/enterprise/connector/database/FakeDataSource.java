@@ -17,6 +17,7 @@ package com.google.enterprise.connector.database;
 import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.logging.Logger;
 import javax.sql.DataSource;
 
 /**
@@ -61,7 +62,7 @@ public class FakeDataSource implements DataSource {
 
   /* @Override */
   public Connection getConnection(String username, String password)
-    throws SQLException {
+      throws SQLException {
     throw new SQLException(message());
   }
 
@@ -83,6 +84,12 @@ public class FakeDataSource implements DataSource {
   /* @Override */
   public PrintWriter getLogWriter() throws SQLException {
     throw new SQLException(message());
+  }
+
+  // Do not uncomment @Override as long as we support bootclasspath < Java 7.
+  /* @Override */
+  public Logger getParentLogger() {
+    return Logger.getLogger("com.google.enterprise.connector");
   }
 
   /* @Override */

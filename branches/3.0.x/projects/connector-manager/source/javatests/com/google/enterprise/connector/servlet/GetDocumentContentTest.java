@@ -438,7 +438,7 @@ public class GetDocumentContentTest extends TestCase {
         MockManager.CONNECTOR6_SPECIAL_CHAR_DOCID);
     encodeQueryParameter(req);
     MockHttpServletResponse res = new MockHttpServletResponse();
-    new GetDocumentContent().doGet(req, res, MockManager.getInstance());
+    GetDocumentContent.doGet(req, res, MockManager.getInstance());
     // connector6 checks docid values.
     assertEquals(200, res.getStatus());
     assertEquals(MockManager.CONNECTOR6_SUCCESS, res.getContentAsString());

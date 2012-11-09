@@ -50,21 +50,23 @@ public class MimeTypeDetectorTest extends TestCase {
   }
 
   public void testSetSupportedEncodings() throws Exception {
-    Collection encodings = EncodingGuesser.getSupportedEncodings();
+    @SuppressWarnings("unchecked") Collection<String> encodings =
+        EncodingGuesser.getSupportedEncodings();
     assertTrue(encodings.contains("UTF-8"));
     assertTrue(encodings.contains("ISO-8859-1"));
     assertTrue(encodings.contains("windows-1252"));
     assertTrue(encodings.contains(Charset.defaultCharset().toString()));
 
     // Need to make a deep copy to restore properly.
-    Collection originalEncodings = Sets.newHashSet(encodings.toArray());
+    Collection<String> originalEncodings = Sets.newHashSet(encodings);
 
     MimeTypeDetector.setSupportedEncodings(
         Sets.newHashSet("UTF-16", "US-ASCII"));
-    encodings = EncodingGuesser.getSupportedEncodings();
-    assertTrue(encodings.contains("UTF-16"));
-    assertTrue(encodings.contains("US-ASCII"));
-    assertTrue(encodings.contains(Charset.defaultCharset().toString()));
+    @SuppressWarnings("unchecked") Collection<String> newEncodings =
+        EncodingGuesser.getSupportedEncodings();
+    assertTrue(newEncodings.contains("UTF-16"));
+    assertTrue(newEncodings.contains("US-ASCII"));
+    assertTrue(newEncodings.contains(Charset.defaultCharset().toString()));
 
     // Restore original supported encodings.
     EncodingGuesser.setSupportedEncodings(originalEncodings);

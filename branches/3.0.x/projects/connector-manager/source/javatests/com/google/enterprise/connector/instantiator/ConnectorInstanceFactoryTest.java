@@ -127,7 +127,7 @@ public class ConnectorInstanceFactoryTest extends AbstractTestInstanceInfo {
 
     // Supply a modified config should override original.
     HashMap<String, String> config =
-        new HashMap(factory.originalConfig.getMap());
+        new HashMap<String, String>(factory.originalConfig.getMap());
     config.put("Username", "xyzzy");
     connector = (SimpleTestConnector) factory.makeConnector(config);
     assertEquals("xyzzy", connector.getUsername());
