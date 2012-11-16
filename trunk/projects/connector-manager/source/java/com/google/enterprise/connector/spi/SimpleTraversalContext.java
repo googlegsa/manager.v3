@@ -32,6 +32,7 @@ public class SimpleTraversalContext implements TraversalContext {
   private Set<String> mimeTypeSet = null;
   private long traversalTimeLimitSeconds = 30 * 60;
   private boolean supportsInheritedAcls = false;
+  private boolean supportsDenyAcls = false;
 
   public synchronized void setMaxDocumentSize(long maxDocumentSize) {
     validateArgument("maxDocumentSize", maxDocumentSize);
@@ -47,9 +48,15 @@ public class SimpleTraversalContext implements TraversalContext {
     this.traversalTimeLimitSeconds = limit;
   }
 
+  /* @since 3.0 */
   public synchronized void setSupportsInheritedAcls(
       boolean supportsInheritedAcls) {
     this.supportsInheritedAcls = supportsInheritedAcls;
+  }
+
+  /* @since 3.0.4 */
+  public synchronized void setSupportsDenyAcls(boolean supportsDenyAcls) {
+    this.supportsDenyAcls = supportsDenyAcls;
   }
 
   private void validateArgument(String property, long value) {
@@ -59,17 +66,17 @@ public class SimpleTraversalContext implements TraversalContext {
     }
   }
 
-  /* @Override */
+  @Override
   public synchronized long maxDocumentSize() {
     return maxDocumentSize;
   }
 
-  /* @Override */
+  @Override
   public synchronized int mimeTypeSupportLevel(String mimeType) {
     return (mimeTypeSet == null || mimeTypeSet.contains(mimeType)) ? 1 : 0;
   }
 
-  /* @Override */
+  @Override
   public synchronized String preferredMimeType(Set<String> mimeTypes) {
     Set<String> choices = new HashSet<String>(mimeTypes);
     if (mimeTypeSet != null) {
@@ -79,13 +86,18 @@ public class SimpleTraversalContext implements TraversalContext {
     return (it.hasNext()) ? it.next() : null;
   }
 
-  /* @Override */
+  @Override
   public synchronized long traversalTimeLimitSeconds() {
     return traversalTimeLimitSeconds;
   }
 
-  /* @Override */
+  @Override
   public synchronized boolean supportsInheritedAcls() {
     return supportsInheritedAcls;
+  }
+
+  @Override
+  public synchronized boolean supportsDenyAcls() {
+    return supportsDenyAcls;
   }
 }
