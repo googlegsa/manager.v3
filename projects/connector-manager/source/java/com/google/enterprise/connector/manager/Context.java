@@ -780,20 +780,26 @@ public class Context {
           (SimpleTraversalContext) traversalContext;
       Properties props = getConnectorManagerProperties();
       GsaFeedConnection feeder = getGsaFeedConnection();
-      if (Boolean.valueOf(props.getProperty(FEED_DISABLE_INHERITED_ACLS))) {
-        simpleContext.setSupportsInheritedAcls(false);
-      } else if (feeder != null) {
-        simpleContext.setSupportsInheritedAcls(feeder.supportsInheritedAcls());
-      }
-      // N.B.: We are using feeder.supportsInheritedAcls() to
-      // determine whether DENY is supported. This is conservative,
-      // only claiming support for DENY ACLs on 7.0, and not on 6.14.
-      // TODO(jlacey): Check for 6.14 and support DENY there as well.
-      if (feeder != null) {
-        simpleContext.setSupportsDenyAcls(feeder.supportsInheritedAcls());
-      }
+      initTraversalContext(simpleContext, props, feeder);
     }
     return traversalContext;
+  }
+
+  @VisibleForTesting
+  void initTraversalContext(SimpleTraversalContext simpleContext,
+      Properties props, GsaFeedConnection feeder) {
+    if (Boolean.valueOf(props.getProperty(FEED_DISABLE_INHERITED_ACLS))) {
+      simpleContext.setSupportsInheritedAcls(false);
+    } else if (feeder != null) {
+      simpleContext.setSupportsInheritedAcls(feeder.supportsInheritedAcls());
+    }
+    // N.B.: We are using feeder.supportsInheritedAcls() to
+    // determine whether DENY is supported. This is conservative,
+    // only claiming support for DENY ACLs on 7.0, and not on 6.14.
+    // TODO(jlacey): Check for 6.14 and support DENY there as well.
+    if (feeder != null) {
+      simpleContext.setSupportsDenyAcls(feeder.supportsInheritedAcls());
+    }
   }
 
   /**
