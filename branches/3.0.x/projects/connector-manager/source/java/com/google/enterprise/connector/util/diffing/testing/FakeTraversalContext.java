@@ -39,6 +39,7 @@ public class FakeTraversalContext extends SimpleTraversalContext {
   public FakeTraversalContext(long maxDocumentSize) {
     setMaxDocumentSize(maxDocumentSize);
     setSupportsInheritedAcls(true);
+    setSupportsDenyAcls(true);
     setTraversalTimeLimitSeconds(120);
   }
 

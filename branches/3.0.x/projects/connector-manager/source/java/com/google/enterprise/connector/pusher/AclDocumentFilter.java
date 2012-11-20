@@ -64,6 +64,7 @@ public class AclDocumentFilter implements DocumentFilterFactory {
    * are unsupported. The meaning of ACLs changes depending on if the GSA
    * supports inheritance, for instance.
    */
+  /* TODO(jlacey): This probably needs to change if we support DENY on 6.14. */
   private Boolean useEnhancedAcls;
 
   public AclDocumentFilter(FeedConnection feedConnection) {

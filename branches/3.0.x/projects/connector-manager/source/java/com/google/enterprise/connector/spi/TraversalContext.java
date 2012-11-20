@@ -85,7 +85,11 @@ public interface TraversalContext {
    * Returns {@code true} if Documents may include full ACL support,
    * specifically DENY users or groups, ACL inheritance, and ACL-only
    * Documents.  Some earlier Search Appliance implementations do not
-   * support these features.
+   * support these features. This method will always return {@code false}
+   * if the {@code feed.disable.inherited.acls} property in
+   * {@code applicationContext.xml} is set to {@code true}. If this
+   * method returns {@code true}, then {@link #supportsDenyAcls} will
+   * also return {@code true}.
    *
    * @return {@code true} if Documents may include enhanced ACL support
    *
@@ -100,4 +104,22 @@ public interface TraversalContext {
    * @since 3.0
    */
   boolean supportsInheritedAcls();
+
+  /**
+   * Returns {@code true} if Documents may include DENY users or
+   * groups in an ACL. Some earlier Search Appliance implementations
+   * do not support this feature. A connector that requires inheritance
+   * in order to implement DENY should use {@link #supportsInheritedAcls}
+   * instead of this method. If this method returns {@code false}, then
+   * {@link #supportsDenyAcls} will also return {@code false}.
+   *
+   * @return {@code true} if Documents may include DENY users or groups
+   *
+   * @see SecureDocument
+   * @see SpiConstants#PROPNAME_ACLDENYGROUPS
+   * @see SpiConstants#PROPNAME_ACLDENYUSERS
+   *
+   * @since 3.0.4
+   */
+  boolean supportsDenyAcls();
 }

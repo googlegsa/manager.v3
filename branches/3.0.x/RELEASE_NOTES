@@ -11,7 +11,7 @@ issues and work-arounds.
 Web Site: http://code.google.com/p/google-enterprise-connector-manager/
 
 
-Release 3.0.4, 09 November 2012
+Release 3.0.4, 19 November 2012
 ===============================
 
 Introduction
@@ -36,6 +36,14 @@ Fix Issue 7409537: Support more unregistered Microsoft Office 2007 media types:
                    "application/vnd.ms-excel.12",
                    "application/vnd.ms-powerpoint.12",
                    "application/vnd.ms-word.12".
+
+Fix Issue 7554816: Support DENY with flattened ACLs in SharePoint connector.
+                   This change adds a TraversalContext.supportsDenyAcls method
+                   that is distinct from the supportsInheritedAcls method.
+                   Previously DENY ACL support was implied if inherited ACLs
+                   were supported.  This change allows DENY ACLs to be sent
+                   to GSA 7.x, even if feed.disable.inherited.acls property
+                   is set.
 
 
 Release 3.0.2, 17 October 2012
