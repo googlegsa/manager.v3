@@ -75,5 +75,10 @@ public interface FeedConnection {
    *
    * @since 3.0
    */
+  /*
+   * TODO(jlacey): Split out supportsDenyAcls. We're currently using
+   * this method to check for DENY support as well, which means we
+   * don't support DENY on GSA 6.14.
+   */
   boolean supportsInheritedAcls();
 }
