@@ -134,7 +134,9 @@ public class GsaFeedConnection implements FeedConnection {
   private void setUrls(String protocol, String host, int port)
       throws MalformedURLException {
     feedUrl = new URL(protocol, host, port, "/xmlfeed");
+    gotFeedError = false;
     dtdUrl = new URL(protocol, host, port, "/getdtd");
+    feedDtd = null;
     contentEncodings = null;
     backlogUrl = new URL(protocol, host, port, "/getbacklogcount");
     lastBacklogCheck = 0L;
