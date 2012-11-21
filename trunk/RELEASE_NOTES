@@ -45,6 +45,12 @@ Fix Issue 7554816: Support DENY with flattened ACLs in SharePoint connector.
                    to GSA 7.x, even if feed.disable.inherited.acls property
                    is set.
 
+Fix Issue 7584684: GsaFeedConnection needs to invalidate the cached DTD when
+                   switching GSAs. If a running connector manager is
+                   reregistered with a different version of the GSA, it
+                   would continue to assume the capabilities of the original
+                   GSA version, based on an inspection of the feed DTD.
+
 
 Release 3.0.2, 17 October 2012
 ==============================
