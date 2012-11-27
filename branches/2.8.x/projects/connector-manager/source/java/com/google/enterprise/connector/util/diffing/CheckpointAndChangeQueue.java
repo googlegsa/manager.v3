@@ -140,7 +140,7 @@ public class CheckpointAndChangeQueue {
     }
   }
 
-  /** Keeps checkpoint information for all known FileSystemMonitors. */
+  /** Keeps checkpoint information for all known Monitors. */
   private static class MonitorRestartState {
     /* Maps monitor's name onto its restart MonitorCheckpoint. */
     HashMap<String, MonitorCheckpoint> points;
@@ -346,7 +346,7 @@ public class CheckpointAndChangeQueue {
   /**
    * Initialize to start processing from after the passed in checkpoint
    * or from the beginning if the passed in checkpoint is null.  Part of
-   * making FileSystemMonitorManager go from "cold" to "warm".
+   * making DocumentSnapshotRepositoryMonitorManager go from "cold" to "warm".
    */
   public synchronized void start(String checkpointString) throws IOException {
     LOG.info("Starting CheckpointAndChangeQueue from " + checkpointString);
