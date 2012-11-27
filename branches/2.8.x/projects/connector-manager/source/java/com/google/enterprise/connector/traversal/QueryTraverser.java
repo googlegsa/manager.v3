@@ -28,7 +28,6 @@ import com.google.enterprise.connector.spi.SkippedDocumentException;
 import com.google.enterprise.connector.spi.SimpleProperty;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.TraversalContext;
-import com.google.enterprise.connector.spi.TraversalContextAware;
 import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.util.Clock;
@@ -68,15 +67,6 @@ public class QueryTraverser implements Traverser {
     this.traversalContext = traversalContext;
     this.clock = clock;
     this.documentStore = documentStore;
-    if (queryTraversalManager instanceof TraversalContextAware) {
-      TraversalContextAware contextAware =
-          (TraversalContextAware)queryTraversalManager;
-      try {
-        contextAware.setTraversalContext(traversalContext);
-      } catch (Exception e) {
-        LOGGER.log(Level.WARNING, "Unable to set TraversalContext", e);
-      }
-    }
   }
 
   //@Override
