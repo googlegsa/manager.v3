@@ -15,10 +15,11 @@
 package com.google.enterprise.connector.util.diffing;
 
 import com.google.common.annotations.VisibleForTesting;
-
 import com.google.enterprise.connector.spi.RepositoryException;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -56,6 +57,45 @@ import java.util.logging.Logger;
 public class DocumentSnapshotRepositoryMonitor implements Runnable {
   private static final Logger LOG = Logger.getLogger(
       DocumentSnapshotRepositoryMonitor.class.getName());
+
+  /*
+   * Gross hack uses Java Reflection to setup and teardown NDC logging context.
+   * This avoids connector-spi.jar having a compile-time or run-time dependency
+   * on connector-logging.jar.
+   */
+  private static Method ndcPush = null;
+  private static Method ndcRemove = null;
+
+  static {
+    initNdcLogging();
+  }
+
+  /* Extracted from the above static block to suppress the unchecked warning. */
+  @SuppressWarnings("unchecked")
+  private static void initNdcLogging() {
+    try {
+      Class ndc = Class.forName("com.google.enterprise.connector.logging.NDC");
+      ndcPush = ndc.getMethod("push", String.class);
+      ndcRemove = ndc.getMethod("remove", (Class []) null);
+    } catch (LinkageError ignored) {
+    } catch (ClassNotFoundException ignored) {
+    } catch (NoSuchMethodException ignored) {
+    } catch (SecurityException ignored) {
+    }
+  }
+
+  /* Call an NDC method via reflection, if possible. */
+  private static void invoke(Method method, Object... args) {
+    if (method != null) {
+      try {
+        method.invoke(null, args);
+      } catch (LinkageError ignored) {
+      } catch (IllegalAccessException ignored) {
+      } catch (IllegalArgumentException ignored) {
+      } catch (InvocationTargetException ignored) {
+      }
+    }
+  }
 
   /**
    * The client provides an implementation of this interface to receive
@@ -106,8 +146,8 @@ public class DocumentSnapshotRepositoryMonitor implements Runnable {
   private MonitorCheckpoint guaranteeCheckpoint;
 
   /**
-   * Creates a FileSystemMonitor that monitors the file system rooted at
-   * {@code root}.
+   * Creates a DocumentSnapshotRepositoryMonitor that monitors the
+   * Repository rooted at {@code root}.
    *
    * @param name the name of this monitor (a hash of the start path)
    * @param query query for files
@@ -151,6 +191,8 @@ public class DocumentSnapshotRepositoryMonitor implements Runnable {
 
   /* @Override */
   public void run() {
+    // Call NDC.push() via reflection, if possible.
+    invoke(ndcPush, "Monitor " + name);
     try {
       while (true) {
         tryToRunForever();
@@ -161,7 +203,10 @@ public class DocumentSnapshotRepositoryMonitor implements Runnable {
         performExceptionRecovery();
       }
     } catch (InterruptedException ie) {
-      LOG.log(Level.INFO, "FileSystemMonitor " + name + " received stop signal.");
+      LOG.info("Repository Monitor " + name + " received stop signal.");
+    } finally {
+      // Call NDC.remove() via reflection, if possible.
+      invoke(ndcRemove);
     }
   }
 
@@ -186,9 +231,9 @@ public class DocumentSnapshotRepositoryMonitor implements Runnable {
   }
 
   /**
-   * Call in situations were FileSystemMonitor runs were interfered with
-   * and we wish to have the FileSystemMonitor continue running.
-   * Brings system into state where doOnePass can be invoked.
+   * Call in situations were DocumentSnapshotRepositoryMonitor runs were
+   * interfered with and we wish to have the DocumentSnapshotRepositoryMonitor
+   * continue running. Brings system into state where doOnePass can be invoked.
    * Failures in this method are considered fatal for the thread.
    *
    * @throws IllegalStateException if recovery fails.
@@ -199,13 +244,13 @@ public class DocumentSnapshotRepositoryMonitor implements Runnable {
     // Try to close potentially opened snapshot files.
     try {
       snapshotStore.close(snapshotReader, snapshotWriter);
-      LOG.info("FileSystemMonitor " + name + " closed faulty reader and writer.");
+      LOG.info("Repository Monitor " + name + " closed faulty reader and writer.");
     } catch (IOException e) {
-      String msg = "FileSystemMonitor " + name + " failed clean up .";
+      String msg = "Repository Monitor " + name + " failed clean up .";
       LOG.log(Level.SEVERE, msg, e);
       throw new IllegalStateException(msg, e);
     } catch (SnapshotStoreException e) {
-      String msg = "FileSystemMonitor " + name + " failed clean up .";
+      String msg = "Repository Monitor " + name + " failed clean up .";
       LOG.log(Level.SEVERE, msg, e);
       throw new IllegalStateException(msg, e);
     }
@@ -213,20 +258,20 @@ public class DocumentSnapshotRepositoryMonitor implements Runnable {
     if (null == guaranteeCheckpoint) {
       // This monitor was started without state; that is from scratch.
       // TODO: Consider deleting all snapshot state and starting again.
-      String msg = "FileSystemMonitor " + name + " could not start correctly.";
+      String msg = "Repository Monitor " + name + " could not start correctly.";
       LOG.severe(msg);
       throw new IllegalStateException(msg);
     } else {
       try {
         SnapshotStore.stitch(snapshotStore.getDirectory(), guaranteeCheckpoint,
             documentSnapshotFactory);
-        LOG.info("FileSystemMonitor " + name + " restiched snapshot.");
+        LOG.info("Repository Monitor " + name + " restiched snapshot.");
       } catch (IOException e) {
-        String msg = "FileSystemMonitor " + name + " has failed and stopped.";
+        String msg = "Repository Monitor " + name + " has failed and stopped.";
         LOG.log(Level.SEVERE, msg, e);
         throw new IllegalStateException(msg, e);
       } catch (SnapshotStoreException e) {
-        String msg = "FileSystemMonitor " + name + " failed fixing store.";
+        String msg = "Repository Monitor " + name + " failed fixing store.";
         LOG.log(Level.SEVERE, msg, e);
         throw new IllegalStateException(msg, e);
       }
@@ -371,7 +416,7 @@ public class DocumentSnapshotRepositoryMonitor implements Runnable {
     current = snapshotReader.read();
   }
 
-  // Public for FileSystemMonitorTest
+  // Public for DocumentSnapshotRepositoryMonitorTest
   @VisibleForTesting
   public void acceptGuarantee(MonitorCheckpoint cp) {
     snapshotStore.acceptGuarantee(cp);
