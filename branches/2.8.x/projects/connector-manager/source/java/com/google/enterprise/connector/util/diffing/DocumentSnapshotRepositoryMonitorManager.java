@@ -15,6 +15,7 @@
 package com.google.enterprise.connector.util.diffing;
 
 import com.google.enterprise.connector.spi.RepositoryException;
+import com.google.enterprise.connector.spi.TraversalSchedule;
 
 import java.util.Map;
 
@@ -73,4 +74,10 @@ public interface DocumentSnapshotRepositoryMonitorManager {
    * file system snapshots.
    */
   void acceptGuarantees(Map<String, MonitorCheckpoint> guarantees);
+
+  /**
+   * Receives {@link TraversalSchedule} from TraversalManager which is
+   * {@link TraversalScheduleAware}.  
+   */
+  void setTraversalSchedule(TraversalSchedule traversalSchedule);
 }

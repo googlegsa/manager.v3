@@ -256,6 +256,7 @@ public class LogLevel extends HttpServlet {
    */
   private static class ConnectorLogLevelHandler implements LogLevelHandler {
     private final String LOGGER_NAME = ""; // root logger
+    Context context = Context.getInstance();
 
     /* @Override */
     public String getName() {
@@ -269,16 +270,31 @@ public class LogLevel extends HttpServlet {
 
     /* @Override */
     public void persistLevel(Level level) throws ConnectorManagerException {
-      String filename = System.getProperty("java.util.logging.config.file");
-      if (!Strings.isNullOrEmpty(filename)) {
+      File confFile = new File(new File(context.getCommonDirPath(), "classes"),
+                               "logging.properties");
+      if (!persistLevel(level, confFile)) {
+        String filename = System.getProperty("java.util.logging.config.file");
+        if (!Strings.isNullOrEmpty(filename)) {
+          persistLevel(level, new File(filename));
+        }
+      }
+    }
+
+    /** Returns true if Level was successfully persisted. */
+    private boolean persistLevel(Level level, File confFile)
+        throws ConnectorManagerException {
+      if (confFile.canRead() && confFile.canWrite()) {
         try {
-          File confFile = new File(filename);
           Properties props = loadProperties(confFile);
           props.setProperty(LOGGER_NAME + ".level", level.getName());
           storeProperties(confFile, props);
         } catch (IOException e) {
-          throw new ConnectorManagerException("Failed to save logging properties", e);
+          throw new ConnectorManagerException(
+              "Failed to save logging properties", e);
         }
+        return true;
+      } else {
+        return false;
       }
     }
 

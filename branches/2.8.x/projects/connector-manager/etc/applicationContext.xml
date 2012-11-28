@@ -72,9 +72,11 @@
              Values <= 0 imply never.  For stand-alone deployments,
              never or long intervals are probably sufficient.  For
              clustered deployments with a shared configuration store,
-             60 - 300 seconds is probably sufficient.
+             60 - 300 seconds is probably sufficient.  The default
+             value of 15 minutes is intended to try to recover from
+             transient connector instantiation problems.
         -->
-        <prop key="config.change.detect.interval">0</prop>
+        <prop key="config.change.detect.interval">900</prop>
 
         <!-- JDBC DataSource configuration. -->
         <prop key="jdbc.datasource.type">EmbeddedH2</prop>
@@ -426,7 +428,7 @@
   <bean id="ChangeDetectorTask"
         class="com.google.enterprise.connector.instantiator.ChangeDetectorTask">
     <constructor-arg index="0" ref="ChangeDetector"/>
-    <constructor-arg index="1" value="0"/>
+    <constructor-arg index="1" value="1"/>
     <constructor-arg index="2" value="${config.change.detect.interval}"/>
   </bean>
 
@@ -597,6 +599,7 @@
         <value>application/vnd.openxmlformats-officedocument.spreadsheetml.sheet</value>
         <value>application/vnd.ms-excel.sheet.macroEnabled.12</value>
         <value>application/vnd.ms-excel.sheet.12</value>
+        <value>application/vnd.ms-excel.12</value>
         <value>application/vnd.ms-htmlhelp</value>
 	<value>application/vnd.ms-outlook</value>
         <value>application/mspowerpoint</value>
@@ -605,6 +608,7 @@
         <value>application/vnd.openxmlformats-officedocument.presentationml.presentation</value>
         <value>application/vnd.ms-powerpoint.presentation.macroEnabled.12</value>
         <value>application/vnd.ms-powerpoint.presentation.12</value>
+        <value>application/vnd.ms-powerpoint.12</value>
         <value>application/vnd.ms-project</value>
         <value>application/x-project</value>
         <value>application/x-mspublisher</value>
@@ -613,6 +617,7 @@
         <value>application/vnd.openxmlformats-officedocument.wordprocessingml.document</value>
         <value>application/vnd.ms-word.document.macroEnabled.12</value>
         <value>application/vnd.ms-word.document.12</value>
+        <value>application/vnd.ms-word.12</value>
         <value>application/vnd.ms-works</value>
         <value>application/mswrite</value>
         <value>application/x-mswrite</value>

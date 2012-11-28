@@ -44,6 +44,13 @@ class MockChangeListener implements ChangeListener {
     return changes;
   }
 
+  /**
+   * Clears the changes.
+   */
+  public void clear() {
+    changes.clear();
+  }
+
   private void addChange(String change) {
     changes.add(change);
     LOGGER.info(change);
@@ -51,7 +58,7 @@ class MockChangeListener implements ChangeListener {
 
   /* @Override */
   public void connectorAdded(String connectorName,
-      Configuration configuration) {
+      Configuration configuration) throws InstantiatorException {
     addChange(CONNECTOR_ADDED + connectorName);
   }
 
@@ -68,7 +75,7 @@ class MockChangeListener implements ChangeListener {
 
   /* @Override */
   public void connectorConfigurationChanged(String connectorName,
-      Configuration configuration) {
+      Configuration configuration) throws InstantiatorException {
     addChange(CONFIGURATION_CHANGED + connectorName);
   }
 

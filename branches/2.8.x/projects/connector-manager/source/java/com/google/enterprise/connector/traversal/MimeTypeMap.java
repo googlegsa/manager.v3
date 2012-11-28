@@ -164,6 +164,10 @@ public class MimeTypeMap {
    *         Positive integers may be compared to choose which mime types are
    *         preferred.
    */
+  /*
+   * TODO(jlacey): Support globbing or regular expressions in the types,
+   * so that we can match against "application/vnd.ms-excel*" for example.
+   */
   public int mimeTypeSupportLevel(String mimeType) {
     Integer result = null;
     if (mimeType != null) {

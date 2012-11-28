@@ -37,7 +37,8 @@ class ChangeListenerImpl implements ChangeListener {
   }
 
   /* @Override */
-  public void connectorAdded(String instanceName, Configuration configuration) {
+  public void connectorAdded(String instanceName, Configuration configuration)
+      throws InstantiatorException {
     LOGGER.config("Add connector " + instanceName + " of type "
                   + configuration.getTypeName());
     try {
@@ -47,6 +48,8 @@ class ChangeListenerImpl implements ChangeListener {
     } catch (InstantiatorException e) {
       LOGGER.log(Level.WARNING, "Failed to handle addition of new connector "
                  + instanceName, e);
+      // Propagate InstantiatorException, so ChangeDetector can retry later.
+      throw e;
     } catch (ConnectorTypeNotFoundException e) {
       LOGGER.log(Level.WARNING, "Failed to handle addition of new connector "
                  + instanceName, e);
@@ -92,7 +95,7 @@ class ChangeListenerImpl implements ChangeListener {
 
   /* @Override */
   public void connectorConfigurationChanged(String instanceName,
-                                            Configuration configuration) {
+      Configuration configuration) throws InstantiatorException {
     LOGGER.config("Configuration changed for connector " + instanceName);
     try {
       ChangeHandler handler = coordinatorMap.getChangeHandler(instanceName);
@@ -101,6 +104,8 @@ class ChangeListenerImpl implements ChangeListener {
     } catch (InstantiatorException e) {
       LOGGER.log(Level.WARNING, "Failed to handle configuration change for "
                  + "connector " + instanceName, e);
+      // Propagate InstantiatorException, so ChangeDetector can retry later.
+      throw e;
     } catch (ConnectorTypeNotFoundException e) {
       LOGGER.log(Level.WARNING, "Failed to handle configuration change for "
                  + "connector " + instanceName, e);

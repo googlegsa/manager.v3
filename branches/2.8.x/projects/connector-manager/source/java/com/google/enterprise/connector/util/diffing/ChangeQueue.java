@@ -33,7 +33,7 @@ public class ChangeQueue implements ChangeSource {
   private final BlockingQueue<Change> pendingChanges;
 
   /** Milliseconds to sleep after a scan that finds no changes. */
-  private final long sleepInterval;
+  private volatile long sleepInterval;
 
   /** Logger that records crawl activities for each repository scan.*/
   private final CrawlActivityLogger activityLogger;
@@ -204,6 +204,11 @@ public class ChangeQueue implements ChangeSource {
     public boolean hasEnqueuedAtLeastOneChangeThisPass() {
       return changeCount > 0;
     }
+
+    /* @Override */
+    public void passPausing(int sleepms) throws InterruptedException {
+      Thread.sleep(sleepms);
+    }
   }
 
   /**
@@ -249,6 +254,19 @@ public class ChangeQueue implements ChangeSource {
    */
   public Change getNextChange() {
     return pendingChanges.poll();
+  }
+
+  /**
+   * Sets the sleepInterval in milliseconds, normally passed from the
+   * retry delay in a TraversalSchedule.
+   */
+  public void setSleepInterval(long sleepInterval) {
+    this.sleepInterval = sleepInterval;
+  }
+
+  @VisibleForTesting
+  long getSleepInterval() {
+    return this.sleepInterval;
   }
 
   /** Empties the queue of all pending changes. */

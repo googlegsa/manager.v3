@@ -31,10 +31,18 @@ public interface TraversalSchedule {
   public boolean isDisabled();
 
   /**
-   * Returns {@code true} if the current time is within a scheduled travesal
+   * Returns {@code true} if the current time is within a scheduled traversal
    * interval.
    */
   public boolean inScheduledInterval();
+
+  /**
+   * Returns the number of seconds until the next scheduled traversal interval.
+   * A return value of 0 (zero) indicates the current time is within a scheduled
+   * traversal interval.  A returned value of -1 indicates there is no next
+   * traversal interval.
+   */
+  public int nextScheduledInterval();
 
   /**
    * Returns {@code true} if traversals could run at this time,
