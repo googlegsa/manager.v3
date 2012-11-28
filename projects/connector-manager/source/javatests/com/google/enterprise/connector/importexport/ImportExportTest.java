@@ -204,7 +204,7 @@ public class ImportExportTest extends TestCase {
     assertFalse(schedule.isDisabled());
     assertTrue((schedule.getLoad() == 100));
     assertTrue((schedule.getRetryDelayMillis() == 300000));
-    assertEquals("0-0", schedule.getTimeIntervalsAsString());
+    assertEquals("0-0", schedule.getTimeIntervals());
 
     coordinator = ccm.get("connector-02");
     config = coordinator.getConnectorConfiguration();
@@ -215,7 +215,7 @@ public class ImportExportTest extends TestCase {
     assertFalse(schedule.isDisabled());
     assertTrue((schedule.getLoad() == 100));
     assertTrue((schedule.getRetryDelayMillis() == 300000));
-    assertEquals("0-0", schedule.getTimeIntervalsAsString());
+    assertEquals("0-0", schedule.getTimeIntervals());
   }
 
   // Tests that imported connectors over an existing installation
@@ -258,7 +258,7 @@ public class ImportExportTest extends TestCase {
     assertFalse(schedule.isDisabled());
     assertTrue((schedule.getLoad() == 100));
     assertTrue((schedule.getRetryDelayMillis() == 300000));
-    assertEquals("0-0", schedule.getTimeIntervalsAsString());
+    assertEquals("0-0", schedule.getTimeIntervals());
 
     coordinator = ccm.get("connector-02");
     config = coordinator.getConnectorConfiguration();
@@ -269,7 +269,7 @@ public class ImportExportTest extends TestCase {
     assertFalse(schedule.isDisabled());
     assertTrue((schedule.getLoad() == 100));
     assertTrue((schedule.getRetryDelayMillis() == 300000));
-    assertEquals("0-0", schedule.getTimeIntervalsAsString());
+    assertEquals("0-0", schedule.getTimeIntervals());
   }
 
   // Test that connectors not in the import set are not removed on import
@@ -320,7 +320,7 @@ public class ImportExportTest extends TestCase {
     assertFalse(schedule.isDisabled());
     assertTrue((schedule.getLoad() == 100));
     assertTrue((schedule.getRetryDelayMillis() == 300000));
-    assertEquals("0-0", schedule.getTimeIntervalsAsString());
+    assertEquals("0-0", schedule.getTimeIntervals());
 
     coordinator = ccm.get("connector-02");
     config = coordinator.getConnectorConfiguration();
@@ -331,7 +331,7 @@ public class ImportExportTest extends TestCase {
     assertFalse(schedule.isDisabled());
     assertTrue((schedule.getLoad() == 100));
     assertTrue((schedule.getRetryDelayMillis() == 300000));
-    assertEquals("0-0", schedule.getTimeIntervalsAsString());
+    assertEquals("0-0", schedule.getTimeIntervals());
   }
 
   // Test that connectors not in the import set are removed on import.
@@ -381,7 +381,7 @@ public class ImportExportTest extends TestCase {
     assertFalse(schedule.isDisabled());
     assertTrue((schedule.getLoad() == 100));
     assertTrue((schedule.getRetryDelayMillis() == 300000));
-    assertEquals("0-0", schedule.getTimeIntervalsAsString());
+    assertEquals("0-0", schedule.getTimeIntervals());
 
     coordinator = ccm.get("connector-02");
     config = coordinator.getConnectorConfiguration();
@@ -392,7 +392,7 @@ public class ImportExportTest extends TestCase {
     assertFalse(schedule.isDisabled());
     assertTrue((schedule.getLoad() == 100));
     assertTrue((schedule.getRetryDelayMillis() == 300000));
-    assertEquals("0-0", schedule.getTimeIntervalsAsString());
+    assertEquals("0-0", schedule.getTimeIntervals());
   }
 
   private static ImportExportConnectorList fromXmlString(String xmlString) {

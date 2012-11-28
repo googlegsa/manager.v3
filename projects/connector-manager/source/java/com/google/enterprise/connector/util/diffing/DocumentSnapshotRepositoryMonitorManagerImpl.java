@@ -16,6 +16,7 @@ package com.google.enterprise.connector.util.diffing;
 
 import com.google.enterprise.connector.spi.RepositoryDocumentException;
 import com.google.enterprise.connector.spi.RepositoryException;
+import com.google.enterprise.connector.spi.TraversalSchedule;
 import com.google.enterprise.connector.util.ChecksumGenerator;
 
 import java.io.File;
@@ -48,6 +49,8 @@ public class DocumentSnapshotRepositoryMonitorManagerImpl
 
   private static final Logger LOG = Logger.getLogger(
       DocumentSnapshotRepositoryMonitorManagerImpl.class.getName());
+
+  private volatile TraversalSchedule traversalSchedule;
 
   private String makeMonitorNameFromStartPath(String startPath) {
     String monitorName = checksumGenerator.getChecksum(startPath);
@@ -98,6 +101,22 @@ public class DocumentSnapshotRepositoryMonitorManagerImpl
     this.checkpointAndChangeQueue = checkpointAndChangeQueue;
   }
 
+  private void flagAllMonitorsToStop() {
+    for (SnapshotRepository<? extends DocumentSnapshot> repository
+        : repositories) {
+      String monitorName = makeMonitorNameFromStartPath(repository.getName());
+      DocumentSnapshotRepositoryMonitor
+          monitor = fileSystemMonitorsByName.get(monitorName);
+      if (null != monitor) {
+        monitor.shutdown();
+      }
+      else {
+        LOG.fine("Unable to stop non existent monitor thread for "
+            + monitorName);
+      }
+    }
+  }
+
   /* @Override */
   public synchronized void stop() {
     for (Thread thread : threads) {
@@ -115,6 +134,11 @@ public class DocumentSnapshotRepositoryMonitorManagerImpl
       }
     }
     threads.clear();
+
+    /* in case thread.interrupt doesn't stop monitors */
+    flagAllMonitorsToStop();
+
+    fileSystemMonitorsByName.clear();
     changeQueue.clear();
     this.isRunning = false;
   }
@@ -240,6 +264,8 @@ public class DocumentSnapshotRepositoryMonitorManagerImpl
         new DocumentSnapshotRepositoryMonitor(monitorName, repository,
             snapshotStore, changeQueue.newCallback(), DOCUMENT_SINK, startCp,
             documentSnapshotFactory);
+    monitor.setTraversalSchedule(traversalSchedule);
+    LOG.fine("Adding a new monitor for " + monitorName + ": " + monitor);
     fileSystemMonitorsByName.put(monitorName, monitor);
     return new Thread(monitor);
   }
@@ -284,6 +310,27 @@ public class DocumentSnapshotRepositoryMonitorManagerImpl
       if (monitor != null) {
         // Signal is asynch.  Let monitor figure out how to use.
         monitor.acceptGuarantee(checkpoint);
+      }
+    }
+  }
+
+  /* @Override */
+  public synchronized void setTraversalSchedule(TraversalSchedule
+      traversalSchedule) {
+    this.traversalSchedule = traversalSchedule;
+    changeQueue.setSleepInterval(traversalSchedule.getRetryDelay() * 1000);
+    for (SnapshotRepository<? extends DocumentSnapshot> repository
+        : repositories) {
+      String monitorName = makeMonitorNameFromStartPath(repository.getName());
+      DocumentSnapshotRepositoryMonitor monitor = 
+          fileSystemMonitorsByName.get(monitorName);
+      if (monitor != null) {
+        monitor.setTraversalSchedule(traversalSchedule);
+      }
+      else {
+        // During initial startup, this is called before all monitor threads are
+        // actually invoked.
+        LOG.info("Unable to set traversal schedule for: " + monitorName);
       }
     }
   }

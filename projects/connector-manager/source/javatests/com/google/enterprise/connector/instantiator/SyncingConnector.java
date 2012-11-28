@@ -119,11 +119,11 @@ public class SyncingConnector implements Connector, ConnectorShutdownAware {
 
   private class SyncingConnectorSession implements Session {
    public AuthenticationManager getAuthenticationManager() {
-     throw new UnsupportedOperationException();
+     return null;
     }
 
     public AuthorizationManager getAuthorizationManager() {
-      throw new UnsupportedOperationException();
+     return null;
     }
 
     public TraversalManager getTraversalManager() {

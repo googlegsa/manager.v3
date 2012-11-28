@@ -28,7 +28,6 @@ import com.google.enterprise.connector.pusher.PusherFactory;
 import com.google.enterprise.connector.scheduler.LoadManager;
 import com.google.enterprise.connector.scheduler.LoadManagerFactory;
 import com.google.enterprise.connector.scheduler.Schedule;
-import com.google.enterprise.connector.scheduler.ScheduleTimeInterval;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.ConfigureResponse;
@@ -347,7 +346,7 @@ class ConnectorCoordinatorImpl implements
       Schedule schedule = getInstanceInfo().getConnectorSchedule();
       if (schedule != null && schedule.isDisabled() &&
             schedule.getRetryDelayMillis() == -1 &&
-            !schedule.getTimeIntervals().isEmpty()) {
+            schedule.nextScheduledInterval() != -1) {
           schedule.setDisabled(false);
           getInstanceInfo().setConnectorSchedule(schedule);
       }

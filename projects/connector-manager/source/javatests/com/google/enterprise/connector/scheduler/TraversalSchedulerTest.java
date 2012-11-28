@@ -143,15 +143,8 @@ public class TraversalSchedulerTest extends TestCase {
    * @return a List of Schedule objects
    */
   private List<Schedule> getSchedules(String traverserName, int delay) {
-    List<ScheduleTimeInterval> intervals =
-        new ArrayList<ScheduleTimeInterval>();
-    intervals.add(new ScheduleTimeInterval(
-        new ScheduleTime(0),
-        new ScheduleTime(0)));
-
     List<Schedule> schedules = new ArrayList<Schedule>();
-    Schedule schedule = new Schedule(traverserName, false, 60, delay,
-        intervals);
+    Schedule schedule = new Schedule(traverserName, false, 60, delay, "0-0");
     schedules.add(schedule);
     return schedules;
   }

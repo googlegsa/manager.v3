@@ -19,6 +19,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * An implementation of {@link ChecksumGenerator} that return
@@ -29,6 +31,9 @@ import java.security.NoSuchAlgorithmException;
  * @since 2.8
  */
 public class BasicChecksumGenerator implements ChecksumGenerator {
+  private static final Logger LOGGER =
+      Logger.getLogger(BasicChecksumGenerator.class.getName());
+
   /* Algorithms supported for MessageDigest. */
   /** The MD2 message digest algorithm as defined in RFC 1319. */
   public static final String MD2 = "MD2";
@@ -114,7 +119,9 @@ public class BasicChecksumGenerator implements ChecksumGenerator {
       }
       return digest.digest();
     } finally {
-      in.close();
+      try { in.close(); } catch (Exception e) {
+        LOGGER.log(Level.WARNING, "Failed to close InputStream", e);
+      }
     }
   }
 
