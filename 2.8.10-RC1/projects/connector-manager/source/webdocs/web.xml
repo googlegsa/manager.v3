@@ -1,0 +1,340 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!--
+  Copyright 2004-2008 The Apache Software Foundation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<!DOCTYPE web-app
+    PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN"
+    "http://java.sun.com/dtd/web-app_2_3.dtd">
+
+<web-app>
+
+  <display-name>Connector Manager Servlets</display-name>
+  <description>
+    Connector Manager Servlets.
+  </description>
+
+  <!-- initialization parameters -->
+
+  <context-param>
+    <param-name>keystore_type</param-name>
+    <param-value>JCEKS</param-value>
+    <description>
+      The type of keystore to use. Your JCE provider must support it.
+    </description>
+  </context-param>
+
+  <context-param>
+    <param-name>keystore_crypto_algo</param-name>
+    <param-value>AES</param-value>
+    <description>
+      Algorithm used to encrypt passwords. Your JCE provider must support it.
+    </description>
+  </context-param>
+
+  <context-param>
+    <param-name>keystore_passwd_file</param-name>
+    <param-value></param-value>
+    <description>
+      File containing the password that is used to secure the keystore.
+      If this is not provided, an empty password will be used.
+      This may be an absolute path or a relative path.  If it is a
+      relative path it is assumed to be relative to the WEB-INF directory.
+      If the StandardContext is being used and the 'unpackWAR' is defaulted
+      to 'true' then the Web App will search for this file under its WEB-INF
+      directory.  If the Servlet container cannot translate this path to a
+      real path, then it will be treated as a virtual path.
+    </description>
+  </context-param>
+
+  <context-param>
+    <param-name>keystore_file</param-name>
+    <param-value>connector_manager.keystore</param-value>
+    <description>
+      Filename of keystore.  This file will be created if it does not exist.
+      This may be an absolute path or a relative path.  If it is a
+      relative path it is assumed to be relative to the WEB-INF directory.
+      If the StandardContext is being used and the 'unpackWAR' is defaulted
+      to 'true' then the Web App will search for this file under its WEB-INF
+      directory.  If the Servlet container cannot translate this path to a
+      real path, then it will be treated as a virtual path.
+    </description>
+  </context-param>
+
+
+  <!-- Define servlets that are included in the Connector Manager application -->
+
+  <servlet>
+    <servlet-name>SetManagerConfig</servlet-name>
+    <servlet-class>com.google.enterprise.connector.servlet.SetManagerConfig</servlet-class>
+  </servlet>
+
+  <servlet>
+    <servlet-name>TestConnectivity</servlet-name>
+    <servlet-class>com.google.enterprise.connector.servlet.TestConnectivity</servlet-class>
+  </servlet>
+
+  <servlet>
+    <servlet-name>GetConnectorList</servlet-name>
+    <servlet-class>com.google.enterprise.connector.servlet.GetConnectorList</servlet-class>
+  </servlet>
+
+  <servlet>
+    <servlet-name>GetConnectorInstanceList</servlet-name>
+    <servlet-class>com.google.enterprise.connector.servlet.GetConnectorInstanceList</servlet-class>
+  </servlet>
+
+  <servlet>
+    <servlet-name>SetConnectorConfig</servlet-name>
+    <servlet-class>com.google.enterprise.connector.servlet.SetConnectorConfig</servlet-class>
+  </servlet>
+
+  <servlet>
+    <servlet-name>GetConfigForm</servlet-name>
+    <servlet-class>com.google.enterprise.connector.servlet.GetConfigForm</servlet-class>
+  </servlet>
+
+  <servlet>
+    <servlet-name>GetConfig</servlet-name>
+    <servlet-class>com.google.enterprise.connector.servlet.GetConfig</servlet-class>
+  </servlet>
+
+  <!--
+  <servlet>
+    <servlet-name>GetSchema</servlet-name>
+    <servlet-class>com.google.enterprise.connector.servlet.GetSchema</servlet-class>
+  </servlet>
+  -->
+
+  <servlet>
+    <servlet-name>LogLevel</servlet-name>
+    <servlet-class>com.google.enterprise.connector.servlet.LogLevel</servlet-class>
+  </servlet>
+
+  <servlet>
+    <servlet-name>GetConnectorLogs</servlet-name>
+    <servlet-class>com.google.enterprise.connector.servlet.GetConnectorLogs</servlet-class>
+  </servlet>
+
+  <servlet>
+    <servlet-name>GetConnectorStatus</servlet-name>
+    <servlet-class>com.google.enterprise.connector.servlet.GetConnectorStatus</servlet-class>
+  </servlet>
+
+  <servlet>
+    <servlet-name>GetConnectorServingStatus</servlet-name>
+    <servlet-class>com.google.enterprise.connector.servlet.GetConnectorServingStatus</servlet-class>
+  </servlet>
+
+  <servlet>
+    <servlet-name>RestartConnectorTraversal</servlet-name>
+    <servlet-class>com.google.enterprise.connector.servlet.RestartConnectorTraversal</servlet-class>
+  </servlet>
+
+  <servlet>
+    <servlet-name>SetSchedule</servlet-name>
+    <servlet-class>com.google.enterprise.connector.servlet.SetSchedule</servlet-class>
+  </servlet>
+
+  <servlet>
+    <servlet-name>Authenticate</servlet-name>
+    <servlet-class>com.google.enterprise.connector.servlet.Authenticate</servlet-class>
+  </servlet>
+
+  <servlet>
+    <servlet-name>Authorization</servlet-name>
+    <servlet-class>com.google.enterprise.connector.servlet.Authorization</servlet-class>
+  </servlet>
+
+  <servlet>
+    <servlet-name>HelloClientFromGSA</servlet-name>
+    <servlet-class>com.google.enterprise.connector.servlet.HelloClientFromGSA</servlet-class>
+  </servlet>
+
+  <servlet>
+    <servlet-name>SetConnectorConfigNoGSA</servlet-name>
+    <servlet-class>com.google.enterprise.connector.servlet.SetConnectorConfigNoGSA</servlet-class>
+  </servlet>
+
+  <servlet>
+    <servlet-name>SetManagerConfigNoGSA</servlet-name>
+    <servlet-class>com.google.enterprise.connector.servlet.SetManagerConfigNoGSA</servlet-class>
+  </servlet>
+
+  <servlet>
+    <servlet-name>SetScheduleNoGSA</servlet-name>
+    <servlet-class>com.google.enterprise.connector.servlet.SetScheduleNoGSA</servlet-class>
+  </servlet>
+
+  <servlet>
+    <servlet-name>StartUp</servlet-name>
+    <servlet-class>com.google.enterprise.connector.servlet.StartUp</servlet-class>
+    <load-on-startup>1</load-on-startup>
+  </servlet>
+
+  <servlet>
+    <servlet-name>GetConnectorConfigToEdit</servlet-name>
+    <servlet-class>com.google.enterprise.connector.servlet.GetConnectorConfigToEdit</servlet-class>
+  </servlet>
+
+  <servlet>
+    <servlet-name>RemoveConnector</servlet-name>
+    <servlet-class>com.google.enterprise.connector.servlet.RemoveConnector</servlet-class>
+  </servlet>
+
+  <!-- Define servlet mappings -->
+
+  <servlet-mapping>
+    <servlet-name>SetManagerConfig</servlet-name>
+    <url-pattern>/setManagerConfig</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>TestConnectivity</servlet-name>
+    <url-pattern>/testConnectivity</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>GetConnectorList</servlet-name>
+    <url-pattern>/getConnectorList</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>GetConnectorInstanceList</servlet-name>
+    <url-pattern>/getConnectorInstanceList</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>SetConnectorConfig</servlet-name>
+    <url-pattern>/setConnectorConfig</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>GetConfigForm</servlet-name>
+    <url-pattern>/getConfigForm</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>GetConfig</servlet-name>
+    <url-pattern>/getConfig/*</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>GetConfig</servlet-name>
+    <url-pattern>/getConfiguration/*</url-pattern>
+  </servlet-mapping>
+
+  <!--
+  <servlet-mapping>
+    <servlet-name>GetSchema</servlet-name>
+    <url-pattern>/getSchema</url-pattern>
+  </servlet-mapping>
+  -->
+
+  <servlet-mapping>
+    <servlet-name>LogLevel</servlet-name>
+    <url-pattern>/getConnectorLogLevel</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>LogLevel</servlet-name>
+    <url-pattern>/setConnectorLogLevel</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>LogLevel</servlet-name>
+    <url-pattern>/getFeedLogLevel</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>LogLevel</servlet-name>
+    <url-pattern>/setFeedLogLevel</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>GetConnectorLogs</servlet-name>
+    <url-pattern>/getConnectorLogs/*</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>GetConnectorLogs</servlet-name>
+    <url-pattern>/getFeedLogs/*</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>GetConnectorLogs</servlet-name>
+    <url-pattern>/getTeedFeedFile/*</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>GetConnectorStatus</servlet-name>
+    <url-pattern>/getConnectorStatus</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>GetConnectorServingStatus</servlet-name>
+    <url-pattern>/getConnectorServingStatus</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>RestartConnectorTraversal</servlet-name>
+    <url-pattern>/restartConnectorTraversal</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>SetSchedule</servlet-name>
+    <url-pattern>/setSchedule</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>Authenticate</servlet-name>
+    <url-pattern>/authenticate</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>Authorization</servlet-name>
+    <url-pattern>/authorization</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>HelloClientFromGSA</servlet-name>
+    <url-pattern>/HelloClientFromGSA</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>SetConnectorConfigNoGSA</servlet-name>
+    <url-pattern>/setConnectorConfigTest</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>SetManagerConfigNoGSA</servlet-name>
+    <url-pattern>/setManagerConfigTest</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>SetScheduleNoGSA</servlet-name>
+    <url-pattern>/setScheduleTest</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>StartUp</servlet-name>
+    <url-pattern>/startUp</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>GetConnectorConfigToEdit</servlet-name>
+    <url-pattern>/getConnectorConfigToEdit</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>RemoveConnector</servlet-name>
+    <url-pattern>/removeConnector</url-pattern>
+  </servlet-mapping>
+
+</web-app>
