@@ -24,6 +24,8 @@ import java.util.Map;
  * purpose of validation. {@link Connector} instances created by the
  * factory are not added to the Connector Manager's list of running
  * connectors and do not have an on-disk representation.
+ *
+ * @since 1.0.1
  */
 public interface ConnectorFactory {
   /**

@@ -29,7 +29,9 @@ import com.google.enterprise.connector.spi.SkippedDocumentException;
  * <p/>
  * Multiple document filters may be chained together, forming
  * a transformational document processing pipeline.
+ *
  * @see DocumentFilterChain
+ * @since 2.8
  */
 public interface DocumentFilterFactory {
   /**

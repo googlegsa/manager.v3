@@ -40,6 +40,8 @@ import java.util.logging.Logger;
  * Implementors may want to override the
  * {@link #validateConfigPair(String, String)} method.
  * This is used to validate a particular key-value pair.
+ *
+ * @since 1.0
  */
 public class SimpleConnectorType implements ConnectorType {
   private static final Logger LOGGER =
@@ -243,7 +245,7 @@ public class SimpleConnectorType implements ConnectorType {
     buf.append(TR_END);
   }
 
-  /* @Override */
+  @Override
   public ConfigureResponse getConfigForm(Locale locale) {
     ConfigureResponse result =
         new ConfigureResponse("", getInitialConfigForm());
@@ -251,7 +253,8 @@ public class SimpleConnectorType implements ConnectorType {
     return result;
   }
 
-  /* @Override */
+  /* @since 1.0.1 */
+  @Override
   public ConfigureResponse validateConfig(Map<String, String> configData,
       Locale locale, ConnectorFactory connectorFactory) {
     if (validateConfigMap(configData)) {
@@ -264,7 +267,7 @@ public class SimpleConnectorType implements ConnectorType {
         "Some required configuration is missing", form);
   }
 
-  /* @Override */
+  @Override
   public ConfigureResponse getPopulatedConfigForm(
       Map<String, String> configMap, Locale locale) {
     return new ConfigureResponse("", makeConfigForm(configMap));

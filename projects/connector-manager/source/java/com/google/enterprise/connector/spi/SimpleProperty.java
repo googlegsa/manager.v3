@@ -21,6 +21,8 @@ import java.util.List;
 /**
  * Simple implementation of the {@link Property} interface.
  * Implementors may use this directly or for reference.
+ *
+ * @since 1.0
  */
 public class SimpleProperty implements Property {
 
@@ -45,7 +47,7 @@ public class SimpleProperty implements Property {
     this.iterator = values.iterator();
   }
 
-  /* @Override */
+  @Override
   public Value nextValue() {
     return (iterator.hasNext()) ? iterator.next() : null;
   }

@@ -53,6 +53,8 @@ import java.util.Set;
  *   doSomething(prop);
  * }
  * </pre>
+ *
+ * @since 1.0
  */
 public interface Document {
 

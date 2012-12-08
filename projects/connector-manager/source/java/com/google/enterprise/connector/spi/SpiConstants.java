@@ -27,6 +27,8 @@ import java.util.Map;
  * The actual values of these property name constants all begin with "google:".
  * For future compatibility, all property names beginning with "google:" are
  * reserved.
+ *
+ * @since 1.0
  */
 public class SpiConstants {
   private SpiConstants() {
@@ -455,7 +457,7 @@ public class SpiConstants {
   public static final String PROPNAME_PAGERANK = "google:pagerank";
 
   /**
-   * Identifies a single-valued {@link #DocumentType} property that,
+   * Identifies a single-valued {@link DocumentType} property that,
    * if present, will be used to determine the object type for this
    * document.
    * <p/>

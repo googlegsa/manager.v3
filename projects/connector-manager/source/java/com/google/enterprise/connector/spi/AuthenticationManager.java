@@ -17,6 +17,8 @@ package com.google.enterprise.connector.spi;
 /**
  * Authentication Manager. All calls for end-user query authentication pass
  * through this interface.
+ *
+ * @since 1.0
  */
 public interface AuthenticationManager {
 
