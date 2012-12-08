@@ -18,6 +18,8 @@ package com.google.enterprise.connector.spi;
  * The primary access point to information from the repository.
  * In the future, we may add access to the root node of the repository,
  * for crawling, or to a listener-registry for event notification.
+ *
+ * @since 1.0
  */
 public interface Session {
 

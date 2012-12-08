@@ -44,6 +44,8 @@ import java.util.logging.Logger;
  * In addition, some of the factory methods are overloaded for the convenience
  * of the connector developer. The implementations attempt to convert from the
  * parameter type to the base type indicated in the factory method's name.
+ *
+ * @since 1.0
  */
 public abstract class Value {
   private static final Logger LOGGER = Logger.getLogger(Value.class.getName());

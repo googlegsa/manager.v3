@@ -17,10 +17,12 @@ package com.google.enterprise.connector.spi;
 /**
  * A {@link Session} should implement this optional interface if it allows
  * {@link Lister} feed documents.
+ *
+ * @since 3.0
  */
 public interface ListerAware {
   /**
    * Return a {@link Lister} that may be used to supply documents for indexing.
    */
-   public Lister getLister() throws RepositoryException;
+  public Lister getLister() throws RepositoryException;
 }

@@ -21,6 +21,8 @@ import java.net.URL;
 /**
  * An {@link InputStreamFactory} that manufactures
  * URL {@link InputStream}.
+ *
+ * @since 3.0
  */
 public class UrlInputStreamFactory implements InputStreamFactory {
   private final URL url;
@@ -34,7 +36,7 @@ public class UrlInputStreamFactory implements InputStreamFactory {
     this.url = url;
   }
 
-  /* @Override */
+  @Override
   public InputStream getInputStream() throws IOException {
     return url.openStream();
   }

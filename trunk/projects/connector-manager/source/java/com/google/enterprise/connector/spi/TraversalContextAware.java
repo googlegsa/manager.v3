@@ -18,7 +18,7 @@ package com.google.enterprise.connector.spi;
  * A {@link TraversalManager} should implement this interface if it wants the
  * Connector Manager to supply it with a {@link TraversalContext} object.
  *
- * @since 1.3
+ * @since 1.0
  */
 public interface TraversalContextAware {
   /**

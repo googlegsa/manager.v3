@@ -98,6 +98,8 @@ import java.util.regex.PatternSyntaxException;
  * <p>
  * When used with binary values, the entire value is buffered and the
  * modified value is stored in a {@code byte} array.
+ *
+ * @since 2.8
  */
 /*
  * TODO: Find a way to process the InputStreams without buffering them,

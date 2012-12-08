@@ -50,6 +50,8 @@ import java.util.logging.Logger;
      &lt;property name="caseSensitivityType" value="everything-case-insensitive"/&gt;
    &lt;/bean&gt;
    </code></pre>
+ *
+ * @since 3.0
  */
 public class AclPropertyFilter extends AbstractDocumentFilter {
 

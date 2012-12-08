@@ -24,8 +24,10 @@ import com.google.enterprise.connector.spi.RepositoryException;
  * Listers may also choose to implement the
  * {@link com.google.enterprise.connector.spi.TraversalContextAware TraversalContextAware}
  * and/or
- * {@link  com.google.enterprise.connector.spi.TraversalScheduleAware TraversalScheduleAware}
+ * {@link com.google.enterprise.connector.spi.TraversalScheduleAware TraversalScheduleAware}
  * interfaces.
+ *
+ * @since 3.0
  */
 public interface Lister {
   /**
