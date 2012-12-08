@@ -14,10 +14,8 @@
 
 package com.google.enterprise.connector.pusher;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
-import com.google.enterprise.connector.common.AlternateContentFilterInputStream;
-import com.google.enterprise.connector.common.BigEmptyDocumentFilterInputStream;
-import com.google.enterprise.connector.common.CompressedFilterInputStream;
 import com.google.enterprise.connector.database.DocumentStore;
 import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.manager.Context;
@@ -30,13 +28,10 @@ import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.SpiConstants.FeedType;
 import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.traversal.FileSizeLimitInfo;
-import com.google.enterprise.connector.util.Base64FilterInputStream;
 import com.google.enterprise.connector.util.filter.DocumentFilterFactory;
 
-import java.io.ByteArrayInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.LinkedList;
 import java.util.ListIterator;
@@ -97,16 +92,6 @@ public class DocPusher implements Pusher {
    * {@code http://localhost:8080/connector-manager/getDocumentContent}
    */
   private final String contentUrlPrefix;
-
-  /**
-   * Encoding method to use for Document content.
-   */
-  private final String contentEncoding;
-
-  /**
-   * Indicates whether the FeedConnection supports ACL inheritance and deny.
-   */
-  private final boolean supportsInheritedAcls;
 
   /**
    * The Connector name that is the dataSource for this Feed.
@@ -170,16 +155,6 @@ public class DocPusher implements Pusher {
     this.fileSizeLimit = fileSizeLimitInfo;
     this.documentFilterFactory = documentFilterFactory;
     this.contentUrlPrefix = contentUrlPrefix;
-
-    // Check to see if the GSA supports compressed content feeds.
-    String supportedEncodings =
-        feedConnection.getContentEncodings().toLowerCase();
-    this.contentEncoding =
-        (supportedEncodings.indexOf(XmlFeed.XML_BASE64COMPRESSED) >= 0) ?
-        XmlFeed.XML_BASE64COMPRESSED : XmlFeed.XML_BASE64BINARY;
-
-    // Check to see if the GSA supports ACL inheritance and deny.
-    this.supportsInheritedAcls = feedConnection.supportsInheritedAcls();
 
     // Initialize background feed submission.
     this.submissions = new LinkedList<FutureTask<String>>();
@@ -262,7 +237,6 @@ public class DocPusher implements Pusher {
     boolean isThrowing = false;
     int resetPoint = xmlFeed.size();
     int resetCount = xmlFeed.getRecordCount();
-    InputStream contentStream = null;
     try {
       if (LOGGER.isLoggable(Level.FINER)) {
         LOGGER.log(Level.FINER, "DOCUMENT: Adding document with docid={0} and "
@@ -274,8 +248,7 @@ public class DocPusher implements Pusher {
       }
 
       // Add this document to the feed.
-      contentStream = getContentStream(document, feedType);
-      xmlFeed.addRecord(document, contentStream, contentEncoding);
+      xmlFeed.addRecord(document);
       if (documentStore != null) {
         documentStore.storeDocument(document);
       }
@@ -314,18 +287,6 @@ public class DocPusher implements Pusher {
         throw (RepositoryException) t;
       } else {
         throw new RepositoryDocumentException("I/O error reading data", ioe);
-      }
-    } finally {
-      if (contentStream != null) {
-        try {
-          contentStream.close();
-        } catch (IOException e) {
-          if (!isThrowing) {
-            LOGGER.log(Level.WARNING,
-                       "Rethrowing IOException as PushException", e);
-            throw new PushException("IOException: " + e.getMessage(), e);
-          }
-        }
       }
     }
   }
@@ -415,7 +376,8 @@ public class DocPusher implements Pusher {
    *
    * @return number if items remaining in the submissions list
    */
-  private int checkSubmissions()
+  @VisibleForTesting
+  int checkSubmissions()
       throws PushException, FeedException, RepositoryException {
     int count = 0;  // Count of outstanding items in the list.
     synchronized(submissions) {
@@ -486,12 +448,12 @@ public class DocPusher implements Pusher {
            "Unable to allocate feed log buffer for connector " + connectorName);
     }
 
-    // Allocate XmlFeed of the target size.
-    int feedSize = (int) fileSizeLimit.maxFeedSize();
+    long feedSize = fileSizeLimit.maxFeedSize();
     try {
       try {
-        xmlFeed = new XmlFeed(connectorName, feedType, feedSize, feedLog,
-                              contentUrlPrefix, supportsInheritedAcls);
+        // Allocate XmlFeed of the target size.
+        xmlFeed = new XmlFeed(connectorName, feedType, fileSizeLimit, feedLog,
+            contentUrlPrefix, feedConnection);
       } catch (OutOfMemoryError me) {
         // We shouldn't even have gotten this far under a low memory condition.
         // However, try to allocate a tiny feed buffer.  It should fill up on
@@ -500,9 +462,12 @@ public class DocPusher implements Pusher {
         LOGGER.warning("Insufficient memory available to allocate an optimally"
             + " sized feed - retrying with a much smaller feed allocation.");
         feedSize = 1024;
+        FileSizeLimitInfo newLimit = new FileSizeLimitInfo();
+        newLimit.setMaxFeedSize(feedSize);
+        newLimit.setMaxDocumentSize(fileSizeLimit.maxDocumentSize());
         try {
-          xmlFeed = new XmlFeed(connectorName, feedType, feedSize, feedLog,
-                                contentUrlPrefix, supportsInheritedAcls);
+          xmlFeed = new XmlFeed(connectorName, feedType, newLimit, feedLog,
+              contentUrlPrefix, feedConnection);
         } catch (OutOfMemoryError oome) {
           throw new OutOfMemoryError(
                "Unable to allocate feed buffer for connector " + connectorName);
@@ -632,46 +597,5 @@ public class DocPusher implements Pusher {
       throw new PushException(eMessage);
     }
     return gsaResponse;
-  }
-
-  /**
-   * Return an InputStream for the Document's content.
-   */
-  private InputStream getContentStream(Document document, FeedType feedType)
-      throws RepositoryException {
-    InputStream contentStream = null;
-    if (feedType == FeedType.CONTENT) {
-      InputStream encodedContentStream = getEncodedStream(
-          new BigEmptyDocumentFilterInputStream(
-              DocUtils.getOptionalStream(document,
-              SpiConstants.PROPNAME_CONTENT), fileSizeLimit.maxDocumentSize()),
-          (Context.getInstance().getTeedFeedFile() != null), 1024 * 1024);
-
-      InputStream encodedAlternateStream = getEncodedStream(
-          AlternateContentFilterInputStream.getAlternateContent(
-          DocUtils.getOptionalString(document, SpiConstants.PROPNAME_TITLE),
-          DocUtils.getOptionalString(document, SpiConstants.PROPNAME_MIMETYPE)),
-          false, 2048);
-
-      contentStream = new AlternateContentFilterInputStream(
-          encodedContentStream, encodedAlternateStream, xmlFeed);
-    }
-    return contentStream;
-  }
-
-  /**
-   * Wrap the content stream with the suitable encoding (either
-   * Base64 or Base64Compressed, based upon GSA encoding support.
-   */
-  // TODO: Don't compress tiny content or already compressed data
-  // (based on mimetype).  This is harder than it sounds.
-  private InputStream getEncodedStream(InputStream content, boolean wrapLines,
-                                       int ioBufferSize) {
-    if (XmlFeed.XML_BASE64COMPRESSED.equals(contentEncoding)) {
-      return new Base64FilterInputStream(
-          new CompressedFilterInputStream(content, ioBufferSize), wrapLines);
-    } else {
-      return new Base64FilterInputStream(content, wrapLines);
-     }
   }
 }
