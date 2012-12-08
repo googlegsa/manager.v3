@@ -14,8 +14,10 @@
 
 package com.google.enterprise.connector.common;
 
+import com.google.enterprise.connector.pusher.MockFeedConnection;
 import com.google.enterprise.connector.pusher.XmlFeed;
 import com.google.enterprise.connector.spi.SpiConstants.FeedType;
+import com.google.enterprise.connector.traversal.FileSizeLimitInfo;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -59,16 +61,12 @@ public class AlternateContentFilterInputStreamTest extends TestCase {
 
   /** Test XmlFeed Rollback. */
   public void testFeedRollback() throws Exception {
-    XmlFeed feed =
-        new XmlFeed("test", FeedType.CONTENT, 10000, null, null, false);
-    checkACIS(new BigInputStream(), feed, ALTERNATE_CONTENT);
+    checkACIS(new BigInputStream(), newFeed(), ALTERNATE_CONTENT);
   }
 
   /** Test No XmlFeed Rollback. */
   public void testNoFeedRollback() throws Exception {
-    XmlFeed feed =
-        new XmlFeed("test", FeedType.CONTENT, 10000, null, null, false);
-    checkACIS(new ByteArrayInputStream(CONTENT.getBytes()), feed, CONTENT);
+    checkACIS(new ByteArrayInputStream(CONTENT.getBytes()), newFeed(), CONTENT);
   }
 
   /** Test XmlFeed Rollback using single byte read(). */
@@ -84,6 +82,12 @@ public class AlternateContentFilterInputStreamTest extends TestCase {
   /** Test No XmlFeed Rollback using single byte read(). */
   public void testNoFeedRollBackReadByte() throws Exception {
     checkACISReadByte(new ByteArrayInputStream(CONTENT.getBytes()), CONTENT);
+  }
+
+  /** Returns a new XmlFeed */
+  private XmlFeed newFeed() throws IOException {
+    return new XmlFeed("test", FeedType.CONTENT, new FileSizeLimitInfo(),
+                       null, null, new MockFeedConnection());
   }
 
   /** Check the AlternateContentInputStream produces the correct results. */
@@ -144,8 +148,7 @@ public class AlternateContentFilterInputStreamTest extends TestCase {
    */
   private void checkACISReadByte(InputStream source, InputStream alt,
       String expectedResult) throws Exception {
-    XmlFeed feed =
-        new XmlFeed("test", FeedType.CONTENT, 10000, null, null, false);
+    XmlFeed feed = newFeed();
     feed.reset(0);
     feed.write(PREFIX.getBytes());
     InputStream is = new AlternateContentFilterInputStream(source, alt, feed);

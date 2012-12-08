@@ -2838,6 +2838,69 @@ public class DocPusherTest extends TestCase {
     testDocumentAclInheritFrom(props, parentUrl);
   }
 
+  /**
+   * Tests switching FeedConnections between one that supports
+   * inherited ACLs and one that does not. Make sure it sends the correctly
+   * formatted feed to each.
+   */
+  public void testSwitchGSAs() throws Exception {
+    SwitchableFeedConnection feedConnection = new SwitchableFeedConnection();
+    feedConnection.setSupportsInheritedAcls(true);
+
+    // Set artificially low feedsize to force 1 document per feed.
+    FileSizeLimitInfo fileSizeLimit = new FileSizeLimitInfo();
+    fileSizeLimit.setMaxFeedSize(32);
+    fileSizeLimit.setMaxDocumentSize(1024 * 1024);
+
+    DocPusher dpusher = new DocPusher(feedConnection, "junit",
+        fileSizeLimit, dfc, contentUrlPrefix);
+
+    String parentId = "parent-doc";
+    Map<String, Object> props = getTestAclDocumentConfig();
+    props.put(SpiConstants.PROPNAME_FEEDTYPE,
+              SpiConstants.FeedType.CONTENT.toString());
+    props.put(SpiConstants.PROPNAME_ACLINHERITFROM_DOCID, parentId);
+    String parentUrl = ServletUtil.PROTOCOL + "junit.localhost"
+        + ServletUtil.DOCID + parentId;
+
+    // Feed the document and check that the feed has inherited ACLs.
+    Document document = ConnectorTestUtils.createSimpleDocument(props);
+    assertEquals(PusherStatus.OK, dpusher.take(document, null));
+    while (dpusher.checkSubmissions() > 0) {
+      Thread.sleep(100);
+    }
+    String resultXML = feedConnection.getFeed();
+
+    // This should be an acl feed record, followed by a regular feed record.
+    assertStringContains("<acl inheritance-type=", resultXML);
+    assertStringContains("<principal scope=", resultXML);
+    assertStringContains("</acl>", resultXML);
+    assertStringContains("<record url=", resultXML);
+    assertStringContains("</record>", resultXML);
+    assertStringNotContains("<meta name=\"google:aclinheritancetype\"",
+                            resultXML);
+    assertStringNotContains("<meta name=\"google:aclusers\"", resultXML);
+    assertStringNotContains("<meta name=\"google:aclgroups\"", resultXML);
+
+    // Now turn off inheritance, feed the document again and check that the
+    // feed has no inherited ACLs.
+    feedConnection.setSupportsInheritedAcls(false);
+    assertEquals(PusherStatus.OK, dpusher.take(document, null));
+    dpusher.flush();
+    resultXML = feedConnection.getFeed();
+
+    // This should have no acl feed record, only a regular feed record with
+    // ACL metadata.
+    assertStringNotContains("<acl inheritance-type=", resultXML);
+    assertStringNotContains("<principal scope=", resultXML);
+    assertStringNotContains("</acl>", resultXML);
+    assertStringContains("<record url=", resultXML);
+    assertStringContains("</record>", resultXML);
+    assertStringContains("<meta name=\"google:aclinheritancetype\"", resultXML);
+    assertStringContains("<meta name=\"google:aclusers\"", resultXML);
+    assertStringContains("<meta name=\"google:aclgroups\"", resultXML);
+  }
+
   /** Returns a document config with some ACL properties. */
   private Map<String, Object> getTestAclDocumentConfig() {
     Map<String, Object> props = getTestDocumentConfig();
@@ -2994,6 +3057,19 @@ public class DocPusherTest extends TestCase {
     // Return a predictable non-unique ID to ease expected output comparisons.
     public String uniqueId() {
       return "test";
+    }
+  }
+
+  /**
+   * A FeedConnection that can toggle inherited ACL support.
+   */
+  private static class SwitchableFeedConnection extends MockFeedConnection {
+    private boolean supportsInheritedAcls = true;
+    public boolean supportsInheritedAcls() {
+      return supportsInheritedAcls;
+    }
+    public void setSupportsInheritedAcls(boolean supportsInheritedAcls) {
+      this.supportsInheritedAcls = supportsInheritedAcls;
     }
   }
 
