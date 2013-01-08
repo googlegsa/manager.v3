@@ -31,11 +31,11 @@ public class DocumentSnapshotRepositoryMonitorTest extends TestCase {
     private final int retryDelay;
     private final boolean isDisabled;
     private final boolean inInterval;
-  
+
     public MockTraversalSchedule() {
       this(500, -1, false, true);
     }
-  
+
     public MockTraversalSchedule(int load, int retryDelay, boolean isDisabled,
                                  boolean inInterval) {
       this.load = load;
@@ -43,35 +43,35 @@ public class DocumentSnapshotRepositoryMonitorTest extends TestCase {
       this.isDisabled = isDisabled;
       this.inInterval = inInterval;
     }
-  
+
     /** Returns the target traversal rate in documents per minute. */
-    /* @Override */
+    @Override
     public int getTraversalRate() {
       return load;
     }
-  
+
     /** Returns the number of seconds to delay after finding no new content. */
-    /* @Override */
+    @Override
     public int getRetryDelay() {
       return retryDelay;
     }
-  
+
     /** Returns {@code true} if the traversal schedule is disabled. */
-    /* @Override */
+    @Override
     public boolean isDisabled() {
       return isDisabled;
     }
-  
+
     /**
      * Returns {@code true} if the current time is within a scheduled travesal
      * interval.
      */
-    /* @Override */
+    @Override
     public boolean inScheduledInterval() {
       return inInterval;
     }
-  
-    /* @Override */
+
+    @Override
     public int nextScheduledInterval() {
       return -1;
     }
@@ -80,37 +80,43 @@ public class DocumentSnapshotRepositoryMonitorTest extends TestCase {
      * Returns {@code true} if traversals could run at this time,
      * equivalent to <pre>!isDisabled() && inScheduledInterval()</pre>.
      */
-    /* @Override */
+    @Override
     public boolean shouldRun() {
       return !isDisabled() && inScheduledInterval();
     }
   }
 
-  // This mock callback throws InterruptedException to catch off traversal pause.
+  /**
+   * This mock callback throws InterruptedException to catch off
+   * traversal pause.
+   */
   private class MockOffTraversalCallback
       implements DocumentSnapshotRepositoryMonitor.Callback {
+    @Override
     public void passBegin() {}
 
-    /* @Override */
+    @Override
     public void changedDocument(DocumentHandle dh, MonitorCheckpoint mcp)
         throws InterruptedException {}
 
-     /* @Override */
+     @Override
     public void deletedDocument(DocumentHandle dh, MonitorCheckpoint mcp)
         throws InterruptedException {}
 
-    /* @Override */
+    @Override
     public void newDocument(DocumentHandle dh, MonitorCheckpoint mcp)
         throws InterruptedException {}
 
-    /* @Override */
+    @Override
     public void passComplete(MonitorCheckpoint mcp)
         throws InterruptedException {}
 
+    @Override
     public boolean hasEnqueuedAtLeastOneChangeThisPass() {
       return true;
     }
 
+    @Override
     public void passPausing(int sleepms) throws InterruptedException {
       throw new InterruptedException();
     }

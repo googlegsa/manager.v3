@@ -14,6 +14,8 @@
 
 package com.google.enterprise.connector.util.diffing;
 
+import static com.google.enterprise.connector.util.diffing.DocumentSnapshotComparator.COMPARATOR;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.TraversalSchedule;
@@ -33,10 +35,10 @@ import java.util.logging.Logger;
  * {@link DocumentSnapshot} entries returned by
  * {@link SnapshotRepository#iterator()}. On each pass, it compares the current
  * contents of the repository to a record of what it saw on the previous pass.
- * The record is stored as a file in the local file system. Each discrepancy
+ * The record is stored as a file in the local repository. Each discrepancy
  * is propagated to the client.
  * <p/>
- * Using a local snapshot of the file system has some serious flaws for
+ * Using a local snapshot of the repository has some serious flaws for
  * continuous crawl:
  * <ul>
  * <li>The local snapshot can diverge from the actual contents of the GSA. This
@@ -59,7 +61,6 @@ import java.util.logging.Logger;
 public class DocumentSnapshotRepositoryMonitor implements Runnable {
   private static final Logger LOG = Logger.getLogger(
       DocumentSnapshotRepositoryMonitor.class.getName());
-  private volatile TraversalSchedule traversalSchedule;
 
   /*
    * Gross hack uses Java Reflection to setup and teardown NDC logging context.
@@ -103,7 +104,7 @@ public class DocumentSnapshotRepositoryMonitor implements Runnable {
 
   /**
    * The client provides an implementation of this interface to receive
-   * notification of changes to the file system.
+   * notification of changes to the repository.
    */
   public static interface Callback {
     public void passBegin() throws InterruptedException;
@@ -124,10 +125,13 @@ public class DocumentSnapshotRepositoryMonitor implements Runnable {
     public void passPausing(int sleepms) throws InterruptedException;
   }
 
+  /** This connector instance's current traversal schedule. */
+  private volatile TraversalSchedule traversalSchedule;
+
   /** Directory that contains snapshots. */
   private final SnapshotStore snapshotStore;
 
-  /** The root of the file system to monitor */
+  /** The root of the repository to monitor */
   private final SnapshotRepository<? extends DocumentSnapshot> query;
 
   /** Reader for the current snapshot. */
@@ -140,7 +144,7 @@ public class DocumentSnapshotRepositoryMonitor implements Runnable {
   private DocumentSnapshot current;
 
   /** The snapshot we are currently writing */
-  private SnapshotWriter snapshotWriter;
+  private OrderedSnapshotWriter snapshotWriter;
 
   private final String name;
 
@@ -198,7 +202,7 @@ public class DocumentSnapshotRepositoryMonitor implements Runnable {
     return getCheckpoint(0);
   }
 
-  /* @Override */
+  @Override
   public void run() {
     // Call NDC.push() via reflection, if possible.
     invoke(ndcPush, "Monitor " + name);
@@ -227,9 +231,9 @@ public class DocumentSnapshotRepositoryMonitor implements Runnable {
           doOnePass();
         }
         else {
-          LOG.finest("Currently out of traversal widow.  " +
-              "Sleeping for 15 minutes.");
-          // TODO(nashi): caluculate when it should wake up while
+          LOG.finest("Currently out of traversal window. "
+              + "Sleeping for 15 minutes.");
+          // TODO(nashi): Calculate when it should wake up while
           // handling TraversalScheduleAware events properly.
           callback.passPausing(15*60*1000);
         }
@@ -298,7 +302,7 @@ public class DocumentSnapshotRepositoryMonitor implements Runnable {
   }
 
   /**
-   * Makes one pass through the file system, notifying {@code visitor} of any
+   * Makes one pass through the repository, notifying {@code visitor} of any
    * changes.
    *
    * @throws InterruptedException
@@ -312,7 +316,8 @@ public class DocumentSnapshotRepositoryMonitor implements Runnable {
       current = snapshotReader.read();
 
       // Create an snapshot writer for this pass.
-      this.snapshotWriter = snapshotStore.openNewSnapshotWriter();
+      this.snapshotWriter =
+          new OrderedSnapshotWriter(snapshotStore.openNewSnapshotWriter());
 
       for(DocumentSnapshot ss : query) {
         if (false == isRunning) {
@@ -367,8 +372,7 @@ public class DocumentSnapshotRepositoryMonitor implements Runnable {
       throws SnapshotReaderException, InterruptedException {
     while (current != null
         && (documentSnapshot == null
-            || documentSnapshot.getDocumentId().compareTo(
-                current.getDocumentId()) > 0)) {
+            || COMPARATOR.compare(documentSnapshot, current) > 0)) {
       callback.deletedDocument(
           new DeleteDocumentHandle(current.getDocumentId()), getCheckpoint());
       current = snapshotReader.read();
@@ -401,8 +405,7 @@ public class DocumentSnapshotRepositoryMonitor implements Runnable {
     // At this point 'current' >= 'file', or possibly current == null if
     // we've processed the previous snapshot entirely.
     if (current != null
-        && (documentSnapshot.getDocumentId().compareTo(
-            current.getDocumentId()) == 0)) {
+        && COMPARATOR.compare(documentSnapshot, current) == 0) {
       processPossibleChange(documentSnapshot);
     } else {
       // This file didn't exist during the previous scan.
@@ -453,13 +456,13 @@ public class DocumentSnapshotRepositoryMonitor implements Runnable {
       throws NullPointerException, InterruptedException {
     tryToRunForever();
   }
+
   public void shutdown() {
     LOG.log(Level.WARNING, "Shutdown the monitor thread " + name
         + " @ " + this);
     isRunning = false;
   }
 
-  /* @Override */
   public synchronized void setTraversalSchedule(TraversalSchedule
       traversalSchedule) {
     this.traversalSchedule = traversalSchedule;
