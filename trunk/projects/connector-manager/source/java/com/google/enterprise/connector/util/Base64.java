@@ -400,10 +400,8 @@ public class Base64 {
    * @return a byte array containing the decoded data
    * @throws Base64DecoderException if the source does not
    * contain valid Base64-encoded data
-   * 
-   * @since 3.0.6
    */
-  public static byte[] decode(byte[] source, int off, int len,
+  private static byte[] decode(byte[] source, int off, int len,
       byte[] decodabet) throws Base64DecoderException {
     int len34 = len * 3 / 4;
     byte[] outBuff = new byte[2 + len34]; // Upper limit on size of output
