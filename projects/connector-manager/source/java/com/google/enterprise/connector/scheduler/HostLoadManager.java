@@ -57,7 +57,7 @@ public class HostLoadManager implements LoadManager {
    * backlog feed processing on the GSA.
    * Large batches may consume excessive local and Repository resources.
    */
-  private int batchSize = 500;
+  private int batchSize = 1000;
 
   /** The smallest allowed batch size. */
   private int minBatchSize;
@@ -77,6 +77,8 @@ public class HostLoadManager implements LoadManager {
   /**
    * The load is the target number of documents per period to process.
    */
+  // TODO(bmj): Raise this to 1000 when the GSA moves there.
+  // TODO(bmj): Make this a public constant for use in default Schedule.
   private int load = 500;
 
   /**
