@@ -18,6 +18,7 @@ import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.PersistentStoreException;
+import com.google.enterprise.connector.scheduler.HostLoadManager;
 import com.google.enterprise.connector.scheduler.Schedule;
 import com.google.enterprise.connector.util.XmlParseUtil;
 
@@ -84,7 +85,8 @@ public class SetSchedule extends ConnectorManagerServlet {
 
     String loadStr = XmlParseUtil.getFirstElementByTagName(root,
         ServletUtil.XMLTAG_LOAD);
-    int load = (loadStr == null) ? 0 : Integer.parseInt(loadStr);
+    int load = (loadStr == null) ? HostLoadManager.DEFAULT_HOST_LOAD
+        : Integer.parseInt(loadStr);
 
     // TODO: Either commit to presence/absence of the disabled tag and
     // support <disabled/> (which getFirstElementByTagName fails to do),
@@ -92,12 +94,11 @@ public class SetSchedule extends ConnectorManagerServlet {
     boolean disabled = (XmlParseUtil.getFirstElementByTagName(root,
         ServletUtil.XMLTAG_DISABLED) != null);
 
-    int retryDelayMillis = Schedule.defaultRetryDelayMillis();
     String delayStr = XmlParseUtil.getFirstElementByTagName(root,
         ServletUtil.XMLTAG_DELAY);
-    if (delayStr != null) {
-      retryDelayMillis = Integer.parseInt(delayStr);
-    }
+    int retryDelayMillis = (delayStr != null) ? Integer.parseInt(delayStr)
+        : Schedule.defaultRetryDelayMillis();
+
     String timeIntervals = XmlParseUtil.getFirstElementByTagName(
         root, ServletUtil.XMLTAG_TIME_INTERVALS);
     Schedule schedule = new Schedule(connectorName, disabled, load,

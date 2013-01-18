@@ -38,6 +38,25 @@ public class ScheduleTest extends TestCase {
           "connector1:xyx:0:1", "connector1:60:0:xyzzy",
           "connector1:60:0:1-2:3", "connector1:60:0:1-2:3:"};
 
+  public void testStaticFactoryMethod() {
+    assertNull(Schedule.of(null));
+    assertNull(Schedule.of(""));
+    Schedule schedule = Schedule.of(strWithDelay);
+    assertNotNull(schedule);
+    assertEquals(schedule.toString(), strWithDelay, schedule.toString());
+  }
+
+  public void testStaticToString() {
+    String schedStr = Schedule.toString(null);
+    assertNotNull(schedStr);
+    assertTrue(schedStr, schedStr.startsWith("#"));
+    assertTrue(schedStr, schedStr.contains(":0-0"));
+
+    schedStr = Schedule.toString(Schedule.of(strWithDelay));
+    assertNotNull(schedStr);
+    assertEquals(schedStr, strWithDelay, schedStr);
+  }
+
   public void testSerialization() {
     Schedule schedule1 = new Schedule("connector1", false, 60, 0, strIntervals);
     assertEquals(strWithDelay, schedule1.toString());
@@ -109,6 +128,16 @@ public class ScheduleTest extends TestCase {
     }
   }
 
+  public void testToLegacyStringFromNull() {
+    // Legacy GSAs cannot handle null Schedules.
+    // But they also cannot handle disabled schedules or retry delay.
+    String schedStr = Schedule.toLegacyString(null);
+    assertNotNull(schedStr);
+    assertFalse(schedStr, schedStr.contains(":300000:"));
+    assertFalse(schedStr, schedStr.startsWith("#"));
+    assertTrue(schedStr, schedStr.contains(":0-0"));
+  }
+
   public void testToLegacyString() {
     // Identity should work.
     assertEquals(strNoDelay, Schedule.toLegacyString(strNoDelay));
@@ -141,8 +170,10 @@ public class ScheduleTest extends TestCase {
 
   public void testGettersAndSetters() throws Exception {
     // Test static setters/getters first.
+    int savedRetryDelay = Schedule.defaultRetryDelayMillis();
     Schedule.setDefaultRetryDelaySecs(20);
     assertEquals(20000, Schedule.defaultRetryDelayMillis());
+    Schedule.setDefaultRetryDelaySecs(savedRetryDelay / 1000);
 
     // Now test the instance setters/getters.
     Schedule schedule = new Schedule();
