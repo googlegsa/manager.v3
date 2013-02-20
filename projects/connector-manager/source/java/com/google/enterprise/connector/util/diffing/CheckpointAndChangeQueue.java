@@ -14,19 +14,25 @@
 
 package com.google.enterprise.connector.util.diffing;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
 import com.google.enterprise.connector.util.IOExceptionHelper;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
+import com.google.gson.stream.JsonReader;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.json.JSONWriter;
 
-import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.Reader;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -77,19 +83,6 @@ public class CheckpointAndChangeQueue {
     LoggingIoException(String msg) {
       super(msg);
       LOG.severe(msg);
-    }
-  }
-
-  /** Provides entire contents of File as a single String. */
-  private static String readEntireUtf8File(File file) throws IOException {
-    BufferedInputStream bis =
-        new BufferedInputStream(new FileInputStream(file));
-    try {
-      byte bytes[] = new byte[(int) file.length()];
-      bis.read(bytes);
-      return new String(bytes, Charsets.UTF_8.name());
-    } finally {
-      bis.close();
     }
   }
 
@@ -269,19 +262,121 @@ public class CheckpointAndChangeQueue {
     // TODO(pjo): Move more recovery logic into this class.
   }
 
-  private JSONObject readPersistedState(RecoveryFile file) throws IOException {
-    // TODO(pjo): Move this method into RecoveryFile.
-    String contents = readEntireUtf8File(file);
-    if (!contents.endsWith(SENTINAL)) {
-      throw new IOException("Read invalid recovery file.");
-    } else {
-      contents = contents.substring(0, contents.length() - SENTINAL.length());
+  /**
+   * Reads JSON recovery files. Uses the Template Method pattern to
+   * delegate what to do with the parsed objects to subclasses.
+   *
+   * Note: This class uses gson for streaming support.
+   */
+  private abstract class AbstractQueueReader {
+    public void readJson(File file) throws IOException {
+      readJson(new BufferedReader(new InputStreamReader(
+                  new FileInputStream(file), Charsets.UTF_8)));
+    }
+
+    /**
+     * Reads and parses the stream, calling the abstract methods to
+     * take whatever action is required. The given stream will be
+     * closed automatically.
+     *
+     * @param reader the stream to parse
+     */
+    @VisibleForTesting
+    void readJson(Reader reader) throws IOException {
+      JsonReader jsonReader = new JsonReader(reader);
       try {
-        JSONObject json = new JSONObject(contents);
-        return json;
-      } catch (JSONException e) {
-        throw IOExceptionHelper.newIOException("Failed reading persisted JSON queue.", e);
+        readJson(jsonReader);
+      } finally {
+        jsonReader.close();
       }
+    }
+
+    /**
+     * Reads and parses the stream, calling the abstract methods to
+     * take whatever action is required.
+     */
+    private void readJson(JsonReader reader) throws IOException {
+      JsonParser parser = new JsonParser();
+      reader.beginObject();
+      while (reader.hasNext()) {
+        String name = reader.nextName();
+        if (name.equals(MONITOR_STATE_JSON_TAG)) {
+          readMonitorPoints(parser.parse(reader));
+        } else if (name.equals(QUEUE_JSON_TAG)) {
+          reader.beginArray();
+          while (reader.hasNext()) {
+            readCheckpointAndChange(parser.parse(reader));
+          }
+          reader.endArray();
+        } else {
+          throw new IOException("Read invalid recovery file.");
+        }
+      }
+      reader.endObject();
+
+      reader.setLenient(true);
+      String name = reader.nextString();
+      if (!name.equals(SENTINAL)) {
+        throw new IOException("Read invalid recovery file.");
+      }
+    }
+
+    protected abstract void readMonitorPoints(JsonElement gson)
+        throws IOException;
+
+    protected abstract void readCheckpointAndChange(JsonElement gson)
+        throws IOException;
+  }
+
+  /**
+   * Verifies that a JSON recovery file is valid JSON with a
+   * trailing sentinel.
+   */
+  private class ValidatingQueueReader extends AbstractQueueReader {
+    protected void readMonitorPoints(JsonElement gson) throws IOException {
+    }
+
+    protected void readCheckpointAndChange(JsonElement gson)
+        throws IOException {
+    }
+  }
+
+  /** Loads the queue from a JSON recovery file. */
+  /*
+   * TODO(jlacey): Change everything downstream to gson. For now, we
+   * reserialize the individual gson objects and deserialize them
+   * using org.json.
+   */
+  @VisibleForTesting
+  class LoadingQueueReader extends AbstractQueueReader {
+    protected void readMonitorPoints(JsonElement gson) throws IOException {
+      try {
+        JSONObject json = gsonToJson(gson);
+        monitorPoints = new MonitorRestartState(json);
+      } catch (JSONException e) {
+        throw IOExceptionHelper.newIOException(
+            "Failed reading persisted JSON queue.", e);
+      }
+    }
+
+    protected void readCheckpointAndChange(JsonElement gson)
+        throws IOException {
+      try {
+        JSONObject json = gsonToJson(gson);
+        checkpointAndChangeList.add(new CheckpointAndChange(json,
+            internalDocumentHandleFactory, clientDocumentHandleFactory));
+      } catch (JSONException e) {
+        throw IOExceptionHelper.newIOException(
+            "Failed reading persisted JSON queue.", e);
+      }
+    }
+
+    // TODO(jlacey): This could be much more efficient, especially
+    // with LOBs, if we directly transformed the objects with a little
+    // recursive parser. This code is only used when recovering failed
+    // batches, so I don't know if that's worth the effort.
+    private JSONObject gsonToJson(JsonElement gson) throws JSONException {
+      return new JSONObject(gson.toString());
     }
   }
 
@@ -289,7 +384,7 @@ public class CheckpointAndChangeQueue {
   private boolean isComplete(RecoveryFile recoveryFile) {
     // TODO(pjo): Move this method into RecoveryFile.
     try {
-      readPersistedState(recoveryFile);
+      new ValidatingQueueReader().readJson(recoveryFile);
       return true;
     } catch(IOException e) {
       return false;
@@ -302,13 +397,11 @@ public class CheckpointAndChangeQueue {
     FileOutputStream outStream = new FileOutputStream(recoveryFile);
     Writer writer = new OutputStreamWriter(outStream, Charsets.UTF_8);
     try {
-      JSONObject queueJson = getJson();
       try {
-        queueJson.write(writer);
+        writeJson(writer);
       } catch (JSONException e) {
         throw IOExceptionHelper.newIOException("Failed writing recovery file.", e);
       }
-      writer.write(SENTINAL);
       writer.flush();
       outStream.getFD().sync();
     } finally {
@@ -318,19 +411,7 @@ public class CheckpointAndChangeQueue {
 
   private void loadUpFromRecoveryState(RecoveryFile file) throws IOException {
     // TODO(pjo): Move this method into RecoveryFile.
-    JSONObject json = readPersistedState(file);
-    try {
-      JSONArray jsonQueue = json.getJSONArray(QUEUE_JSON_TAG);
-      for (int i = 0; i < jsonQueue.length(); i++) {
-        JSONObject chnch = jsonQueue.getJSONObject(i);
-        checkpointAndChangeList.add(new CheckpointAndChange(chnch,
-            internalDocumentHandleFactory, clientDocumentHandleFactory));
-      }
-      JSONObject jsonMonPoints = json.getJSONObject(MONITOR_STATE_JSON_TAG);
-      monitorPoints = new MonitorRestartState(jsonMonPoints);
-    } catch (JSONException e) {
-      throw IOExceptionHelper.newIOException("Failed reading persisted JSON queue.", e);
-    }
+    new LoadingQueueReader().readJson(file);
   }
 
   private RecoveryFile[] allRecoveryFiles() throws IOException {
@@ -407,25 +488,30 @@ public class CheckpointAndChangeQueue {
     return new HashMap<String, MonitorCheckpoint>(monitorPoints.points);
   }
 
-  private JSONArray getQueueAsJsonArray() {
-    JSONArray jsonQueue = new JSONArray();
+  private void writeQueueAsJsonArray(JSONWriter writer) throws JSONException {
+    writer.array();
     for (CheckpointAndChange guaranteed : checkpointAndChangeList) {
       JSONObject encodedGuaranteedChange = guaranteed.getJson();
-      jsonQueue.put(encodedGuaranteedChange);
+      writer.value(encodedGuaranteedChange);
     }
-    return jsonQueue;
+    writer.endArray();
   }
 
-  private JSONObject getJson() {
-    JSONObject result = new JSONObject();
-    try {
-      result.put(QUEUE_JSON_TAG, getQueueAsJsonArray());
-      result.put(MONITOR_STATE_JSON_TAG, monitorPoints.getJson());
-      return result;
-    } catch (JSONException e) {
-      // Should never happen.
-      throw new RuntimeException("internal error: failed to create JSON", e);
-    }
+  @VisibleForTesting
+  void writeJson(Writer writer) throws IOException, JSONException {
+    LOG.fine("Writing CheckPointAndChangeQueue to recovery file");
+    writeJson(new JSONWriter(writer));
+
+    writer.write(SENTINAL);
+  }
+
+  private void writeJson(JSONWriter writer) throws JSONException {
+    writer.object();
+    writer.key(MONITOR_STATE_JSON_TAG);
+    writer.value(monitorPoints.getJson());
+    writer.key(QUEUE_JSON_TAG);
+    writeQueueAsJsonArray(writer);
+    writer.endObject();
   }
 
   private void removeCompletedChanges(String checkpointString) {
