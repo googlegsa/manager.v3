@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.instantiator;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.enterprise.connector.common.PropertiesException;
 import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.common.StringUtils;
@@ -30,6 +31,8 @@ import com.google.enterprise.connector.spi.Connector;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
 
 import junit.framework.TestCase;
+
+import org.springframework.core.io.ByteArrayResource;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -142,5 +145,43 @@ public class InstanceInfoTest extends AbstractTestInstanceInfo {
 
     // Clean up temp directory and files
     ConnectorTestUtils.deleteAllFiles(new File(testDirName));
+  }
+
+  /** Parses an XML instance with non-ASCII characters. */
+  public void testNonAsciiXml() throws Exception {
+    String resourceName =
+        "testdata/connectorTypeTests/default/connectorType.xml";
+    TypeInfo typeInfo = makeTypeInfo(resourceName);
+
+    String expected = "fonc\u00e9";
+    String xml =
+        "<?xml version='1.0' encoding='UTF-8'?>\n"
+        + "<!DOCTYPE beans PUBLIC '-//SPRING//DTD BEAN//EN' "
+        + "'http://www.springframework.org/dtd/spring-beans.dtd'>\n"
+        + "<beans><bean id='SimpleTestConnectorInstance' "
+        + "class='" + SimpleTestConnector.class.getName() + "'>\n"
+        + "<property name='color' value='" + expected + "'/>\n"
+        + "</bean></beans>\n";
+
+    Configuration configuration =
+      new Configuration(typeInfo.getConnectorTypeName(),
+          ImmutableMap.<String, String>of(), xml);
+    Connector instance =
+        InstanceInfo.makeConnectorWithSpring("fred", typeInfo, configuration);
+    assertEquals(expected, ((SimpleTestConnector) instance).getColor());
+  }
+
+  /**
+   * Shows that getBytes() is harmless with properties files, which
+   * are encoded using ASCII anyway.
+   */
+  public void testNonAsciiProperties() throws Exception {
+    String expected = "fonc\u00e9";
+    ByteArrayResource resource = (ByteArrayResource) InstanceInfo
+        .getPropertiesResource("fred", ImmutableMap.of("Color", expected));
+    String props = new String(resource.getByteArray());
+    assertFalse(props, props.contains(expected));
+    Properties properties = PropertiesUtils.loadFromString(props);
+    assertEquals(expected, properties.getProperty("Color"));
   }
 }
