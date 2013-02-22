@@ -16,8 +16,6 @@ package com.google.enterprise.connector.spi;
 
 /**
  * Thrown for general repository errors, such as connectivity problems.
- *
- * @since 1.0
  */
 public class RepositoryException extends Exception {
   /**

@@ -19,8 +19,6 @@ import com.google.enterprise.connector.spi.AuthenticationIdentity;
 /**
  * Simple implementation of the {@link AuthenticationIdentity} interface.
  * Connector developers may want to use this to implement unit tests.
- *
- * @since 1.3.2
  */
 public class SimpleAuthenticationIdentity implements AuthenticationIdentity {
 
@@ -28,17 +26,17 @@ public class SimpleAuthenticationIdentity implements AuthenticationIdentity {
   private final String password;
   private final String domain;
 
-  @Override
+  /* @Override */
   public String getPassword() {
     return password;
   }
 
-  @Override
+  /* @Override */
   public String getUsername() {
     return username;
   }
 
-  @Override
+  /* @Override */
   public String getDomain() {
     return domain;
   }

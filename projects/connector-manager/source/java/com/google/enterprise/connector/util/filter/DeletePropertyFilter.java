@@ -46,8 +46,6 @@ import java.util.Set;
      &lt;/property&gt;
    &lt;/bean&gt;
    </code></pre>
- *
- * @since 2.8
  */
 public class DeletePropertyFilter extends AbstractDocumentFilter {
 

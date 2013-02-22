@@ -17,8 +17,6 @@ package com.google.enterprise.connector.spi;
 /**
  * Thrown for general {@link DocumentAcceptor} errors, such as connectivity
  * problems.
- *
- * @since 3.0
  */
 public class DocumentAcceptorException extends Exception {
   /**

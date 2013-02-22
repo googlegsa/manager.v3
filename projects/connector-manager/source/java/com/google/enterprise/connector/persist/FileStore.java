@@ -158,8 +158,13 @@ public class FileStore implements PersistentStore {
   /* @Override */
   public Schedule getConnectorSchedule(StoreContext context) {
     testStoreContext(context);
-    return Schedule.of(
-        readStoreFile(context, getStoreFileName(context, schedName)));
+    String schedule =
+        readStoreFile(context, getStoreFileName(context, schedName));
+    if (schedule != null) {
+      return new Schedule(schedule);
+    } else {
+      return null;
+    }
   }
 
   /**

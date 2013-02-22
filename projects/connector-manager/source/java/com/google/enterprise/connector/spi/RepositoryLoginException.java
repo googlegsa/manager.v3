@@ -16,8 +16,6 @@ package com.google.enterprise.connector.spi;
 
 /**
  * Thrown to indicate unsuccessful login.
- *
- * @since 1.0
  */
 public class RepositoryLoginException extends RepositoryException {
   /**

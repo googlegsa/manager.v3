@@ -31,15 +31,13 @@ import java.util.logging.Logger;
  * Subclasses are exected to override {@link #findProperty(Document, String)}
  * and/or {@link #getPropertyNames(Document)}, but not
  * {@link #newDocumentFilter(Document)}.
- *
- * @since 2.8
  */
 public abstract class AbstractDocumentFilter implements DocumentFilterFactory {
 
   /** The logger for this class. */
   protected final Logger LOGGER = Logger.getLogger(this.getClass().getName());
 
-  @Override
+  /* @Override */
   public Document newDocumentFilter(Document source) {
     Preconditions.checkNotNull(source, "Source document must not be null");
     return new DocumentFilter(source);
@@ -136,12 +134,12 @@ public abstract class AbstractDocumentFilter implements DocumentFilterFactory {
       this.source = source;
     }
 
-    @Override
+    /* @Override */
     public Property findProperty(String name) throws RepositoryException {
       return AbstractDocumentFilter.this.findProperty(source, name);
     }
 
-    @Override
+    /* @Override */
     public Set<String> getPropertyNames() throws RepositoryException {
       return AbstractDocumentFilter.this.getPropertyNames(source);
     }

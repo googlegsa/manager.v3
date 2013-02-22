@@ -26,7 +26,8 @@ public interface ConnectorPersistentStore {
    * Gets a {@link LocalDocumentStore} through which the connector can access
    * the Connector Manager's persisted store of document metadata.
    *
-   * @return {@code null}
+   * @return a {@link LocalDocumentStore} or {@code null} for Connector Manager
+   *         versions prior to 3.0
    */
   public LocalDocumentStore getLocalDocumentStore();
 

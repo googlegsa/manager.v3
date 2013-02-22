@@ -45,12 +45,6 @@ Fix Issue 7554816: Support DENY with flattened ACLs in SharePoint connector.
                    to GSA 7.x, even if feed.disable.inherited.acls property
                    is set.
 
-Fix Issue 7584684: GsaFeedConnection needs to invalidate the cached DTD when
-                   switching GSAs. If a running connector manager is
-                   reregistered with a different version of the GSA, it
-                   would continue to assume the capabilities of the original
-                   GSA version, based on an inspection of the feed DTD.
-
 
 Release 3.0.2, 17 October 2012
 ==============================
@@ -112,68 +106,6 @@ Fix Issue 6996468: Provide advanced configuration option to not use inherited
                    with Distributed Crawl and Serve.
 
 
-Release 2.8.10, 28 November 2012
-================================
-
-Introduction
-------------
-This is a patch release that fixes a few small problems discovered in the
-the previous release. Users of previous releases are encouraged to review
-the changes below to determine whether to upgrade.
-
-Summary of Changes
-------------------
-Fix Issue 4765123: Set a logging context in the diffing package. This provides
-                   more informative logging from the various diffing connector
-                   threads.
-
-Fix Issue 5599305: Retry Connector startup if instantiation fails. The
-                   FileSystem Connector fails Connector bean instantiation if
-                   the file share is off-line. The other connectors that use
-                   the Diffing package (LDAP and Database) can suffer similar
-                   failures. This fix allows a failed Connector instantiation
-                   to be retried after a period, in hopes that any transient
-                   errors may have been corrected.
-
-Fix Issue 6299907: Connector Manager restart resets the logging level.
-
-Fix Issue 6861210: Diffing fileSystemMonitorsByName is not cleared when
-                   DocumentSnapshotRepositoryMonitorManagerImpl is stopped.
-
-Fix Issue 6867242: Diffing connector may leak DocumentSnapshotRepositoryMonitor
-                   threads when toggling "Disable traversal" check box and the
-                   connector may go into inconsistent state. 
-
-Fix Issue 6942176: CheckpointAndChangeQueue throws NullPointerException.
-
-Fix Issues 7312517, 7343328: Multiple cases of NullPointerException
-                   thrown from the diffing connector SnapshotStore.
-
-Fix Issue 7341404: Diffing connectors ignored Retry Delay setting.  Diffing
-                   connectors will now schedule incremental traversals
-                   according to the Retry Delay setting specified on the
-                   connector configuration page.
-
-Fix Issue 7343330: BasicChecksumGenerator.getDigest() throws
-                   NullPointerException.
-
-Fix Issue 7364602: Inaccessible LDAP server kills Connector Manager.
-                   Loading the connector instances asynchronously now moves
-                   their creation out of the Connector Manager servlet StartUp
-                   code path, so an individual connector instance timing out
-                   will not cause the Connector Manager to fail start-up.
-
-Fix Issue 7369686: Diffing connectors ignore the configured schedule intervals.
-                   Diffing connectors would continue to run, consuming 
-                   resources and traversing the repositories when outside
-                   of a scheduled traversal interval.
-
-Fix Issue 7409537: Support more unregistered Microsoft Office 2007 media types:
-                   "application/vnd.ms-excel.12",
-                   "application/vnd.ms-powerpoint.12",
-                   "application/vnd.ms-word.12".
-
-
 Release 2.8.6, 5 May 2012
 =========================
 
@@ -189,6 +121,13 @@ Summary of Changes
     the content. Handle PDF documents that are zero-length or too long more
     gracefully. Rather than skip the document entirely, feed a stub
     document with just the document's title, if available.
+
+  * Fix Issue 5599305 - Retry Connector startup if instantiation fails.
+    The FileSystem Connector fails Connector bean instantiation if the file
+    share is off-line.  The other connectors that use the Diffing package
+    (LDAP and Database) can suffer similar failures.  This fix allows a
+    failed Connector instantiation to be retried after a period, in hopes
+    that any transient errors may have been corrected.
 
   * Fix file system connector code site issue 32 - Initial snapshot fails
     in Java 7 with error "two snapshots with the same number". Note that

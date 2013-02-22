@@ -376,8 +376,7 @@ public class ProductionManagerTest extends TestCase {
     assertEquals(0, status.getStatus());
     assertEquals(instantiator.getConnectorTypeName(connectorName),
                  status.getType());
-    assertNotNull(status.getSchedule());
-    assertTrue(status.getSchedule().startsWith("#"));
+    assertNull(status.getSchedule());
 
     Schedule sched = new Schedule(connectorName, false, 200, 1000, "1-2");
     String schedStr = sched.toString();

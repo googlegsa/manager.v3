@@ -277,7 +277,8 @@ public class JdbcStore implements PersistentStore {
    */
   /* @Override */
   public Schedule getConnectorSchedule(StoreContext context) {
-    return Schedule.of(getField(context, SCHEDULE));
+    String schedule = getField(context, SCHEDULE);
+    return (schedule == null) ? null : new Schedule(schedule);
   }
 
   /**

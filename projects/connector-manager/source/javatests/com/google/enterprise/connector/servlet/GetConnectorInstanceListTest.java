@@ -89,10 +89,8 @@ public class GetConnectorInstanceListTest extends TestCase {
         + "      <ConnectorName>connector1</ConnectorName>\n"
         + "      <ConnectorType>TestConnectorA</ConnectorType>\n"
         + "      <Status>0</Status>\n"
-        + "      <ConnectorSchedules version=\"3\">#:500:300000:0-0"
-        + "</ConnectorSchedules>\n"
-        + "      <ConnectorSchedule version=\"1\">:500:0-0"
-        + "</ConnectorSchedule>\n"
+        + "      <ConnectorSchedule></ConnectorSchedule>\n"
+        + "      <ConnectorSchedules></ConnectorSchedules>\n"
         + "    </ConnectorInstance>\n"
         + "  </ConnectorInstances>\n"
         + "</CmResponse>\n";
@@ -152,8 +150,7 @@ public class GetConnectorInstanceListTest extends TestCase {
     StringBuffer result = new StringBuffer(res.getContentAsString());
     ConnectorTestUtils.removeManagerVersion(result);
     removeConnectorVersion(result);
-    assertEquals(result.toString(),
-        StringUtils.normalizeNewlines(expectedResult),
+    assertEquals(StringUtils.normalizeNewlines(expectedResult),
         StringUtils.normalizeNewlines(result.toString()));
   }
 

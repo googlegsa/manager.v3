@@ -18,8 +18,6 @@ package com.google.enterprise.connector.spi;
  * The carrier type of the list returned by the
  * {@link AuthorizationManager#authorizeDocids
  * AuthorizationManager.authorizeDocids} method.
- *
- * @since 1.0
  */
 public class AuthorizationResponse implements Comparable<AuthorizationResponse> {
 

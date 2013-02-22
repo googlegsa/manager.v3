@@ -18,30 +18,12 @@ import com.google.enterprise.connector.spi.RepositoryException;
 
 /**
  * Interface for a local copy of a document that is stored on the GSA.
- * This represents both objects in the repository as well as
- * serialized entries in the snapshot files (the implementations need
- * not be the same concrete, although doing so is often convenient).
- * <p>
- * The diffing package depends on the ordering of snapshots, which
- * must match the order of their appearance in the
- * {@link SnapshotRepository}. By default the ordering of snapshots is
- * determined by the lexicographic ordering of their document IDs (the
- * natural order of Java {@code String} values).
- * <p>
- * Since version 3.0.6, the {@code DocumentSnapshot} implementation
- * class can also implement {@link Comparable}. The diffing package
- * will check for the {@code Comparable} implementation before
- * comparing the document IDs. Reasons to implement {@code Comparable}
- * to define the details of the ordering include the lexicographic
- * ordering of the document IDs, and the encoding required to make the
- * document IDs safe to use in URLs, which might not be an
- * order-preserving encoding (e.g., Base64 is not order-preserving).
  *
  * @since 2.8
  */
 public interface DocumentSnapshot {
   /**
-   * Returns the unique ID for the document.
+   * Returns the id for the document.
    */
   String getDocumentId();
 

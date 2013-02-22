@@ -467,53 +467,50 @@ public class GetDocumentContentTest extends TestCase {
   }
 
   /**
-   * Test If-Modified-Since, where lastModified returns -1.
+   * Test IfModifiedSince, where lastModified returns -1.
    */
-  public void testGetIfModifiedSinceNoLastModified() throws Exception {
+  public void testDoGetIfModifiedSinceNoLastModified() throws Exception {
     patchRealProductionManager();
     String docid = MockRetriever.DOCID_NO_LASTMODIFIED;
     MockHttpServletRequest req = createMockRequest();
-    req.setMethod("GET");
     req.setParameter(ServletUtil.XMLTAG_CONNECTOR_NAME, connectorName);
     req.setParameter(ServletUtil.QUERY_PARAM_DOCID, docid);
     encodeQueryParameter(req);
     req.addHeader("If-Modified-Since", SystemClock.INSTANCE.getTimeMillis());
     MockHttpServletResponse res = new MockHttpServletResponse();
-    new GetDocumentContent().service(req, res);
+    new GetDocumentContent().doGet(req, res);
     assertEquals(200, res.getStatus());
     assertEquals(docid, res.getContentAsString());
   }
 
   /**
-   * Test If-Modified-Since, where lastModified newer.
+   * Test IfModifiedSince, where lastModified newer.
    */
-  public void testGetIfModifiedSinceLastModified() throws Exception {
+  public void testDoGetIfModifiedSinceLastModified() throws Exception {
     patchRealProductionManager();
     MockHttpServletRequest req = createMockRequest();
-    req.setMethod("GET");
     req.setParameter(ServletUtil.XMLTAG_CONNECTOR_NAME, connectorName);
     req.setParameter(ServletUtil.QUERY_PARAM_DOCID, docid);
     encodeQueryParameter(req);
     req.addHeader("If-Modified-Since", 1);
     MockHttpServletResponse res = new MockHttpServletResponse();
-    new GetDocumentContent().service(req, res);
+    new GetDocumentContent().doGet(req, res);
     assertEquals(200, res.getStatus());
     assertEquals(docid, res.getContentAsString());
   }
 
   /**
-   * Test If-Modified-Since, where unmodified.
+   * Test IfModifiedSince, where unmodified.
    */
-  public void testGetUnModifiedSinceLastModified() throws Exception {
+  public void testDoGetUnModifiedSinceLastModified() throws Exception {
     patchRealProductionManager();
     MockHttpServletRequest req = createMockRequest();
-    req.setMethod("GET");
     req.setParameter(ServletUtil.XMLTAG_CONNECTOR_NAME, connectorName);
     req.setParameter(ServletUtil.QUERY_PARAM_DOCID, docid);
     encodeQueryParameter(req);
     req.addHeader("If-Modified-Since", SystemClock.INSTANCE.getTimeMillis());
     MockHttpServletResponse res = new MockHttpServletResponse();
-    new GetDocumentContent().service(req, res);
+    new GetDocumentContent().doGet(req, res);
     assertEquals(304, res.getStatus());
     assertTrue(Strings.isNullOrEmpty(res.getContentAsString()));
   }

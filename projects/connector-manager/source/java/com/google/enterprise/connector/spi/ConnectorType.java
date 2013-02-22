@@ -23,8 +23,6 @@ import java.util.Map;
  * objects that implement this interface. The implementor <strong>must</strong>
  * provide a Spring XML configuration file named {@code connectorType.xml} to
  * control this process. See the package documentation for more details.
- *
- * @since 1.0
  */
 public interface ConnectorType {
 
@@ -83,7 +81,6 @@ public interface ConnectorType {
    *         but may be different than the supplied configData.  If a modified
    *         configuration map is returned, it must preserve configuration
    *         items with names beginning with "google".
-   * @since 1.0.1
    */
   public ConfigureResponse validateConfig(Map<String, String> configData,
       Locale locale, ConnectorFactory connectorFactory);

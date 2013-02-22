@@ -22,8 +22,6 @@ package com.google.enterprise.connector.spi;
  * that skips over the offending {@link Document} if
  * {@link DocumentList#checkpoint()} is called after
  * {@code RepositoryDocumentException} is thrown.
- *
- * @since 1.3.0
  */
 public class RepositoryDocumentException extends RepositoryException {
   /**

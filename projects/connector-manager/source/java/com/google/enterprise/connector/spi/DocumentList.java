@@ -69,8 +69,6 @@ package com.google.enterprise.connector.spi;
  * (or {@code null}) to all calls to {@link #nextDocument()} and
  * {@link Document#findProperty(String)}. However, if preferred, the
  * implementor may also use separate objects for each of those interfaces.
- *
- * @since 1.0
  */
 public interface DocumentList {
 

@@ -27,8 +27,6 @@ import java.util.Map;
  * The actual values of these property name constants all begin with "google:".
  * For future compatibility, all property names beginning with "google:" are
  * reserved.
- *
- * @since 1.0
  */
 public class SpiConstants {
   private SpiConstants() {
@@ -457,7 +455,7 @@ public class SpiConstants {
   public static final String PROPNAME_PAGERANK = "google:pagerank";
 
   /**
-   * Identifies a single-valued {@link DocumentType} property that,
+   * Identifies a single-valued {@link #DocumentType} property that,
    * if present, will be used to determine the object type for this
    * document.
    * <p/>
@@ -744,57 +742,6 @@ public class SpiConstants {
    * {@link #PERSISTABLE_ATTRIBUTES} map.
    */
   public static final String PROPNAME_CONTAINER = "google:container";
-
-  /**
-   * Optional, single-valued property to specify the existing encoding of the 
-   * supplied content, rather than letting the Connector Manager choose an 
-   * encoding to apply to the supplied content.
-   * 
-   * If a value of google:contentEncoding is null, Connector Manager will encode 
-   * the content. If the value is "base64binary", it denotes that the supplied 
-   * content is already Base64 encoded. If the value is "base64compressed" 
-   * it denotes the supplied content is already compressed then Base64 encoded.
-   * 
-   * @since 3.0.6
-   */
-  public static final String PROPNAME_CONTENT_ENCODING =
-      "google:contentEncoding";
-
-  /**
-   * Enum for feed content encoding.
-   * 
-   * @see "Feeds Protocol Developer's Guide"
-   */
-  public enum ContentEncoding {
-    BASE64BINARY("base64binary"), 
-    BASE64COMPRESSED("base64compressed"),
-    ERROR("error");
-
-    private final String tag;
-
-    ContentEncoding(String tag) {
-      this.tag = tag;
-    }
-
-    /**
-     * @return The enum matching the given {@code tag}.
-     *         {@code ContentEncoding.ERROR} will be returned if the given
-     *         {@code tag} does not match a known {@code ContentEncoding}.
-     */
-    public static ContentEncoding findContentEncoding(String tag) {
-      try {
-        return Enum.valueOf(ContentEncoding.class, tag.toUpperCase());
-      } catch (IllegalArgumentException e) {
-        // Not found, return ERROR.
-        return ERROR;
-      }
-    }
-
-    @Override
-    public String toString() {
-      return tag;
-    }
-  }
 
   /**
    * Optional, single-valued property the Connector Manager will persist in its

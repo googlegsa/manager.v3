@@ -62,8 +62,6 @@ import java.util.logging.Level;
      &lt;property name="overwrite" value="false"/&gt;
    &lt;/bean&gt;
    </code></pre>
- *
- * @since 2.8
  */
 public class AddPropertyFilter extends AbstractDocumentFilter {
 

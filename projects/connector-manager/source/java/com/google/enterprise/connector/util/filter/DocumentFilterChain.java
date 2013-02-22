@@ -29,8 +29,6 @@ import java.util.List;
  * filters.  The filters are constructed from a {@link List} of
  * {@link DocumentFilterFactory DocumentFilterFactories}, and linked
  * together like pop-beads, each using the previous as its source Document.
- *
- * @since 2.8
  */
 public class DocumentFilterChain implements DocumentFilterFactory {
 
@@ -66,7 +64,7 @@ public class DocumentFilterChain implements DocumentFilterFactory {
    * @param source the input {@link Document} for the filters
    * @return the head of the chain of filters
    */
-  @Override
+  /* @Override */
   public Document newDocumentFilter(Document source) {
     Preconditions.checkNotNull(source);
     for (DocumentFilterFactory factory : factories) {

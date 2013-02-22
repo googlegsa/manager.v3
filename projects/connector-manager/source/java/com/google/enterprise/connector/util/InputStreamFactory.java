@@ -22,8 +22,6 @@ import java.io.InputStream;
  * Passing an {@link InputStreamFactory} is beneficial if the recipient
  * may wish to delay opening an {@code InputStream} (if at all), or if the
  * recipient needs to open an  {@code InputStream} several times.
- *
- * @since 3.0
  */
 public interface InputStreamFactory {
   /**

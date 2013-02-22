@@ -52,8 +52,6 @@ import java.util.Set;
      &lt;property name="overwrite" value="false"/&gt;
    &lt;/bean&gt;
    </code></pre>
- *
- * @since 2.8
  */
 public class MovePropertyFilter extends CopyPropertyFilter {
   /**

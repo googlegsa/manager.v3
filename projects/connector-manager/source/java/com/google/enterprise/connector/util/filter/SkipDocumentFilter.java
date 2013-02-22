@@ -52,8 +52,6 @@ import java.util.regex.PatternSyntaxException;
      &lt;property name "skipOnMatch" value="false"/&gt;
    &lt;/bean&gt;
    </code></pre>
- *
- * @since 2.8.4
  */
 public class SkipDocumentFilter extends AbstractDocumentFilter {
 
@@ -147,13 +145,13 @@ public class SkipDocumentFilter extends AbstractDocumentFilter {
    * Checks for a pattern match on the source property values.
    */
   private class SkipProperty implements Property {
-    private final Property property;
+    private Property property;
 
     public SkipProperty(Property property) {
       this.property = property;
     }
 
-    @Override
+    /* @Override */
     public Value nextValue() throws RepositoryException {
       // Look for a pattern match in any of the property values.
       Value value = property.nextValue();

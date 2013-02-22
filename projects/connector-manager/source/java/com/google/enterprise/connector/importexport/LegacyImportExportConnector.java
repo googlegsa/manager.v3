@@ -59,7 +59,9 @@ public class LegacyImportExportConnector extends ImportExportConnector {
       // Could be dealing with old format.
       String scheduleString = XmlParseUtil.getFirstElementByTagName(
            connectorElement, ServletUtil.XMLTAG_CONNECTOR_SCHEDULE);
-      schedule = Schedule.of(scheduleString);
+      if (scheduleString != null && scheduleString.trim().length() > 0) {
+        schedule =  new Schedule(scheduleString);
+      }
     }
     return schedule;
   }

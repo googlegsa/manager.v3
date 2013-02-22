@@ -23,8 +23,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Fake TraversalContext that implements the functions needed for testing.
- *
- * @since 2.8
  */
 /* TODO: Deprecate this in favor of SimpleTraversalContext. */
 public class FakeTraversalContext extends SimpleTraversalContext {
@@ -49,7 +47,7 @@ public class FakeTraversalContext extends SimpleTraversalContext {
     allowAllMimeTypes.set(newValue);
   }
 
-  @Override
+  /* @Override */
   public int mimeTypeSupportLevel(String mimeType) {
     if (allowAllMimeTypes.get()) {
       return 1;
@@ -63,7 +61,7 @@ public class FakeTraversalContext extends SimpleTraversalContext {
   /**
    * Returns lexically first provided mime type.
    */
-  @Override
+  /* @Override */
   public String preferredMimeType(Set<String> mimeTypes) {
     if (mimeTypes.size() < 1) {
       throw new IllegalArgumentException("mimeTypes must have at least 1 entry");

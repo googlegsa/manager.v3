@@ -24,7 +24,7 @@ import java.util.Set;
  * provide an implementation of this object.  However, for testing
  * purposes, the developer may want to provide a temporary implementation.
  *
- * @since 1.0
+ * @since 1.3
  */
 public interface TraversalContext {
   /**
@@ -67,7 +67,6 @@ public interface TraversalContext {
    *
    * @param mimeTypes a {@code Set} of mime types
    * @return the most preferred mime type from the Set
-   * @since 1.3
    */
   String preferredMimeType(Set<String> mimeTypes);
 
@@ -93,6 +92,7 @@ public interface TraversalContext {
    * also return {@code true}.
    *
    * @return {@code true} if Documents may include enhanced ACL support
+   *
    * @see SecureDocument
    * @see SpiConstants.AclInheritanceType
    * @see SpiConstants.FeedType
@@ -100,6 +100,7 @@ public interface TraversalContext {
    * @see SpiConstants#PROPNAME_ACLINHERITANCETYPE
    * @see SpiConstants#PROPNAME_ACLDENYGROUPS
    * @see SpiConstants#PROPNAME_ACLDENYUSERS
+   *
    * @since 3.0
    */
   boolean supportsInheritedAcls();
@@ -113,9 +114,11 @@ public interface TraversalContext {
    * {@link #supportsDenyAcls} will also return {@code false}.
    *
    * @return {@code true} if Documents may include DENY users or groups
+   *
    * @see SecureDocument
    * @see SpiConstants#PROPNAME_ACLDENYGROUPS
    * @see SpiConstants#PROPNAME_ACLDENYUSERS
+   *
    * @since 3.0.4
    */
   boolean supportsDenyAcls();

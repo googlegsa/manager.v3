@@ -54,14 +54,6 @@ public class GetDocumentContent extends HttpServlet {
   private static Logger LOGGER =
     Logger.getLogger(GetDocumentContent.class.getName());
   private static final String HDR_IF_MODIFIED = "If-Modified-Since";
-
-  /**
-   * Attribute name on the ServletRequest containing a cache of the parsed
-   * query parameters.
-   */
-  private static final String PARAMETER_CACHE_NAME =
-      GetDocumentContent.class.getName() + ".parameters";
-
   /**
    * Attribute name on the ServletRequest containing a cache of the metadata
    * of the requested document.
@@ -111,6 +103,7 @@ public class GetDocumentContent extends HttpServlet {
     return securityHeaderSupported;
   }
 
+  // TODO: HEAD requests?
   // TODO: Range requests?
 
   /**
@@ -140,42 +133,6 @@ public class GetDocumentContent extends HttpServlet {
   }
 
   /**
-   * Fetches the last modified date for the document, in milliseconds since
-   * the epoch; or -1 if the last modified date is not known or unavailable.
-   *
-   * @param req
-   * @return a long integer specifying the time the document was last modified,
-   * in milliseconds since midnight, January 1, 1970 GMT, or -1 if the time is
-   * not known.
-   */
-  @Override
-  protected long getLastModified(HttpServletRequest req) {
-    Map<String, List<String>> params = getQueryParams(req);
-    String connectorName = ServletUtil.getFirstParameter(
-        params, ServletUtil.XMLTAG_CONNECTOR_NAME);
-    String docid = ServletUtil.getFirstParameter(
-        params, ServletUtil.QUERY_PARAM_DOCID);
-    if (Strings.isNullOrEmpty(connectorName) || Strings.isNullOrEmpty(docid)) {
-      return -1L;
-    }
-    return handleGetLastModified(req, Context.getInstance().getManager(),
-                                 connectorName, docid);
-  }
-
-  /**
-   * Returns a map of query parameters extracted from the request.
-   */
-  private static Map<String, List<String>> getQueryParams(HttpServletRequest req) {
-    @SuppressWarnings("unchecked") Map<String, List<String>> params = 
-        (Map<String, List<String>>)(req.getAttribute(PARAMETER_CACHE_NAME));
-    if (params == null) {
-      params = ServletUtil.parseQueryString(req.getQueryString());
-      req.setAttribute(PARAMETER_CACHE_NAME, params);
-    }
-    return params;
-  }
-
-  /**
    * Retrieves the content of a document from a connector instance.
    *
    * @param req
@@ -202,7 +159,8 @@ public class GetDocumentContent extends HttpServlet {
       return;
     }
 
-    Map<String, List<String>> params = getQueryParams(req);
+    Map<String, List<String>> params = ServletUtil.parseQueryString(
+        req.getQueryString());
     String connectorName = ServletUtil.getFirstParameter(
         params, ServletUtil.XMLTAG_CONNECTOR_NAME);
     NDC.pushAppend("Retrieve " + connectorName);
@@ -219,6 +177,41 @@ public class GetDocumentContent extends HttpServlet {
     if (securityCode != HttpServletResponse.SC_OK) {
       res.sendError(securityCode);
       return;
+    }
+
+    // Manually process If-Modified-Since headers instead of implementing
+    // getLastModified().
+    //
+    // getLastModified() is called for every request in order to see if doGet()
+    // can be circumvented (via If-Modified-Since) and to set the Last-Modified
+    // response header (whose date is typically provided in the
+    // If-Modified-Since header in later requests).
+    //
+    // Retrieving the lastModifiedDate from the ECM repository can be quite
+    // expensive (certainly more expensive than req.containsHeader()) and the
+    // GSA ignores the Last-Modified response header, so we don't provide the
+    // Last-Modified header and manually process If-Modified-Since.
+    long ifModifiedSince = req.getDateHeader(HDR_IF_MODIFIED);
+    if (ifModifiedSince != -1L) {
+      if (LOGGER.isLoggable(Level.FINEST)) {
+        LOGGER.finest("RETRIEVER: Get Document " + docid + " "
+            + HDR_IF_MODIFIED + " " + req.getHeader(HDR_IF_MODIFIED));
+      }
+      long lastModified =
+          handleGetLastModified(req, manager, connectorName, docid);
+
+      // If the document modification time is later, fall through to fetch
+      // the content, otherwise return SC_NOT_MODIFIED.  Since the GSA sends
+      // a modified-since time of the crawl time, rather than the document's
+      // actual supplied lastModified meta-data, fudge the time by a minute
+      // to avoid client/server clock disparities.
+      if (lastModified != -1 && lastModified < ifModifiedSince - (60 * 1000)) {
+        if (LOGGER.isLoggable(Level.FINEST)) {
+          LOGGER.finest("RETRIEVER: Document " + docid + " unchanged");
+        }
+        res.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
+        return;
+      }
     }
 
     // Set the Content-Type. 

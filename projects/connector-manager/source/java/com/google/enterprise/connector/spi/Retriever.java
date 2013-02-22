@@ -18,8 +18,6 @@ import java.io.InputStream;
 
 /**
  * A {@link Retriever} provides access to document content, based upon a docid.
- *
- * @since 3.0
  */
 public interface Retriever {
   /**

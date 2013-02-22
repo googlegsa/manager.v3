@@ -21,8 +21,6 @@ import java.util.Set;
 /**
  * Simple implementation of the {@link Document} interface.
  * Implementors may use this directly or for reference.
- *
- * @since 1.0
  */
 public class SimpleDocument implements Document {
 
@@ -39,7 +37,7 @@ public class SimpleDocument implements Document {
     this.properties = properties;
   }
 
-  @Override
+  /* @Override */
   public Property findProperty(String name) {
     List<Value> list = properties.get(name);
     Property prop = null;
@@ -49,7 +47,7 @@ public class SimpleDocument implements Document {
     return prop;
   }
 
-  @Override
+  /* @Override */
   public Set<String> getPropertyNames() {
     return properties.keySet();
   }

@@ -28,8 +28,6 @@ import junit.framework.TestCase;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.StringReader;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -386,31 +384,6 @@ public class CheckpointAndChangeQueueTest extends TestCase {
     List<CheckpointAndChange> secondBatchRedoEnd = q2.resume(checkpoint);
     assertEquals(secondBatch.get(2), secondBatchRedoEnd.get(0));
     assertEquals(secondBatch.get(3), secondBatchRedoEnd.get(1));
-  }
-
-  private String getRecoveryFile(CheckpointAndChangeQueue q) throws Exception {
-    StringWriter writer = new StringWriter();
-    q.writeJson(writer);
-    return writer.toString();
-  }
-
-  private static final String EMPTY_RECOVERY_FILE =
-      "{\"MON\":{},\"Q\":[]}SENTINAL";
-
-  public void testWriteAndReadJson() throws Exception {
-    ChangeSource changeSource = new MockChangeSource(10);
-    CheckpointAndChangeQueue q = new CheckpointAndChangeQueue(changeSource,
-        persistDir, internalFactory, clientFactory);
-    q.start(null);
-    assertEquals(EMPTY_RECOVERY_FILE, getRecoveryFile(q));
-    List<CheckpointAndChange> firstBatch = q.resume(null);
-    String original = getRecoveryFile(q);
-
-    CheckpointAndChangeQueue q2 = new CheckpointAndChangeQueue(changeSource,
-        persistDir, internalFactory, clientFactory);
-    assertEquals(EMPTY_RECOVERY_FILE, getRecoveryFile(q2));
-    q2.new LoadingQueueReader().readJson(new StringReader(original));
-    assertEquals(original, getRecoveryFile(q2));
   }
 
   public void testRecoveryStateCleanup() throws IOException {

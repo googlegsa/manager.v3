@@ -18,8 +18,10 @@ package com.google.enterprise.connector.spi;
  * A {@link Connector} object may implement this interface if it wishes
  * to be informed when the Connector instance is being shut down
  * or deleted.
- *
- * @since 2.0
+ * <p/>
+ * <strong>WARNING:</strong> This Interface is in development, and may change,
+ * be replaced, or even removed in the near future.  Its use is not
+ * recommended at this time.
  */
 public interface ConnectorShutdownAware {
 

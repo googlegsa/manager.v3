@@ -277,11 +277,10 @@ public class ProductionManager implements Manager {
       globalNamespace = configData.get(PropertiesUtils.GOOGLE_GLOBAL_NAMESPACE);
       localNamespace = configData.get(PropertiesUtils.GOOGLE_LOCAL_NAMESPACE);
     }
-    // Note: We do not return a null or empty Schedule, as most GSAs cannot
-    // handle it.
     // TODO: resolve the third parameter - we need to give status a meaning
     return new ConnectorStatus(connectorName, connectorTypeName, 0,
-        Schedule.toString(schedule), globalNamespace, localNamespace);
+        ((schedule == null) ? null : schedule.toString()), globalNamespace,
+        localNamespace);
   }
 
   /* @Override */
@@ -339,7 +338,8 @@ public class ProductionManager implements Manager {
   /* @Override */
   public void setSchedule(String connectorName, String schedule)
       throws ConnectorNotFoundException, PersistentStoreException {
-    instantiator.setConnectorSchedule(connectorName, Schedule.of(schedule));
+    instantiator.setConnectorSchedule(connectorName,
+        ((schedule == null) ? null : new Schedule(schedule)));
   }
 
   /* @Override */

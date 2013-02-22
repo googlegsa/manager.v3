@@ -22,7 +22,6 @@ import java.util.Map;
  * {@link ConnectorType#validateConfig ConnectorType.validateConfig}.
  *
  * @see ConnectorType
- * @since 1.0
  */
 public class ConfigureResponse {
   private final String message;

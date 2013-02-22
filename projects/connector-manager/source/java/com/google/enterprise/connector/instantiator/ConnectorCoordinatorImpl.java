@@ -28,7 +28,6 @@ import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.pusher.DocumentAcceptorImpl;
 import com.google.enterprise.connector.pusher.PusherFactory;
-import com.google.enterprise.connector.scheduler.HostLoadManager;
 import com.google.enterprise.connector.scheduler.LoadManager;
 import com.google.enterprise.connector.scheduler.LoadManagerFactory;
 import com.google.enterprise.connector.scheduler.Schedule;
@@ -75,8 +74,8 @@ class ConnectorCoordinatorImpl implements
   private static final Logger LOGGER =
       Logger.getLogger(ConnectorCoordinatorImpl.class.getName());
 
-  /** A default, disabled Schedule. */
-  private static final Schedule DEFAULT_SCHEDULE = new Schedule();
+  /** An empty, disabled Schedule. */
+  private static final Schedule EMPTY_SCHEDULE = new Schedule();
 
   /**
    * Invariant context.
@@ -470,18 +469,17 @@ class ConnectorCoordinatorImpl implements
   }
 
   /**
-   * Returns a traversal {@link Schedule} for the {@link Connector} instance,
-   * or a default, disabled {@link Schedule} if the connector has no schedule.
+   * Returns a traversal {@link Schedule} for the {@link Connector} instance.
    */
   private synchronized Schedule getSchedule() {
     if (traversalSchedule == null) {
       try {
         traversalSchedule = getInstanceInfo().getConnectorSchedule();
         if (traversalSchedule == null) {
-          return DEFAULT_SCHEDULE;
+          return EMPTY_SCHEDULE;
         }
       } catch (ConnectorNotFoundException e) {
-        return DEFAULT_SCHEDULE;
+        return EMPTY_SCHEDULE;
       }
     }
     return traversalSchedule;
@@ -519,8 +517,8 @@ class ConnectorCoordinatorImpl implements
     traversalSchedule = schedule;
 
     // Update the LoadManager with the new load.
-    loadManager.setLoad((schedule == null)
-        ? HostLoadManager.DEFAULT_HOST_LOAD : schedule.getLoad());
+    loadManager.setLoad(
+        (schedule == null) ? EMPTY_SCHEDULE.getLoad() : schedule.getLoad());
 
     // Let the traversal manager know the schedule changed.
     setTraversalSchedule(traversalManager, schedule);

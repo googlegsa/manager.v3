@@ -20,8 +20,6 @@ import java.util.List;
 /**
  * Simple implementation of the {@link DocumentList} interface.
  * Implementors may use this directly or for reference.
- *
- * @since 1.0
  */
 public class SimpleDocumentList implements DocumentList {
   private List<? extends Document> documents;
@@ -40,7 +38,7 @@ public class SimpleDocumentList implements DocumentList {
     this.document = null;
   }
 
-  @Override
+  /* @Override */
   public Document nextDocument() {
     if (iterator == null) {
       iterator = documents.iterator();
@@ -52,7 +50,7 @@ public class SimpleDocumentList implements DocumentList {
     return null;
   }
 
-  @Override
+  /* @Override */
   public String checkpoint() throws RepositoryException {
     if (document == null) {
       return null;
