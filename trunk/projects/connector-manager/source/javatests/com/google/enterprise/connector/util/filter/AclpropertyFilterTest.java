@@ -30,7 +30,7 @@ public class AclpropertyFilterTest extends DocumentFilterTest {
 
     /** Creates a AclPropertyFilter. */
   protected Document createFilter(Document doc,
-      CaseSensitivityType caseSensitivityType) {
+      CaseSensitivityType caseSensitivityType) throws Exception {
     AclPropertyFilter factory = new AclPropertyFilter();
     factory.setCaseSensitivityType(caseSensitivityType.toString());
     return factory.newDocumentFilter(doc);
