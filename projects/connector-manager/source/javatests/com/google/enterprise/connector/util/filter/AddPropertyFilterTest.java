@@ -32,7 +32,7 @@ public class AddPropertyFilterTest extends DocumentFilterTest {
 
   /** Creates a AddPropertyFilter. */
   protected Document createFilter(boolean overwrite,
-      String propertyName, String... values) {
+      String propertyName, String... values) throws Exception {
     AddPropertyFilter factory = new AddPropertyFilter();
     factory.setPropertyName(propertyName);
     factory.setOverwrite(overwrite);

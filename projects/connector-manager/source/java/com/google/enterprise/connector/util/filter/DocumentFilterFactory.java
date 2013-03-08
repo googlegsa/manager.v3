@@ -16,6 +16,7 @@ package com.google.enterprise.connector.util.filter;
 
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.Property;
+import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.SkippedDocumentException;
 
 /**
@@ -41,6 +42,7 @@ public interface DocumentFilterFactory {
    * @param source the input {@link Document} for the filter - must not be
    *        {@code null}
    * @return a document filter
+   * @throws RepositoryException if there was a problem accessing the source
    */
-  public Document newDocumentFilter(Document source);
+  public Document newDocumentFilter(Document source) throws RepositoryException;
 }

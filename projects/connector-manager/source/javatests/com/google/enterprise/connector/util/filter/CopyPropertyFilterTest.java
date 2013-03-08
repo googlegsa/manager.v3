@@ -31,7 +31,7 @@ import junit.framework.TestCase;
 public class CopyPropertyFilterTest extends DocumentFilterTest {
 
   /** Creates a CopyPropertyFilter. */
-  protected Document createFilter() {
+  protected Document createFilter() throws Exception {
     Map<String, String> aliases = new HashMap<String, String>();
     aliases.put(PROP1, "foo");
     aliases.put(PROP3, "bar");
@@ -39,7 +39,7 @@ public class CopyPropertyFilterTest extends DocumentFilterTest {
   }
 
   protected Document createFilter(Map<String, String>aliases,
-                                  boolean overwrite) {
+      boolean overwrite) throws Exception {
     CopyPropertyFilter factory = new CopyPropertyFilter();
     factory.setPropertyNameMap(aliases);
     factory.setOverwrite(overwrite);

@@ -30,14 +30,15 @@ import junit.framework.TestCase;
 public class DeletePropertyFilterTest extends DocumentFilterTest {
 
   /** Creates a DeletePropertyFilter. */
-  protected Document createFilter() {
+  protected Document createFilter() throws Exception {
     HashSet<String> deletes = new HashSet<String>();
     deletes.add(PROP1);
     deletes.add(PROP3);
     return createFilter(deletes);
   }
 
-  protected Document createFilter(Set<String>deletes) {
+  protected Document createFilter(Set<String>deletes)
+    throws Exception {
     DeletePropertyFilter factory = new DeletePropertyFilter();
     factory.setPropertyNames(deletes);
     return factory.newDocumentFilter(createDocument());

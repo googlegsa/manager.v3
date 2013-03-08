@@ -37,7 +37,8 @@ public class BinaryModifyPropertyFilterTest extends ModifyPropertyFilterTest{
   /** Creates a ModifyPropertyFilter. */
   @Override
   protected Document createFilter(
-      Set<String> propNames, String pattern, boolean overwrite) {
+      Set<String> propNames, String pattern, boolean overwrite)
+      throws Exception {
     ModifyPropertyFilter factory = createBasicFilter(propNames, 
         pattern, overwrite);
     return factory.newDocumentFilter(createDocument());
@@ -45,7 +46,8 @@ public class BinaryModifyPropertyFilterTest extends ModifyPropertyFilterTest{
   
   /** Creates a ModifyPropertyFilter. */
   protected Document createNoMatchMimeTypeFilter(
-      Set<String> propNames, String pattern, boolean overwrite) {
+      Set<String> propNames, String pattern, boolean overwrite)
+      throws Exception {
     ModifyPropertyFilter factory = createBasicFilter(propNames, 
         pattern, overwrite);
     factory.setMimeType(NOMATCH_MIMETYPE);
@@ -54,7 +56,8 @@ public class BinaryModifyPropertyFilterTest extends ModifyPropertyFilterTest{
   
   /** Creates a filter to test Docs with No Mimetype. */
   protected Document createFilterForNoMimeTypeDocs(
-      Set<String> propNames, String pattern, boolean overwrite) {
+      Set<String> propNames, String pattern, boolean overwrite)
+      throws Exception {
     ModifyPropertyFilter factory = createBasicFilter(propNames, 
         pattern, overwrite);
     return factory.newDocumentFilter(createDocument(false));
