@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-// http://www.apache.org/licenses/LICENSE-2.0
+//     http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -57,100 +57,39 @@ public class AclDocumentFilter implements DocumentFilterFactory {
     PROPERTIES_TO_REMOVE = Collections.unmodifiableSet(properties);
   }
 
-  private final FeedConnection feedConnection;
-  /**
-   * GSA 7.0 introduced the ability to use the acl tag in feeds and introduced
-   * ACL inheritance. For correctness, this flag must be off if these features
-   * are unsupported. The meaning of ACLs changes depending on if the GSA
-   * supports inheritance, for instance.
-   */
-  /* TODO(jlacey): This probably needs to change if we support DENY on 6.14. */
-  private Boolean useEnhancedAcls;
-
-  public AclDocumentFilter(FeedConnection feedConnection) {
-    this.feedConnection = feedConnection;
-  }
-
-  /* @Override */
-  public Document newDocumentFilter(Document source) {
-    if (getUseEnhancedAcls()) {
-      return source;
+  @Override
+  public Document newDocumentFilter(Document source)
+      throws RepositoryException {
+    if (isAclDocument(source)) {
+      // Throw-away ACL-only documents if the GSA can't handle them. These
+      // documents should only be used with ACL inheritance, and since we
+      // fallback to non-ACL solutions when ACL inheritance is in place,
+      // things should "just work," even though we are throwing away
+      // information here.
+      return new SkipDocument(source);
+    } else if (requiresDumbingDown(source)) {
+      return new NoAclsDocument(source);
     } else {
-      // It may be necessary to modify properties. Wrap it now and determine
-      // later what actions (if any) are necessary. We can't determine now what
-      // needs to be done because we can't throw a RepositoryException.
-      return new LazyDocumentFilter(source);
+      return source;
     }
   }
 
-  private boolean getUseEnhancedAcls() {
-    if (useEnhancedAcls != null) {
-      return useEnhancedAcls;
-    }
-
-    this.useEnhancedAcls = feedConnection.supportsInheritedAcls();
-    return useEnhancedAcls;
+  private boolean isAclDocument(Document source) throws RepositoryException {
+    String docType = DocUtils.getOptionalString(source,
+        SpiConstants.PROPNAME_DOCUMENTTYPE);
+    return docType != null
+        && DocumentType.findDocumentType(docType) == DocumentType.ACL;
   }
 
-  /**
-   * Lazily load real document filter. This is only necessary because
-   * newDocumentFilter() can't throw RepositoryException.
-   */
-  private static class LazyDocumentFilter implements Document {
-    private final Document source;
-    private Document documentFilter;
-
-    public LazyDocumentFilter(Document source) {
-      this.source = source;
-    }
-
-    /* @Override */
-    public Property findProperty(String name) throws RepositoryException {
-      return getDocumentFilter().findProperty(name);
-    }
-
-    /* @Override */
-    public Set<String> getPropertyNames() throws RepositoryException {
-      return getDocumentFilter().getPropertyNames();
-    }
-
-    private Document getDocumentFilter() throws RepositoryException {
-      if (documentFilter != null) {
-        return documentFilter;
+  private boolean requiresDumbingDown(Document source)
+      throws RepositoryException {
+    Set<String> propertyNames = source.getPropertyNames();
+    for (String unsupported : PROPERTIES_UNSUPPORTED) {
+      if (propertyNames.contains(unsupported)) {
+        return true;
       }
-
-      if (isAclDocument(source)) {
-        // Throw-away ACL-only documents if the GSA can't handle them. These
-        // documents should only be used with ACL inheritance, and since we
-        // fallback to non-ACL solutions when ACL inheritance is in place,
-        // things should "just work," even though we are throwing away
-        // information here.
-        documentFilter = new SkipDocument(source);
-      } else if (requiresDumbingDown(source)) {
-        documentFilter = new NoAclsDocument(source);
-      } else {
-        documentFilter = source;
-      }
-      return documentFilter;
     }
-
-    private boolean isAclDocument(Document source) throws RepositoryException {
-      String docType = DocUtils.getOptionalString(source,
-          SpiConstants.PROPNAME_DOCUMENTTYPE);
-      return docType != null
-          && DocumentType.findDocumentType(docType) == DocumentType.ACL;
-    }
-
-    private boolean requiresDumbingDown(Document source)
-        throws RepositoryException {
-      Set<String> propertyNames = source.getPropertyNames();
-      for (String unsupported : PROPERTIES_UNSUPPORTED) {
-        if (propertyNames.contains(unsupported)) {
-          return true;
-        }
-      }
-      return false;
-    }
+    return false;
   }
 
   /**

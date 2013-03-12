@@ -98,8 +98,9 @@ public class DocPusherTest extends TestCase {
     fsli.setMaxFeedSize(1024 * 1024);
     fsli.setMaxDocumentSize(1024 * 1024);
 
-    // Set up an empty filter document chain.
-    dfc = new DocumentFilterChain();
+    // Set up the default internal document filter chain.
+    dfc = new DocumentFilterChain(Collections.singletonList(
+        new AclTransformFilter(new MockFeedConnection())));
 
     // A distinct contentUrlPrefix.
     contentUrlPrefix = "http://contentUrlPrefix";
@@ -3139,8 +3140,6 @@ public class DocPusherTest extends TestCase {
     props.put(SpiConstants.PROPNAME_FEEDTYPE,
         SpiConstants.FeedType.CONTENT.toString());
     Document document = ConnectorTestUtils.createSimpleDocument(props);
-    dfc = new DocumentFilterChain(Collections.singletonList(
-        new AclDocumentFilter(new MockFeedConnection())));
     String resultXML = feedDocument(document);
     assertStringContains("parent-doc", resultXML);
     assertStringNotContains("httpbasic", resultXML);
@@ -3152,7 +3151,7 @@ public class DocPusherTest extends TestCase {
         SpiConstants.FeedType.CONTENT.toString());
     Document document = ConnectorTestUtils.createSimpleDocument(props);
     dfc = new DocumentFilterChain(Collections.singletonList(
-        new AclDocumentFilter(aclsUnsupportedFeedConnection)));
+        new AclTransformFilter(aclsUnsupportedFeedConnection)));
     String resultXML = feedDocument(document);
     assertStringNotContains("httpbasic", resultXML);
   }
@@ -3165,7 +3164,7 @@ public class DocPusherTest extends TestCase {
         SpiConstants.FeedType.CONTENT.toString());
     Document document = ConnectorTestUtils.createSimpleDocument(props);
     dfc = new DocumentFilterChain(Collections.singletonList(
-        new AclDocumentFilter(aclsUnsupportedFeedConnection)));
+        new AclTransformFilter(aclsUnsupportedFeedConnection)));
     String resultXML = feedDocument(document);
     assertStringNotContains("parent-doc", resultXML);
     assertStringContains("httpbasic", resultXML);
@@ -3181,7 +3180,7 @@ public class DocPusherTest extends TestCase {
         SpiConstants.DocumentType.ACL.toString());
     Document document = ConnectorTestUtils.createSimpleDocument(props);
     dfc = new DocumentFilterChain(Collections.singletonList(
-        new AclDocumentFilter(aclsUnsupportedFeedConnection)));
+        new AclTransformFilter(aclsUnsupportedFeedConnection)));
     try {
       feedDocument(document);
       fail("Excepted SkippedDocumentException");

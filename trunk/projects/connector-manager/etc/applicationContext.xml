@@ -416,7 +416,7 @@
         <ref bean="DocumentFilters"/>
         <!-- These filters are required for correctness, so we apply them last.
         -->
-        <bean class="com.google.enterprise.connector.pusher.AclDocumentFilter">
+        <bean class="com.google.enterprise.connector.pusher.AclTransformFilter">
           <constructor-arg index="0" ref="FeedConnection"/>
         </bean>
       </list>

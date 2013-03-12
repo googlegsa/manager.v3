@@ -786,20 +786,13 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
           wrapOneProperty(buf, SpiConstants.PROPNAME_ACLINHERITFROM, property);
           continue;
         }
-        if (propertySkipSet.contains(name) ||
-            name.startsWith(SpiConstants.USER_ROLES_PROPNAME_PREFIX) ||
-            name.startsWith(SpiConstants.GROUP_ROLES_PROPNAME_PREFIX)) {
+        if (propertySkipSet.contains(name)) {
           if (LOGGER.isLoggable(Level.FINEST)) {
             logOneProperty(document, name);
           }
           continue;
         }
-        if (SpiConstants.PROPNAME_ACLGROUPS.equals(name) ||
-            SpiConstants.PROPNAME_ACLUSERS.equals(name)) {
-          property = DocUtils.processAclProperty(document, name);
-        } else {
-          property = document.findProperty(name);
-        }
+        property = document.findProperty(name);
         if (property != null) {
           wrapOneProperty(buf, name, property);
         }
