@@ -158,8 +158,11 @@ public class SkipDocumentFilter extends AbstractDocumentFilter {
       // Look for a pattern match in any of the property values.
       Value value = property.nextValue();
       if (value != null) {
-        // TODO: pattern.matches() or pattern.find()??
-        if (pattern.matcher(value.toString()).find() ^ !skipOnMatch) {
+        // Use matcher.matches() or matcher.find()?  I choose the latter
+        // because you can get the behaviour of the former using \A and \Z
+        // in the pattern.
+        if (pattern.matcher(Strings.nullToEmpty(value.toString())).find()
+            ^ !skipOnMatch) {
           throw new SkippedDocumentException("Skipping document based upon "
               + "property " + propertyName + " value: " + value.toString());
         }
