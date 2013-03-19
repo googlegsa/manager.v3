@@ -15,6 +15,7 @@
 package com.google.enterprise.connector.util.filter;
 
 import com.google.enterprise.connector.spi.Document;
+import com.google.enterprise.connector.spi.SimpleDocument;
 import com.google.enterprise.connector.spi.Value;
 
 import java.util.Collections;
@@ -236,6 +237,20 @@ public class ModifyPropertyFilterTest extends DocumentFilterTest {
         valueList(CLEAN_STRING.replaceAll("quick", "very quick"),
                   EXTRA_STRING.replaceAll("lazy", "very lazy")));
     checkDocument(filter, expectedProps);
+  }
+
+  /** Test that the null values will match an empty pattern. */
+  public void testNullValue() throws Exception {
+    ModifyPropertyFilter factory = new ModifyPropertyFilter();
+    factory.setPropertyName(PROP2);
+    factory.setPattern("\\A\\Z");
+    factory.setReplacement(CLEAN_STRING);
+    factory.setOverwrite(true);
+    // Nuke the property, the filter should restore it.
+    Map<String, List<Value>> props = createProperties();
+    props.put(PROP2, valueList((String) null));
+    Document filter = factory.newDocumentFilter(new SimpleDocument(props));
+    checkDocument(filter, createProperties());
   }
 
   /** Test toString(). */

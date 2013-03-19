@@ -81,7 +81,11 @@ public class BinaryModifyPropertyFilterTest extends ModifyPropertyFilterTest{
   protected List<Value> valueList(String... values) {
     LinkedList<Value> list = new LinkedList<Value>();
     for (String value : values) {
-      list.add(Value.getBinaryValue(value.getBytes()));
+      if (value == null) {
+        list.add(Value.getBinaryValue(new byte[0]));
+      } else {
+        list.add(Value.getBinaryValue(value.getBytes()));
+      }
     }
     return list;
   }
