@@ -15,6 +15,7 @@
 package com.google.enterprise.connector.pusher;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.RepositoryException;
@@ -42,9 +43,21 @@ public class AclTransformFilter implements DocumentFilterFactory {
    */
   /* TODO(jlacey): This probably needs to change if we support DENY on 6.14. */
   private final FeedConnection feedConnection;
+  
+  private final UrlConstructor urlConstructor;
+  private final AclInheritFromDocidFilter aclInheritFromDocidFilter;
+  private final AclDocumentFilter aclDocumentFilter;
+  private final AclUserGroupRolesFilter aclUserGroupRolesFilter;
 
-  public AclTransformFilter(FeedConnection feedConnection) {
+  public AclTransformFilter(FeedConnection feedConnection,
+                            UrlConstructor urlConstructor) {
     this.feedConnection = feedConnection;
+    this.urlConstructor = urlConstructor;
+
+    // Construct the DocumentFilterFactories.
+    aclInheritFromDocidFilter = new AclInheritFromDocidFilter(urlConstructor);
+    aclDocumentFilter = new AclDocumentFilter();
+    aclUserGroupRolesFilter = new AclUserGroupRolesFilter();
   }
 
   /**
@@ -60,16 +73,26 @@ public class AclTransformFilter implements DocumentFilterFactory {
     Preconditions.checkNotNull(source);
     Document filter = source;
 
-    // If GSA doesn't support inherited ACLs, strip them out.
-    if (!feedConnection.supportsInheritedAcls()) {
-      filter = new AclDocumentFilter().newDocumentFilter(filter);
+    if (feedConnection.supportsInheritedAcls()) {
+      // If connector supplies ACLINHERITFROM_DOCID instead of ACLINHERITFROM
+      // property, add a filter that builds an ACLINHERTITFROM property from
+      // ACLINHERITFROM_DOCID and ACLINHERITFROM_FEEDTYPE.
+      if (Strings.isNullOrEmpty(DocUtils.getOptionalString(source,
+          SpiConstants.PROPNAME_ACLINHERITFROM))
+          && !Strings.isNullOrEmpty(DocUtils.getOptionalString(source,
+          SpiConstants.PROPNAME_ACLINHERITFROM_DOCID))) {
+        filter = aclInheritFromDocidFilter.newDocumentFilter(filter);
+      }
+    } else {
+      // If GSA doesn't support inherited ACLs, strip them out.
+      filter = aclDocumentFilter.newDocumentFilter(filter);
     }
 
     // If the connector supplies old style user and group roles, transform them.
     for (String name : source.getPropertyNames()) {
       if (name.startsWith(SpiConstants.GROUP_ROLES_PROPNAME_PREFIX) ||
           name.startsWith(SpiConstants.USER_ROLES_PROPNAME_PREFIX)) {
-        filter = new AclUserGroupRolesFilter().newDocumentFilter(filter);
+        filter = aclUserGroupRolesFilter.newDocumentFilter(filter);
         break;
       }
     }

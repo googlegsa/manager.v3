@@ -64,6 +64,11 @@ import java.util.logging.Logger;
  * Also the interface used for event publishing.  Wraps the event publishing
  * functionality of the established context.
  */
+// TODO (jlacey): Context and ConnectorCoordinatorImpl are dangerously close
+// to encountering deadlock issues, calling each other from synchronized 
+// methods.  The most likely scenerio for deadlock would probably be when
+// registering the CM with a new GSA.  Be wary when adding addition
+// synchronization to these classes.
 public class Context {
   public static final String GSA_FEED_PROTOCOL_PROPERTY_KEY =
       "gsa.feed.protocol";
@@ -384,6 +389,15 @@ public class Context {
   private boolean isGsaFeedHostInitialized = false;
   private String gsaFeedHost = null;
 
+  /**
+   * The prefix that will be used for contentUrl generation.
+   * The prefix should include protocol, host and port, web app,
+   * and servlet to point back at this Connector Manager instance.
+   * For example:
+   * {@code http://localhost:8080/connector-manager/getDocumentContent}
+   */
+  private String contentUrlPrefix = null;
+
   private int propertiesVersion = 0;
 
   /**
@@ -513,7 +527,7 @@ public class Context {
    * Choose a default context, if it wasn't specified in any other way. For now,
    * we choose servlet context by default.
    */
-  private void initApplicationContext() {
+  private synchronized void initApplicationContext() {
     if (applicationContext == null) {
       if (initFailureCause != null) {
         throw new IllegalStateException("Connector Manager Startup failed",
@@ -943,7 +957,7 @@ public class Context {
    * @return the configuration Properties for the Connector Manager.
    * @throws PropertiesException if error loading properties
    */
-  public Properties loadConnectorManagerProperties()
+  public synchronized Properties loadConnectorManagerProperties()
       throws PropertiesException {
     initApplicationContext();
     String propFileName = "";
@@ -966,7 +980,7 @@ public class Context {
    * @param props  the configuration Properties to store
    * @throws PropertiesException if error storing properties
    */
-  public void storeConnectorManagerProperties(Properties props)
+  public synchronized void storeConnectorManagerProperties(Properties props)
       throws PropertiesException {
     String propFileName = "";
     try {
@@ -1003,7 +1017,7 @@ public class Context {
     return result;
   }
 
-  public void setConnectorManagerConfig(String feederGateProtocol,
+  public synchronized void setConnectorManagerConfig(String feederGateProtocol,
       String feederGateHost, int feederGatePort, int feederGateSecurePort,
       String connectorManagerUrl) throws InstantiatorException {
     initApplicationContext();
@@ -1077,8 +1091,10 @@ public class Context {
     }
 
     if (!Strings.isNullOrEmpty(connectorManagerUrl)) {
-      props.put(FEED_CONTENTURL_PREFIX_PROPERTY_KEY,
-                connectorManagerUrl + FEED_CONTENTURL_SERVLET);
+      contentUrlPrefix = connectorManagerUrl + FEED_CONTENTURL_SERVLET;
+      props.put(FEED_CONTENTURL_PREFIX_PROPERTY_KEY, contentUrlPrefix);
+    } else {
+      contentUrlPrefix = null;
     }
 
     // Lock down the manager at this point.
@@ -1128,16 +1144,6 @@ public class Context {
       }
     }
 
-    // Notify DocPusherFactory of new contentUrlPrefix.
-    if (!Strings.isNullOrEmpty(connectorManagerUrl)) {
-      DocPusherFactory pusherFactory =
-          (DocPusherFactory) getBean("PusherFactory", DocPusherFactory.class);
-      if (pusherFactory != null) {
-        pusherFactory.setContentUrlPrefix(
-            props.getProperty(FEED_CONTENTURL_PREFIX_PROPERTY_KEY));
-      }
-    }
-
     // Notify GData aware Connectors.
     if (instantiator != null) {
       instantiator.setGDataConfig();
@@ -1153,7 +1159,7 @@ public class Context {
    * If the <code>gsa.admin.requiresPrefix</code> property is not defined, the
    * default value is <code>false</code>.
    */
-  public boolean gsaAdminRequiresPrefix() {
+  public synchronized boolean gsaAdminRequiresPrefix() {
     initApplicationContext();
     if (gsaAdminRequiresPrefix == null) {
         String prop = getProperty(
@@ -1169,7 +1175,7 @@ public class Context {
    * See google-enterprise-connector-manager/projects/connector-manager/etc/applicationContext.properties
    * for additional documentation.
    */
-  public String getTeedFeedFile() {
+  public synchronized String getTeedFeedFile() {
     initApplicationContext();
     if (!isTeedFeedFileInitialized) {
       teedFeedFile = getProperty(TEED_FEED_FILE_PROPERTY_KEY, null);
@@ -1183,7 +1189,7 @@ public class Context {
    * See google-enterprise-connector-manager/projects/connector-manager/etc/applicationContext.properties
    * for additional documentation.
    */
-  public String getGsaFeedHost() {
+  public synchronized String getGsaFeedHost() {
     initApplicationContext();
     if (!isGsaFeedHostInitialized) {
       gsaFeedHost = getProperty(GSA_FEED_HOST_PROPERTY_KEY, null);
@@ -1193,13 +1199,32 @@ public class Context {
   }
 
   /**
+   * Reads <code>feed.contenturl.prefix</code> from the application context
+   * properties file.
+   * See google-enterprise-connector-manager/projects/connector-manager/etc/applicationContext.properties
+   * for additional documentation.
+   */
+  public synchronized String getContentUrlPrefix() {
+    initApplicationContext();
+    if (contentUrlPrefix == null) {
+      contentUrlPrefix = getProperty(FEED_CONTENTURL_PREFIX_PROPERTY_KEY, null);
+    }
+    return contentUrlPrefix;
+  }
+
+  @VisibleForTesting
+  public synchronized void setContentUrlPrefix(String contentUrlPrefix) {
+    this.contentUrlPrefix = contentUrlPrefix;
+  }
+
+  /**
    * Reads <code>manager.locked</code> property from the application context
    * properties file.
    *
    * @return true if the property does not exist.  Returns true if the property
    *         is set to 'true', ignoring case.  Returns false otherwise.
    */
-  public boolean getIsManagerLocked() {
+  public synchronized boolean getIsManagerLocked() {
     initApplicationContext();
     String isManagerLocked = getProperty(MANAGER_LOCKED_PROPERTY_KEY, null);
     if (isManagerLocked != null) {

@@ -85,15 +85,6 @@ public class DocPusher implements Pusher {
   private final DocumentFilterFactory documentFilterFactory;
 
   /**
-   * The prefix that will be used for contentUrl generation.
-   * The prefix should include protocol, host and port, web app,
-   * and servlet to point back at this Connector Manager instance.
-   * For example:
-   * {@code http://localhost:8080/connector-manager/getDocumentContent}
-   */
-  private final String contentUrlPrefix;
-
-  /**
    * The Connector name that is the dataSource for this Feed.
    */
   private final String connectorName;
@@ -143,18 +134,14 @@ public class DocPusher implements Pusher {
    *        and feed size.
    * @param documentFilterFactory a {@link DocumentFilterFactory} that creates
    *        document processing filters.
-   * @param contentUrlPrefix the prefix that will be used for Feed contentUrl
-   *        generation.
    */
   public DocPusher(FeedConnection feedConnection, String connectorName,
                    FileSizeLimitInfo fileSizeLimitInfo,
-                   DocumentFilterFactory documentFilterFactory,
-                   String contentUrlPrefix) {
+                   DocumentFilterFactory documentFilterFactory) {
     this.feedConnection = feedConnection;
     this.connectorName = connectorName;
     this.fileSizeLimit = fileSizeLimitInfo;
     this.documentFilterFactory = documentFilterFactory;
-    this.contentUrlPrefix = contentUrlPrefix;
 
     // Initialize background feed submission.
     this.submissions = new LinkedList<FutureTask<String>>();
@@ -453,7 +440,7 @@ public class DocPusher implements Pusher {
       try {
         // Allocate XmlFeed of the target size.
         xmlFeed = new XmlFeed(connectorName, feedType, fileSizeLimit, feedLog,
-            contentUrlPrefix, feedConnection);
+            feedConnection);
       } catch (OutOfMemoryError me) {
         // We shouldn't even have gotten this far under a low memory condition.
         // However, try to allocate a tiny feed buffer.  It should fill up on
@@ -467,7 +454,7 @@ public class DocPusher implements Pusher {
         newLimit.setMaxDocumentSize(fileSizeLimit.maxDocumentSize());
         try {
           xmlFeed = new XmlFeed(connectorName, feedType, newLimit, feedLog,
-              contentUrlPrefix, feedConnection);
+              feedConnection);
         } catch (OutOfMemoryError oome) {
           throw new OutOfMemoryError(
                "Unable to allocate feed buffer for connector " + connectorName);

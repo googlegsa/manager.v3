@@ -54,14 +54,6 @@ import java.util.Set;
  * <pre>
  *   google:aclgroups=[sales=reader, support=reader, support=writer, eng=owner]
  * </pre>
- *
- * @param document the document being processed.
- * @param aclPropName the name of the property being processed.  Should be one
- *        of {@link SpiConstants#PROPNAME_ACLGROUPS} or
- *        {@link SpiConstants#PROPNAME_ACLUSERS}.
- * @return either the original property if no conversion was necessary or a
- *         new converted property containing ACL Entries.
- * @throws RepositoryException if there was a problem extracting properties.
  */
 public class AclUserGroupRolesFilter extends AbstractDocumentFilter {
 
@@ -92,6 +84,15 @@ public class AclUserGroupRolesFilter extends AbstractDocumentFilter {
     }
   }
 
+  /**
+   * @param document the document being processed.
+   * @param aclPropName the name of the property being processed. Should be one
+   *        of {@link SpiConstants#PROPNAME_ACLGROUPS} or
+   *        {@link SpiConstants#PROPNAME_ACLUSERS}.
+   * @return either the original property if no conversion was necessary or a
+   *         new converted property containing ACL Entries.
+   * @throws RepositoryException if there was a problem extracting properties.
+   */
   private static Property processAclProperty(Document document,
       String aclPropName, String aclRolePrefix) throws RepositoryException {
     LinkedList<Value> acl = new LinkedList<Value>();

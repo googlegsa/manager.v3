@@ -32,6 +32,7 @@ import com.google.enterprise.connector.spi.SecureDocument;
 import com.google.enterprise.connector.spi.SkippedDocumentException;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.SpiConstants.ContentEncoding;
+import com.google.enterprise.connector.spi.SpiConstants.FeedType;
 import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
@@ -79,14 +80,8 @@ import javax.jcr.query.QueryManager;
 public class DocPusherTest extends TestCase {
   private FileSizeLimitInfo fsli;
   private DocumentFilterChain dfc;
+  private String dataSource;
   private String contentUrlPrefix;
-
-  private FeedConnection aclsUnsupportedFeedConnection
-      = new MockFeedConnection() {
-    public boolean supportsInheritedAcls() {
-      return false;
-    }
-  };
 
   @Override
   protected void setUp() throws Exception {
@@ -98,12 +93,13 @@ public class DocPusherTest extends TestCase {
     fsli.setMaxFeedSize(1024 * 1024);
     fsli.setMaxDocumentSize(1024 * 1024);
 
-    // Set up the default internal document filter chain.
-    dfc = new DocumentFilterChain(Collections.singletonList(
-        new AclTransformFilter(new MockFeedConnection())));
+    dataSource = "junit";
+
+    // Set up an empty filter document chain.
+    dfc = new DocumentFilterChain();
 
     // A distinct contentUrlPrefix.
-    contentUrlPrefix = "http://contentUrlPrefix";
+    setContentUrlPrefix("http://contentUrlPrefix");
 
     // We're comparing date strings here, so we need a fixed time zone.
     Value.setFeedTimeZone("GMT");
@@ -116,6 +112,11 @@ public class DocPusherTest extends TestCase {
   public void tearDown() {
     // Reset the default time zone.
     Value.setFeedTimeZone("");
+  }
+
+  private void setContentUrlPrefix(String contentUrlPrefix) {
+    this.contentUrlPrefix = contentUrlPrefix;
+    Context.getInstance().setContentUrlPrefix(contentUrlPrefix);
   }
 
   /**
@@ -163,7 +164,7 @@ public class DocPusherTest extends TestCase {
 
     MockFeedConnection feedConnection = new MockFeedConnection();
     DocPusher dpusher =
-        new DocPusher(feedConnection, "junit", fsli, dfc, null);
+        new DocPusher(feedConnection, dataSource, fsli, dfc);
     dpusher.take(document, null);
     dpusher.flush();
     assertEquals(expectedXml, feedConnection.getFeed());
@@ -445,7 +446,7 @@ public class DocPusherTest extends TestCase {
       }
     };
 
-    DocPusher dpusher = new DocPusher(feedConnection, "junit", fsli, dfc, null);
+    DocPusher dpusher = new DocPusher(feedConnection, dataSource, fsli, dfc);
     DocumentList documentList = qtm.startTraversal();
 
     Document document = null;
@@ -520,7 +521,7 @@ public class DocPusherTest extends TestCase {
       System.out.println("Test " + i + " output");
       assertFalse(i == expectedXml.length);
       DocPusher dpusher =
-          new DocPusher(feedConnection, "junit", fsli, dfc, null);
+          new DocPusher(feedConnection, dataSource, fsli, dfc);
       assertEquals(PusherStatus.OK, dpusher.take(document, null));
       dpusher.flush();
       System.out.println("Test " + i + " assertions");
@@ -1002,7 +1003,7 @@ public class DocPusherTest extends TestCase {
     assertStringNotContains("<content encoding=\"base64binary\">", resultXML);
 
     // Test unset contentUrlPrefix.
-    contentUrlPrefix = null;
+    setContentUrlPrefix(null);
     try {
       resultXML = feedJsonEvent(json1);
       fail("Expected RepositoryDocumentException");
@@ -1012,7 +1013,7 @@ public class DocPusherTest extends TestCase {
     }
 
     // Test empty contentUrlPrefix.
-    contentUrlPrefix = "";
+    setContentUrlPrefix("");
     try {
       resultXML = feedJsonEvent(json1);
       fail("Expected RepositoryDocumentException");
@@ -1550,7 +1551,7 @@ public class DocPusherTest extends TestCase {
     };
 
     DocPusher dpusher =
-        new DocPusher(mockFeedConnection, "junit", fsli, dff, contentUrlPrefix);
+        new DocPusher(mockFeedConnection, dataSource, fsli, dff);
     assertEquals(PusherStatus.OK, dpusher.take(document, null));
     dpusher.flush();
     return mockFeedConnection.getFeed();
@@ -1578,7 +1579,7 @@ public class DocPusherTest extends TestCase {
     };
 
     DocPusher dpusher =
-        new DocPusher(mockFeedConnection, "junit", fsli, dff, contentUrlPrefix);
+        new DocPusher(mockFeedConnection, dataSource, fsli, dff);
     assertEquals(PusherStatus.OK, dpusher.take(document, null));
     dpusher.flush();
     return mockFeedConnection.getFeed();
@@ -1612,7 +1613,7 @@ public class DocPusherTest extends TestCase {
       // Setup the DocPusher.
       MockFeedConnection mockFeedConnection = new MockFeedConnection();
       DocPusher dpusher =
-          new DocPusher(mockFeedConnection, "junit", fsli, dfc, null);
+          new DocPusher(mockFeedConnection, dataSource, fsli, dfc);
       assertEquals(PusherStatus.OK, dpusher.take(document, null));
       dpusher.flush();
       String resultXML = mockFeedConnection.getFeed();
@@ -1786,14 +1787,14 @@ public class DocPusherTest extends TestCase {
       // Create DocPusher and send feed.
       MockFeedConnection mockFeedConnection = new MockFeedConnection();
       DocPusher dpusher =
-          new DocPusher(mockFeedConnection, "junit", fsli, dfc, null);
+          new DocPusher(mockFeedConnection, dataSource, fsli, dfc);
       assertEquals(PusherStatus.OK, dpusher.take(document, null));
       dpusher.flush();
       String resultXML = mockFeedConnection.getFeed();
       assertFeedTeed(resultXML, tffName);
 
       // Now send the feed again and compare with existing teed feed file.
-      dpusher = new DocPusher(mockFeedConnection, "junit", fsli, dfc, null);
+      dpusher = new DocPusher(mockFeedConnection, dataSource, fsli, dfc);
       assertEquals(PusherStatus.OK, dpusher.take(document, null));
       dpusher.flush();
       String secondResultXML = mockFeedConnection.getFeed();
@@ -2661,7 +2662,7 @@ public class DocPusherTest extends TestCase {
     limit.setMaxDocumentSize(1024 * 1024); // 1 MB
     limit.setMaxFeedSize(64 * 1024); // 64 KB
     DocPusher dpusher =
-        new DocPusher(mockFeedConnection, "junit", limit, dfc, null);
+        new DocPusher(mockFeedConnection, dataSource, limit, dfc);
     assertEquals(PusherStatus.OK, dpusher.take(document, null));
     dpusher.flush();
     return mockFeedConnection.getFeed();
@@ -2787,7 +2788,7 @@ public class DocPusherTest extends TestCase {
     try {
       FeedConnection badFeedConnection = new BadFeedConnection1();
       DocPusher dpusher =
-          new DocPusher(badFeedConnection, "junit", fsli, dfc, null);
+          new DocPusher(badFeedConnection, dataSource, fsli, dfc);
       dpusher.take(document, null);
       dpusher.flush();
       fail("Expected FeedException, but got none.");
@@ -2807,7 +2808,7 @@ public class DocPusherTest extends TestCase {
     try {
       FeedConnection badFeedConnection = new BadFeedConnection2();
       DocPusher dpusher =
-          new DocPusher(badFeedConnection, "junit", fsli, dfc, null);
+          new DocPusher(badFeedConnection, dataSource, fsli, dfc);
       dpusher.take(document, null);
       dpusher.flush();
       fail("Expected PushException, but got none.");
@@ -2834,7 +2835,7 @@ public class DocPusherTest extends TestCase {
     // to back up on this end of the connection.
     SlowFeedConnection slowFeedConnection = new SlowFeedConnection();
     DocPusher dpusher =
-        new DocPusher(slowFeedConnection, "junit", limit, dfc, null);
+        new DocPusher(slowFeedConnection, dataSource, limit, dfc);
     int count;
     PusherStatus status = PusherStatus.OK;
     for (count = 0; count < 30; count++) {
@@ -2863,7 +2864,7 @@ public class DocPusherTest extends TestCase {
     limit.setMaxDocumentSize(64 * 1024);
 
     DocPusher dpusher =
-        new DocPusher(backlogFeedConnection, "junit", limit, dfc, null);
+        new DocPusher(backlogFeedConnection, dataSource, limit, dfc);
     assertEquals(PusherStatus.OK, dpusher.take(document, null));
     backlogFeedConnection.setBacklogged(true);
     assertEquals(PusherStatus.GSA_FEED_BACKLOG, dpusher.take(document, null));
@@ -2888,7 +2889,7 @@ public class DocPusherTest extends TestCase {
     // If plenty of memory is available, DocPusher should indicate it is
     // OK to feed more (return true).
     DocPusher dpusher =
-        new DocPusher(feedConnection, "junit", limit, dfc, null);
+        new DocPusher(feedConnection, dataSource, limit, dfc);
     assertEquals(PusherStatus.OK, dpusher.take(document, null));
     dpusher.flush();
   }
@@ -2911,7 +2912,7 @@ public class DocPusherTest extends TestCase {
     limit.setMaxFeedSize(memAvailable/3);
 
     DocPusher dpusher =
-        new DocPusher(feedConnection, "junit", limit, dfc, null);
+        new DocPusher(feedConnection, dataSource, limit, dfc);
     Map<String, Object> config = getTestDocumentConfig();
     config.put(SpiConstants.PROPNAME_CONTENT,
                new HugeInputStream(limit.maxDocumentSize() - 10));
@@ -2989,14 +2990,13 @@ public class DocPusherTest extends TestCase {
     fileSizeLimit.setMaxFeedSize(32);
     fileSizeLimit.setMaxDocumentSize(1024 * 1024);
 
-    DocPusher dpusher = new DocPusher(feedConnection, "junit",
-        fileSizeLimit, dfc, contentUrlPrefix);
+    DocPusher dpusher =
+        new DocPusher(feedConnection, dataSource, fileSizeLimit, dfc);
 
     String parentId = "parent-doc";
     Map<String, Object> props = getTestAclDocumentConfig();
     props.put(SpiConstants.PROPNAME_FEEDTYPE,
               SpiConstants.FeedType.CONTENT.toString());
-    props.put(SpiConstants.PROPNAME_ACLINHERITFROM_DOCID, parentId);
     String parentUrl = ServletUtil.PROTOCOL + "junit.localhost"
         + ServletUtil.DOCID + parentId;
 
@@ -3140,7 +3140,7 @@ public class DocPusherTest extends TestCase {
     props.put(SpiConstants.PROPNAME_FEEDTYPE,
         SpiConstants.FeedType.CONTENT.toString());
     Document document = ConnectorTestUtils.createSimpleDocument(props);
-    String resultXML = feedDocument(document);
+    String resultXML = feedDocument(document, true);
     assertStringContains("parent-doc", resultXML);
     assertStringNotContains("httpbasic", resultXML);
   }
@@ -3150,9 +3150,7 @@ public class DocPusherTest extends TestCase {
     props.put(SpiConstants.PROPNAME_FEEDTYPE,
         SpiConstants.FeedType.CONTENT.toString());
     Document document = ConnectorTestUtils.createSimpleDocument(props);
-    dfc = new DocumentFilterChain(Collections.singletonList(
-        new AclTransformFilter(aclsUnsupportedFeedConnection)));
-    String resultXML = feedDocument(document);
+    String resultXML = feedDocument(document, false);
     assertStringNotContains("httpbasic", resultXML);
   }
 
@@ -3163,9 +3161,7 @@ public class DocPusherTest extends TestCase {
     props.put(SpiConstants.PROPNAME_FEEDTYPE,
         SpiConstants.FeedType.CONTENT.toString());
     Document document = ConnectorTestUtils.createSimpleDocument(props);
-    dfc = new DocumentFilterChain(Collections.singletonList(
-        new AclTransformFilter(aclsUnsupportedFeedConnection)));
-    String resultXML = feedDocument(document);
+    String resultXML = feedDocument(document, false);
     assertStringNotContains("parent-doc", resultXML);
     assertStringContains("httpbasic", resultXML);
   }
@@ -3179,10 +3175,8 @@ public class DocPusherTest extends TestCase {
     props.put(SpiConstants.PROPNAME_DOCUMENTTYPE,
         SpiConstants.DocumentType.ACL.toString());
     Document document = ConnectorTestUtils.createSimpleDocument(props);
-    dfc = new DocumentFilterChain(Collections.singletonList(
-        new AclTransformFilter(aclsUnsupportedFeedConnection)));
     try {
-      feedDocument(document);
+      feedDocument(document, false);
       fail("Excepted SkippedDocumentException");
     } catch (SkippedDocumentException ex) {
     }

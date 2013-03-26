@@ -43,15 +43,6 @@ public class DocPusherFactory implements PusherFactory {
   private final FileSizeLimitInfo fileSizeLimit;
 
   /**
-   * The prefix that will be used for contentUrl generation.
-   * The prefix should include protocol, host and port, web app,
-   * and servlet to point back at this Connector Manager instance.
-   * For example:
-   * {@code http://localhost:8080/connector-manager/getDocumentContent}
-   */
-  private String contentUrlPrefix = null;
-
-  /**
    * The {@link DocumentFilterFactoryFactory} is used to construct
    * {@code Document} instances that act as filters on a source
    * document.  Document filters may add, remove, or modify
@@ -97,29 +88,9 @@ public class DocPusherFactory implements PusherFactory {
     LOGGER.config(documentFilterFactoryFactory.toString());
   }
 
-  /**
-   * Sets the contentUrlPrefix that will be used for Feed contentUrl
-   * generation. The prefix should include protocol, host and port,
-   * web app, and servlet to point back at this Connector Manager instance.
-   * For example:
-   *    {@code http://localhost:8080/connector-manager/getDocumentContent}
-   *
-   * @param contentUrlPrefix the content url prefix
-   */
-  public synchronized void setContentUrlPrefix(String contentUrlPrefix) {
-    this.contentUrlPrefix = contentUrlPrefix;
-    LOGGER.config("ContentURL prefix: " + contentUrlPrefix);
-  }
-
-  @VisibleForTesting
-  public synchronized String getContentUrlPrefix() {
-    return contentUrlPrefix;
-  }
-
   @Override
   public Pusher newPusher(String dataSource) {
     return new DocPusher(feedConnection, dataSource, fileSizeLimit,
-        documentFilterFactoryFactory.getDocumentFilterFactory(dataSource),
-        getContentUrlPrefix());
+        documentFilterFactoryFactory.getDocumentFilterFactory(dataSource));
   }
 }

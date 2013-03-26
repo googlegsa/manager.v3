@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-// http://www.apache.org/licenses/LICENSE-2.0
+//     http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -52,8 +52,6 @@ import com.google.enterprise.connector.util.filter.AbstractDocumentFilter;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -72,19 +70,12 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
 
   private final String dataSource;
   private final FeedType feedType;
+  private final UrlConstructor urlConstructor;
   private final int maxFeedSize;
   private final Appendable feedLogBuilder;
   private final String feedId;
   private final FileSizeLimitInfo fileSizeLimit;
-
-  /**
-   * The prefix that will be used for contentUrl generation.
-   * The prefix should include protocol, host and port, web app,
-   * and servlet to point back at this Connector Manager instance.
-   * For example:
-   * {@code http://localhost:8080/connector-manager/getDocumentContent}
-   */
-  private final String contentUrlPrefix;
+  private final AclTransformFilter aclTransformFilter;
 
   /** Encoding method to use for Document content. */
   private final ContentEncoding contentEncoding;
@@ -164,8 +155,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
 
   public XmlFeed(String dataSource, FeedType feedType, 
       FileSizeLimitInfo fileSizeLimit, Appendable feedLogBuilder,
-      String contentUrlPrefix, FeedConnection feedConnection)
-      throws IOException {
+      FeedConnection feedConnection) throws IOException {
     super((int) fileSizeLimit.maxFeedSize());
     this.maxFeedSize = (int) fileSizeLimit.maxFeedSize();
     this.dataSource = dataSource;
@@ -175,8 +165,12 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
     this.recordCount = 0;
     this.isClosed = false;
     this.feedId = uniqueIdGenerator.uniqueId();
-    this.contentUrlPrefix = contentUrlPrefix;
     this.supportsInheritedAcls = feedConnection.supportsInheritedAcls();
+
+    // Configure the dynamic ACL transformation filters for the documents.
+    this.urlConstructor = new UrlConstructor(dataSource, feedType);
+    this.aclTransformFilter =
+        new AclTransformFilter(feedConnection, this.urlConstructor);
 
     supportedEncodings = feedConnection.getContentEncodings().toLowerCase();
     // Check to see if the GSA supports compressed content feeds.
@@ -242,8 +236,9 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
    */
   public synchronized void addRecord(Document document)
       throws RepositoryException, IOException {
+    // Apply any ACL transformations to the document.
     // Build an XML feed record for the document.
-    xmlWrapRecord(document);
+    xmlWrapRecord(aclTransformFilter.newDocumentFilter(document));
   }
 
   /*
@@ -416,7 +411,8 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
     StringBuilder prefix = new StringBuilder();
     prefix.append("<").append(XML_RECORD);
 
-    String searchUrl = getRecordUrl(document, DocumentType.RECORD);
+    String searchUrl =
+        urlConstructor.getRecordUrl(document, DocumentType.RECORD);
     XmlUtils.xmlAppendAttr(XML_URL, searchUrl, prefix);
 
     String displayUrl = DocUtils.getOptionalString(document,
@@ -542,78 +538,6 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
   }
 
   /**
-   * Constructs the URL for the given doc id, feed type and URL.
-   *
-   * @throws RepositoryDocumentException if searchUrl is invalid.
-   */
-  private String getOrConstructUrl(Document document, String urlProperty,
-      String docidProperty, FeedType feedType, DocumentType documentType)
-      throws RepositoryException, RepositoryDocumentException {
-    String recordUrl = DocUtils.getOptionalString(document, urlProperty);
-    if (recordUrl != null) {
-      if (documentType != DocumentType.ACL) {
-        validateUrl(recordUrl, urlProperty);
-      }
-    } else {
-      String docId = DocUtils.getOptionalString(document, docidProperty);
-      if (docId != null) {
-        // Fabricate a URL from the docid and feedType.
-        recordUrl = constructUrl(docId, feedType);
-      }
-    }
-    return recordUrl;
-  }
-
-  /**
-   * Constructs the record URL for the given doc id, feed type and search URL.
-   *
-   * @throws RepositoryDocumentException if searchUrl is invalid.
-   */
-  private String getRecordUrl(Document document, DocumentType documentType)
-      throws RepositoryException, RepositoryDocumentException {
-    String url = getOrConstructUrl(document, SpiConstants.PROPNAME_SEARCHURL,
-        SpiConstants.PROPNAME_DOCID, feedType, documentType);
-    if (url == null) {
-      throw new RepositoryDocumentException(
-          "Document has neither property " + SpiConstants.PROPNAME_DOCID
-          + " nor property " + SpiConstants.PROPNAME_SEARCHURL);
-    }
-    return url;
-  }
-
-  /**
-   * Constructs the record URL for the inherited ACL document.
-   *
-   * @return inheritFrom URL, or null if there is none.
-   */
-  private String getInheritFromUrl(Document document)
-      throws RepositoryException, RepositoryDocumentException {
-    return getOrConstructUrl(document, SpiConstants.PROPNAME_ACLINHERITFROM,
-        SpiConstants.PROPNAME_ACLINHERITFROM_DOCID,
-        getInheritFromFeedType(document), DocumentType.ACL);
-  }
-
-  /**
-   * Determines the FeedType for the inherited ACL document.
-   * The FeedType comes from (in order):
-   *   1. SpiConstants.PROPNAME_ACLINHERITFROM_FEEDTYPE
-   *   2. SpiConstants.PROPNAME_FEEDTYPE
-   *   3. FeedType of this XmlFeed
-   *
-   * @return the FeedType for the inherited ACL document
-   */
-  private FeedType getInheritFromFeedType(Document document)
-      throws RepositoryException, RepositoryDocumentException {
-    String feedType = DocUtils.getOptionalString(document,
-        SpiConstants.PROPNAME_ACLINHERITFROM_FEEDTYPE);
-    if (feedType == null) {
-      feedType = DocUtils.getOptionalString(document,
-          SpiConstants.PROPNAME_FEEDTYPE);
-    }
-    return (feedType == null) ? this.feedType : FeedType.findFeedType(feedType);
-  }
-
-  /**
    * Returns true if the document exposes any acl properties, false otherwise.
    */
   private static boolean hasAclProperties(Document document)
@@ -626,23 +550,23 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
    */
   private void xmlWrapAclRecord(StringBuilder aclBuff, Document acl)
       throws IOException, RepositoryException {
-    String inheritFrom = getInheritFromUrl(acl);
-    String inheritanceType = DocUtils.getOptionalString(acl,
-        SpiConstants.PROPNAME_ACLINHERITANCETYPE);
-
     aclBuff.append("<").append(XML_ACL);
     String docType = DocUtils.getOptionalString(acl,
         SpiConstants.PROPNAME_DOCUMENTTYPE);
     if (docType != null
         && DocumentType.findDocumentType(docType) == DocumentType.ACL) {
       // Only specify the URL if this is a stand-alone ACL.
-      XmlUtils.xmlAppendAttr(XML_URL, getRecordUrl(acl, DocumentType.ACL),
-          aclBuff);
+      XmlUtils.xmlAppendAttr(XML_URL, 
+         urlConstructor.getRecordUrl(acl, DocumentType.ACL), aclBuff);
     }
+
+    String inheritanceType = DocUtils.getOptionalString(acl,
+        SpiConstants.PROPNAME_ACLINHERITANCETYPE);
     if (!Strings.isNullOrEmpty(inheritanceType)) {
       XmlUtils.xmlAppendAttr(XML_TYPE, inheritanceType, aclBuff);
     }
 
+    String inheritFrom = urlConstructor.getInheritFromUrl(acl);
     if (!Strings.isNullOrEmpty(inheritFrom)) {
       XmlUtils.xmlAppendAttr(XML_INHERIT_FROM, inheritFrom, aclBuff);
     }
@@ -773,26 +697,13 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
       // in the same order each time in order to prevent reindexing.
       propertyNames = new TreeSet<String>(propertyNames);
       for (String name : propertyNames) {
-        Property property = null;
-        // Possibly manufacture an ACLINHERITFROM property from
-        // ACLINHERITFROM_DOCID and ACLINHERITFROM_FEEDTYPE.
-        // TODO: All this ACL property munging should really be
-        // done in a DocumentFilter.
-        if (SpiConstants.PROPNAME_ACLINHERITFROM_DOCID.equals(name) &&
-            (DocUtils.getOptionalString(document,
-                SpiConstants.PROPNAME_ACLINHERITFROM) == null)) {
-          property = new SimpleProperty(
-              Value.getStringValue(getInheritFromUrl(document)));
-          wrapOneProperty(buf, SpiConstants.PROPNAME_ACLINHERITFROM, property);
-          continue;
-        }
         if (propertySkipSet.contains(name)) {
           if (LOGGER.isLoggable(Level.FINEST)) {
             logOneProperty(document, name);
           }
           continue;
         }
-        property = document.findProperty(name);
+        Property property = document.findProperty(name);
         if (property != null) {
           wrapOneProperty(buf, name, property);
         }
@@ -847,76 +758,6 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
                         + "\"");
         }
       }
-    }
-  }
-
-  /**
-   * Form either a Google connector URL or a Content URL, based on
-   * feed type.
-   */
-  private String constructUrl(String docid, FeedType feedType) {
-    switch (feedType) {
-      case CONTENTURL:
-        return constructContentUrl(docid);
-      case CONTENT:
-        return constructGoogleConnectorUrl(docid);
-      case WEB:
-        return docid;
-      default:
-        throw new AssertionError(feedType);
-    }
-  }
-
-  /**
-   * Form a Google connector URL.
-   *
-   * @param docid
-   * @return the connector url
-   */
-  private String constructGoogleConnectorUrl(String docid) {
-    StringBuilder buf = new StringBuilder(ServletUtil.PROTOCOL);
-    buf.append(dataSource);
-    buf.append(".localhost").append(ServletUtil.DOCID);
-    buf.append(docid);
-    return buf.toString();
-  }
-
-  /**
-   * Form a Content URL.
-   *
-   * @param docid
-   * @return the contentUrl
-   */
-  private String constructContentUrl(String docid) {
-    Preconditions.checkState(!Strings.isNullOrEmpty(contentUrlPrefix),
-                             "contentUrlPrefix must not be null or empty");
-    StringBuilder buf = new StringBuilder(contentUrlPrefix);
-    ServletUtil.appendQueryParam(buf, ServletUtil.XMLTAG_CONNECTOR_NAME,
-                                 dataSource);
-    ServletUtil.appendQueryParam(buf, ServletUtil.QUERY_PARAM_DOCID, docid);
-    return buf.toString();
-  }
-
-  /**
-   * Verify that a supplied URL is at least syntactically valid.
-   *
-   * @param url the URL to validate
-   * @param description description of the URL
-   * @throws RepositoryDocumentException if the URL is invalid
-   */
-  private static void validateUrl(String url, String description)
-      throws RepositoryDocumentException {
-    // Check that this looks like a URL.
-    try {
-      // The GSA supports SMB URLs, but Java does not.
-      if (url != null && url.startsWith("smb:")) {
-        new URL(null, url, SmbURLStreamHandler.getInstance());
-      } else {
-        new URL(url);
-      }
-    } catch (MalformedURLException e) {
-      throw new RepositoryDocumentException(
-          "Supplied " + description + " URL " + url + " is malformed.", e);
     }
   }
 
