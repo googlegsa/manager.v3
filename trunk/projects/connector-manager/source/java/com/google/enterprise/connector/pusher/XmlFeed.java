@@ -19,6 +19,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.google.enterprise.connector.common.AlternateContentFilterInputStream;
@@ -98,23 +99,19 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
   private boolean isClosed;
   private int recordCount;
 
-  private static Set<String> propertySkipSet;
-
-  static {
-    // TODO: What about action, contenturl, displayurl, ispublic,
-    // securitytoken, searchurl? Should we have an explicit opt-in
-    // list of google: properties instead an opt-out list?
-    propertySkipSet = new HashSet<String>();
-    propertySkipSet.add(SpiConstants.PROPNAME_ACLINHERITFROM_DOCID);
-    propertySkipSet.add(SpiConstants.PROPNAME_ACLINHERITFROM_FEEDTYPE);
-    propertySkipSet.add(SpiConstants.PROPNAME_CONTENT);
-    propertySkipSet.add(SpiConstants.PROPNAME_DOCID);
-    propertySkipSet.add(SpiConstants.PROPNAME_DOCUMENTTYPE);
-    propertySkipSet.add(SpiConstants.PROPNAME_FEEDTYPE);
-    propertySkipSet.add(SpiConstants.PROPNAME_LOCK);
-    propertySkipSet.add(SpiConstants.PROPNAME_PAGERANK);
-    propertySkipSet.add(SpiConstants.PROPNAME_OVERWRITEACLS);
-  }
+  public static final Set<String> propertySkipSet = ImmutableSet.<String>of(
+      // TODO: What about action, contenturl, displayurl, ispublic,
+      // securitytoken, searchurl? Should we have an explicit opt-in
+      // list of google: properties instead an opt-out list?
+      SpiConstants.PROPNAME_ACLINHERITFROM_DOCID,
+      SpiConstants.PROPNAME_ACLINHERITFROM_FEEDTYPE,
+      SpiConstants.PROPNAME_CONTENT,
+      SpiConstants.PROPNAME_DOCID,
+      SpiConstants.PROPNAME_DOCUMENTTYPE,
+      SpiConstants.PROPNAME_FEEDTYPE,
+      SpiConstants.PROPNAME_LOCK,
+      SpiConstants.PROPNAME_PAGERANK,
+      SpiConstants.PROPNAME_OVERWRITEACLS);
 
   // Strings for XML tags.
   public static final String XML_DEFAULT_ENCODING = "UTF-8";
@@ -389,24 +386,9 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
    */
   private void xmlWrapDocumentRecord(Document document)
       throws RepositoryException, IOException {
-    boolean metadataAllowed = true;
+    boolean aclRecordAllowed = supportsInheritedAcls;
+    boolean metadataAllowed = (feedType != FeedType.CONTENTURL);
     boolean contentAllowed = (feedType == FeedType.CONTENT);
-
-    ContentEncoding documentContentEncoding = null;
-    String documentContentEncodingStr = DocUtils.getOptionalString(
-        document, SpiConstants.PROPNAME_CONTENT_ENCODING);
-
-    if (!Strings.isNullOrEmpty(documentContentEncodingStr)) {
-      documentContentEncoding =
-          ContentEncoding.findContentEncoding(documentContentEncodingStr);
-      if (documentContentEncoding == ContentEncoding.ERROR
-          || supportedEncodings.indexOf(documentContentEncodingStr) < 0) {
-        String message =
-            "Unsupported content encoding: " + documentContentEncodingStr;
-        LOGGER.log(Level.WARNING, message);
-        throw new RepositoryDocumentException(message);
-      }
-    }
 
     StringBuilder prefix = new StringBuilder();
     prefix.append("<").append(XML_RECORD);
@@ -429,6 +411,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
         XmlUtils.xmlAppendAttr(XML_ACTION, actionType.toString(), prefix);
       } else if (actionType == ActionType.DELETE) {
         XmlUtils.xmlAppendAttr(XML_ACTION, actionType.toString(), prefix);
+        aclRecordAllowed = false;
         metadataAllowed = false;
         contentAllowed = false;
       } else if (actionType == ActionType.ERROR) {
@@ -483,22 +466,39 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
     }
 
     prefix.append(">\n");
+
+    if (aclRecordAllowed && hasAclProperties(document)) {
+      xmlWrapAclRecord(prefix, document);
+      // Prevent ACLs from showing up in metadata.
+      document = stripAclDocumentFilter.newDocumentFilter(document);
+    }
     if (metadataAllowed) {
-      if (supportsInheritedAcls && hasAclProperties(document)) {
-        xmlWrapAclRecord(prefix, document);
-        // Prevent ACLs from showing up in metadata.
-        document = stripAclDocumentFilter.newDocumentFilter(document);
-      }
       xmlWrapMetadata(prefix, document);
     }
 
     StringBuilder suffix = new StringBuilder();
-
-    ContentEncoding alternateEncoding = (documentContentEncoding == null) 
-        ? contentEncoding : documentContentEncoding;
-  
-    // If including document content, wrap it with <content> tags.
+    ContentEncoding documentContentEncoding = null;
+    ContentEncoding alternateEncoding = null;
     if (contentAllowed) {
+      // Determine the content encoding to specify.
+      String documentContentEncodingStr = DocUtils.getOptionalString(
+          document, SpiConstants.PROPNAME_CONTENT_ENCODING);
+
+      if (!Strings.isNullOrEmpty(documentContentEncodingStr)) {
+        documentContentEncoding =
+            ContentEncoding.findContentEncoding(documentContentEncodingStr);
+        if (documentContentEncoding == ContentEncoding.ERROR
+            || supportedEncodings.indexOf(documentContentEncodingStr) < 0) {
+          String message =
+              "Unsupported content encoding: " + documentContentEncodingStr;
+          LOGGER.log(Level.WARNING, message);
+          throw new RepositoryDocumentException(message);
+        }
+      }
+      alternateEncoding = (documentContentEncoding == null) 
+          ? contentEncoding : documentContentEncoding;
+  
+      // If including document content, wrap it with <content> tags.
       prefix.append("<");
       prefix.append(XML_CONTENT);
       XmlUtils.xmlAppendAttr(XML_ENCODING,
@@ -510,6 +510,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
     }
 
     write(prefix.toString().getBytes(XML_DEFAULT_ENCODING));
+
     if (contentAllowed) {
       InputStream contentStream = getContentStream(
           document, documentContentEncoding, alternateEncoding);

@@ -25,6 +25,7 @@ import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.manager.MockManager;
 import com.google.enterprise.connector.manager.ProductionManager;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
+import com.google.enterprise.connector.pusher.MockFeedConnection;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.DocumentAccessException;
@@ -88,22 +89,26 @@ public class GetDocumentContentTest extends TestCase {
     long lastModified;
 
     // Connector1 has a lastModifiedDate
-    lastModified = GetDocumentContent.handleGetLastModified(
+    // xyzzy has metadata.
+    Document metaData = GetDocumentContent.getDocumentMetaData(
         createMockRequest(), manager, "connector1", "xyzzy");
+    assertNotNull(metaData);
+    lastModified = GetDocumentContent.handleGetLastModified(metaData);
     assertEquals(3600 * 1000, lastModified);
 
     // Connector2 has no lastModifiedDate
-    lastModified = GetDocumentContent.handleGetLastModified(
+    metaData = GetDocumentContent.getDocumentMetaData(
         createMockRequest(), manager, "connector2", "xyzzy");
+    assertNotNull(metaData);
+    lastModified = GetDocumentContent.handleGetLastModified(metaData);
     assertEquals(-1L, lastModified);
   }
 
   /** Test getDocumentMetaData against a MockManager. */
   public void testGetDocumentMetaDataMockManager() throws Exception {
     Manager manager = MockManager.getInstance();
-    MockHttpServletRequest req;
-
-    req = createMockRequest();
+    MockHttpServletRequest req = createMockRequest();
+    
     // xyzzy has metadata.
     Document metaData = GetDocumentContent.getDocumentMetaData(req,
         manager, "connector1", "xyzzy");
@@ -121,9 +126,14 @@ public class GetDocumentContentTest extends TestCase {
     } catch (ConnectorNotFoundException expected) {
       // Expected.
     }
-    // Test cache.
-    assertNull(GetDocumentContent.getDocumentMetaData(req,
-        manager, "unknownConnector", "xyzzy"));
+    // Test cache is empty.
+    try {
+      GetDocumentContent.getDocumentMetaData(req,
+          manager, "unknownConnector", "xyzzy");
+      fail("Expected ConnectorNotFoundException, but got none.");
+    } catch (ConnectorNotFoundException expected) {
+      // Expected.
+    }
   }
 
   private String connectorName = MockInstantiator.TRAVERSER_NAME1;
@@ -137,6 +147,7 @@ public class GetDocumentContentTest extends TestCase {
         new MockConnector(null, null, null, new MockRetriever(), null));
     ProductionManager manager = new ProductionManager();
     manager.setInstantiator(instantiator);
+    manager.setFeedConnection(new MockFeedConnection());
     return manager;
   }
 
@@ -175,9 +186,7 @@ public class GetDocumentContentTest extends TestCase {
   private void checkNullOrEmptyConnectorNameDocid(String connectorName,
       String docid) throws Exception {
     patchRealProductionManager();
-    MockHttpServletRequest req = createMockRequest();
-    req.setParameter(ServletUtil.XMLTAG_CONNECTOR_NAME, connectorName);
-    req.setParameter(ServletUtil.QUERY_PARAM_DOCID, docid);
+    MockHttpServletRequest req = createMockRequest(connectorName, docid);
     MockHttpServletResponse res = new MockHttpServletResponse();
     new GetDocumentContent().service(req, res);
     assertEquals(400, res.getStatus());
@@ -232,6 +241,15 @@ public class GetDocumentContentTest extends TestCase {
         "/connector-manager/getDocumentContent");
   }
 
+  private MockHttpServletRequest createMockRequest(
+      String connectorName, String docid) throws Exception {
+    MockHttpServletRequest req = createMockRequest();
+    req.setParameter(ServletUtil.XMLTAG_CONNECTOR_NAME, connectorName);
+    req.setParameter(ServletUtil.QUERY_PARAM_DOCID, docid);
+    encodeQueryParameter(req);
+    return req;
+  }
+
   /** Test getDocumentMetaData against a ProductionManager. */
   public void testConnectorNotFoundGetDocumentMetaDataProductionManager()
       throws Exception {
@@ -281,13 +299,17 @@ public class GetDocumentContentTest extends TestCase {
     long lastModified;
 
     // Connector regular docids have lastModified.
-    lastModified = GetDocumentContent.handleGetLastModified(
+    Document metaData = GetDocumentContent.getDocumentMetaData(
         createMockRequest(), manager, connectorName, docid);
+    assertNotNull(metaData);
+    lastModified = GetDocumentContent.handleGetLastModified(metaData);
     assertEquals(3600 * 1000, lastModified);
 
     // This Document has no lastModifiedDate
-    lastModified = GetDocumentContent.handleGetLastModified(createMockRequest(),
+    metaData = GetDocumentContent.getDocumentMetaData(createMockRequest(),
         manager, connectorName, MockRetriever.DOCID_NO_LASTMODIFIED);
+    assertNotNull(metaData);
+    lastModified = GetDocumentContent.handleGetLastModified(metaData);
     assertEquals(-1L, lastModified);
   }
 
@@ -298,13 +320,17 @@ public class GetDocumentContentTest extends TestCase {
     String contentType;
 
     // Connector regular docids have lastModified.
-    contentType = GetDocumentContent.handleGetContentType(
+    Document metaData = GetDocumentContent.getDocumentMetaData(
         createMockRequest(), manager, connectorName, docid);
+    assertNotNull(metaData);
+    contentType = GetDocumentContent.handleGetContentType(metaData);
     assertEquals("text/plain", contentType);
 
     // This Document has no mime type.
-    contentType = GetDocumentContent.handleGetContentType(createMockRequest(),
+    metaData = GetDocumentContent.getDocumentMetaData(createMockRequest(),
         manager, connectorName, MockRetriever.DOCID_NO_MIMETYPE);
+    assertNotNull(metaData);
+    contentType = GetDocumentContent.handleGetContentType(metaData);
     assertEquals(SpiConstants.DEFAULT_MIMETYPE, contentType);
   }
 
@@ -323,9 +349,7 @@ public class GetDocumentContentTest extends TestCase {
   /** Test ProductionManager getDocumentContent should deny SecMgr. */
   public void testGetDocumentContentFromSecMgr() throws Exception {
     patchRealProductionManager();
-    MockHttpServletRequest req = createMockRequest();
-    req.setParameter(ServletUtil.XMLTAG_CONNECTOR_NAME, connectorName);
-    req.setParameter(ServletUtil.QUERY_PARAM_DOCID, docid);
+    MockHttpServletRequest req = createMockRequest(connectorName, docid);
     req.addHeader("User-Agent", "SecMgr");
     MockHttpServletResponse res = new MockHttpServletResponse();
     new GetDocumentContent().service(req, res);
@@ -335,10 +359,8 @@ public class GetDocumentContentTest extends TestCase {
   /** Test ProductionManager getDocumentContent should deny HEAD from SecMgr. */
   public void testGetDocumentContentHeadFromSecMgr() throws Exception {
     patchRealProductionManager();
-    MockHttpServletRequest req = new MockHttpServletRequest("HEAD",
-        "/connector-manager/getDocumentContent");
-    req.setParameter(ServletUtil.XMLTAG_CONNECTOR_NAME, connectorName);
-    req.setParameter(ServletUtil.QUERY_PARAM_DOCID, docid);
+    MockHttpServletRequest req = createMockRequest(connectorName, docid);
+    req.setMethod("HEAD");
     req.addHeader("User-Agent", "SecMgr");
     MockHttpServletResponse res = new MockHttpServletResponse();
     new GetDocumentContent().service(req, res);
@@ -349,9 +371,7 @@ public class GetDocumentContentTest extends TestCase {
       Cookie based Authn will generate a GET with Range:0-0 */
   public void testGetDocumentContentCookieHeadRequest() throws Exception {
     patchRealProductionManager();
-    MockHttpServletRequest req = createMockRequest();
-    req.setParameter(ServletUtil.XMLTAG_CONNECTOR_NAME, connectorName);
-    req.setParameter(ServletUtil.QUERY_PARAM_DOCID, docid);
+    MockHttpServletRequest req = createMockRequest(connectorName, docid);
     req.addHeader("User-Agent", "gsa-crawler");
     req.addHeader("Range", "0-0");
     MockHttpServletResponse res = new MockHttpServletResponse();
@@ -359,29 +379,27 @@ public class GetDocumentContentTest extends TestCase {
     assertEquals(403, res.getStatus());
   }
 
-
   /** Test ProductionManager getDocumentContent should deny
       Legacy Headrequest. */
   public void testGetDocumentContentHeadRequest() throws Exception {
     patchRealProductionManager();
-    MockHttpServletRequest req = new MockHttpServletRequest("HEAD",
-        "/connector-manager/getDocumentContent");
-    req.setParameter(ServletUtil.XMLTAG_CONNECTOR_NAME, connectorName);
-    req.setParameter(ServletUtil.QUERY_PARAM_DOCID, docid);
+    MockHttpServletRequest req = createMockRequest(connectorName, docid);
+    req.setMethod("HEAD");
     req.addHeader("User-Agent", "gsa-crawler");
     MockHttpServletResponse res = new MockHttpServletResponse();
     new GetDocumentContent().service(req, res);
     assertEquals(403, res.getStatus());
   }
 
-
   /** Test requiring GSA to use authentication for private doc. */
   public void testHttpBasicWithoutCredentials() throws Exception {
     MockHttpServletRequest req = createMockRequest();
     // connector5's documents are private.
+    Document metaData = GetDocumentContent.getDocumentMetaData(
+        req, MockManager.getInstance(), "connector5", docid);
     MockHttpServletResponse res = new MockHttpServletResponse();
-    int status = GetDocumentContent.handleMarkingDocumentSecurity(req, res,
-        MockManager.getInstance(), "connector5", docid);
+    int status =
+        GetDocumentContent.handleMarkingDocumentSecurity(req, res, metaData);
     assertEquals(401, status);
     assertNotNull(res.getHeader("WWW-Authenticate"));
   }
@@ -392,9 +410,11 @@ public class GetDocumentContentTest extends TestCase {
     // Credentials: gsa:password
     req.addHeader("Authorization", "Basic Z3NhOnBhc3N3b3Jk");
     // connector5's documents are private.
+    Document metaData = GetDocumentContent.getDocumentMetaData(
+        req, MockManager.getInstance(), "connector5", docid);
     MockHttpServletResponse res = new MockHttpServletResponse();
-    int status = GetDocumentContent.handleMarkingDocumentSecurity(req, res,
-        MockManager.getInstance(), "connector5", docid);
+    int status =
+        GetDocumentContent.handleMarkingDocumentSecurity(req, res, metaData);
     assertEquals(200, status);
   }
 
@@ -407,7 +427,9 @@ public class GetDocumentContentTest extends TestCase {
       for (String value : req.getParameterValues(key)) {
         sb.append(URLEncoder.encode(key, "UTF-8"));
         sb.append("=");
-        sb.append(URLEncoder.encode(value, "UTF-8"));
+        if (value != null) {
+          sb.append(URLEncoder.encode(value, "UTF-8"));
+        }
         sb.append("&");
       }
     }
@@ -415,28 +437,29 @@ public class GetDocumentContentTest extends TestCase {
     req.setQueryString(query);
   }
 
+  private MockHttpServletResponse getDocumentContent(
+       MockHttpServletRequest req, String expectedContent) throws Exception {
+    MockHttpServletResponse res = new MockHttpServletResponse();
+    new GetDocumentContent().doGet(req, res);
+    assertEquals(200, res.getStatus());
+    assertEquals(expectedContent, res.getContentAsString());
+    return res;
+  }
+
   /**
    * Test method for the HttpServlet.doGet.
    */
   public void testDoGetNoIfModifiedSince() throws Exception {
     patchRealProductionManager();
-    MockHttpServletRequest req = createMockRequest();
-    req.setParameter(ServletUtil.XMLTAG_CONNECTOR_NAME, connectorName);
-    req.setParameter(ServletUtil.QUERY_PARAM_DOCID, docid);
-    encodeQueryParameter(req);
-    MockHttpServletResponse res = new MockHttpServletResponse();
-    new GetDocumentContent().doGet(req, res);
-    assertEquals(200, res.getStatus());
-    assertEquals(docid, res.getContentAsString());
+    MockHttpServletRequest req = createMockRequest(connectorName, docid);
+    MockHttpServletResponse res = getDocumentContent(req, docid);
     assertNull(res.getHeader("Content-Encoding"));
   }
 
   public void testSpecialCharsDocId() throws Exception {
-    MockHttpServletRequest req = createMockRequest();
-    req.setParameter(ServletUtil.XMLTAG_CONNECTOR_NAME, MockManager.CONNECTOR6);
-    req.setParameter(ServletUtil.QUERY_PARAM_DOCID,
+    // connector6 checks docid values.
+    MockHttpServletRequest req = createMockRequest(MockManager.CONNECTOR6,
         MockManager.CONNECTOR6_SPECIAL_CHAR_DOCID);
-    encodeQueryParameter(req);
     MockHttpServletResponse res = new MockHttpServletResponse();
     GetDocumentContent.doGet(req, res, MockManager.getInstance());
     // connector6 checks docid values.
@@ -450,10 +473,7 @@ public class GetDocumentContentTest extends TestCase {
   public void testDoGetWithCompression() throws Exception {
     patchRealProductionManager();
     String docid = "NowIsTheTimeForAllGoodMenToComeToTheAidOfTheCountry";
-    MockHttpServletRequest req = createMockRequest();
-    req.setParameter(ServletUtil.XMLTAG_CONNECTOR_NAME, connectorName);
-    req.setParameter(ServletUtil.QUERY_PARAM_DOCID, docid);
-    encodeQueryParameter(req);
+    MockHttpServletRequest req = createMockRequest(connectorName, docid);
     req.addHeader("Accept-Encoding", "gzip");
     GetDocumentContent.setUseCompression(true);
     MockHttpServletResponse res = new MockHttpServletResponse();
@@ -472,16 +492,9 @@ public class GetDocumentContentTest extends TestCase {
   public void testGetIfModifiedSinceNoLastModified() throws Exception {
     patchRealProductionManager();
     String docid = MockRetriever.DOCID_NO_LASTMODIFIED;
-    MockHttpServletRequest req = createMockRequest();
-    req.setMethod("GET");
-    req.setParameter(ServletUtil.XMLTAG_CONNECTOR_NAME, connectorName);
-    req.setParameter(ServletUtil.QUERY_PARAM_DOCID, docid);
-    encodeQueryParameter(req);
+    MockHttpServletRequest req = createMockRequest(connectorName, docid);
     req.addHeader("If-Modified-Since", SystemClock.INSTANCE.getTimeMillis());
-    MockHttpServletResponse res = new MockHttpServletResponse();
-    new GetDocumentContent().service(req, res);
-    assertEquals(200, res.getStatus());
-    assertEquals(docid, res.getContentAsString());
+    getDocumentContent(req, docid);
   }
 
   /**
@@ -489,16 +502,9 @@ public class GetDocumentContentTest extends TestCase {
    */
   public void testGetIfModifiedSinceLastModified() throws Exception {
     patchRealProductionManager();
-    MockHttpServletRequest req = createMockRequest();
-    req.setMethod("GET");
-    req.setParameter(ServletUtil.XMLTAG_CONNECTOR_NAME, connectorName);
-    req.setParameter(ServletUtil.QUERY_PARAM_DOCID, docid);
-    encodeQueryParameter(req);
+    MockHttpServletRequest req = createMockRequest(connectorName, docid);
     req.addHeader("If-Modified-Since", 1);
-    MockHttpServletResponse res = new MockHttpServletResponse();
-    new GetDocumentContent().service(req, res);
-    assertEquals(200, res.getStatus());
-    assertEquals(docid, res.getContentAsString());
+    getDocumentContent(req, docid);
   }
 
   /**
@@ -506,11 +512,7 @@ public class GetDocumentContentTest extends TestCase {
    */
   public void testGetUnModifiedSinceLastModified() throws Exception {
     patchRealProductionManager();
-    MockHttpServletRequest req = createMockRequest();
-    req.setMethod("GET");
-    req.setParameter(ServletUtil.XMLTAG_CONNECTOR_NAME, connectorName);
-    req.setParameter(ServletUtil.QUERY_PARAM_DOCID, docid);
-    encodeQueryParameter(req);
+    MockHttpServletRequest req = createMockRequest(connectorName, docid);
     req.addHeader("If-Modified-Since", SystemClock.INSTANCE.getTimeMillis());
     MockHttpServletResponse res = new MockHttpServletResponse();
     new GetDocumentContent().service(req, res);
@@ -523,14 +525,8 @@ public class GetDocumentContentTest extends TestCase {
    */
   public void testDoGetContentType() throws Exception {
     patchRealProductionManager();
-    MockHttpServletRequest req = createMockRequest();
-    req.setParameter(ServletUtil.XMLTAG_CONNECTOR_NAME, connectorName);
-    req.setParameter(ServletUtil.QUERY_PARAM_DOCID, docid);
-    encodeQueryParameter(req);
-    MockHttpServletResponse res = new MockHttpServletResponse();
-    new GetDocumentContent().doGet(req, res);
-    assertEquals(200, res.getStatus());
-    assertEquals(docid, res.getContentAsString());
+    MockHttpServletRequest req = createMockRequest(connectorName, docid);
+    MockHttpServletResponse res = getDocumentContent(req, docid);
     assertTrue(res.getContentType().contains("text/plain"));
   }
 
@@ -540,14 +536,23 @@ public class GetDocumentContentTest extends TestCase {
   public void testDoGetContentTypeNoMimeType() throws Exception {
     patchRealProductionManager();
     String docid = MockRetriever.DOCID_NO_MIMETYPE;
-    MockHttpServletRequest req = createMockRequest();
-    req.setParameter(ServletUtil.XMLTAG_CONNECTOR_NAME, connectorName);
-    req.setParameter(ServletUtil.QUERY_PARAM_DOCID, docid);
-    encodeQueryParameter(req);
-    MockHttpServletResponse res = new MockHttpServletResponse();
-    new GetDocumentContent().doGet(req, res);
-    assertEquals(200, res.getStatus());
-    assertEquals(docid, res.getContentAsString());
+    MockHttpServletRequest req = createMockRequest(connectorName, docid);
+    MockHttpServletResponse res = getDocumentContent(req, docid);
     assertTrue(res.getContentType().contains(SpiConstants.DEFAULT_MIMETYPE));
+  }
+
+  /**
+   * Test document metadata is returned in a MetaData header.
+   */
+  public void testMetadataInHeader() throws Exception {
+    patchRealProductionManager();
+    MockHttpServletRequest req = createMockRequest(connectorName, docid);
+    MockHttpServletResponse res = getDocumentContent(req, docid);
+    String expected = "google%3Adisplayurl=http%3A%2F%2Fwww.comtesturl.com%2F"
+        + "test%3Fdocid,google%3Alastmodified=1969-12-31,google%3Amimetype=text"
+        + "%2Fplain";
+    String extMetadata = (String) res.getHeader("X-Gsa-External-Metadata");
+    assertNotNull(extMetadata);
+    assertEquals(expected, extMetadata);
   }
 }

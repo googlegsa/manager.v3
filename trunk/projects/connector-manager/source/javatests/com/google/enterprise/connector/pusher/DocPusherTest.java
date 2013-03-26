@@ -990,7 +990,10 @@ public class DocPusherTest extends TestCase {
     assertStringContains("displayurl=\"http://www.sometesturl.com/test\"",
         resultXML);
     assertStringContains("<feedtype>metadata-and-url</feedtype>", resultXML);
-    assertStringNotContains("<content encoding=\"base64binary\">", resultXML);
+    assertStringNotContains("<content encoding=", resultXML);
+    // Assert there is no metadata in the feed.
+    // Metadata will be supplied at crawl time.
+    assertStringNotContains("<metadata", resultXML);
 
     // ContentURL feed - docid has special chars (Issue 214 regression).
     resultXML = feedJsonEvent(json2);
@@ -1000,7 +1003,8 @@ public class DocPusherTest extends TestCase {
     assertStringContains("displayurl=\"http://www.sometesturl.com/test\"",
         resultXML);
     assertStringContains("<feedtype>metadata-and-url</feedtype>", resultXML);
-    assertStringNotContains("<content encoding=\"base64binary\">", resultXML);
+    assertStringNotContains("<content encoding=", resultXML);
+    assertStringNotContains("<metadata", resultXML);
 
     // Test unset contentUrlPrefix.
     setContentUrlPrefix(null);
