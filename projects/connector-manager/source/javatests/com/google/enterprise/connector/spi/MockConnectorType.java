@@ -106,7 +106,6 @@ public class MockConnectorType implements ConnectorType {
    */
   @Override
   public boolean equals(Object obj) {
-    System.out.println("Equals called with " + obj);
     if (this == obj) {
       return true;
     }
