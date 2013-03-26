@@ -109,9 +109,7 @@ public class AclPropertyFilter extends AbstractDocumentFilter {
    * @param userDomain the domain name to set for user principals.
    */
   public void setUserDomain(String userDomain) {
-    if (!userDomain.isEmpty()) {
-      this.userDomain = userDomain;
-    }
+    this.userDomain = Strings.emptyToNull(userDomain);
   }
 
   /**
@@ -135,8 +133,7 @@ public class AclPropertyFilter extends AbstractDocumentFilter {
   @Override
   public Property findProperty(Document source, String name)
       throws RepositoryException {
-    if (caseSensitivityType == null
-        && (Strings.isNullOrEmpty(userDomain))) {
+    if (caseSensitivityType == null && userDomain == null) {
       return source.findProperty(name);
     }
 
@@ -176,7 +173,7 @@ public class AclPropertyFilter extends AbstractDocumentFilter {
   private String getPrincipalName(Principal principal, String name) {
     String principalName = principal.getName();
     if (aclUsers.contains(name)) {
-      if (userDomain == null || userDomain.isEmpty()
+      if (userDomain == null
           || principal.getPrincipalType() == PrincipalType.UNQUALIFIED) {
         return principalName;
       } else {
