@@ -409,23 +409,9 @@
     <constructor-arg index="1" ref="Clock"/>
   </bean>
 
-  <bean id="InternalDocumentFilters"
-        class="com.google.enterprise.connector.util.filter.DocumentFilterChain">
-    <constructor-arg>
-      <list>
-        <ref bean="DocumentFilters"/>
-        <!-- These filters are required for correctness, so we apply them last.
-        -->
-        <bean class="com.google.enterprise.connector.pusher.AclTransformFilter">
-          <constructor-arg index="0" ref="FeedConnection"/>
-        </bean>
-      </list>
-    </constructor-arg>
-  </bean>
-
   <bean id="DocumentFilterFactoryFactory"
         class="com.google.enterprise.connector.instantiator.DocumentFilterFactoryFactoryImpl">
-    <constructor-arg index="0" ref="InternalDocumentFilters"/>
+    <constructor-arg index="0" ref="DocumentFilters"/>
     <constructor-arg index="1" ref="ConnectorCoordinatorMap"/>
   </bean>
 
@@ -434,7 +420,6 @@
     <constructor-arg index="0" ref="FeedConnection" />
     <constructor-arg index="1" ref="FileSizeLimitInfo"/>
     <constructor-arg index="2" ref="DocumentFilterFactoryFactory"/>
-    <property name="contentUrlPrefix" value="${feed.contenturl.prefix}"/>
   </bean>
 
   <bean id="LoadManagerFactory"

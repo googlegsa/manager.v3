@@ -87,7 +87,7 @@ public class AlternateContentFilterInputStreamTest extends TestCase {
   /** Returns a new XmlFeed */
   private XmlFeed newFeed() throws IOException {
     return new XmlFeed("test", FeedType.CONTENT, new FileSizeLimitInfo(),
-                       null, null, new MockFeedConnection());
+                       null, new MockFeedConnection());
   }
 
   /** Check the AlternateContentInputStream produces the correct results. */
