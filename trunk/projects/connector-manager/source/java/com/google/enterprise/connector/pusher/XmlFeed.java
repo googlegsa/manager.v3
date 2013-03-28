@@ -105,6 +105,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
       // list of google: properties instead an opt-out list?
       SpiConstants.PROPNAME_ACLINHERITFROM_DOCID,
       SpiConstants.PROPNAME_ACLINHERITFROM_FEEDTYPE,
+      SpiConstants.PROPNAME_AUTHMETHOD,
       SpiConstants.PROPNAME_CONTENT,
       SpiConstants.PROPNAME_DOCID,
       SpiConstants.PROPNAME_DOCUMENTTYPE,
@@ -457,7 +458,11 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
       if (v != null) {
         boolean isPublic = v.toBoolean();
         if (!isPublic) {
-          XmlUtils.xmlAppendAttr(XML_AUTHMETHOD, CONNECTOR_AUTHMETHOD, prefix);
+          String authmethod = DocUtils.getOptionalString(document, SpiConstants.PROPNAME_AUTHMETHOD);
+          if (authmethod == null || authmethod.equals("")) {
+            authmethod = CONNECTOR_AUTHMETHOD;
+          }
+          XmlUtils.xmlAppendAttr(XML_AUTHMETHOD, authmethod, prefix);
         }
       }
     } catch (IllegalArgumentException e) {
