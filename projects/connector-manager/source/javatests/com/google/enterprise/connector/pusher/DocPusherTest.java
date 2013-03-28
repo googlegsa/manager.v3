@@ -43,6 +43,7 @@ import com.google.enterprise.connector.util.SAXParseErrorHandler;
 import com.google.enterprise.connector.util.SystemClock;
 import com.google.enterprise.connector.util.UniqueIdGenerator;
 import com.google.enterprise.connector.util.XmlParseUtil;
+import com.google.enterprise.connector.util.filter.AddPropertyFilter;
 import com.google.enterprise.connector.util.filter.DocumentFilterChain;
 import com.google.enterprise.connector.util.filter.DocumentFilterFactory;
 import com.google.enterprise.connector.util.filter.ModifyPropertyFilter;
@@ -1969,6 +1970,77 @@ public class DocPusherTest extends TestCase {
         resultXML);
     assertStringNotContains(SpiConstants.PROPNAME_LOCK,
         resultXML);
+  }
+
+  /** Test Add filter can override the default httpbasic. */
+  public void testAuthmethodWithDocfilter() throws Exception {
+    String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
+        + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
+        + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
+        + ",\"google:ispublic\":\"false\""
+        + "}\r\n" + "";
+    Document document = JcrDocumentTest.makeDocumentFromJson(json1);
+
+    AddPropertyFilter apf = new AddPropertyFilter();
+    apf.setPropertyName("google:authmethod");
+    apf.setPropertyValue("ntlm");
+    apf.setOverwrite(true);
+    String resultXML = feedDocument(document, apf, false);
+
+    assertStringContains("authmethod=\"ntlm\"", resultXML);
+    assertStringNotContains(SpiConstants.PROPNAME_AUTHMETHOD, resultXML);
+  }
+
+  /** Test non-public doc with authmethod unspecified. */
+  public void testAuthmethodUnspecified() throws Exception {
+    String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
+        + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
+        + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
+        + ",\"google:ispublic\":\"false\""
+        + "}\r\n" + "";
+    String resultXML = feedJsonEvent(json1);
+
+    assertStringContains("authmethod=\"httpbasic\"", resultXML);
+    assertStringNotContains(SpiConstants.PROPNAME_AUTHMETHOD, resultXML);
+  }
+
+  /** Test non-public doc with valid authmethod. */
+  public void testValidAuthmethod() throws Exception {
+    String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
+        + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
+        + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
+        + ",\"google:ispublic\":\"false\"" + ",\"google:authmethod\":\"ntlm\""
+        + "}\r\n" + "";
+    String resultXML = feedJsonEvent(json1);
+
+    assertStringContains("authmethod=\"ntlm\"", resultXML);
+    assertStringNotContains(SpiConstants.PROPNAME_AUTHMETHOD, resultXML);
+  }
+
+  /** Test authmethod is removed when explicitly public **/
+  public void testAuthmethodRemovedExplicit() throws Exception {
+    String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
+        + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
+        + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
+        + ",\"google:ispublic\":\"true\"" + ",\"google:authmethod\":\"shouldnotbehere\""
+        + "}\r\n" + "";
+    String resultXML = feedJsonEvent(json1);
+
+    assertStringNotContains("authmethod", resultXML);
+    assertStringNotContains(SpiConstants.PROPNAME_AUTHMETHOD, resultXML);
+  }
+
+  /** Test authmethod is removed when implicitly public **/
+  public void testAuthmethodRemovedImplicit() throws Exception {
+    String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
+        + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
+        + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
+        + ",\"google:authmethod\":\"shouldnotbehere\""
+        + "}\r\n" + "";
+    String resultXML = feedJsonEvent(json1);
+
+    assertStringNotContains("authmethod", resultXML);
+    assertStringNotContains(SpiConstants.PROPNAME_AUTHMETHOD, resultXML);
   }
 
   /** Test doc with pagerank unspecified. */
