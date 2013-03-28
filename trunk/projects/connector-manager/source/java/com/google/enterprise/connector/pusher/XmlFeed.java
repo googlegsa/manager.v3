@@ -458,8 +458,9 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
       if (v != null) {
         boolean isPublic = v.toBoolean();
         if (!isPublic) {
-          String authmethod = DocUtils.getOptionalString(document, SpiConstants.PROPNAME_AUTHMETHOD);
-          if (authmethod == null || authmethod.equals("")) {
+          String authmethod = DocUtils.getOptionalString(document,
+              SpiConstants.PROPNAME_AUTHMETHOD);
+          if (Strings.isNullOrEmpty(authmethod)){
             authmethod = CONNECTOR_AUTHMETHOD;
           }
           XmlUtils.xmlAppendAttr(XML_AUTHMETHOD, authmethod, prefix);

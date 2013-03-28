@@ -457,13 +457,13 @@ public class SpiConstants {
   public static final String PROPNAME_PAGERANK = "google:pagerank";
 
   /**
-   * Identifies an optional, single-valued string property that specfifies
+   * Identifies an optional, single-valued string property that specifies
    * the authmethod of the document. Default: {@code httpbasic}.
    * <p/>
-   * AddPropertyFilter can be used to override default.
+   * AddPropertyFilter can be used to override the default value.
    * <p/>
    *
-   * @since 3.0
+   * @since 3.0.6
    */
   public static final String PROPNAME_AUTHMETHOD = "google:authmethod";
 
