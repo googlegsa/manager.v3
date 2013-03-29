@@ -518,8 +518,26 @@ public class ServletUtil {
         url.append(((url.indexOf("?") == -1) ? '?' : '&'));
         url.append(URLEncoder.encode(paramName, "UTF-8")).append('=');
         url.append(URLEncoder.encode(paramValue, "UTF-8"));
-      } catch (UnsupportedEncodingException ignored) {
+      } catch (UnsupportedEncodingException e) {
         // Can't happen with UTF-8.
+        throw new AssertionError(e);
+      }
+    }
+  }
+
+  /**
+   * Append a fragment to a URL.
+   *
+   * @param url an Appendable with URL under contruction
+   * @param fragment the fragment to append to the URL.
+   */
+  public static void appendFragment(StringBuilder url, String fragment) {
+    if (!Strings.isNullOrEmpty(fragment)) {
+      try {
+        url.append('#').append(URLEncoder.encode(fragment, "UTF-8"));
+      } catch (UnsupportedEncodingException e) {
+        // Can't happen with UTF-8.
+        throw new AssertionError(e);
       }
     }
   }

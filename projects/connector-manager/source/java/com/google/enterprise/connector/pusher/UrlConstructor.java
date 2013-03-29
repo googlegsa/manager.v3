@@ -60,7 +60,8 @@ public class UrlConstructor {
   public String getRecordUrl(Document document, DocumentType documentType)
       throws RepositoryException, RepositoryDocumentException {
     String url = getOrConstructUrl(document, SpiConstants.PROPNAME_SEARCHURL,
-        SpiConstants.PROPNAME_DOCID, defaultFeedType, documentType);
+         SpiConstants.PROPNAME_DOCID, SpiConstants.PROPNAME_FRAGMENT,
+         defaultFeedType, documentType);
     if (url == null) {
       throw new RepositoryDocumentException(
           "Document has neither property " + SpiConstants.PROPNAME_DOCID
@@ -78,6 +79,7 @@ public class UrlConstructor {
       throws RepositoryException, RepositoryDocumentException {
     return getOrConstructUrl(document, SpiConstants.PROPNAME_ACLINHERITFROM,
         SpiConstants.PROPNAME_ACLINHERITFROM_DOCID,
+        SpiConstants.PROPNAME_ACLINHERITFROM_FRAGMENT,
         getInheritFromFeedType(document), DocumentType.ACL);
   }
 
@@ -108,7 +110,8 @@ public class UrlConstructor {
    * @throws RepositoryDocumentException if searchUrl is invalid.
    */
   private String getOrConstructUrl(Document document, String urlProperty,
-      String docidProperty, FeedType feedType, DocumentType documentType)
+      String docidProperty, String fragmentProperty, FeedType feedType,
+      DocumentType documentType)
       throws RepositoryException, RepositoryDocumentException {
     String recordUrl = DocUtils.getOptionalString(document, urlProperty);
     if (recordUrl != null) {
@@ -117,9 +120,10 @@ public class UrlConstructor {
       }
     } else {
       String docId = DocUtils.getOptionalString(document, docidProperty);
+      String fragment = DocUtils.getOptionalString(document, fragmentProperty);
       if (docId != null) {
         // Fabricate a URL from the docid and feedType.
-        recordUrl = constructUrl(docId, feedType);
+        recordUrl = constructUrl(docId, fragment, feedType);
       }
     }
     return recordUrl;
@@ -129,12 +133,13 @@ public class UrlConstructor {
    * Form either a Google connector URL or a Content URL, based on
    * feed type.
    */
-  private String constructUrl(String docid, FeedType feedType) {
+  private String constructUrl(String docid, String fragment,
+      FeedType feedType) {
     switch (feedType) {
       case CONTENTURL:
-        return constructContentUrl(docid);
+        return constructContentUrl(docid, fragment);
       case CONTENT:
-        return constructGoogleConnectorUrl(docid);
+        return constructGoogleConnectorUrl(docid, fragment);
       case WEB:
         return docid;
       default:
@@ -148,11 +153,13 @@ public class UrlConstructor {
    * @param docid
    * @return the connector url
    */
-  private String constructGoogleConnectorUrl(String docid) {
+  private String constructGoogleConnectorUrl(String docid, String fragment) {
     StringBuilder buf = new StringBuilder(ServletUtil.PROTOCOL);
     buf.append(dataSource);
     buf.append(".localhost").append(ServletUtil.DOCID);
     buf.append(docid);
+    // TODO (bmj): Does this run afoul of Issue 214 (b/6514016)?
+    ServletUtil.appendFragment(buf, fragment);
     return buf.toString();
   }
 
@@ -162,13 +169,14 @@ public class UrlConstructor {
    * @param docid
    * @return the contentUrl
    */
-  private String constructContentUrl(String docid) {
+  private String constructContentUrl(String docid, String fragment) {
     Preconditions.checkState(!Strings.isNullOrEmpty(contentUrlPrefix),
                              "contentUrlPrefix must not be null or empty");
     StringBuilder buf = new StringBuilder(contentUrlPrefix);
     ServletUtil.appendQueryParam(buf, ServletUtil.XMLTAG_CONNECTOR_NAME,
                                  dataSource);
     ServletUtil.appendQueryParam(buf, ServletUtil.QUERY_PARAM_DOCID, docid);
+    ServletUtil.appendFragment(buf, fragment);
     return buf.toString();
   }
 

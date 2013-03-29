@@ -22,14 +22,16 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ParsedUrl {
+  // TODO (bmj): This discards fragments at the end of the URLs,
+  // which possibly makes Issue 214 (b/6514016) worse.
   private static final Pattern GOOGLECONNECTOR_URL_PATTERN =
       Pattern.compile("^" + ServletUtil.PROTOCOL + "([^./]*)(?:[^/]*)?"
-          + "(?:/[dD][oO][cC]\\?(?:[^&]*&)*[dD][oO][cC][iI][dD]=([^&]*))?");
+          + "(?:/[dD][oO][cC]\\?(?:[^&]*&)*[dD][oO][cC][iI][dD]=([^&#]*))?");
 
   private static final Pattern RETRIEVER_URL_PATTERN =
       Pattern.compile("^http.+/getDocumentContent\\?[cC][oO][nN][nN][eE][cC]"
           + "[tT][oO][rR][nN][aA][mM][eE]=([^&]*)&[dD][oO][cC][iI][dD]="
-          + "([^&]*)");
+          + "([^&#]*)");
   // TODO: We should handle the case where the query parameters are swapped.
 
   private int urlStatus = ConnectorMessageCode.SUCCESS;
