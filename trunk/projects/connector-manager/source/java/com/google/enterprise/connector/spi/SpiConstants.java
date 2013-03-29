@@ -62,6 +62,17 @@ public class SpiConstants {
   public static final String PROPNAME_DOCID = "google:docid";
 
   /**
+   * Identifies a single-valued String property. This value is used to 
+   * embellish named resources constructed from {@link #PROPNAME_DOCID},
+   * {@link #PROPNAME_FEEDTYPE}, and {@link #PROPNAME_FRAGMENT}.
+   * <p/>
+   * Value: google:fragment
+   *
+   * @since TODO(bmj)
+   */
+  public static final String PROPNAME_FRAGMENT = "google:fragment";
+
+  /**
    * Identifies a single-valued, date property that gives the last modified
    * date of a document. This property is optional but strongly recommended in
    * order to associate a specific date to the document.
@@ -307,8 +318,9 @@ public class SpiConstants {
    * used to identify the document URL from which the ACL is inherited from.
    * <p/>
    * This property takes precedence over values specified by
-   * {@link #PROPNAME_ACLINHERITFROM_DOCID} and
-   * {@link #PROPNAME_ACLINHERITFROM_FEEDTYPE}.
+   * {@link #PROPNAME_ACLINHERITFROM_DOCID},
+   * {@link #PROPNAME_ACLINHERITFROM_FEEDTYPE}, and
+   * {@link #PROPNAME_ACLINHERITFROM_FRAGMENT}.
    * <p/>
    * Value: google:aclinheritfrom
    *
@@ -349,6 +361,25 @@ public class SpiConstants {
    */
   public static final String PROPNAME_ACLINHERITFROM_FEEDTYPE =
       "google:aclinheritfrom:feedtype";
+
+  /**
+   * Identifies a single-valued String property. This value is used to 
+   * embellish the ACL named resource from which the ACL is inherited from.
+   * <p/>
+   * {@link #PROPNAME_ACLINHERITFROM_DOCID},
+   * {@link #PROPNAME_ACLINHERITFROM_FEEDTYPE}, and
+   * {@link #PROPNAME_ACLINHERITFROM_FRAGMENT} are used to construct an
+   * {@link #PROPNAME_ACLINHERITFROM} named resource.
+   * <p/>
+   * This property is ignored if {@link #PROPNAME_ACLINHERITFROM} is also
+   * specified.
+   * <p/>
+   * Value: google:aclinheritfrom:fragment
+   *
+   * @since TODO(bmj)
+   */
+  public static final String PROPNAME_ACLINHERITFROM_FRAGMENT =
+      "google:aclinheritfrom:fragment";
 
   /**
    * Prefix added to the front of the group ACL Scope ID when creating a group
