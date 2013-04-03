@@ -16,11 +16,8 @@ package com.google.enterprise.connector.pusher;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.google.enterprise.connector.common.AlternateContentFilterInputStream;
 import com.google.enterprise.connector.common.BigEmptyDocumentFilterInputStream;
@@ -84,17 +81,15 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
   /** If true, ACLs support inheritance and deny; otherwise legacy ACLs. */
   private final boolean supportsInheritedAcls;
 
-  private static Predicate<String> aclPredicate = new Predicate<String>() {
-    public boolean apply(String input) {
-      return (input.startsWith(SpiConstants.ACL_PROPNAME_PREFIX) ||
-              input.startsWith(SpiConstants.GROUP_ROLES_PROPNAME_PREFIX) ||
-              input.startsWith(SpiConstants.USER_ROLES_PROPNAME_PREFIX));
-    }
-  };
-
   private static UniqueIdGenerator uniqueIdGenerator = new UuidGenerator();
+
   private static StripAclDocumentFilter stripAclDocumentFilter =
       new StripAclDocumentFilter();
+  private static ExtractedAclDocumentFilter extractedAclDocumentFilter =
+      new ExtractedAclDocumentFilter();
+  private static InheritFromExtractedAclDocumentFilter
+      inheritFromExtractedAclDocumentFilter =
+      new InheritFromExtractedAclDocumentFilter();
 
   private boolean isClosed;
   private int recordCount;
@@ -373,6 +368,19 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
         xmlWrapAclRecord(document);
         recordCount++;
         return;
+      } else if (feedType == FeedType.CONTENTURL
+                 && DocUtils.hasAclProperties(document)) {
+        // GSA 7.0 does not support case-sensitivity or namespaces in ACLs
+        // during crawl-time. So we have to send the ACLs at feed-time.
+        // But the crawl-time metadata overwrites the feed-time ACLs.
+        // The proposed escape is to send a named resource ACL in the feed for
+        // each document, and at crawl-time return an empty ACL that inherits
+        // from the corresponding named resource ACL.
+        xmlWrapAclRecord(
+            extractedAclDocumentFilter.newDocumentFilter(document));
+        recordCount++;
+        document =
+            inheritFromExtractedAclDocumentFilter.newDocumentFilter(document);
       }
     }
     xmlWrapDocumentRecord(document);
@@ -473,7 +481,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
 
     prefix.append(">\n");
 
-    if (aclRecordAllowed && hasAclProperties(document)) {
+    if (aclRecordAllowed && DocUtils.hasAclProperties(document)) {
       xmlWrapAclRecord(prefix, document);
       // Prevent ACLs from showing up in metadata.
       document = stripAclDocumentFilter.newDocumentFilter(document);
@@ -542,14 +550,6 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
         LOGGER.log(Level.WARNING, "Exception while constructing feed log:", e);
       }
     }
-  }
-
-  /**
-   * Returns true if the document exposes any acl properties, false otherwise.
-   */
-  private static boolean hasAclProperties(Document document)
-      throws RepositoryException {
-    return Iterables.any(document.getPropertyNames(), aclPredicate);
   }
 
   /*
@@ -810,27 +810,6 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
           new CompressedFilterInputStream(content, ioBufferSize), wrapLines);
     } else {
       return new Base64FilterInputStream(content, wrapLines);
-    }
-  }
-
-  /**
-   * A DocumentFilter that strips all ACL properties from the Document's
-   * Properties, since the ACLs are being sent in a separate tag from generic
-   * metadata.
-   */
-  private static class StripAclDocumentFilter extends AbstractDocumentFilter {
-    private static Predicate<String> predicate = Predicates.not(aclPredicate);
-
-    @Override
-    public Set<String> getPropertyNames(Document source)
-        throws RepositoryException {
-      return Sets.filter(source.getPropertyNames(), predicate);
-    }
-
-    @Override
-    public Property findProperty(Document source, String name)
-        throws RepositoryException {
-      return (predicate.apply(name)) ? source.findProperty(name) : null;
     }
   }
 }

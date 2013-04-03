@@ -14,6 +14,8 @@
 
 package com.google.enterprise.connector.pusher;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterables;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.RepositoryDocumentException;
@@ -209,5 +211,21 @@ public class DocUtils {
     String searchUrl =
         getOptionalString(document, SpiConstants.PROPNAME_SEARCHURL);
     return (searchUrl == null) ? FeedType.CONTENT : FeedType.WEB;
+  }
+
+  public static Predicate<String> aclPredicate = new Predicate<String>() {
+    public boolean apply(String input) {
+      return (input.startsWith(SpiConstants.ACL_PROPNAME_PREFIX) ||
+              input.startsWith(SpiConstants.GROUP_ROLES_PROPNAME_PREFIX) ||
+              input.startsWith(SpiConstants.USER_ROLES_PROPNAME_PREFIX));
+    }
+  };
+  
+  /**
+   * Returns true if the document exposes any acl properties, false otherwise.
+   */
+  public static boolean hasAclProperties(Document document)
+      throws RepositoryException {
+    return Iterables.any(document.getPropertyNames(), aclPredicate);
   }
 }
