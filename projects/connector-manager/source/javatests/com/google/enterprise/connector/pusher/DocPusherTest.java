@@ -20,6 +20,7 @@ import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.mock.MockRepository;
 import com.google.enterprise.connector.mock.MockRepositoryEventList;
 import com.google.enterprise.connector.mock.jcr.MockJcrQueryManager;
+import com.google.enterprise.connector.pusher.ExtractedAclDocumentFilter;
 import com.google.enterprise.connector.pusher.Pusher.PusherStatus;
 import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.spi.Document;
@@ -118,6 +119,16 @@ public class DocPusherTest extends TestCase {
   private void setContentUrlPrefix(String contentUrlPrefix) {
     this.contentUrlPrefix = contentUrlPrefix;
     Context.getInstance().setContentUrlPrefix(contentUrlPrefix);
+  }
+
+  private String buildContentUrl(String docid) {
+    return contentUrlPrefix + "?"
+        + ServletUtil.XMLTAG_CONNECTOR_NAME + "=junit&amp;"
+        + ServletUtil.QUERY_PARAM_DOCID + "=" + docid;
+  }
+
+  private String buildContentUrl(String docid, String fragment) {
+    return buildContentUrl(docid) + "#" + fragment;
   }
 
   /**
@@ -985,9 +996,7 @@ public class DocPusherTest extends TestCase {
 
     // ContentURL feed.
     String resultXML = feedJsonEvent(json1);
-    assertStringContains("url=\"" + contentUrlPrefix + "?"
-        + ServletUtil.XMLTAG_CONNECTOR_NAME + "=junit&amp;"
-        + ServletUtil.QUERY_PARAM_DOCID + "=doc1\"", resultXML);
+    assertStringContains("url=\"" + buildContentUrl("doc1") + "\"", resultXML);
     assertStringContains("displayurl=\"http://www.sometesturl.com/test\"",
         resultXML);
     assertStringContains("<feedtype>metadata-and-url</feedtype>", resultXML);
@@ -998,9 +1007,8 @@ public class DocPusherTest extends TestCase {
 
     // ContentURL feed - docid has special chars (Issue 214 regression).
     resultXML = feedJsonEvent(json2);
-    assertStringContains("url=\"" + contentUrlPrefix + "?"
-        + ServletUtil.XMLTAG_CONNECTOR_NAME + "=junit&amp;"
-        + ServletUtil.QUERY_PARAM_DOCID + "=doc1%26evil%2Fvalue\"", resultXML);
+    assertStringContains("url=\"" + buildContentUrl("doc1%26evil%2Fvalue")
+        + "\"", resultXML);
     assertStringContains("displayurl=\"http://www.sometesturl.com/test\"",
         resultXML);
     assertStringContains("<feedtype>metadata-and-url</feedtype>", resultXML);
@@ -3018,9 +3026,7 @@ public class DocPusherTest extends TestCase {
     props.put(SpiConstants.PROPNAME_ACLINHERITFROM_DOCID, parentId);
     props.put(SpiConstants.PROPNAME_ACLINHERITFROM_FEEDTYPE,
               SpiConstants.FeedType.CONTENTURL.toString());
-    String parentUrl = contentUrlPrefix + "?"
-        + ServletUtil.XMLTAG_CONNECTOR_NAME + "=junit&amp;"
-        + ServletUtil.QUERY_PARAM_DOCID + "=" + parentId;
+    String parentUrl = buildContentUrl(parentId);
     testAclInheritFrom(props, parentUrl);
     testDocumentAclInheritFrom(props, parentUrl);
   }
@@ -3213,6 +3219,7 @@ public class DocPusherTest extends TestCase {
     String parentUrl = "http://foo/parent-doc";
     Map<String, Object> props = getTestAclDocumentConfig();
     props.put(SpiConstants.PROPNAME_ACLINHERITFROM, parentUrl);
+
     props.put(SpiConstants.PROPNAME_FEEDTYPE,
         SpiConstants.FeedType.CONTENT.toString());
     Document document = ConnectorTestUtils.createSimpleDocument(props);
@@ -3256,6 +3263,44 @@ public class DocPusherTest extends TestCase {
       fail("Excepted SkippedDocumentException");
     } catch (SkippedDocumentException ex) {
     }
+  }
+
+  public void testExtractAclSmartGsa() throws Exception {
+    String parentDocid = "parent-doc";
+    Map<String, Object> props = getTestAclDocumentConfig();
+    props.put(SpiConstants.PROPNAME_ACLINHERITFROM_DOCID, parentDocid);
+    props.put(SpiConstants.PROPNAME_FEEDTYPE,
+        SpiConstants.FeedType.CONTENTURL.toString());
+    Document document = ConnectorTestUtils.createSimpleDocument(props);
+    String resultXML = feedDocument(document, true);
+
+    String[] records = resultXML.split("</acl>", 2);
+    // Should get ACL entry, followed by RECORD entry.
+    assertTrue(records.length == 2);
+
+    // Verify the ACL information was extracted into a separate feed record.
+    assertStringContains("<acl url=" + buildContentUrl("doc1",
+        ExtractedAclDocumentFilter.EXTRACTED_ACL_FRAGMENT)
+        + " inheritance-type=\"parent-overrides\" inherit-from=\""
+        + buildContentUrl(parentDocid) + "\">", records[0]);
+    assertStringContains(
+        "<principal scope=\"user\" access=\"permit\">John Doe</principal>",
+        records[0]);
+    assertStringContains(
+        "<principal scope=\"user\" access=\"deny\">Jason Wang</principal>",
+        records[0]);
+    assertStringContains(
+        "<principal scope=\"group\" access=\"permit\">Engineering</principal>",
+        records[0]);
+    assertStringNotContains("<record", records[0]);
+
+    // Verify the document record contains only InheritFrom the extracted ACL.
+    assertStringContains("<record url=" + buildContentUrl("doc1"), records[1]);
+    assertStringContains("<acl inheritance-type=\"child-overrides\" "
+         + "inherit-from=\"" + buildContentUrl("doc1",
+         ExtractedAclDocumentFilter.EXTRACTED_ACL_FRAGMENT) + "\">",
+         records[1]);
+    assertStringNotContains("<principal ", records[1]);
   }
 
   private static class MockIdGenerator implements UniqueIdGenerator {
