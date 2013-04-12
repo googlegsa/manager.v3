@@ -83,6 +83,9 @@ public class GetDocumentContent extends HttpServlet {
   private static final String EXTERNAL_METADATA_HEADER =
       "X-Gsa-External-Metadata";
 
+  /** Size of I/O buffers used to transfer content. */
+  private static final int BUFFER_SIZE = 256 * 1024;
+
   private static boolean useCompression = false;
   private static FeedConnection feedConnection;
   /**
@@ -249,6 +252,10 @@ public class GetDocumentContent extends HttpServlet {
       res.setHeader(EXTERNAL_METADATA_HEADER, getMetadataHeader(metadata));
     }
 
+    // Configure chunked transfer.
+    res.setHeader("Transfer-Encoding", "chunked");
+    res.setBufferSize(BUFFER_SIZE);
+
     OutputStream out = res.getOutputStream();
     if (useCompression) {
       // Select Content-Encoding based on the client's Accept-Encoding header.
@@ -260,8 +267,6 @@ public class GetDocumentContent extends HttpServlet {
       }
       res.setHeader("Vary", "Accept-Encoding");
     }
-
-    // TODO: Configure chunked output?
 
     try {
       int code = handleDoGet(manager, connectorName, docid, out);
@@ -352,12 +357,13 @@ public class GetDocumentContent extends HttpServlet {
         // will return an AlternateContent InputStream.
         in = new ByteArrayInputStream(new byte[0]);
       }
-      byte[] buffer = new byte[1024 * 1024];
+      byte[] buffer = new byte[BUFFER_SIZE];
       int bytes;
       do {
         bytes = in.read(buffer);
         if (bytes > 0) {
           out.write(buffer, 0, bytes);
+          out.flush();
         }
       } while (bytes != -1);
       return HttpServletResponse.SC_OK;

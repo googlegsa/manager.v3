@@ -3279,9 +3279,9 @@ public class DocPusherTest extends TestCase {
     assertTrue(records.length == 2);
 
     // Verify the ACL information was extracted into a separate feed record.
-    assertStringContains("<acl url=" + buildContentUrl("doc1",
+    assertStringContains("<acl url=\"" + buildContentUrl("doc1",
         ExtractedAclDocumentFilter.EXTRACTED_ACL_FRAGMENT)
-        + " inheritance-type=\"parent-overrides\" inherit-from=\""
+        + "\" inheritance-type=\"parent-overrides\" inherit-from=\""
         + buildContentUrl(parentDocid) + "\">", records[0]);
     assertStringContains(
         "<principal scope=\"user\" access=\"permit\">John Doe</principal>",
@@ -3295,7 +3295,8 @@ public class DocPusherTest extends TestCase {
     assertStringNotContains("<record", records[0]);
 
     // Verify the document record contains only InheritFrom the extracted ACL.
-    assertStringContains("<record url=" + buildContentUrl("doc1"), records[1]);
+    assertStringContains("<record url=\"" + buildContentUrl("doc1") + "\"",
+                         records[1]);
     assertStringContains("<acl inheritance-type=\"child-overrides\" "
          + "inherit-from=\"" + buildContentUrl("doc1",
          ExtractedAclDocumentFilter.EXTRACTED_ACL_FRAGMENT) + "\">",
