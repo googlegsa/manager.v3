@@ -17,6 +17,8 @@ package com.google.enterprise.connector.spi;
 /**
  * A {@link Session} should implement this optional interface if it allows
  * {@link Retriever} access to document content.
+ *
+ * @since 3.0
  */
 public interface RetrieverAware {
   /**

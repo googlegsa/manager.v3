@@ -52,6 +52,8 @@ import java.util.regex.PatternSyntaxException;
      &lt;property name "skipOnMatch" value="false"/&gt;
    &lt;/bean&gt;
    </code></pre>
+ *
+ * @since 2.8.4
  */
 public class SkipDocumentFilter extends AbstractDocumentFilter {
 
@@ -145,19 +147,22 @@ public class SkipDocumentFilter extends AbstractDocumentFilter {
    * Checks for a pattern match on the source property values.
    */
   private class SkipProperty implements Property {
-    private Property property;
+    private final Property property;
 
     public SkipProperty(Property property) {
       this.property = property;
     }
 
-    /* @Override */
+    @Override
     public Value nextValue() throws RepositoryException {
       // Look for a pattern match in any of the property values.
       Value value = property.nextValue();
       if (value != null) {
-        // TODO: pattern.matches() or pattern.find()??
-        if (pattern.matcher(value.toString()).find() ^ !skipOnMatch) {
+        // Use matcher.matches() or matcher.find()?  I choose the latter
+        // because you can get the behaviour of the former using \A and \Z
+        // in the pattern.
+        if (pattern.matcher(Strings.nullToEmpty(value.toString())).find()
+            ^ !skipOnMatch) {
           throw new SkippedDocumentException("Skipping document based upon "
               + "property " + propertyName + " value: " + value.toString());
         }

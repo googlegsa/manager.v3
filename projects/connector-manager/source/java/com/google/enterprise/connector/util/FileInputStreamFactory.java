@@ -22,6 +22,8 @@ import java.io.InputStream;
 /**
  * An {@link InputStreamFactory} that manufactures
  * {@link FileInputStream FileInputStreams}.
+ *
+ * @since 3.0
  */
 public class FileInputStreamFactory implements InputStreamFactory {
   private final File file;
@@ -45,7 +47,7 @@ public class FileInputStreamFactory implements InputStreamFactory {
     this(new File(filename));
   }
 
-  /* @Override */
+  @Override
   public InputStream getInputStream() throws IOException {
     return new FileInputStream(file);
   }

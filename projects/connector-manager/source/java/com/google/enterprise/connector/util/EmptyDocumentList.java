@@ -17,7 +17,11 @@ package com.google.enterprise.connector.util;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.DocumentList;
 
-/** An empty document list that provides a new checkpoint. */
+/**
+ * An empty document list that provides a new checkpoint.
+ *
+ * @since 3.0
+ */
 public class EmptyDocumentList implements DocumentList {
   private final String checkpoint;
 

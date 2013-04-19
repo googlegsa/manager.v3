@@ -18,6 +18,7 @@ package com.google.enterprise.connector.spi;
  * HasTimeout.  This should be implemented by a TraversalManager if it wants
  * to supply the ConnectorManager with its own timeout value.
  *
+ * @since 1.0
  * @deprecated This Interface has been fully deprecated.  It is never called.
  */
 @Deprecated

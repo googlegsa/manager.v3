@@ -20,6 +20,7 @@ import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.manager.MockManager;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.PersistentStoreException;
+import com.google.enterprise.connector.scheduler.HostLoadManager;
 import com.google.enterprise.connector.scheduler.Schedule;
 import com.google.enterprise.connector.spi.XmlUtils;
 
@@ -128,8 +129,9 @@ public class SetScheduleTest extends TestCase {
     }
     assertEquals(connectorName.toLowerCase(), schedule.getConnectorName());
     assertEquals(isDisabled, schedule.isDisabled());
-    assertEquals((Strings.isNullOrEmpty(load) ? 0 : Integer.parseInt(load)),
-                 schedule.getLoad());
+    assertEquals((Strings.isNullOrEmpty(load)
+                  ? HostLoadManager.DEFAULT_HOST_LOAD
+                  : Integer.parseInt(load)), schedule.getLoad());
     if (Strings.isNullOrEmpty(retryDelay)) {
       assertEquals(Schedule.defaultRetryDelayMillis(),
                    schedule.getRetryDelayMillis());
@@ -213,8 +215,7 @@ public class SetScheduleTest extends TestCase {
       if (Strings.isNullOrEmpty(connectorName)) {
         return null;
       }
-      String schedString = schedules.get(connectorName.toLowerCase());
-      return (schedString == null) ? null : new Schedule(schedString);
+      return Schedule.of(schedules.get(connectorName.toLowerCase()));
     }
   }
 }

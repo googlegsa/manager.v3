@@ -21,6 +21,8 @@ import com.google.enterprise.connector.spi.RepositoryException;
 /**
  * Interface for a DocumentAcceptor - something that takes spi Documents
  * and sends them along on their way.
+ *
+ * @since 3.0
  */
 // NOTE: This looks A LOT like Pusher.
 public interface DocumentAcceptor {

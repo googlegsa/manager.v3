@@ -14,6 +14,8 @@
 
 package com.google.enterprise.connector.instantiator;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.google.enterprise.connector.common.PropertiesException;
 import com.google.enterprise.connector.common.PropertiesUtils;
@@ -34,6 +36,7 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
@@ -202,8 +205,8 @@ final class InstanceInfo {
     String name = connectorName;
     Resource prototype = null;
     if (config.getXml() != null) {
-      prototype = new ByteArrayResourceHack(config.getXml().getBytes(),
-                                            TypeInfo.CONNECTOR_INSTANCE_XML);
+      prototype = getByteArrayResource(config.getXml(), Charsets.UTF_8.name(),
+          TypeInfo.CONNECTOR_INSTANCE_XML);
     }
     if (prototype == null) {
       prototype = typeInfo.getConnectorInstancePrototype();
@@ -264,39 +267,48 @@ final class InstanceInfo {
    * Return a Spring Resource containing the InstanceInfo
    * configuration Properties.
    */
-  private static Resource getPropertiesResource(String connectorName,
+  @VisibleForTesting
+  static Resource getPropertiesResource(String connectorName,
       Map<String, String> configMap) throws InstanceInfoException {
     Properties properties = (configMap == null)
         ? new Properties() : PropertiesUtils.fromMap(configMap);
     try {
-      return new ByteArrayResourceHack(
-          PropertiesUtils.storeToString(properties, null).getBytes(),
-          connectorName + ".properties");
+      return getByteArrayResource(
+          PropertiesUtils.storeToString(properties, null),
+          PropertiesUtils.PROPERTIES_ENCODING, connectorName + ".properties");
     } catch (PropertiesException e) {
       throw new PropertyProcessingInternalFailureException(e,
           connectorName);
     }
   }
 
-  /* This subclass of ByteArrayResource attempts to circumvent a bug in
+  /*
+   * Wraps a string as a Spring resource. This function has two purposes:
+   * 1. Convert the string to a byte array using the given encoding.
+   * 2. Workaround a bug in Spring where Resource.getFilename() is required.
+   *
+   * We override ByteArrayResource.getFilename, because
    * org.springframework.core.io.support.PropertiesLoaderSupport.loadProperties()
-   * that tries to fetch the filename extension of the properties Resource
+   * tries to fetch the filename extension of the properties Resource
    * in an attempt to determine whether to parse the properties as XML or
    * traditional syntax.  ByteArrayResource throws an exception when
    * getFilename() is called because there is no associated filename.
-   * TODO: Remove this when Spring Framework SPR-5068 gets fixed:
+   * TODO: Remove this hack when Spring Framework SPR-5068 gets fixed:
    * http://jira.springframework.org/browse/SPR-5068
    */
-  private static class ByteArrayResourceHack extends ByteArrayResource {
-    private final String filename;
-    public ByteArrayResourceHack(byte[] byteArray, String filename) {
-      super(byteArray);
-      this.filename = filename;
+  private static ByteArrayResource getByteArrayResource(String value,
+      String encoding, final String filename) {
+    byte[] byteArray;
+    try {
+      byteArray = value.getBytes(encoding);
+    } catch (IOException e) {
+      throw new AssertionError(e);
     }
-    @Override
-    public String getFilename() {
-      return filename;
-    }
+    return new ByteArrayResource(byteArray) {
+      public String getFilename() {
+        return filename;
+      }
+    };
   }
 
   /**

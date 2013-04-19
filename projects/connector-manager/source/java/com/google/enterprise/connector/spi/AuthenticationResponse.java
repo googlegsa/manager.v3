@@ -20,6 +20,8 @@ import java.util.Collection;
  * The response from the
  * {@link AuthenticationManager#authenticate AuthenticationManager.authenticate}
  * method.
+ *
+ * @since 1.0
  */
 public class AuthenticationResponse {
 

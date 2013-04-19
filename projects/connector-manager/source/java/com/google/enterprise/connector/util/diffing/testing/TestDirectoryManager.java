@@ -25,6 +25,8 @@ import java.util.UUID;
 
 /**
  * Utility methods for tests to access temporary directories.
+ *
+ * @since 2.8
  */
 public class TestDirectoryManager  {
   private final File tmpDir;

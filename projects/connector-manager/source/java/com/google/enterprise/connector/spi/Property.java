@@ -31,6 +31,8 @@ package com.google.enterprise.connector.spi;
  *   doSomething(v);
  * }
  * </pre>
+ *
+ * @since 1.0
  */
 public interface Property {
 

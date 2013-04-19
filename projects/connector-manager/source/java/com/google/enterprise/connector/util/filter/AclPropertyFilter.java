@@ -14,12 +14,14 @@
 
 package com.google.enterprise.connector.util.filter;
 
+import com.google.common.base.Strings;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.Principal;
 import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.SimpleProperty;
 import com.google.enterprise.connector.spi.SpiConstants;
+import com.google.enterprise.connector.spi.SpiConstants.PrincipalType;
 import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.spi.SpiConstants.CaseSensitivityType;
 import com.google.enterprise.connector.spiimpl.PrincipalValue;
@@ -50,6 +52,8 @@ import java.util.logging.Logger;
      &lt;property name="caseSensitivityType" value="everything-case-insensitive"/&gt;
    &lt;/bean&gt;
    </code></pre>
+ *
+ * @since 3.0
  */
 public class AclPropertyFilter extends AbstractDocumentFilter {
 
@@ -60,9 +64,18 @@ public class AclPropertyFilter extends AbstractDocumentFilter {
   /** Case sensitivity type flag. */
   protected CaseSensitivityType caseSensitivityType;
 
+  /** user domain. */
+  protected String userDomain;
+  protected boolean overwriteUserDomain = false;
+
+  private static final Set<String> aclUsers;
   private static final Set<String> aclUsersGroups;
 
   static {
+    aclUsers = new HashSet<String>();
+    aclUsers.add(SpiConstants.PROPNAME_ACLUSERS);
+    aclUsers.add(SpiConstants.PROPNAME_ACLDENYUSERS);
+
     aclUsersGroups = new HashSet<String>();
     aclUsersGroups.add(SpiConstants.PROPNAME_ACLUSERS);
     aclUsersGroups.add(SpiConstants.PROPNAME_ACLDENYUSERS);
@@ -91,6 +104,26 @@ public class AclPropertyFilter extends AbstractDocumentFilter {
   }
 
   /**
+   * Sets the domain for users for ACL Principals.
+   * 
+   * @param userDomain the domain name to set for user principals.
+   */
+  public void setUserDomain(String userDomain) {
+    this.userDomain = Strings.emptyToNull(userDomain);
+  }
+
+  /**
+   * Sets the overwrite value flag.
+   * 
+   * @param overwriteUserDomain the overwrite flag. Overwrites the existing
+   *        domain values if true, or preserves existing domain values 
+   *        if false.
+   */
+  public void setOverwriteUserDomain(boolean overwriteUserDomain) {
+    this.overwriteUserDomain = overwriteUserDomain;
+  }
+
+  /**
    * Finds a {@link Property} by {@code name}. If the requested property is 
    * ACL property, then checks for case sensitivity type and modifies the value
    * if different than specified in filter. Returns ACL property with modified 
@@ -100,7 +133,7 @@ public class AclPropertyFilter extends AbstractDocumentFilter {
   @Override
   public Property findProperty(Document source, String name)
       throws RepositoryException {
-    if (caseSensitivityType == null) {
+    if (caseSensitivityType == null && userDomain == null) {
       return source.findProperty(name);
     }
 
@@ -112,24 +145,56 @@ public class AclPropertyFilter extends AbstractDocumentFilter {
             ? ((PrincipalValue) value).getPrincipal()
             : new Principal(value.toString().trim());
 
-        if (principal.getCaseSensitivityType() != caseSensitivityType) {
+        if (caseSensitivityType != null &&
+            principal.getCaseSensitivityType() != caseSensitivityType) {
           if (LOGGER.isLoggable(Level.FINEST)) {
             LOGGER.finest("Changing " + principal.getName()
                 + " caseSensitivityType to " + caseSensitivityType);
           }
 
           Principal newPrincipal = new Principal(principal.getPrincipalType(),
-              principal.getNamespace(), principal.getName(),
+              principal.getNamespace(), getPrincipalName(principal, name),
                   caseSensitivityType);
 
           newValues.add(new PrincipalValue(newPrincipal));
         } else {
-          newValues.add(new PrincipalValue(principal));
+          Principal newPrincipal = new Principal(principal.getPrincipalType(),
+                  principal.getNamespace(), getPrincipalName(principal, name),
+                  principal.getCaseSensitivityType());
+          newValues.add(new PrincipalValue(newPrincipal));
         }
       }
       return new SimpleProperty(newValues);
     } else {
       return source.findProperty(name);
+    }
+  }
+
+  private String getPrincipalName(Principal principal, String name) {
+    String principalName = principal.getName();
+    if (aclUsers.contains(name)) {
+      if (userDomain == null
+          || principal.getPrincipalType() == PrincipalType.UNQUALIFIED) {
+        return principalName;
+      } else {
+        String userName;
+        if (principalName.contains("\\")) {
+          userName = principalName.substring(principalName.indexOf("\\") + 1);
+        } else if (principalName.contains("@")) {
+          userName = principalName.substring(0, principalName.indexOf("@"));
+        } else {
+          userName = principalName;
+        }
+        if (overwriteUserDomain) {
+          return userDomain + "\\" + userName;
+        } else if (principalName.contains("\\")) {
+          return principalName;
+        } else {
+          return userDomain + "\\" + userName;
+        }
+      }
+    } else {
+      return principalName;
     }
   }
 }
