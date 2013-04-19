@@ -15,6 +15,8 @@
 package com.google.enterprise.connector.scheduler;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.enterprise.connector.spi.TraversalSchedule;
 
 import java.util.Calendar;
@@ -58,12 +60,15 @@ public class Schedule implements TraversalSchedule {
   public static final int POLLING_DISABLED = -1;
 
   /**
-   * Construct an empty, disabled Schedule.
+   * Construct a disabled Schedule, with otherwise default values.
    */
   public Schedule() {
-    this(null, true, 0, -1, null);
+    // Note that GSA's have difficulties with schedules that contain no time
+    // intervals. So even though this is disabled, it has the default 0-0 time
+    // interval.
+    this(null, true, HostLoadManager.DEFAULT_HOST_LOAD, defaultRetryDelayMillis,
+         "0-0");
   }
-
 
   /**
    * Construct a Schedule for a given Connector.
@@ -86,13 +91,12 @@ public class Schedule implements TraversalSchedule {
   /**
    * Create a schedule object.
    *
-   * @param scheduleProto String readable by readString() method
+   * @param schedule String readable by readString() method
    */
-  public Schedule(String scheduleProto) {
-    if (scheduleProto == null || scheduleProto.trim().length() == 0) {
-      scheduleProto = "#:0:-1:";
-    }
-    readString(scheduleProto);
+  public Schedule(String schedule) {
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(schedule),
+        "Schedule string may not be null or empty.");
+    readString(schedule);
   }
 
   /**
@@ -105,6 +109,39 @@ public class Schedule implements TraversalSchedule {
   }
 
   /**
+   * Return the default retryDelayMillis value.
+   * This can be defined in the Context by specifying
+   * TraversalDelaySecondsDefault value.
+   */
+  public static int defaultRetryDelayMillis() {
+    return defaultRetryDelayMillis;
+  }
+
+  /**
+   * Factory method for optionally creating a Schedule from a string.
+   *
+   * @param schedule A stringified Schedule, may be null or empty.
+   * @return a Schedule parsed from the supplied schedule string, or
+   *         {@code null} if that string was null or empty.
+   */
+  public static Schedule of(String schedule) {
+    return (Strings.isNullOrEmpty(schedule)) ? null : new Schedule(schedule);
+  }
+
+  /**
+   * Returns a string representation of the supplied Schedule.
+   * If the supplied Schedule is {@code null}, then return a string
+   * representation of a default, disabled schedule.  This is for 
+   * the benefit of GSA's that cannot handle a {@code null} Schedule.
+   *
+   * @param schedule a Schedule, may be null.
+   * @return string representation of schedule
+   */
+  public static String toString(Schedule schedule) {
+    return ((schedule == null) ? new Schedule() : schedule).toString();
+  }
+
+  /**
    * Return a legacy representation of the supplied schedule.
    * Legacy schedules do not have a delay field or disabled flag.
    * Only sent to a GSA that does not understand the delay field.
@@ -113,18 +150,10 @@ public class Schedule implements TraversalSchedule {
    * @return a schedule string without the delay field or disabled flag.
    */
   public static String toLegacyString(String scheduleStr) {
-    Schedule schedule = new Schedule(scheduleStr);
+    Schedule schedule = Strings.isNullOrEmpty(scheduleStr) 
+        ? new Schedule() : new Schedule(scheduleStr);
     return (schedule.connectorName + ":" + schedule.load + ":"
             + schedule.getTimeIntervals());
-  }
-
-  /**
-   * Return the default retryDelayMillis value.
-   * This can be defined in the Context by specifying
-   * TraversalDelaySecondsDefault value.
-   */
-  public static int defaultRetryDelayMillis() {
-    return defaultRetryDelayMillis;
   }
 
   /**
@@ -214,7 +243,7 @@ public class Schedule implements TraversalSchedule {
     if (disabled) {
       buf.append('#');
     }
-    buf.append(connectorName);
+    buf.append(Strings.nullToEmpty(connectorName));
     buf.append(":" + load);
     buf.append(":" + retryDelayMillis);
     buf.append(":" + getTimeIntervals());

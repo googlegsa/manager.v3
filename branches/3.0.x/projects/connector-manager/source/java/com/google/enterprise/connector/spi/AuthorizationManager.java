@@ -19,6 +19,8 @@ import java.util.Collection;
 /**
  * Authorization Manager. All calls related to authorizing particular users
  * to see particular documents pass through this interface.
+ *
+ * @since 1.0
  */
 public interface AuthorizationManager {
 

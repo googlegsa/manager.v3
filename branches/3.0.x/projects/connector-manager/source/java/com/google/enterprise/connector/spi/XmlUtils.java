@@ -19,6 +19,8 @@ import java.io.IOException;
 /**
  * Utility class containing methods used to encode and construct XML for the
  * Connector Manager.
+ *
+ * @since 1.1.0
  */
 public class XmlUtils {
 

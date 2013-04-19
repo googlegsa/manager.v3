@@ -98,6 +98,8 @@ import java.util.regex.PatternSyntaxException;
  * <p>
  * When used with binary values, the entire value is buffered and the
  * modified value is stored in a {@code byte} array.
+ *
+ * @since 2.8
  */
 /*
  * TODO: Find a way to process the InputStreams without buffering them,
@@ -270,12 +272,12 @@ public class ModifyPropertyFilter extends AbstractDocumentFilter {
       Value originalValue = null;
       Value modifiedValue = null;
       if (value instanceof BinaryValue) {
-        Property prop = source.findProperty(SpiConstants.PROPNAME_MIMETYPE);
-        if (prop == null){
+        String mimeType =
+            Value.getSingleValueString(source, SpiConstants.PROPNAME_MIMETYPE);
+        if (Strings.isNullOrEmpty(mimeType)) {
           // There is no mimetype property in the document.
           return source.findProperty(name);
         }
-        String mimeType = prop.nextValue().toString();
         if (mimeType.contains(";")) {
           mimeType = mimeType.substring(0, mimeType.indexOf(";"));
         }
@@ -311,7 +313,7 @@ public class ModifyPropertyFilter extends AbstractDocumentFilter {
               + " data with " + encoding, e);
         }
       } else {
-        original = value.toString();
+        original = Strings.nullToEmpty(value.toString());
         originalValue = value;
         modified = pattern.matcher(original).replaceAll(replacement);
         modifiedValue = Value.getStringValue(modified);
@@ -359,7 +361,7 @@ public class ModifyPropertyFilter extends AbstractDocumentFilter {
 
   @Override
   public String toString() {
-    StringBuffer buf = new StringBuffer();
+    StringBuilder buf = new StringBuilder();
     buf.append(super.toString());
     buf.append(": (");
     buf.append(propertyNames);

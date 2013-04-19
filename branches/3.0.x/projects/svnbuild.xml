@@ -139,4 +139,42 @@
     <echo message="svn.branch.version set to '${svn.branch.version}'" />
   </target>
 
+  <!-- TODO(jlacey): These are shared, but not really svn-related, and
+       should be moved to a separate shared build file. -->
+  <macrodef name="repackage-zip"
+            description="Repackage release candidate ZIP file for release.">
+    <attribute name="destfile" description="Repackaged release ZIP file."/>
+    <attribute name="src" description="Original downloads ZIP file."/>
+    <attribute name="downloads.prefix" description="Original name prefix."/>
+    <attribute name="repackage.prefix" description="Repackaged name prefix."/>
+    <sequential>
+      <zip destfile="@{destfile}">
+        <mappedresources>
+          <zipfileset src="@{src}" />
+          <globmapper from="@{downloads.prefix}/*"
+                      to="@{repackage.prefix}/*" />
+        </mappedresources>
+      </zip>
+      <checksum algorithm="SHA-1" file="@{destfile}" />
+    </sequential>
+  </macrodef>
+
+  <macrodef name="repackage-downloads"
+            description="Repackage release candidate files for release.">
+    <attribute name="downloads.dir" description="Directory for all files."/>
+    <attribute name="downloads.prefix" description="Original name prefix."/>
+    <attribute name="repackage.prefix" description="Repackaged name prefix."/>
+    <sequential>
+    <echo message="Repackaging ${downloads.prefix} as ${repackage.prefix}." />
+    <repackage-zip destfile="@{downloads.dir}/@{repackage.prefix}-src.zip"
+                   src="@{downloads.dir}/@{downloads.prefix}-src.zip"
+                   downloads.prefix="@{downloads.prefix}"
+                   repackage.prefix="@{repackage.prefix}" />
+    <repackage-zip destfile="@{downloads.dir}/@{repackage.prefix}.zip"
+                   src="@{downloads.dir}/@{downloads.prefix}.zip"
+                   downloads.prefix="@{downloads.prefix}"
+                   repackage.prefix="@{repackage.prefix}" />
+    </sequential>
+  </macrodef>
+
 </project>

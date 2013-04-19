@@ -16,7 +16,11 @@ package com.google.enterprise.connector.util;
 
 import com.google.enterprise.connector.spi.TraversalContext;
 
-/** A simple timer to control traversal loops and avoid batch timeouts. */
+/**
+ * A simple timer to control traversal loops and avoid batch timeouts.
+ *
+ * @since 3.0
+ */
 public class TraversalTimer {
   private static long defaultTime = 60L * 4L;
 

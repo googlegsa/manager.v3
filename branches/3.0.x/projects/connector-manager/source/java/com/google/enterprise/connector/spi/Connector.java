@@ -27,6 +27,8 @@ package com.google.enterprise.connector.spi;
  * access to all other services. Note, this is presumably "superuser", one-time
  * only authentication, not authentication for a given user query session (which
  * takes place via the {@link AuthenticationManager}).
+ *
+ * @since 1.0
  */
 public interface Connector {
 

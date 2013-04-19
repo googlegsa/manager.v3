@@ -183,6 +183,8 @@ package com.google.enterprise.connector.spi;
  * as the primary link on a results page. This should <strong>not</strong>
  * be used with {@link SpiConstants#PROPNAME_SEARCHURL}.</li>
  * </ul>
+ *
+ * @since 1.0
  */
 public interface TraversalManager {
 

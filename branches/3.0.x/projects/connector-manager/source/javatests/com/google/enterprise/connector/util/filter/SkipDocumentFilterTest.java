@@ -38,12 +38,18 @@ public class SkipDocumentFilterTest extends DocumentFilterTest {
 
   /** Creates a SkipDocumentFilter. */
   private Document createFilter(
-      String propName, String pattern, boolean skipOnMatch) {
+        String propName, String pattern, boolean skipOnMatch) {
+    return createFilter(propName, pattern, skipOnMatch, createDocument());
+  }
+
+  /** Creates a SkipDocumentFilter. */
+  private Document createFilter(
+      String propName, String pattern, boolean skipOnMatch, Document source) {
     SkipDocumentFilter factory = new SkipDocumentFilter();
     factory.setPropertyName(propName);
     factory.setPattern(pattern);
     factory.setSkipOnMatch(skipOnMatch);
-    return factory.newDocumentFilter(createDocument());
+    return factory.newDocumentFilter(source);
   }
 
   /** Creates a Properties subset with specified properties removed. */
@@ -177,6 +183,30 @@ public class SkipDocumentFilterTest extends DocumentFilterTest {
   public void testNoSkipOnMatchingMultipleValues() throws Exception {
     Document filter = createFilter(PROP6, PATTERN, false);
     checkDocument(filter, createProperties());
+  }
+
+  /** Test that the filter doesn't skip if a value is null. */
+  public void testNoSkipOnNullValue() throws Exception {
+    Map<String, List<Value>> props = createPropertiesSubset(PROP1);
+    props.put(PROP1, valueList((String) null));
+    Document filter =
+        createFilter(PROP1, PATTERN, true, new SimpleDocument(props));
+    checkDocument(filter, props);
+  }
+
+  /** Test that null values match an empty pattern. */
+  public void testSkipOnNullValue() throws Exception {
+    Map<String, List<Value>> props = createPropertiesSubset(PROP1);
+    props.put(PROP1, valueList((String) null));
+    Document filter =
+        createFilter(PROP1, "\\A\\Z", true, new SimpleDocument(props));
+    try {
+      checkProperty(filter.findProperty(PROP1));
+      fail("SkippedDocumentException expected");
+    } catch (SkippedDocumentException expected) {
+      // Expected.
+    }
+    checkDocumentProperties(filter, createPropertiesSubset(PROP1));
   }
 
   /** Test toString(). */

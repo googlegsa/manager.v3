@@ -31,10 +31,12 @@ import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.SecureDocument;
 import com.google.enterprise.connector.spi.SkippedDocumentException;
 import com.google.enterprise.connector.spi.SpiConstants;
+import com.google.enterprise.connector.spi.SpiConstants.ContentEncoding;
 import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
 import com.google.enterprise.connector.traversal.FileSizeLimitInfo;
+import com.google.enterprise.connector.util.Base64;
 import com.google.enterprise.connector.util.Clock;
 import com.google.enterprise.connector.util.SAXParseErrorHandler;
 import com.google.enterprise.connector.util.SystemClock;
@@ -67,6 +69,7 @@ import java.util.Set;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.SimpleFormatter;
+import java.util.zip.Inflater;
 
 import javax.jcr.query.QueryManager;
 
@@ -595,6 +598,111 @@ public class DocPusherTest extends TestCase {
       assertStringContains("action=\"delete\"", resultXML);
     } catch (Exception e) {
       fail("No content document take");
+    }
+  }
+
+  public void testSimpleContent() throws Exception {
+    Map<String, Object> props = getTestDocumentConfig();
+    props.put(
+        SpiConstants.PROPNAME_ACTION, SpiConstants.ActionType.ADD.toString());
+    Document document = ConnectorTestUtils.createSimpleDocument(props);
+
+    String resultXML = feedCompressedDocument(document);
+    assertStringContains(
+        "last-modified=\"Thu, 01 Jan 1970 01:00:00 GMT\"", resultXML);
+    assertStringContains("url=" + googleConnectorUrl("doc1"), resultXML);
+    assertStringContains("action=\"add\"", resultXML);
+    assertStringContains(
+        "<content encoding=\"" + ContentEncoding.BASE64COMPRESSED + "\">",
+        resultXML);
+  }
+
+  public void testSimpleBinaryContent() throws Exception {
+    String docId = "doc1";
+    String content = "hello doc";
+    String binaryContent = Base64.encode(content.getBytes());
+
+    Map<String, Object> props = new HashMap<String, Object>();
+    props.put(SpiConstants.PROPNAME_DOCID, docId);
+    props.put(SpiConstants.PROPNAME_MIMETYPE, "text/plain");
+    props.put(SpiConstants.PROPNAME_DISPLAYURL,
+        "http://www.comtesturl.com/test?" + docId);
+    props.put(
+        SpiConstants.PROPNAME_ACTION, SpiConstants.ActionType.ADD.toString());
+    // add base64binary encoded content and verify in return results
+    props.put(SpiConstants.PROPNAME_CONTENT_ENCODING,
+        ContentEncoding.BASE64BINARY.toString());
+    props.put(SpiConstants.PROPNAME_CONTENT, binaryContent);
+    Document document = ConnectorTestUtils.createSimpleDocument(props);
+
+    String resultXml = feedDocument(document);
+    assertStringContains("url=" + googleConnectorUrl(docId), resultXml);
+    assertStringContains("action=\"add\"", resultXml);
+    String contentTag =
+        "<content encoding=\"" + ContentEncoding.BASE64BINARY + "\">";
+    String contentEndTag = "</content>";
+    assertStringContains(contentTag, resultXml);
+
+    // decode content and verify with the original content
+    String resultContent = resultXml.substring(
+        resultXml.indexOf(contentTag) + contentTag.length(),
+        resultXml.indexOf(contentEndTag));
+    byte[] decodedContent = Base64.decode(resultContent);
+    assertEquals(content, new String(decodedContent));
+  }
+
+  public void testSimpleCompressedContent() throws Exception {
+    String docId = "doc1";
+    String content = "hello doc";
+    String binaryCompressedContent = "eJzLSM3JyVdIyU8GABFtA2s=";
+
+    Map<String, Object> props = new HashMap<String, Object>();
+    props.put(SpiConstants.PROPNAME_DOCID, docId);
+    props.put(SpiConstants.PROPNAME_MIMETYPE, "text/plain");
+    props.put(SpiConstants.PROPNAME_DISPLAYURL,
+        "http://www.comtesturl.com/test?" + docId);
+    props.put(
+        SpiConstants.PROPNAME_ACTION, SpiConstants.ActionType.ADD.toString());
+    // add base64compressed encoded content and verify in return results
+    props.put(SpiConstants.PROPNAME_CONTENT_ENCODING,
+        ContentEncoding.BASE64COMPRESSED.toString());
+    props.put(SpiConstants.PROPNAME_CONTENT, binaryCompressedContent);
+    Document document = ConnectorTestUtils.createSimpleDocument(props);
+
+    String resultXml = feedCompressedDocument(document);
+    assertStringContains("url=" + googleConnectorUrl(docId), resultXml);
+    assertStringContains("action=\"add\"", resultXml);
+    String contentTag =
+        "<content encoding=\"" + ContentEncoding.BASE64COMPRESSED + "\">";
+    String contentEndTag = "</content>";
+    assertStringContains(contentTag, resultXml);
+
+    // decode and decompress content, and verify with the original content
+    String resultContent = resultXml.substring(
+        resultXml.indexOf(contentTag) + contentTag.length(),
+        resultXml.indexOf(contentEndTag));
+    byte[] decodedContent = Base64.decode(resultContent);
+    byte[] decompressed = new byte[512];
+    Inflater decompressor = new Inflater();
+    decompressor.setInput(decodedContent);
+    int len = decompressor.inflate(decompressed);
+    decompressor.end();
+    assertEquals(content, new String(decompressed, 0, len, "UTF-8"));
+  }
+
+  public void testSimpleCompressedContentDocumentException() throws Exception {
+    Map<String, Object> props = getTestDocumentConfig();
+    props.put(
+        SpiConstants.PROPNAME_ACTION, SpiConstants.ActionType.ADD.toString());
+    props.put(SpiConstants.PROPNAME_CONTENT_ENCODING,
+        ContentEncoding.BASE64COMPRESSED.toString());
+    Document document = ConnectorTestUtils.createSimpleDocument(props);
+
+    try {
+      String resultXml = feedDocument(document);
+      fail("testSimpleCompressedContent take failed");
+    } catch (RepositoryDocumentException expected) {
+      assertNotNull(expected);
     }
   }
 
@@ -1437,6 +1545,34 @@ public class DocPusherTest extends TestCase {
     MockFeedConnection mockFeedConnection = new MockFeedConnection() {
       public boolean supportsInheritedAcls() {
         return supportsInheritedAcls;
+      }
+    };
+
+    DocPusher dpusher =
+        new DocPusher(mockFeedConnection, "junit", fsli, dff, contentUrlPrefix);
+    assertEquals(PusherStatus.OK, dpusher.take(document, null));
+    dpusher.flush();
+    return mockFeedConnection.getFeed();
+  }
+
+  /**
+   * Utility method to take the given Document and feed it through a
+   * DocPusher and return the resulting XML feed string.
+   */
+  private String feedCompressedDocument(Document document) throws Exception {
+    return takeDocument(document, dfc, false);
+  }
+
+  /**
+   * Utility method to take the given Document and DocumentFilterFactory
+   * and feed it through a DocPusher and return the resulting XML feed
+   * string. It uses MockFeedConnection with default base64compressed encoding.
+   */
+  private String takeDocument(Document document, DocumentFilterFactory dff,
+      final boolean supportsInheritedAcls) throws Exception {
+    MockFeedConnection mockFeedConnection = new MockFeedConnection() {
+      public String getContentEncodings() {
+        return ContentEncoding.BASE64COMPRESSED.toString();
       }
     };
 
@@ -2838,6 +2974,69 @@ public class DocPusherTest extends TestCase {
     testDocumentAclInheritFrom(props, parentUrl);
   }
 
+  /**
+   * Tests switching FeedConnections between one that supports
+   * inherited ACLs and one that does not. Make sure it sends the correctly
+   * formatted feed to each.
+   */
+  public void testSwitchGSAs() throws Exception {
+    SwitchableFeedConnection feedConnection = new SwitchableFeedConnection();
+    feedConnection.setSupportsInheritedAcls(true);
+
+    // Set artificially low feedsize to force 1 document per feed.
+    FileSizeLimitInfo fileSizeLimit = new FileSizeLimitInfo();
+    fileSizeLimit.setMaxFeedSize(32);
+    fileSizeLimit.setMaxDocumentSize(1024 * 1024);
+
+    DocPusher dpusher = new DocPusher(feedConnection, "junit",
+        fileSizeLimit, dfc, contentUrlPrefix);
+
+    String parentId = "parent-doc";
+    Map<String, Object> props = getTestAclDocumentConfig();
+    props.put(SpiConstants.PROPNAME_FEEDTYPE,
+              SpiConstants.FeedType.CONTENT.toString());
+    props.put(SpiConstants.PROPNAME_ACLINHERITFROM_DOCID, parentId);
+    String parentUrl = ServletUtil.PROTOCOL + "junit.localhost"
+        + ServletUtil.DOCID + parentId;
+
+    // Feed the document and check that the feed has inherited ACLs.
+    Document document = ConnectorTestUtils.createSimpleDocument(props);
+    assertEquals(PusherStatus.OK, dpusher.take(document, null));
+    while (dpusher.checkSubmissions() > 0) {
+      Thread.sleep(100);
+    }
+    String resultXML = feedConnection.getFeed();
+
+    // This should be an acl feed record, followed by a regular feed record.
+    assertStringContains("<acl inheritance-type=", resultXML);
+    assertStringContains("<principal scope=", resultXML);
+    assertStringContains("</acl>", resultXML);
+    assertStringContains("<record url=", resultXML);
+    assertStringContains("</record>", resultXML);
+    assertStringNotContains("<meta name=\"google:aclinheritancetype\"",
+                            resultXML);
+    assertStringNotContains("<meta name=\"google:aclusers\"", resultXML);
+    assertStringNotContains("<meta name=\"google:aclgroups\"", resultXML);
+
+    // Now turn off inheritance, feed the document again and check that the
+    // feed has no inherited ACLs.
+    feedConnection.setSupportsInheritedAcls(false);
+    assertEquals(PusherStatus.OK, dpusher.take(document, null));
+    dpusher.flush();
+    resultXML = feedConnection.getFeed();
+
+    // This should have no acl feed record, only a regular feed record with
+    // ACL metadata.
+    assertStringNotContains("<acl inheritance-type=", resultXML);
+    assertStringNotContains("<principal scope=", resultXML);
+    assertStringNotContains("</acl>", resultXML);
+    assertStringContains("<record url=", resultXML);
+    assertStringContains("</record>", resultXML);
+    assertStringContains("<meta name=\"google:aclinheritancetype\"", resultXML);
+    assertStringContains("<meta name=\"google:aclusers\"", resultXML);
+    assertStringContains("<meta name=\"google:aclgroups\"", resultXML);
+  }
+
   /** Returns a document config with some ACL properties. */
   private Map<String, Object> getTestAclDocumentConfig() {
     Map<String, Object> props = getTestDocumentConfig();
@@ -2994,6 +3193,19 @@ public class DocPusherTest extends TestCase {
     // Return a predictable non-unique ID to ease expected output comparisons.
     public String uniqueId() {
       return "test";
+    }
+  }
+
+  /**
+   * A FeedConnection that can toggle inherited ACL support.
+   */
+  private static class SwitchableFeedConnection extends MockFeedConnection {
+    private boolean supportsInheritedAcls = true;
+    public boolean supportsInheritedAcls() {
+      return supportsInheritedAcls;
+    }
+    public void setSupportsInheritedAcls(boolean supportsInheritedAcls) {
+      this.supportsInheritedAcls = supportsInheritedAcls;
     }
   }
 

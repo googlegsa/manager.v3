@@ -38,6 +38,9 @@ public class HostLoadManager implements LoadManager {
 
   private static final long MINUTE_IN_MILLIS = 60 * 1000L;
 
+  // TODO(bmj): Raise this to 1000 when the GSA moves there.
+  public static final int DEFAULT_HOST_LOAD = 500;
+
   /**
    * The batch size as calculated by the last call to determineBatchSize().
    */
@@ -57,7 +60,7 @@ public class HostLoadManager implements LoadManager {
    * backlog feed processing on the GSA.
    * Large batches may consume excessive local and Repository resources.
    */
-  private int batchSize = 500;
+  private int batchSize = 1000;
 
   /** The smallest allowed batch size. */
   private int minBatchSize;
@@ -77,7 +80,7 @@ public class HostLoadManager implements LoadManager {
   /**
    * The load is the target number of documents per period to process.
    */
-  private int load = 500;
+  private int load = DEFAULT_HOST_LOAD;
 
   /**
    * The target traversal rate, based upon the load and the period.

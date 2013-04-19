@@ -92,5 +92,7 @@
      &lt;/constructor-arg&gt;
    &lt;/bean&gt;
    </code></pre>
+ *
+ * @since 2.8
  */
 package com.google.enterprise.connector.util.filter;

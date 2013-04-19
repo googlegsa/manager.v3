@@ -21,6 +21,8 @@ package com.google.enterprise.connector.spi;
  *
  * If an implementation overrides the {# toString} method, it should
  * not include the password in the returned string.
+ *
+ * @since 1.0
  */
 public interface AuthenticationIdentity {
 

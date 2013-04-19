@@ -34,6 +34,8 @@ import java.util.logging.Logger;
 
 /**
  * Detector for MIME type based on file name and content.
+ *
+ * @since 3.0
  */
 public class MimeTypeDetector {
   private static final Logger LOGGER =

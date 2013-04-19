@@ -21,6 +21,10 @@ import com.google.common.base.Predicates;
 import com.google.common.base.Strings;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
+import com.google.enterprise.connector.common.AlternateContentFilterInputStream;
+import com.google.enterprise.connector.common.BigEmptyDocumentFilterInputStream;
+import com.google.enterprise.connector.common.CompressedFilterInputStream;
+import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.Principal;
@@ -31,6 +35,7 @@ import com.google.enterprise.connector.spi.SimpleProperty;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.SpiConstants.AclAccess;
 import com.google.enterprise.connector.spi.SpiConstants.AclScope;
+import com.google.enterprise.connector.spi.SpiConstants.ContentEncoding;
 import com.google.enterprise.connector.spi.SpiConstants.DocumentType;
 import com.google.enterprise.connector.spi.SpiConstants.FeedType;
 import com.google.enterprise.connector.spi.Value;
@@ -38,8 +43,10 @@ import com.google.enterprise.connector.spi.XmlUtils;
 import com.google.enterprise.connector.spi.SpiConstants.ActionType;
 import com.google.enterprise.connector.spiimpl.PrincipalValue;
 import com.google.enterprise.connector.spiimpl.ValueImpl;
+import com.google.enterprise.connector.traversal.FileSizeLimitInfo;
 import com.google.enterprise.connector.util.UniqueIdGenerator;
 import com.google.enterprise.connector.util.UuidGenerator;
+import com.google.enterprise.connector.util.Base64FilterInputStream;
 import com.google.enterprise.connector.util.filter.AbstractDocumentFilter;
 
 import java.io.ByteArrayOutputStream;
@@ -68,6 +75,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
   private final int maxFeedSize;
   private final Appendable feedLogBuilder;
   private final String feedId;
+  private final FileSizeLimitInfo fileSizeLimit;
 
   /**
    * The prefix that will be used for contentUrl generation.
@@ -77,6 +85,9 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
    * {@code http://localhost:8080/connector-manager/getDocumentContent}
    */
   private final String contentUrlPrefix;
+
+  /** Encoding method to use for Document content. */
+  private final ContentEncoding contentEncoding;
 
   /** If true, ACLs support inheritance and deny; otherwise legacy ACLs. */
   private final boolean supportsInheritedAcls;
@@ -140,9 +151,6 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
   private static final String XML_ENCODING = "encoding";
   private static final String XML_OVERWRITEACLS = "overwrite-acls";
 
-  public static final String XML_BASE64BINARY = "base64binary";
-  public static final String XML_BASE64COMPRESSED = "base64compressed";
-
   private static final String CONNECTOR_AUTHMETHOD = "httpbasic";
 
   private static final String XML_ACL = "acl";
@@ -152,19 +160,30 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
   private static final String XML_SCOPE = "scope";
   private static final String XML_ACCESS = "access";
 
-  public XmlFeed(String dataSource, FeedType feedType, int maxFeedSize,
-      Appendable feedLogBuilder, String contentUrlPrefix,
-      boolean supportsInheritedAcls) throws IOException {
-    super(maxFeedSize);
-    this.maxFeedSize = maxFeedSize;
+  private final String  supportedEncodings;
+
+  public XmlFeed(String dataSource, FeedType feedType, 
+      FileSizeLimitInfo fileSizeLimit, Appendable feedLogBuilder,
+      String contentUrlPrefix, FeedConnection feedConnection)
+      throws IOException {
+    super((int) fileSizeLimit.maxFeedSize());
+    this.maxFeedSize = (int) fileSizeLimit.maxFeedSize();
     this.dataSource = dataSource;
     this.feedType = feedType;
+    this.fileSizeLimit = fileSizeLimit;
     this.feedLogBuilder = feedLogBuilder;
     this.recordCount = 0;
     this.isClosed = false;
     this.feedId = uniqueIdGenerator.uniqueId();
     this.contentUrlPrefix = contentUrlPrefix;
-    this.supportsInheritedAcls = supportsInheritedAcls;
+    this.supportsInheritedAcls = feedConnection.supportsInheritedAcls();
+
+    supportedEncodings = feedConnection.getContentEncodings().toLowerCase();
+    // Check to see if the GSA supports compressed content feeds.
+    this.contentEncoding = (
+        supportedEncodings.indexOf(ContentEncoding.BASE64COMPRESSED.toString())
+        >= 0) ? ContentEncoding.BASE64COMPRESSED : ContentEncoding.BASE64BINARY;
+
     String prefix = xmlFeedPrefix(dataSource, feedType);
     write(prefix.getBytes(XML_DEFAULT_ENCODING));
   }
@@ -199,7 +218,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
     } else if (bytesLeft > (10 * avgRecordSize)) {
       return false;
     } else {
-      // If its more 90% full, then its consider it full.
+      // If its more 90% full, then consider it full.
       return (bytesLeft < (maxFeedSize / 10));
     }
   }
@@ -221,11 +240,10 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
   /**
    * Add the XML record for a given document to the Feed.
    */
-  public synchronized void addRecord(Document document,
-      InputStream contentStream, String contentEncoding)
+  public synchronized void addRecord(Document document)
       throws RepositoryException, IOException {
     // Build an XML feed record for the document.
-    xmlWrapRecord(document, contentStream, contentEncoding);
+    xmlWrapRecord(document);
   }
 
   /*
@@ -352,8 +370,8 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
    * @throws IOException only from Appendable, and that can't really
    *         happen when using StringBuilder.
    */
-  private void xmlWrapRecord(Document document, InputStream contentStream,
-      String contentEncoding) throws RepositoryException, IOException {
+  private void xmlWrapRecord(Document document)
+      throws RepositoryException, IOException {
     if (supportsInheritedAcls) {
       String docType = DocUtils.getOptionalString(document,
           SpiConstants.PROPNAME_DOCUMENTTYPE);
@@ -364,7 +382,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
         return;
       }
     }
-    xmlWrapDocumentRecord(document, contentStream, contentEncoding);
+    xmlWrapDocumentRecord(document);
     recordCount++;
   }
 
@@ -374,12 +392,26 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
    * @throws IOException only from Appendable, and that can't really
    *         happen when using StringBuilder.
    */
-  private void xmlWrapDocumentRecord(Document document, InputStream contentStream,
-      String contentEncoding) throws RepositoryException, IOException {
-
+  private void xmlWrapDocumentRecord(Document document)
+      throws RepositoryException, IOException {
     boolean metadataAllowed = true;
-    boolean contentAllowed = (feedType == FeedType.CONTENT &&
-                              contentStream != null);
+    boolean contentAllowed = (feedType == FeedType.CONTENT);
+
+    ContentEncoding documentContentEncoding = null;
+    String documentContentEncodingStr = DocUtils.getOptionalString(
+        document, SpiConstants.PROPNAME_CONTENT_ENCODING);
+
+    if (!Strings.isNullOrEmpty(documentContentEncodingStr)) {
+      documentContentEncoding =
+          ContentEncoding.findContentEncoding(documentContentEncodingStr);
+      if (documentContentEncoding == ContentEncoding.ERROR
+          || supportedEncodings.indexOf(documentContentEncodingStr) < 0) {
+        String message =
+            "Unsupported content encoding: " + documentContentEncodingStr;
+        LOGGER.log(Level.WARNING, message);
+        throw new RepositoryDocumentException(message);
+      }
+    }
 
     StringBuilder prefix = new StringBuilder();
     prefix.append("<").append(XML_RECORD);
@@ -446,7 +478,12 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
       if (v != null) {
         boolean isPublic = v.toBoolean();
         if (!isPublic) {
-          XmlUtils.xmlAppendAttr(XML_AUTHMETHOD, CONNECTOR_AUTHMETHOD, prefix);
+          String authmethod = DocUtils.getOptionalString(document,
+              SpiConstants.PROPNAME_AUTHMETHOD);
+          if (Strings.isNullOrEmpty(authmethod)){
+            authmethod = CONNECTOR_AUTHMETHOD;
+          }
+          XmlUtils.xmlAppendAttr(XML_AUTHMETHOD, authmethod, prefix);
         }
       }
     } catch (IllegalArgumentException e) {
@@ -466,23 +503,33 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
 
     StringBuilder suffix = new StringBuilder();
 
+    ContentEncoding alternateEncoding = (documentContentEncoding == null) 
+        ? contentEncoding : documentContentEncoding;
+  
     // If including document content, wrap it with <content> tags.
     if (contentAllowed) {
       prefix.append("<");
       prefix.append(XML_CONTENT);
-      XmlUtils.xmlAppendAttr(XML_ENCODING, contentEncoding, prefix);
+      XmlUtils.xmlAppendAttr(XML_ENCODING,
+          alternateEncoding.toString(), prefix);
       prefix.append(">\n");
 
       suffix.append('\n');
       XmlUtils.xmlAppendEndTag(XML_CONTENT, suffix);
     }
 
-    XmlUtils.xmlAppendEndTag(XML_RECORD, suffix);
-
     write(prefix.toString().getBytes(XML_DEFAULT_ENCODING));
     if (contentAllowed) {
-      readFrom(contentStream);
+      InputStream contentStream = getContentStream(
+          document, documentContentEncoding, alternateEncoding);
+      try {
+        readFrom(contentStream);
+      } finally {
+        contentStream.close();
+      }
     }
+
+    XmlUtils.xmlAppendEndTag(XML_RECORD, suffix);
     write(suffix.toString().getBytes(XML_DEFAULT_ENCODING));
 
     if (feedLogBuilder != null) {
@@ -882,6 +929,51 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
     } catch (MalformedURLException e) {
       throw new RepositoryDocumentException(
           "Supplied " + description + " URL " + url + " is malformed.", e);
+    }
+  }
+
+  /**
+   * Return an InputStream for the Document's content.
+   */
+  private InputStream getContentStream(Document document,
+      ContentEncoding documentContentEncoding,
+      ContentEncoding alternateEncoding) throws RepositoryException {
+    InputStream contentStream;
+      InputStream original = new BigEmptyDocumentFilterInputStream(
+          DocUtils.getOptionalStream(document, SpiConstants.PROPNAME_CONTENT),
+          fileSizeLimit.maxDocumentSize());
+      InputStream encodedContentStream;
+      if (documentContentEncoding == null) {
+        encodedContentStream = getEncodedStream(contentEncoding, 
+            original, (Context.getInstance().getTeedFeedFile() != null),
+            1024 * 1024);
+      } else {
+        encodedContentStream = original;
+      }
+
+      InputStream encodedAlternateStream = getEncodedStream(alternateEncoding, 
+          AlternateContentFilterInputStream.getAlternateContent(
+          DocUtils.getOptionalString(document, SpiConstants.PROPNAME_TITLE), 
+          DocUtils.getOptionalString(document, SpiConstants.PROPNAME_MIMETYPE)),
+          false, 2048);
+
+      return new AlternateContentFilterInputStream(
+          encodedContentStream, encodedAlternateStream, this);
+  }
+
+  /**
+   * Wrap the content stream with the suitable encoding (either
+   * Base64 or Base64Compressed, based upon GSA encoding support.
+   */
+  // TODO: Don't compress tiny content or already compressed data
+  // (based on mimetype).  This is harder than it sounds.
+  private InputStream getEncodedStream(ContentEncoding contentEncoding,
+      InputStream content, boolean wrapLines, int ioBufferSize) {
+    if (contentEncoding == ContentEncoding.BASE64COMPRESSED) {
+      return new Base64FilterInputStream(
+          new CompressedFilterInputStream(content, ioBufferSize), wrapLines);
+    } else {
+      return new Base64FilterInputStream(content, wrapLines);
     }
   }
 
