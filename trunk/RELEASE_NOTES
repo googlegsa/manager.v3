@@ -11,6 +11,64 @@ issues and work-arounds.
 Web Site: http://code.google.com/p/google-enterprise-connector-manager/
 
 
+Release 3.0.6, 20 April 2013
+============================
+
+Introduction
+------------
+This is a patch release that fixes a few small problems discovered in the
+the previous release. Users of previous releases are encouraged to upgrade.
+
+Summary of Changes
+------------------
+Fix Issue 6513938: Allow the connector to specify a document's content encoding
+                   with a "google:contentEncoding" property.  This allows the
+                   connector to return content that has already been encoded in
+                   one of the supported content encodings (e.g. base64binary).
+
+Fix issue 6734754: GSA cannot handle null Schedule.  The GSA, while claiming
+                   to support null or empty schedules, actually does not.
+                   If a connector does not have a schedule, getConnectorStatus
+                   servlet will supply a schedule with default load, retryDelay,
+                   and interval, but disabled.
+
+Fix issue 7040140: The GetDocumentContent servlet should provide Last-Modified
+                   date in HttpResponse.
+
+Fix issue 7766078: Reduce the default feed backlog configuration parameters.
+                   The default feed.backlog.ceiling dropped from 10000 to 1000.
+                   The default feed.backlog.floor dropped from 1000 to 200.
+                   The default feed.backlog.interval dropped from 900 to 120
+                   seconds.
+
+Fix issue 7928861: Avoid unordered snapshots in the snapshot files of Diffing
+                   Connectors.
+
+Fix Issue 8078850: Add a configuration option to AclPropertyFilter to specify
+                   a domain for the users in Prinicipals.
+
+Fix issue 8207127: Reduce the memory footprint of DocumentHandle
+                   serialization for Diffing connectors.
+
+Fix issue 8237465: Connector instantiation would fail with non-ASCII
+                   characters in the advanced properties XML.
+
+Fix Issue 8394155: SkipDocumentFilter and ModifyPropertyFilter would throw
+                   NullPointerException if the target property has a null
+                   string value.
+
+Fix Issue 8461333: Add google:authmethod. Added an optional, single-valued
+                   string property, google:authmethod, to specify the
+                   authentication method. Users can override the default
+                   (httpbasic) by adding an AddPropertyFilter to set
+                   google:authmethod in a connector's advanced configuration:
+   <bean class="com.google.enterprise.connector.util.filter.AddPropertyFilter">
+      <property name="propertyName" value="google:authmethod"/>
+      <property name="propertyValue" value="ntlm"/>
+      <property name="overwrite" value="true"/>
+   </bean>
+
+
 Release 3.0.4, 19 November 2012
 ===============================
 
