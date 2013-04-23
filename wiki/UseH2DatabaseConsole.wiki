@@ -10,7 +10,7 @@ This is a set of simple instructions on how to use the H2 database management co
 
 
 
-* Installation
+== Installation ==
 
 Install the software using the Windows Installer (if you did not yet do that).
 Download Link - http://www.h2database.com/html/main.html
