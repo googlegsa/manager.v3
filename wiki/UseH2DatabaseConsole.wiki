@@ -28,7 +28,7 @@ Also, a new browser page should open with the URL http://localhost:8082. You may
 
 == Login ==
 
-# NOTE - You may need to stop the connector service to view the user datastore
+#NOTE - You may need to stop the connector service to view the user datastore
 # Select - Generic H2 (Embedded)
 # Leave Driver Class at default value  - org.h2.Driver
 # Set JDBC URL
