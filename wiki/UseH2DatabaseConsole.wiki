@@ -63,26 +63,33 @@ TO BE CONFIRMED (use at your own risk for now):
 
  # To delete User data store related tables and index run the following SQL statement 
 
-{{{ TRUNCATE TABLE User_Group_Memberships;}}}
+{{{ 
+TRUNCATE TABLE User_Group_Memberships;
+}}}
 
-H2 DB browsing
+= H2 DB browsing = 
 
+{{{
 java -cp C:\wherever\tomcat\webapps\connector-manager\WEB-INF\lib\h2.jar org.h2.tools.Console
+}}}
 
 It will start a server on local port 8082 and you can browse the database on http://localhost:8082/
 
-Using Command line:
+== Using Command line: ==
 
 c:\Program Files (x86)\H2\bin>java -cp h2*.jar org.h2.tools.Shell
 You will be prompted with URL, driver user name/password. 
 Remember to put “;” at the end of each query you issue.
-Common Queries
+
+== Common Queries ==
 
 Find a user
 
+{{{
 select * from user_group_memberships where spusername like '%username%’
+}}}
 
-Case sensitivity - 2.x (3.x not case sensitive)
+== Case sensitivity - 2.x (3.x not case sensitive)==
 
 
 The lookup of local SharePoint User Group Memberships by the SharePoint connector is case sensitive.
@@ -107,19 +114,21 @@ Then it IGNORECASE=TRUE will kick in and you are all set.
 ****
 if you haven't already deleted the DB, there is a way to change the existing DB:
 
+{{{
 ALTER TABLE USER_GROUP_MEMBERSHIPS ALTER COLUMN SPUSERNAME VARCHAR_IGNORECASE(256);
+}}}
 
 
-DB Backup
+== DB Backup ==
 
 Reference: http://www.h2database.com/html/tutorial.html#upgrade_backup_restore
 
 A command like:
 
+{{{
 java -cp "C:\Program Files (x86)\GoogleConnectors_2_8_All\GSAConnectors3\Tomcat\webapps\connector-manager\WEB-INF\lib\h2.jar" org.h2.tools.Shell -url "jdbc:h2:file:C:/Program Files (x86)/GoogleConnectors_2_8_All\GSAConnectors3/Tomcat/webapps/connector-manager/WEB-INF/connector_manager.dbstore/connector-manager;AUTO_SERVER=TRUE" -user sa -sql "BACKUP TO 'c:\backup2.zip'"
+}}}
 
 Will backup the DB in live mode (while it is running) to a zip.  This zip can then restore from scratch an H2 database.
 
 This can be scheduled to run via a scheduled *.bat script the the resulting .zip should be backed up periodically.
-
-3.0 Screenshots of DB
