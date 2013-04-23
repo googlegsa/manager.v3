@@ -32,34 +32,32 @@ Also, a new browser page should open with the URL http://localhost:8082. You may
  # Select - Generic H2 (Embedded)
  # Leave Driver Class at default value  - org.h2.Driver
  # Set JDBC URL
- ## Locate the datastore... 
+ * Locate the datastore... 
 {{{/Tomcat/webapps/connector-manager/WEB-INF/connector_manager.dbstore/connector-manager
 }}} You can also find relevant information in the applicationContext.xml file 
-Look for “JDBC DataSource configuration”      
+ * Look for “JDBC DataSource configuration”      
 {{{ <prop key="jdbc.datasource.h2.url">jdbc:h2:${catalina.base}/webapps/connector-manager/WEB-INF/connector_manager.dbstore/connector-manager;AUTO_SERVER=TRUE;TRACE_LEVEL_FILE=1;MVCC=TRUE;CACHE_SIZE=131072;MAX_OPERATION_MEMORY=0</prop>
 }}}
-Specify the URL (this is just an example) : jdbc:h2:file:C:/Program Files (x86)/GoogleConnectors/Sharepoint1/Tomcat/webapps/connector-manager/WEB-INF/connector_manager.dbstore/connector-manager;AUTO_SERVER=TRUE;
+ * Specify the URL (this is just an example) : jdbc:h2:file:C:/Program Files (x86)/GoogleConnectors/Sharepoint1/Tomcat/webapps/connector-manager/WEB-INF/connector_manager.dbstore/connector-manager;AUTO_SERVER=TRUE;
 
-By default the Username is “sa” and password is blank
+ * By default the Username is “sa” and password is blank
 
-Click Connect
-You are now logged in.
-Please note that this tool doesn’t complain if it cannot find the datastore you specified. It will not complain. If you don’t see those tables mentioned below, that’s a sign.
+ # Click Connect
+ # You are now logged in.
+ # Please note that this tool doesn’t complain if it cannot find the datastore you specified. It will not complain. If you don’t see those tables mentioned below, that’s a sign.
 
-Viewing the User Group Membership Table
+== Viewing the User Group Membership Table ==
 
-You should now see the USER_GROUP_MEMBERSHIP table
-You can click on the table which will generate the following SQL statement “SELECT * FROM USER_GROUP_MEMBERSHIPS ” or type it directly in and hit Run
-You will see the following
-
-
-The table contains the username (SPUSERNAME), group name (SPGROUPNAME) and SharePoint Site (SPSITE)
-Also note that the SPUSERNAME contains the domain name to ensure the domain is set when configuring the connector for ACLs change the “Username Format in ACE” to domain\username
+ # You should now see the USER_GROUP_MEMBERSHIP table
+ # You can click on the table which will generate the following SQL statement “SELECT * FROM USER_GROUP_MEMBERSHIPS ” or type it directly in and hit Run
+ # You will see a table.
+ # The table contains the username (SPUSERNAME), group name (SPGROUPNAME) and SharePoint Site (SPSITE)
+ # Also note that the SPUSERNAME contains the domain name to ensure the domain is set when configuring the connector for ACLs change the “Username Format in ACE” to domain\username
 TO BE CONFIRMED (use at your own risk for now):
 
-To delete User data store related tables and index run the following SQL statement 
+ # To delete User data store related tables and index run the following SQL statement 
 
-TRUNCATE TABLE User_Group_Memberships;
+{{{ TRUNCATE TABLE User_Group_Memberships;}}}
 
 H2 DB browsing
 
