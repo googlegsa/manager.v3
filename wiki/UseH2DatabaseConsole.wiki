@@ -14,29 +14,30 @@ This is a set of simple instructions on how to use the H2 database management co
 
 Install the software using the Windows Installer (if you did not yet do that).
 Download Link - http://www.h2database.com/html/main.html
-Start the Console
 
+== Start the Console ==
+{{{
 Click [Start], [All Programs], [H2], and [H2 Console (Command Line)]:
+}}}
 
 
-
-A new console window appears:
-
-
-
+A new console window appears.
 
 Also, a new browser page should open with the URL http://localhost:8082. You may get a security warning from the firewall. If you don't want other computers in the network to access the database on your machine, you can let the firewall block these connections. Only local connections are required at this time.
 
 
-Login
+== Login ==
 
 NOTE - You may need to stop the connector service to view the user datastore
 Select - Generic H2 (Embedded)
 Leave Driver Class at default value  - org.h2.Driver
 Set JDBC URL
-Locate the datastore... /Tomcat/webapps/connector-manager/WEB-INF/connector_manager.dbstore/connector-manager. You can also find relevant information in the applicationContext.xml file 
+Locate the datastore... 
+{{{/Tomcat/webapps/connector-manager/WEB-INF/connector_manager.dbstore/connector-manager
+}}} You can also find relevant information in the applicationContext.xml file 
 Look for “JDBC DataSource configuration”      
- <prop key="jdbc.datasource.h2.url">jdbc:h2:${catalina.base}/webapps/connector-manager/WEB-INF/connector_manager.dbstore/connector-manager;AUTO_SERVER=TRUE;TRACE_LEVEL_FILE=1;MVCC=TRUE;CACHE_SIZE=131072;MAX_OPERATION_MEMORY=0</prop>
+{{{ <prop key="jdbc.datasource.h2.url">jdbc:h2:${catalina.base}/webapps/connector-manager/WEB-INF/connector_manager.dbstore/connector-manager;AUTO_SERVER=TRUE;TRACE_LEVEL_FILE=1;MVCC=TRUE;CACHE_SIZE=131072;MAX_OPERATION_MEMORY=0</prop>
+}}}
 Specify the URL (this is just an example) : jdbc:h2:file:C:/Program Files (x86)/GoogleConnectors/Sharepoint1/Tomcat/webapps/connector-manager/WEB-INF/connector_manager.dbstore/connector-manager;AUTO_SERVER=TRUE;
 
 By default the Username is “sa” and password is blank
