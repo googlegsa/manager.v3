@@ -42,6 +42,10 @@ public class UrlConstructorTest extends TestCase {
   private static final String PARENTID = "parent";
   private static final String WEBURL = "http://www.foo.com/bar/doc1.txt";
 
+  // TODO(bmj): GSA 7.0 strips fragments off of URLs in the feed, so we
+  // append the fragment as another query parameter until that is fixed.
+  private static final String FRAG = "&"; // "#";
+
   @Override
   protected void setUp() throws Exception {
     Context.getInstance().setContentUrlPrefix(CONTENTURL_PREFIX);
@@ -138,8 +142,27 @@ public class UrlConstructorTest extends TestCase {
   }
 
   /**
-   * Test getRecordUrl() with FeedType.CONTENT and a fragment property returns
-   * a googleconnector URL with the fragment appended.
+   * Test getRecordUrl() with FeedType.CONTENT avoid issue 214 if not
+   * an ACL record.
+   */
+  public void testGetRecordUrlFeedTypeContentAndFragmentFails()
+      throws Exception {
+    UrlConstructor urlConstructor =
+        new UrlConstructor(DATASOURCE, FeedType.CONTENT);
+    Map<String, Object> props = getDocumentProperties();
+    props.put(SpiConstants.PROPNAME_FRAGMENT, "fragment");
+    Document document = getDocument(props);
+    try {
+      urlConstructor.getRecordUrl(document, DocumentType.RECORD);
+      fail("Expected IllegalArgumentException, but got none.");
+    } catch (IllegalArgumentException expected) {
+      // Expected.
+    }
+  }
+
+  /**
+   * Test getRecordUrl() with FeedType.CONTENT, DocumentType.ACL, and a
+   * fragment property returns a googleconnector URL with the fragment appended.
    */
   public void testGetRecordUrlFeedTypeContentAndFragment() throws Exception {
     UrlConstructor urlConstructor =
@@ -148,13 +171,14 @@ public class UrlConstructorTest extends TestCase {
     props.put(SpiConstants.PROPNAME_FRAGMENT, "fragment");
     Document document = getDocument(props);
     assertEquals(ServletUtil.PROTOCOL + DATASOURCE + ".localhost"
-        + ServletUtil.DOCID + DOCID + "#" + "fragment",
-        urlConstructor.getRecordUrl(document, DocumentType.RECORD));
+        + ServletUtil.DOCID + DOCID + FRAG + "fragment",
+        urlConstructor.getRecordUrl(document, DocumentType.ACL));
   }
 
   /**
-   * Test getRecordUrl() with FeedType.CONTENT and a fragment property returns
-   * a googleconnector URL with the fragment appended and is encoded.
+   * Test getRecordUrl() with FeedType.CONTENT, DocumentType.ACL, and a
+   * fragment property returns a googleconnector URL with the fragment
+   * appended and is encoded.
    */
   public void testGetRecordUrlFeedTypeContentAndEvilFragment()
       throws Exception {
@@ -164,8 +188,8 @@ public class UrlConstructorTest extends TestCase {
     props.put(SpiConstants.PROPNAME_FRAGMENT, "slice&dice");
     Document document = getDocument(props);
     assertEquals(ServletUtil.PROTOCOL + DATASOURCE + ".localhost"
-        + ServletUtil.DOCID + DOCID + "#" + "slice%26dice",
-        urlConstructor.getRecordUrl(document, DocumentType.RECORD));
+        + ServletUtil.DOCID + DOCID + FRAG + "slice%26dice",
+        urlConstructor.getRecordUrl(document, DocumentType.ACL));
   }
 
   /** Test getRecordUrl() with FeedType.CONTENTURL returns a retriever URL */
@@ -202,7 +226,7 @@ public class UrlConstructorTest extends TestCase {
     Document document = getDocument(props);
     assertEquals(CONTENTURL_PREFIX + "?" + ServletUtil.XMLTAG_CONNECTOR_NAME
         + "=" + DATASOURCE + "&" + ServletUtil.QUERY_PARAM_DOCID + "="
-        + DOCID + "#" + "fragment",
+        + DOCID + FRAG + "fragment",
         urlConstructor.getRecordUrl(document, DocumentType.RECORD));
   }
 
@@ -219,7 +243,7 @@ public class UrlConstructorTest extends TestCase {
     Document document = getDocument(props);
     assertEquals(CONTENTURL_PREFIX + "?" + ServletUtil.XMLTAG_CONNECTOR_NAME
         + "=" + DATASOURCE + "&" + ServletUtil.QUERY_PARAM_DOCID + "="
-        + DOCID + "#" + "slice%26dice",
+        + DOCID + FRAG + "slice%26dice",
         urlConstructor.getRecordUrl(document, DocumentType.RECORD));
   }
 
@@ -294,7 +318,7 @@ public class UrlConstructorTest extends TestCase {
     props.put(SpiConstants.PROPNAME_ACLINHERITFROM_FRAGMENT, "fragment");
     Document document = getDocument(props);
     assertEquals(ServletUtil.PROTOCOL + DATASOURCE + ".localhost"
-        + ServletUtil.DOCID + PARENTID + "#" + "fragment",
+        + ServletUtil.DOCID + PARENTID + FRAG + "fragment",
         urlConstructor.getInheritFromUrl(document));
   }
 
@@ -310,7 +334,7 @@ public class UrlConstructorTest extends TestCase {
     props.put(SpiConstants.PROPNAME_ACLINHERITFROM_FRAGMENT, "slice&dice");
     Document document = getDocument(props);
     assertEquals(ServletUtil.PROTOCOL + DATASOURCE + ".localhost"
-        + ServletUtil.DOCID + PARENTID + "#" + "slice%26dice",
+        + ServletUtil.DOCID + PARENTID + FRAG + "slice%26dice",
         urlConstructor.getInheritFromUrl(document));
   }
 
@@ -356,7 +380,7 @@ public class UrlConstructorTest extends TestCase {
     Document document = getDocument(props);
     assertEquals(CONTENTURL_PREFIX + "?" + ServletUtil.XMLTAG_CONNECTOR_NAME
         + "=" + DATASOURCE + "&" + ServletUtil.QUERY_PARAM_DOCID + "="
-        + PARENTID + "#" + "fragment",
+        + PARENTID + FRAG + "fragment",
         urlConstructor.getInheritFromUrl(document));
   }
 
@@ -373,7 +397,7 @@ public class UrlConstructorTest extends TestCase {
     Document document = getDocument(props);
     assertEquals(CONTENTURL_PREFIX + "?" + ServletUtil.XMLTAG_CONNECTOR_NAME
         + "=" + DATASOURCE + "&" + ServletUtil.QUERY_PARAM_DOCID + "="
-        + PARENTID + "#" + "slice%26dice",
+        + PARENTID + FRAG + "slice%26dice",
         urlConstructor.getInheritFromUrl(document));
   }
 

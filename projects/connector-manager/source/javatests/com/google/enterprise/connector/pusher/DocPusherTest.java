@@ -128,7 +128,9 @@ public class DocPusherTest extends TestCase {
   }
 
   private String buildContentUrl(String docid, String fragment) {
-    return buildContentUrl(docid) + "#" + fragment;
+    // TODO(bmj): GSA 7.0 strips fragments off of URLs in the feed, so we
+    // append the fragment as another query parameter until that is fixed.
+    return buildContentUrl(docid) + "&amp;" /*"#"*/ + fragment;
   }
 
   /**

@@ -27,8 +27,10 @@ import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.SpiConstants.DocumentType;
 import com.google.enterprise.connector.spi.SpiConstants.FeedType;
 
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLEncoder;
 
 /**
  * Extracts specific URLs from a {@link Document} or constructs a URL
@@ -122,6 +124,13 @@ public class UrlConstructor {
       String docId = DocUtils.getOptionalString(document, docidProperty);
       String fragment = DocUtils.getOptionalString(document, fragmentProperty);
       if (docId != null) {
+        // Avoid issue 214 (b/6514016).
+        // Do not append a fragment to a non-ACL googleconnector URL.
+        if (!Strings.isNullOrEmpty(fragment) && feedType == FeedType.CONTENT
+            && documentType != DocumentType.ACL) {
+          throw new IllegalArgumentException(
+              "URL fragments are not permitted on googleconnector URLs");
+        }
         // Fabricate a URL from the docid and feedType.
         recordUrl = constructUrl(docId, fragment, feedType);
       }
@@ -158,8 +167,7 @@ public class UrlConstructor {
     buf.append(dataSource);
     buf.append(".localhost").append(ServletUtil.DOCID);
     buf.append(docid);
-    // TODO (bmj): Does this run afoul of Issue 214 (b/6514016)?
-    ServletUtil.appendFragment(buf, fragment);
+    appendPseudoFragment(buf, fragment);
     return buf.toString();
   }
 
@@ -176,7 +184,7 @@ public class UrlConstructor {
     ServletUtil.appendQueryParam(buf, ServletUtil.XMLTAG_CONNECTOR_NAME,
                                  dataSource);
     ServletUtil.appendQueryParam(buf, ServletUtil.QUERY_PARAM_DOCID, docid);
-    ServletUtil.appendFragment(buf, fragment);
+    appendPseudoFragment(buf, fragment);
     return buf.toString();
   }
 
@@ -200,6 +208,28 @@ public class UrlConstructor {
     } catch (MalformedURLException e) {
       throw new RepositoryDocumentException(
           "Supplied " + description + " URL " + url + " is malformed.", e);
+    }
+  }
+
+  /**
+   * Append a fragment to a URL, not as a fragment, but as an additional
+   * query parameter.
+   *
+   * @param url an Appendable with URL under contruction
+   * @param fragment the fragment to append to the URL.
+   */
+  // TODO(bmj): GSA 7.0 strips fragments off of URLs in the feed, so
+  // append the fragment as another query parameter until that is fixed.
+  // Then delete this and use ServletUtil.appendFragment() instead.
+  private static void appendPseudoFragment(StringBuilder url, String fragment) {
+    if (!Strings.isNullOrEmpty(fragment)) {
+      try {
+        url.append(((url.indexOf("?") == -1) ? '?' : '&'));
+        url.append(URLEncoder.encode(fragment, "UTF-8"));
+      } catch (UnsupportedEncodingException e) {
+        // Can't happen with UTF-8.
+        throw new AssertionError(e);
+      }
     }
   }
 }
