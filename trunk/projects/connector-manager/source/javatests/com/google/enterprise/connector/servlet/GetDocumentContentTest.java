@@ -34,6 +34,7 @@ import com.google.enterprise.connector.spi.MockConnector;
 import com.google.enterprise.connector.spi.MockRetriever;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.Value;
+import com.google.enterprise.connector.test.ConnectorTestUtils;
 import com.google.enterprise.connector.util.SystemClock;
 
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -134,6 +135,46 @@ public class GetDocumentContentTest extends TestCase {
     } catch (ConnectorNotFoundException expected) {
       // Expected.
     }
+  }
+
+  /**
+   * Test handleGetContentLength.
+   */
+  public void testGetContentLength() throws Exception {
+    Map<String, Object> props =
+        ConnectorTestUtils.createSimpleDocumentBasicProperties("test");
+
+    // No contentLength.
+    testGetContentLength(props, null);
+
+    // Invalid contentLength.
+    props.put(SpiConstants.PROPNAME_CONTENT_LENGTH, "foo");
+    testGetContentLength(props, null);
+
+    // Negative lengths are not allowed.
+    props.put(SpiConstants.PROPNAME_CONTENT_LENGTH, new Long(-1L));
+    testGetContentLength(props, null);
+
+    // Too big contentLength.
+    props.put(SpiConstants.PROPNAME_CONTENT_LENGTH,
+              new Long(1L + Integer.MAX_VALUE));
+    testGetContentLength(props, null);
+
+    // Acceptable contentLength.
+    props.put(SpiConstants.PROPNAME_CONTENT_LENGTH,
+              new Long(1000));
+    testGetContentLength(props, 1000);    
+
+    // Acceptable contentLength.
+    props.put(SpiConstants.PROPNAME_CONTENT_LENGTH,
+              new Long(Integer.MAX_VALUE));
+    testGetContentLength(props, Integer.MAX_VALUE);    
+  }
+
+  private void testGetContentLength(Map<String, Object> props,
+      Integer expected) throws Exception {
+    Document metadata = ConnectorTestUtils.createSimpleDocument(props);
+    assertEquals(expected, GetDocumentContent.handleGetContentLength(metadata));
   }
 
   private String connectorName = MockInstantiator.TRAVERSER_NAME1;
@@ -539,6 +580,38 @@ public class GetDocumentContentTest extends TestCase {
     MockHttpServletRequest req = createMockRequest(connectorName, docid);
     MockHttpServletResponse res = getDocumentContent(req, docid);
     assertTrue(res.getContentType().contains(SpiConstants.DEFAULT_MIMETYPE));
+  }
+
+  /**
+   * Test ContentLength.
+   */
+  public void testDoGetContentLength() throws Exception {
+    patchRealProductionManager();
+    MockHttpServletRequest req = createMockRequest(connectorName, docid);
+    MockHttpServletResponse res = getDocumentContent(req, docid);
+    assertEquals(docid.length(), res.getContentLength());
+  }
+
+  /**
+   * Test ContentLength, where document has no contentLength property.
+   */
+  public void testDoGetNoContentLength() throws Exception {
+    patchRealProductionManager();
+    String docid = MockRetriever.DOCID_NO_CONTENT;
+    MockHttpServletRequest req = createMockRequest(connectorName, docid);
+    MockHttpServletResponse res = getDocumentContent(req, " ");
+    assertEquals(0, res.getContentLength());
+  }
+
+  /**
+   * Test ContentLength, where document has zero-length content.
+   */
+  public void testDoGetEmptyContent() throws Exception {
+    patchRealProductionManager();
+    String docid = MockRetriever.DOCID_EMPTY_CONTENT;
+    MockHttpServletRequest req = createMockRequest(connectorName, docid);
+    MockHttpServletResponse res = getDocumentContent(req, " ");
+    assertEquals(0, res.getContentLength());
   }
 
   /**

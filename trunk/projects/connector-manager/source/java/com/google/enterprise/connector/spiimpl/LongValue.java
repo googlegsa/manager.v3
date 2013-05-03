@@ -18,8 +18,8 @@ public class LongValue extends ValueImpl {
 
   long longValue;
 
-  public LongValue(long bool) {
-    this.longValue = bool;
+  public LongValue(long longValue) {
+    this.longValue = longValue;
   }
 
   @Override
@@ -34,6 +34,6 @@ public class LongValue extends ValueImpl {
 
   @Override
   public boolean toBoolean() {
-    return (longValue == 0l);
+    return (longValue == 0L);
   }
 }
