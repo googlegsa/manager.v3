@@ -788,6 +788,15 @@ public class SpiConstants {
   public static final String PROPNAME_CONTAINER = "google:container";
 
   /**
+   * Optional, single-valued property to specify the length, in bytes, of the
+   * supplied content.
+   * 
+   * @since TODO(bmj)
+   */
+  public static final String PROPNAME_CONTENT_LENGTH =
+      "google:contentLength";
+
+  /**
    * Optional, single-valued property to specify the existing encoding of the 
    * supplied content, rather than letting the Connector Manager choose an 
    * encoding to apply to the supplied content.

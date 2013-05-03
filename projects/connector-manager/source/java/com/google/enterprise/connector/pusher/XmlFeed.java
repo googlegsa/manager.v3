@@ -102,6 +102,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
       SpiConstants.PROPNAME_ACLINHERITFROM_FEEDTYPE,
       SpiConstants.PROPNAME_AUTHMETHOD,
       SpiConstants.PROPNAME_CONTENT,
+      SpiConstants.PROPNAME_CONTENT_LENGTH,
       SpiConstants.PROPNAME_DOCID,
       SpiConstants.PROPNAME_DOCUMENTTYPE,
       SpiConstants.PROPNAME_FEEDTYPE,

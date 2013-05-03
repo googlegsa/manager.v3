@@ -214,14 +214,14 @@ public class GetDocumentContent extends HttpServlet {
     Map<String, List<String>> params = getQueryParams(req);
     String connectorName = ServletUtil.getFirstParameter(
         params, ServletUtil.XMLTAG_CONNECTOR_NAME);
-    NDC.pushAppend("Retrieve " + connectorName);
     String docid = ServletUtil.getFirstParameter(
         params, ServletUtil.QUERY_PARAM_DOCID);
-
     if (Strings.isNullOrEmpty(connectorName) || Strings.isNullOrEmpty(docid)) {
       res.sendError(HttpServletResponse.SC_BAD_REQUEST);
       return;
     }
+    NDC.pushAppend("Retrieve " + connectorName + " "
+                   + docid.substring(docid.lastIndexOf('/') + 1));
 
     Document metadata;
     try {
@@ -239,10 +239,14 @@ public class GetDocumentContent extends HttpServlet {
 
     // Set the Content-Type. 
     String mimeType = handleGetContentType(metadata);
-    if (LOGGER.isLoggable(Level.FINEST)) {
-      LOGGER.finest("Document Content-Type " + mimeType);
-    }
+    LOGGER.log(Level.FINEST, "Document Content-Type {0}", mimeType);
     res.setContentType(mimeType);
+
+    Integer contentLength = handleGetContentLength(metadata);
+    if (contentLength != null) {
+      LOGGER.log(Level.FINEST, "Document Content-Length {0}", contentLength);
+      res.setContentLength(contentLength);
+    }
 
     // Supply the document metadata in an X-Gsa-External-Metadata header.
     if (metadata != null) {
@@ -319,9 +323,8 @@ public class GetDocumentContent extends HttpServlet {
       Property property) throws RepositoryException {
     ValueImpl value;
     while ((value = (ValueImpl) property.nextValue()) != null) {
-      if (LOGGER.isLoggable(Level.FINEST)) {
-        LOGGER.finest("PROPERTY: " + name + " = \"" + value.toString() + "\"");
-      }
+      LOGGER.log(Level.FINEST, "PROPERTY: {0} = \"{1}\"",
+                 new Object[] { name, value.toString() });
       String valString = value.toFeedXml();
       if (!Strings.isNullOrEmpty(valString)) {
         ServletUtil.percentEncode(sb, name, valString);
@@ -440,10 +443,8 @@ public class GetDocumentContent extends HttpServlet {
       ValueImpl value = (ValueImpl)
           Value.getSingleValue(metadata, SpiConstants.PROPNAME_LASTMODIFIED);
       if (value == null) {
-        if (LOGGER.isLoggable(Level.FINEST)) {
-          LOGGER.finest("Document does not contain "
-                        + SpiConstants.PROPNAME_LASTMODIFIED);
-        }
+        LOGGER.log(Level.FINEST, "Document does not contain {0}",
+                   SpiConstants.PROPNAME_LASTMODIFIED);
       } else if (value instanceof DateValue) {
         // DateValues don't give direct access to their Calendar object, but
         // I can get the Calendar back out by parsing the stringized version.
@@ -451,9 +452,7 @@ public class GetDocumentContent extends HttpServlet {
         // TODO: Add a DateValue.getTimeMillis() or getCalendar() method to
         // directly access the wrapped value.
         String lastModified = ((DateValue) value).toIso8601();
-        if (LOGGER.isLoggable(Level.FINEST)) {
-          LOGGER.finest("Document last modified " + lastModified);
-        }
+        LOGGER.log(Level.FINEST, "Document last modified {0}", lastModified);
         return Value.iso8601ToCalendar(lastModified).getTimeInMillis();
       }
     } catch (RepositoryException e) {
@@ -490,6 +489,37 @@ public class GetDocumentContent extends HttpServlet {
       }
     }
     return SpiConstants.DEFAULT_MIMETYPE;
+  }
+  
+  /**
+   * Retrieves the content length of a document from a connector instance.
+   *
+   * @param metadata the Document metadata
+   * @return the content-length of the document, as an Integer, or {@code null}
+   *         if the content length is not known, less than or equal to zero,
+   *         or the value does not fit in an Integer.  Note that if the
+   *         content-length returned by the connector is zero, this returns
+   *         null, since the GSA does not support empty documents, so the
+   *         empty content will be replaced by ProductionManager with alternate
+   *         non-empty content.
+   */
+  @VisibleForTesting
+  static Integer handleGetContentLength(Document metadata) {
+    if (metadata != null) {
+      try {
+        String lengthStr = Value.getSingleValueString(metadata, 
+            SpiConstants.PROPNAME_CONTENT_LENGTH);
+        if (!Strings.isNullOrEmpty(lengthStr)) {
+          Integer length = Integer.valueOf(lengthStr);
+          return (length > 0) ? length : null;
+        }
+      } catch (NumberFormatException e) {
+        LOGGER.log(Level.WARNING, "Failed to retrieve content-length", e);
+      } catch (RepositoryException e) {
+        LOGGER.log(Level.WARNING, "Failed to retrieve content-length", e);
+      }
+    }
+    return null;
   }
   
   @VisibleForTesting

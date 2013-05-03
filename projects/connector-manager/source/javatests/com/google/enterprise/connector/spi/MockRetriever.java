@@ -71,23 +71,23 @@ public class MockRetriever implements Retriever {
       throw new DocumentAccessException("Access Denied");
     } else if (DOCID_REPOSITORY_EXCEPTION.equals(docid)) {
       throw new RepositoryException("Repository Error");
-    } else if (DOCID_NO_LASTMODIFIED.equals(docid)) {
-      Map<String, Object> props =
-          ConnectorTestUtils.createSimpleDocumentBasicProperties(docid);
-      props.remove(SpiConstants.PROPNAME_CONTENT);
-      props.remove(SpiConstants.PROPNAME_LASTMODIFIED);
-      props.remove(SpiConstants.PROPNAME_MIMETYPE);
-      return ConnectorTestUtils.createSimpleDocument(props);
-    } else if (DOCID_NO_MIMETYPE.equals(docid)) {
-      Map<String, Object> props =
-          ConnectorTestUtils.createSimpleDocumentBasicProperties(docid);
-      props.remove(SpiConstants.PROPNAME_MIMETYPE);
-      return ConnectorTestUtils.createSimpleDocument(props);
-    } else {
-      Map<String, Object> props =
-          ConnectorTestUtils.createSimpleDocumentBasicProperties(docid);
-      props.remove(SpiConstants.PROPNAME_CONTENT);
-      return ConnectorTestUtils.createSimpleDocument(props);
     }
+    Map<String, Object> props =
+        ConnectorTestUtils.createSimpleDocumentBasicProperties(docid);
+    if (DOCID_NO_CONTENT.equals(docid)) {
+      props.remove(SpiConstants.PROPNAME_CONTENT);
+    } else if (DOCID_EMPTY_CONTENT.equals(docid)) {
+      props.put(SpiConstants.PROPNAME_CONTENT_LENGTH, new Long(0));
+    } else {
+      props.put(SpiConstants.PROPNAME_CONTENT_LENGTH,
+                new Long(docid.getBytes().length));
+    }
+    if (DOCID_NO_LASTMODIFIED.equals(docid)) {
+      props.remove(SpiConstants.PROPNAME_LASTMODIFIED);
+    }
+    if (DOCID_NO_MIMETYPE.equals(docid)) {
+      props.remove(SpiConstants.PROPNAME_MIMETYPE);
+    }
+    return ConnectorTestUtils.createSimpleDocument(props);
   }
 }
