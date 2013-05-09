@@ -107,6 +107,7 @@ public class AclPropertyFilter extends AbstractDocumentFilter {
    * Sets the domain for users for ACL Principals.
    * 
    * @param userDomain the domain name to set for user principals.
+   * @since 3.0.8
    */
   public void setUserDomain(String userDomain) {
     this.userDomain = Strings.emptyToNull(userDomain);
@@ -118,6 +119,7 @@ public class AclPropertyFilter extends AbstractDocumentFilter {
    * @param overwriteUserDomain the overwrite flag. Overwrites the existing
    *        domain values if true, or preserves existing domain values 
    *        if false.
+   * @since 3.0.8
    */
   public void setOverwriteUserDomain(boolean overwriteUserDomain) {
     this.overwriteUserDomain = overwriteUserDomain;

@@ -23,9 +23,11 @@ import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.pusher.FeedConnection;
+import com.google.enterprise.connector.pusher.XmlFeed;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.DocumentAccessException;
 import com.google.enterprise.connector.spi.DocumentNotFoundException;
+import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.RepositoryDocumentException;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.SkippedDocumentException;
@@ -38,8 +40,11 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.text.ParseException;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.GZIPOutputStream;
@@ -158,8 +163,8 @@ public class GetDocumentContent extends HttpServlet {
     if (Strings.isNullOrEmpty(connectorName) || Strings.isNullOrEmpty(docid)) {
       return -1L;
     }
-    return handleGetLastModified(req, Context.getInstance().getManager(),
-                                 connectorName, docid);
+    return handleGetLastModified(getDocumentMetaDataNoThrow(req,
+        Context.getInstance().getManager(), connectorName, docid));
   }
 
   /**
@@ -205,28 +210,39 @@ public class GetDocumentContent extends HttpServlet {
     Map<String, List<String>> params = getQueryParams(req);
     String connectorName = ServletUtil.getFirstParameter(
         params, ServletUtil.XMLTAG_CONNECTOR_NAME);
-    NDC.pushAppend("Retrieve " + connectorName);
     String docid = ServletUtil.getFirstParameter(
         params, ServletUtil.QUERY_PARAM_DOCID);
-
     if (Strings.isNullOrEmpty(connectorName) || Strings.isNullOrEmpty(docid)) {
       res.sendError(HttpServletResponse.SC_BAD_REQUEST);
       return;
     }
+    NDC.pushAppend("Retrieve " + connectorName + " "
+                   + docid.substring(docid.lastIndexOf('/') + 1));
 
-    int securityCode =
-        handleMarkingDocumentSecurity(req, res, manager, connectorName, docid);
+    Document metadata;
+    try {
+      metadata = getDocumentMetaData(req, manager, connectorName, docid);
+    } catch (Exception e) {
+      res.sendError(handleException("metadata", e));
+      return;
+    }
+
+    int securityCode = handleMarkingDocumentSecurity(req, res, metadata);
     if (securityCode != HttpServletResponse.SC_OK) {
       res.sendError(securityCode);
       return;
     }
 
     // Set the Content-Type. 
-    String mimeType = handleGetContentType(req, manager, connectorName, docid);
-    if (LOGGER.isLoggable(Level.FINEST)) {
-      LOGGER.finest("Document Content-Type " + mimeType);
-    }
+    String mimeType = handleGetContentType(metadata);
+    LOGGER.log(Level.FINEST, "Document Content-Type {0}", mimeType);
     res.setContentType(mimeType);
+
+    Integer contentLength = handleGetContentLength(metadata);
+    if (contentLength != null) {
+      LOGGER.log(Level.FINEST, "Document Content-Length {0}", contentLength);
+      res.setContentLength(contentLength);
+    }
 
     OutputStream out = res.getOutputStream();
     if (useCompression) {
@@ -286,32 +302,36 @@ public class GetDocumentContent extends HttpServlet {
         }
       } while (bytes != -1);
       return HttpServletResponse.SC_OK;
-    } catch (DocumentNotFoundException e) {
-      LOGGER.log(Level.FINE, "Failed to retrieve document content: {0}",
-                 e.toString());
-      return HttpServletResponse.SC_NOT_FOUND;
-    } catch (SkippedDocumentException e) {
-      LOGGER.log(Level.FINE, "Failed to retrieve document content: {0}",
-                 e.toString());
-      return HttpServletResponse.SC_NOT_FOUND;
-    } catch (DocumentAccessException e) {
-      LOGGER.log(Level.FINE, "Failed to retrieve document content: {0}",
-                 e.toString());
-      return HttpServletResponse.SC_FORBIDDEN;
-    } catch (ConnectorNotFoundException e) {
-      LOGGER.log(Level.FINE, "Failed to retrieve document content: {0}",
-                 e.toString());
-      return HttpServletResponse.SC_SERVICE_UNAVAILABLE;
-    } catch (RepositoryException e) {
-      LOGGER.log(Level.WARNING, "Failed to retrieve document content", e);
-      return HttpServletResponse.SC_SERVICE_UNAVAILABLE;
-    } catch (ConnectorManagerException e) {
-      LOGGER.log(Level.SEVERE, "Failed to retrieve document content", e);
-      return HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
+    } catch (Exception e) {
+      return handleException("content", e);
     } finally {
       if (in != null) {
         in.close();
       }
+    }
+  }
+
+  /**
+   * Retrieve and cache the metadata of the currently requested document.
+   * The metadata is cached for the life of the servlet request.
+   * No checked exceptions are thrown.
+   * If a problem occurs  {@code null} is returned.
+   *
+   * @param req Request to use for caching return value
+   * @param manager a Manager
+   * @param connectorName the name of the connector instance that
+   *        can access the document
+   * @param docId the document identifer
+   * @return document's metadata or {@code null} if it is unavailable
+   */
+  private static Document getDocumentMetaDataNoThrow(HttpServletRequest req, 
+      Manager manager, String connectorName, String docid) {
+    try {
+      return getDocumentMetaData(req, manager, connectorName, docid);
+    } catch (ConnectorManagerException e) {
+      return null;
+    } catch (RepositoryException e) {
+      return null;
     }
   }
 
@@ -327,53 +347,42 @@ public class GetDocumentContent extends HttpServlet {
    * @return document's metadata or {@code null} if it is unavailable
    */
   @VisibleForTesting
-  static Document getDocumentMetaData(HttpServletRequest req, Manager manager,
-      String connectorName, String docid) throws ConnectorManagerException,
-      RepositoryException {
+  static Document getDocumentMetaData(HttpServletRequest req,
+      Manager manager, String connectorName, String docid)
+      throws ConnectorManagerException, RepositoryException {
     Object cache = req.getAttribute(METADATA_CACHE_NAME);
     if (cache != null) {
       return cache == NEGATIVE_METADATA_CACHE_VALUE ? null : (Document) cache;
     }
 
-    Document document = null;
-    try {
-      document = manager.getDocumentMetaData(connectorName, docid);
-    } finally {
-      req.setAttribute(METADATA_CACHE_NAME, 
-          (document == null) ? NEGATIVE_METADATA_CACHE_VALUE : document);
-    }
-    return document;
+    Document metadata = manager.getDocumentMetaData(connectorName, docid);
+    req.setAttribute(METADATA_CACHE_NAME, 
+        (metadata == null) ? NEGATIVE_METADATA_CACHE_VALUE : metadata);
+    return metadata;
   }
 
   /**
    * Retrieves the last modified date of a document from a connector instance.
    *
-   * @param req Request whose parameters identify the document of interest
-   * @param manager a Manager
-   * @param connectorName the name of the connector instance that
-   *        can access the document
-   * @param docId the document identifer
+   * @param metadata the Document metadata
    * @return a long integer specifying the time the document was last modified,
    *         in milliseconds since midnight, January 1, 1970 GMT, or -1L if the
    *         time is not known
    */
   @VisibleForTesting
-  static long handleGetLastModified(HttpServletRequest req, Manager manager,
-      String connectorName, String docid) {
-    try {
-      Document metaData =
-          getDocumentMetaData(req, manager, connectorName, docid);
-      if (metaData == null) {
-        return -1L;
-      }
+  static long handleGetLastModified(Document metadata) {
+    if (metadata == null) {
+      return -1L;
+    }
 
+    try {
+      // TODO: Value and DateValue Calendar methods are too weak to try to get
+      // last modified from non-DateValues.
       ValueImpl value = (ValueImpl)
-          Value.getSingleValue(metaData, SpiConstants.PROPNAME_LASTMODIFIED);
+          Value.getSingleValue(metadata, SpiConstants.PROPNAME_LASTMODIFIED);
       if (value == null) {
-        if (LOGGER.isLoggable(Level.FINEST)) {
-          LOGGER.finest("Document does not contain "
-                        + SpiConstants.PROPNAME_LASTMODIFIED);
-        }
+        LOGGER.log(Level.FINEST, "Document does not contain {0}",
+                   SpiConstants.PROPNAME_LASTMODIFIED);
       } else if (value instanceof DateValue) {
         // DateValues don't give direct access to their Calendar object, but
         // I can get the Calendar back out by parsing the stringized version.
@@ -381,18 +390,13 @@ public class GetDocumentContent extends HttpServlet {
         // TODO: Add a DateValue.getTimeMillis() or getCalendar() method to
         // directly access the wrapped value.
         String lastModified = ((DateValue) value).toIso8601();
-        if (LOGGER.isLoggable(Level.FINEST)) {
-          LOGGER.finest("Document last modified " + lastModified);
-        }
+        LOGGER.log(Level.FINEST, "Document last modified {0}", lastModified);
         return Value.iso8601ToCalendar(lastModified).getTimeInMillis();
       }
-      // TODO: Value and DateValue Calendar methods are too weak to try to get
-      // last modified from non-DateValues.
-    } catch (RepositoryDocumentException e) {
-      LOGGER.log(Level.FINE, "Failed to retrieve document last modified: {0}",
-                 e.toString());
-    } catch (Exception e) {
-      LOGGER.log(Level.WARNING, "Failed to retrieve document last modified", e);
+    } catch (RepositoryException e) {
+      LOGGER.log(Level.WARNING, "Failed to retrieve last-modified date", e);
+    } catch (ParseException e) {
+      LOGGER.log(Level.WARNING, "Failed to parse last-modified date", e);
     }
     return -1L;
   }
@@ -400,83 +404,77 @@ public class GetDocumentContent extends HttpServlet {
   /**
    * Retrieves the content type of a document from a connector instance.
    *
-   * @param req Request whose parameters identify the document of interest
-   * @param manager a Manager
-   * @param connectorName the name of the connector instance that
-   *        can access the document
-   * @param docId the document identifer
+   * @param metadata the Document metadata
    * @return the content-type of the document, as a string, or 
    *         {@link SpiConstants.DEFAULT_MIMETYPE} if the content type
    *         is not supplied.
    */
   @VisibleForTesting
-  static String handleGetContentType(HttpServletRequest req, Manager manager,
-      String connectorName, String docid) {
+  static String handleGetContentType(Document metadata) {
     // NOTE: To maintain consistency with the XmlFeed, this code returns
     // SpiConstants.DEFAULT_MIMETYPE ("text/html") if the Document supplies
     // no mime type property. However, the GSA would really rather receive
     // MimeTypeDetector.UKNOWN_MIMETYPE ("application/octet-stream").
-    try {
-      Document metaData =
-          getDocumentMetaData(req, manager, connectorName, docid);
-      if (metaData != null) {
-        String mimeType = Value.getSingleValueString(metaData, 
-                          SpiConstants.PROPNAME_MIMETYPE);
+    if (metadata != null) {
+      try {
+        String mimeType = Value.getSingleValueString(metadata, 
+            SpiConstants.PROPNAME_MIMETYPE);
         if (!Strings.isNullOrEmpty(mimeType)) {
           return mimeType;
         }
+      } catch (RepositoryException e) {
+        LOGGER.log(Level.WARNING, "Failed to retrieve content-type", e);
       }
-    } catch (RepositoryDocumentException e) {
-      LOGGER.log(Level.FINE, "Failed to retrieve document content type: {0}",
-                 e.toString());
-    } catch (Exception e) {
-      LOGGER.log(Level.WARNING, "Failed to retrieve document content type", e);
     }
     return SpiConstants.DEFAULT_MIMETYPE;
   }
   
+  /**
+   * Retrieves the content length of a document from a connector instance.
+   *
+   * @param metadata the Document metadata
+   * @return the content-length of the document, as an Integer, or {@code null}
+   *         if the content length is not known, less than or equal to zero,
+   *         or the value does not fit in an Integer.  Note that if the
+   *         content-length returned by the connector is zero, this returns
+   *         null, since the GSA does not support empty documents, so the
+   *         empty content will be replaced by ProductionManager with alternate
+   *         non-empty content.
+   */
+  @VisibleForTesting
+  static Integer handleGetContentLength(Document metadata) {
+    if (metadata != null) {
+      try {
+        String lengthStr = Value.getSingleValueString(metadata, 
+            SpiConstants.PROPNAME_CONTENT_LENGTH);
+        if (!Strings.isNullOrEmpty(lengthStr)) {
+          Integer length = Integer.valueOf(lengthStr);
+          return (length > 0) ? length : null;
+        }
+      } catch (NumberFormatException e) {
+        LOGGER.log(Level.WARNING, "Failed to retrieve content-length", e);
+      } catch (RepositoryException e) {
+        LOGGER.log(Level.WARNING, "Failed to retrieve content-length", e);
+      }
+    }
+    return null;
+  }
+  
   @VisibleForTesting
   static int handleMarkingDocumentSecurity(HttpServletRequest req,
-      HttpServletResponse res, Manager manager, String connectorName,
-      String docid) throws IOException {
+      HttpServletResponse res, Document metadata) throws IOException {
     if (req.getHeader("Authorization") != null) {
       // GSA logged in; it is aware of the access restrictions on the document.
       return HttpServletResponse.SC_OK;
     }
 
-    Document document;
-    try { 
-      document = getDocumentMetaData(req, manager, connectorName, docid);
-      if (document == null) {
-        return HttpServletResponse.SC_SERVICE_UNAVAILABLE;
-      }
-    } catch (DocumentNotFoundException e) {
-      LOGGER.log(Level.FINE, "Failed to retrieve document metadata: {0}",
-                 e.toString());
-      return HttpServletResponse.SC_NOT_FOUND;
-    } catch (SkippedDocumentException e) {
-      LOGGER.log(Level.FINE, "Failed to retrieve document metadata: {0}",
-                 e.toString());
-      return HttpServletResponse.SC_NOT_FOUND;
-    } catch (DocumentAccessException e) {
-      LOGGER.log(Level.FINE, "Failed to retrieve document metadata: {0}",
-                 e.toString());
-      return HttpServletResponse.SC_FORBIDDEN;
-    } catch (ConnectorNotFoundException e) {
-      LOGGER.log(Level.FINE, "Failed to retrieve document metadata: {0}",
-                 e.toString());
+    if (metadata == null) {
       return HttpServletResponse.SC_SERVICE_UNAVAILABLE;
-    } catch (RepositoryException e) {
-      LOGGER.log(Level.WARNING, "Failed to retrieve document metadata", e);
-      return HttpServletResponse.SC_SERVICE_UNAVAILABLE;
-    } catch (ConnectorManagerException e) {
-      LOGGER.log(Level.SEVERE, "Failed to retrieve document metadata", e);
-      return HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
     }
 
     ValueImpl isPublicVal;
     try {
-      isPublicVal = (ValueImpl) Value.getSingleValue(document,
+      isPublicVal = (ValueImpl) Value.getSingleValue(metadata,
           SpiConstants.PROPNAME_ISPUBLIC);
     } catch (RepositoryException ex) {
       LOGGER.log(Level.WARNING, "Failed retrieving isPublic property", ex);
@@ -494,6 +492,40 @@ public class GetDocumentContent extends HttpServlet {
         res.setHeader("WWW-Authenticate", "Basic realm=\"Retriever\"");
         return HttpServletResponse.SC_UNAUTHORIZED;
       }
+    }
+  }
+
+  /** Logs an Exception and returns an appropriate HTTP status code. */
+  private static int handleException(String context, Exception e)
+      throws IOException {
+    if (e instanceof DocumentNotFoundException) {
+      LOGGER.log(Level.FINE, "Failed to retrieve document {0}: {1}",
+                 new Object[] {context, e.toString()});
+      return HttpServletResponse.SC_NOT_FOUND;
+    } else if (e instanceof SkippedDocumentException) {
+      LOGGER.log(Level.FINE, "Failed to retrieve document {0}: {1}",
+                 new Object[] {context, e.toString()});
+      return HttpServletResponse.SC_NOT_FOUND;
+    } else if (e instanceof DocumentAccessException) {
+      LOGGER.log(Level.FINE, "Failed to retrieve document {0}: {1}",
+                 new Object[] {context, e.toString()});
+      return HttpServletResponse.SC_FORBIDDEN;
+    } else if (e instanceof ConnectorNotFoundException) {
+      LOGGER.log(Level.FINE, "Failed to retrieve document {0}: {1}",
+                 new Object[] {context, e.toString()});
+      return HttpServletResponse.SC_SERVICE_UNAVAILABLE;
+    } else if (e instanceof RepositoryException) {
+      LOGGER.log(Level.WARNING, "Failed to retrieve document " + context, e);
+      return HttpServletResponse.SC_SERVICE_UNAVAILABLE;
+    } else if (e instanceof IOException) {
+      LOGGER.log(Level.WARNING, "Failed to retrieve document " + context, e);
+      throw (IOException) e;
+    } else if (e instanceof RuntimeException) {
+      LOGGER.log(Level.WARNING, "Failed to retrieve document " + context, e);
+      throw (RuntimeException) e;
+    } else { // ConnectorManagerException
+      LOGGER.log(Level.SEVERE, "Failed to retrieve document " + context, e);
+      return HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
     }
   }
 }

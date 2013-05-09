@@ -151,8 +151,8 @@
       <zip destfile="@{destfile}">
         <mappedresources>
           <zipfileset src="@{src}" />
-          <globmapper from="@{downloads.prefix}/*"
-                      to="@{repackage.prefix}/*" />
+          <globmapper from="@{downloads.prefix}*"
+                      to="@{repackage.prefix}*" />
         </mappedresources>
       </zip>
       <checksum algorithm="SHA-1" file="@{destfile}" />
