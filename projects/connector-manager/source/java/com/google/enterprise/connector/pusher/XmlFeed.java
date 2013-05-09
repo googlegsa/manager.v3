@@ -19,6 +19,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.google.enterprise.connector.common.AlternateContentFilterInputStream;
@@ -107,23 +108,23 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
   private boolean isClosed;
   private int recordCount;
 
-  private static Set<String> propertySkipSet;
-
-  static {
-    // TODO: What about action, contenturl, displayurl, ispublic,
-    // securitytoken, searchurl? Should we have an explicit opt-in
-    // list of google: properties instead an opt-out list?
-    propertySkipSet = new HashSet<String>();
-    propertySkipSet.add(SpiConstants.PROPNAME_ACLINHERITFROM_DOCID);
-    propertySkipSet.add(SpiConstants.PROPNAME_ACLINHERITFROM_FEEDTYPE);
-    propertySkipSet.add(SpiConstants.PROPNAME_CONTENT);
-    propertySkipSet.add(SpiConstants.PROPNAME_DOCID);
-    propertySkipSet.add(SpiConstants.PROPNAME_DOCUMENTTYPE);
-    propertySkipSet.add(SpiConstants.PROPNAME_FEEDTYPE);
-    propertySkipSet.add(SpiConstants.PROPNAME_LOCK);
-    propertySkipSet.add(SpiConstants.PROPNAME_PAGERANK);
-    propertySkipSet.add(SpiConstants.PROPNAME_OVERWRITEACLS);
-  }
+  public static final Set<String> propertySkipSet = ImmutableSet.<String>of(
+      // TODO: What about action, contenturl, displayurl, ispublic,
+      // securitytoken, searchurl? Should we have an explicit opt-in
+      // list of google: properties instead an opt-out list?
+      SpiConstants.PROPNAME_ACLINHERITFROM_DOCID,
+      SpiConstants.PROPNAME_ACLINHERITFROM_FEEDTYPE,
+      SpiConstants.PROPNAME_ACTION,
+      SpiConstants.PROPNAME_AUTHMETHOD,
+      SpiConstants.PROPNAME_CONTENT,
+      SpiConstants.PROPNAME_CONTENT_ENCODING,
+      SpiConstants.PROPNAME_CONTENT_LENGTH,
+      SpiConstants.PROPNAME_DOCID,
+      SpiConstants.PROPNAME_DOCUMENTTYPE,
+      SpiConstants.PROPNAME_FEEDTYPE,
+      SpiConstants.PROPNAME_LOCK,
+      SpiConstants.PROPNAME_PAGERANK,
+      SpiConstants.PROPNAME_OVERWRITEACLS);
 
   // Strings for XML tags.
   public static final String XML_DEFAULT_ENCODING = "UTF-8";

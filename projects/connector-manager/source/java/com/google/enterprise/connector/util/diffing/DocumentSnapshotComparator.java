@@ -22,7 +22,7 @@ import java.util.Comparator;
  * comparisons using the document IDs. This implementation does not
  * support null snapshot values.
  *
- * @since 3.0.6
+ * @since 3.0.8
  */
 public class DocumentSnapshotComparator
     implements Comparator<DocumentSnapshot> {
