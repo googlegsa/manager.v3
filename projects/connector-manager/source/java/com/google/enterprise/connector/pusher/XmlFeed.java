@@ -100,8 +100,10 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
       // list of google: properties instead an opt-out list?
       SpiConstants.PROPNAME_ACLINHERITFROM_DOCID,
       SpiConstants.PROPNAME_ACLINHERITFROM_FEEDTYPE,
+      SpiConstants.PROPNAME_ACTION,
       SpiConstants.PROPNAME_AUTHMETHOD,
       SpiConstants.PROPNAME_CONTENT,
+      SpiConstants.PROPNAME_CONTENT_ENCODING,
       SpiConstants.PROPNAME_CONTENT_LENGTH,
       SpiConstants.PROPNAME_DOCID,
       SpiConstants.PROPNAME_DOCUMENTTYPE,
