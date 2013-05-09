@@ -11,8 +11,8 @@ issues and work-arounds.
 Web Site: http://code.google.com/p/google-enterprise-connector-manager/
 
 
-Release 3.0.6, 20 April 2013
-============================
+Release 3.0.8, 08 May 2013
+==========================
 
 Introduction
 ------------
@@ -22,7 +22,7 @@ the previous release. Users of previous releases are encouraged to upgrade.
 Summary of Changes
 ------------------
 Fix Issue 6513938: Allow the connector to specify a document's content encoding
-                   with a "google:contentEncoding" property.  This allows the
+                   with a google:contentencoding SPI property.  This allows the
                    connector to return content that has already been encoded in
                    one of the supported content encodings (e.g. base64binary).
 
@@ -58,7 +58,7 @@ Fix Issue 8394155: SkipDocumentFilter and ModifyPropertyFilter would throw
                    string value.
 
 Fix Issue 8461333: Add google:authmethod. Added an optional, single-valued
-                   string property, google:authmethod, to specify the
+                   string SPI property, google:authmethod, to specify the
                    authentication method. Users can override the default
                    (httpbasic) by adding an AddPropertyFilter to set
                    google:authmethod in a connector's advanced configuration:
@@ -67,6 +67,15 @@ Fix Issue 8461333: Add google:authmethod. Added an optional, single-valued
       <property name="propertyValue" value="ntlm"/>
       <property name="overwrite" value="true"/>
    </bean>
+
+Fix issue 8592252: GetDocumentContent now optionally supplies a Content-Length
+                   header in its servlet response. This adds a new SPI property,
+                   google:contentlength, that the connector may supply,
+                   which specifies the length of the document content, in bytes.
+                   If the google:contentLength is supplied by the connector,
+                   that value is used in the Content-Length HTTP header in
+                   the servlet response.  This feature only applies to
+                   connectors with a Retriever implementation.
 
 
 Release 3.0.4, 19 November 2012
