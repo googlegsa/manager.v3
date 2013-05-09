@@ -1,1 +1,0 @@
-{"timestamp":"10","type":"save","docid":"doc10","google:mimetype":"text/html","contentfile":"testdata/mocktestdata/i18n.html","google:lastmodified":"Tue, 15 Nov 1994 12:45:26 GMT"}
