@@ -494,7 +494,7 @@ public class SpiConstants {
    * AddPropertyFilter can be used to override the default value.
    * <p/>
    *
-   * @since 3.0.6
+   * @since 3.0.8
    */
   public static final String PROPNAME_AUTHMETHOD = "google:authmethod";
 
@@ -791,25 +791,25 @@ public class SpiConstants {
    * Optional, single-valued property to specify the length, in bytes, of the
    * supplied content.
    * 
-   * @since TODO(bmj)
+   * @since 3.0.8
    */
   public static final String PROPNAME_CONTENT_LENGTH =
-      "google:contentLength";
+      "google:contentlength";
 
   /**
    * Optional, single-valued property to specify the existing encoding of the 
    * supplied content, rather than letting the Connector Manager choose an 
    * encoding to apply to the supplied content.
    * 
-   * If a value of google:contentEncoding is null, Connector Manager will encode 
+   * If a value of google:contentencoding is null, Connector Manager will encode 
    * the content. If the value is "base64binary", it denotes that the supplied 
    * content is already Base64 encoded. If the value is "base64compressed" 
    * it denotes the supplied content is already compressed then Base64 encoded.
    * 
-   * @since 3.0.6
+   * @since 3.0.8
    */
   public static final String PROPNAME_CONTENT_ENCODING =
-      "google:contentEncoding";
+      "google:contentencoding";
 
   /**
    * Enum for feed content encoding.
