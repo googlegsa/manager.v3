@@ -78,27 +78,13 @@
     </ant>
   </target>
 
-  <target name="download-connector-manager"
-          depends="connector-manager-war-prod,spi-javadoc,make-downloads-dir,svn.svn-branch-version">
+  <target name="init-downloads" depends="prebuild,svn.svn-branch-version">
     <property name="downloads.prefix" value="connector-manager-${svn.branch}"/>
+  </target>
+
+  <target name="download-connector-manager"
+          depends="connector-manager-war-prod,spi-javadoc,make-downloads-dir,init-downloads">
     <copy file="${trunk.dir}/COPYING" tofile="${trunk.dir}/LICENSE"/>
-    <tar destfile="${downloads.dir}/${downloads.prefix}.tar"
-         longfile="gnu">
-      <tarfileset dir="${connector-manager.dir}/dist/connector-manager"
-        prefix="${downloads.prefix}">
-        <include name="connector-manager.war"/>
-      </tarfileset>
-      <tarfileset dir="${trunk.dir}" prefix="${downloads.prefix}">
-        <include name="LICENSE"/>
-        <include name="README"/>
-        <include name="RELEASE_NOTES"/>
-      </tarfileset>
-      <tarfileset dir="${connector-manager.dir}/source/scripts" includes="*"
-         prefix="${downloads.prefix}/Scripts"/>
-    </tar>
-    <gzip zipfile="${downloads.dir}/${downloads.prefix}.tar.gz"
-      src="${downloads.dir}/${downloads.prefix}.tar"/>
-    <delete file="${downloads.dir}/${downloads.prefix}.tar"/>
     <zip destfile="${downloads.dir}/${downloads.prefix}.zip">
       <zipfileset dir="${connector-manager.dir}/dist/connector-manager"
         includes="connector-manager.war" prefix="${downloads.prefix}"/>
@@ -108,50 +94,7 @@
         prefix="${downloads.prefix}/Scripts"/>
     </zip>
     <checksum algorithm="SHA-1"
-              file="${downloads.dir}/${downloads.prefix}.tar.gz"/>
-    <checksum algorithm="SHA-1"
               file="${downloads.dir}/${downloads.prefix}.zip"/>
-    <tar destfile="${downloads.dir}/${downloads.prefix}-src.tar"
-         longfile="gnu">
-      <tarfileset dir="." prefix="${downloads.prefix}-src">
-        <include name="build.xml"/>
-      </tarfileset>
-      <tarfileset dir="${trunk.dir}" prefix="${downloads.prefix}-src">
-        <include name="LICENSE"/>
-        <include name="README"/>
-        <include name="RELEASE_NOTES"/>
-      </tarfileset>
-      <tarfileset dir="${connector-manager.dir}"
-        prefix="${downloads.prefix}-src/${connector-manager.dir}">
-        <include name="build.xml"/>
-        <include name="doc/**/*"/>
-        <include name="etc/**/*"/>
-        <include name="source/**/*"/>
-        <include name="testdata/**/*"/>
-        <include name="third-party/**/*"/>
-        <include name=".classpath"/>
-        <include name=".project"/>
-      </tarfileset>
-      <tarfileset dir="${test-connectorA.dir}"
-        prefix="${downloads.prefix}-src/${test-connectorA.dir}">
-        <include name="config/**/*"/>
-        <include name="source/**/*"/>
-        <include name="build.xml"/>
-        <include name=".classpath"/>
-        <include name=".project"/>
-      </tarfileset>
-      <tarfileset dir="${test-connectorB.dir}"
-        prefix="${downloads.prefix}-src/${test-connectorB.dir}">
-        <include name="config/**/*"/>
-        <include name="source/**/*"/>
-        <include name="build.xml"/>
-        <include name=".classpath"/>
-        <include name=".project"/>
-      </tarfileset>
-    </tar>
-    <gzip zipfile="${downloads.dir}/${downloads.prefix}-src.tar.gz"
-      src="${downloads.dir}/${downloads.prefix}-src.tar"/>
-    <delete file="${downloads.dir}/${downloads.prefix}-src.tar"/>
     <zip destfile="${downloads.dir}/${downloads.prefix}-src.zip">
       <zipfileset dir="." includes="build.xml" prefix="${downloads.prefix}-src"/>
       <zipfileset dir="${trunk.dir}" prefix="${downloads.prefix}-src"
@@ -171,12 +114,19 @@
         prefix="${downloads.prefix}-src/${test-connectorB.dir}"/>
     </zip>
     <checksum algorithm="SHA-1"
-              file="${downloads.dir}/${downloads.prefix}-src.tar.gz"/>
-    <checksum algorithm="SHA-1"
               file="${downloads.dir}/${downloads.prefix}-src.zip"/>
     <delete file="${trunk.dir}/LICENSE"/>
   </target>
 
+  <target name="repackage" depends="init-downloads"
+          description="Repackage release candidate files for release.">
+    <echo message="Repackaging ${svn.branch} as ${version}." />
+    <property name="repackage.prefix" value="connector-manager-${version}"/>
+    <repackage-downloads downloads.dir="${downloads.dir}"
+                         downloads.prefix="${downloads.prefix}"
+                         repackage.prefix="${repackage.prefix}" />
+  </target>
+  
   <target name="install-test-connectorA" depends="test-connectorA,make-install-dir">
     <mkdir dir="${install.dir}/test-connectorA" />
     <copy todir="${install.dir}/test-connectorA" >
