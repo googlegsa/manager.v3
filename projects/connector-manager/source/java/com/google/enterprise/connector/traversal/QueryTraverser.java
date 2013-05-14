@@ -300,11 +300,12 @@ public class QueryTraverser implements Traverser {
     } catch (RepositoryException re) {
       // If checkpoint() throws RepositoryException, it means there is no
       // new checkpoint.
+      LOGGER.log(Level.FINE, "Failed to obtain checkpoint for connector "
+                 + connectorName, re);
       return null;
     } catch (Exception e) {
-      // If checkpoint() throws some general Exception, it is probably
-      // an older connector that doesn't understand the newer empty
-      // DocumentList and Exception handling from runBatch() model.
+      LOGGER.log(Level.INFO, "Failed to obtain checkpoint for connector "
+                 + connectorName, e);
       return null;
     }
     try {
