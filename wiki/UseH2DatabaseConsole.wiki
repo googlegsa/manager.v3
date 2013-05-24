@@ -1,4 +1,4 @@
-#summary One-sentence summary of this page.
+#Quick reference on how to use H2 database embedded in the connector manager. 
 
 = Introduction =
 
