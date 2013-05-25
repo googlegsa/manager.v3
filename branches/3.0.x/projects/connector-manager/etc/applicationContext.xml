@@ -32,11 +32,11 @@
              GSA has fallen behind processing outstanding feed items.
         -->
         <!-- Stop feeding if the backlog exceeds this value. -->
-        <prop key="feed.backlog.ceiling">1000</prop>
+        <prop key="feed.backlog.ceiling">10000</prop>
         <!-- Resume feeding if the backlog falls below this value. -->
-        <prop key="feed.backlog.floor">200</prop>
+        <prop key="feed.backlog.floor">1000</prop>
         <!-- How often to check for feed backlog (in seconds). -->
-        <prop key="feed.backlog.interval">120</prop>
+        <prop key="feed.backlog.interval">900</prop>
 
         <!-- The target size in bytes of an accumulated feed file. -->
         <prop key="feed.file.size">10485760</prop>
