@@ -105,7 +105,6 @@
   <bean id="Manager"
         class="com.google.enterprise.connector.manager.ProductionManager">
     <property name="instantiator" ref="Instantiator" />
-    <property name="feedConnection" ref="FeedConnection" />
   </bean>
 
   <bean id="TraversalScheduler"

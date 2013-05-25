@@ -79,10 +79,6 @@ public class GetDocumentContent extends HttpServlet {
    */
   private static final Object NEGATIVE_METADATA_CACHE_VALUE = new Object();
 
-  /** HTTP header that contains the Document metadata. */
-  private static final String EXTERNAL_METADATA_HEADER =
-      "X-Gsa-External-Metadata";
-
   private static boolean useCompression = false;
   private static FeedConnection feedConnection;
   /**
@@ -248,11 +244,6 @@ public class GetDocumentContent extends HttpServlet {
       res.setContentLength(contentLength);
     }
 
-    // Supply the document metadata in an X-Gsa-External-Metadata header.
-    if (metadata != null) {
-      res.setHeader(EXTERNAL_METADATA_HEADER, getMetadataHeader(metadata));
-    }
-
     OutputStream out = res.getOutputStream();
     if (useCompression) {
       // Select Content-Encoding based on the client's Accept-Encoding header.
@@ -277,59 +268,6 @@ public class GetDocumentContent extends HttpServlet {
     } finally {
       out.close();
       NDC.pop();
-    }
-  }
-
-  /**
-   * Builds the GSA-specific metadata header value for crawl-time metadata,
-   * based upon the Document's supplied metadata.
-   */
-  // Warning: See XmlFeed.wrapMetaData() if you make changes here.
-  @VisibleForTesting
-  static String getMetadataHeader(Document metadata) {
-    StringBuilder sb = new StringBuilder();
-    Set<String> propertyNames = null;
-    try {
-      propertyNames = metadata.getPropertyNames();
-    } catch (RepositoryException e) {
-      LOGGER.log(Level.WARNING, "Failed to retrieve property names", e);
-    }
-    if (propertyNames != null && !propertyNames.isEmpty()) {
-      // Sort property names so that metadata is written in a canonical form.
-      // The GSA's metadata change detection logic depends on the metadata to
-      // be in the same order each time to prevent reindexing.
-      propertyNames = new TreeSet<String>(propertyNames);
-      for (String name : propertyNames) {
-        if (XmlFeed.propertySkipSet.contains(name)) {
-          continue;
-        }
-        try { 
-          Property property = metadata.findProperty(name);
-          if (property != null) {
-            encodeOneProperty(sb, name, property);
-          }
-        } catch (RepositoryException e) {
-          LOGGER.log(Level.WARNING, "Failed to retrieve property " + name, e);
-        }
-      }
-    }
-    return (sb.length() == 0) ? "" : sb.substring(0, sb.length() - 1);
-  }
-  
-  /**
-   * Adds one Property's values to the metadata header under contruction.
-   */
-  private static void encodeOneProperty(StringBuilder sb, String name,
-      Property property) throws RepositoryException {
-    ValueImpl value;
-    while ((value = (ValueImpl) property.nextValue()) != null) {
-      LOGGER.log(Level.FINEST, "PROPERTY: {0} = \"{1}\"",
-                 new Object[] { name, value.toString() });
-      String valString = value.toFeedXml();
-      if (!Strings.isNullOrEmpty(valString)) {
-        ServletUtil.percentEncode(sb, name, valString);
-        sb.append(',');
-      }
     }
   }
 

@@ -16,6 +16,7 @@ package com.google.enterprise.connector.manager;
 
 import com.google.common.base.Strings;
 import com.google.enterprise.connector.instantiator.InstantiatorException;
+import com.google.enterprise.connector.pusher.DocPusherFactory;
 import com.google.enterprise.connector.pusher.GsaFeedConnection;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
 
@@ -121,8 +122,10 @@ public class SetManagerConfigTest extends TestCase {
         Context.GSA_FEED_SECURE_PORT_INVALID, null);
     verifyPropsValues(host, port, expectedContentUrlPrefix, propFile);
 
-    // Verify that the contentUrlPrefix was also set in the Context.
-    assertEquals(expectedContentUrlPrefix, context.getContentUrlPrefix());
+    // Verify that the contentUrlPrefix was also set in the DocPusherFactory.
+    DocPusherFactory pusherFactory = (DocPusherFactory)
+        context.getBean("PusherFactory", DocPusherFactory.class);
+    assertEquals(expectedContentUrlPrefix, pusherFactory.getContentUrlPrefix());
   }
 
   public final void testIsManagerLocked() throws Exception {

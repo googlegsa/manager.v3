@@ -27,11 +27,6 @@ import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.persist.PersistentStoreException;
-import com.google.enterprise.connector.pusher.AclTransformFilter;
-import com.google.enterprise.connector.pusher.DocUtils;
-import com.google.enterprise.connector.pusher.FeedConnection;
-import com.google.enterprise.connector.pusher.InheritFromExtractedAclDocumentFilter;
-import com.google.enterprise.connector.pusher.UrlConstructor;
 import com.google.enterprise.connector.scheduler.Schedule;
 import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.AuthenticationManager;
@@ -44,7 +39,6 @@ import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.RepositoryLoginException;
 import com.google.enterprise.connector.spi.Retriever;
-import com.google.enterprise.connector.spi.SpiConstants.FeedType;
 import com.google.enterprise.connector.util.EofFilterInputStream;
 import com.google.enterprise.connector.util.filter.DocumentFilterFactory;
 
@@ -70,7 +64,6 @@ public class ProductionManager implements Manager {
 
   Instantiator instantiator;
   private DocumentFilterFactoryFactory documentFilterFactoryFactory = null;
-  private FeedConnection feedConnection;
 
   public ProductionManager() {
   }
@@ -90,14 +83,6 @@ public class ProductionManager implements Manager {
   public void setDocumentFilterFactoryFactory(
       DocumentFilterFactoryFactory documentFilterFactoryFactory) {
     this.documentFilterFactoryFactory = documentFilterFactoryFactory;
-  }
-
-  /**
-   * Sets the feed connection to use to discover if the security header is
-   * supported. This must be set during startup to take effect.
-   */
-  public void setFeedConnection(FeedConnection feedConnection) {
-    this.feedConnection = feedConnection;
   }
 
   /* @Override */
@@ -230,31 +215,10 @@ public class ProductionManager implements Manager {
     if (metaDoc == null) {
       LOGGER.finer("RETRIEVER: Document has no metadata.");
       // TODO: Create empty Document?
-    } else {
-      if (documentFilterFactoryFactory != null) {
-        DocumentFilterFactory documentFilterFactory = 
+    } else if (documentFilterFactoryFactory != null) {
+      DocumentFilterFactory documentFilterFactory = 
           documentFilterFactoryFactory.getDocumentFilterFactory(connectorName);
-        metaDoc = documentFilterFactory.newDocumentFilter(metaDoc);
-      }
-
-      // GSA 7.0 does not support case-sensitivity or namespaces in ACLs
-      // during crawl-time. So we have to send the ACLs at feed-time.
-      // But the crawl-time metadata overwrites the feed-time ACLs.
-      // The proposed escape is to send a named resource ACL in the feed for
-      // each document, and at crawl-time return an empty ACL that inherits
-      // from the corresponding named resource ACL.
-      if (feedConnection.supportsInheritedAcls()
-          && DocUtils.hasAclProperties(metaDoc)) {
-        metaDoc = new InheritFromExtractedAclDocumentFilter()
-            .newDocumentFilter(metaDoc);
-      }
-
-      // Configure the dynamic ACL transformation filters for the documents.
-      // TODO(bmj): Is FeedType.CONTENTURL a reasonable assumption here?
-      AclTransformFilter aclTransformFilter = new AclTransformFilter(
-          feedConnection,
-          new UrlConstructor(connectorName, FeedType.CONTENTURL));
-      metaDoc = aclTransformFilter.newDocumentFilter(metaDoc);
+      metaDoc = documentFilterFactory.newDocumentFilter(metaDoc);
     }
     return metaDoc;
   }

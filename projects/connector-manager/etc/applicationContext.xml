@@ -32,11 +32,11 @@
              GSA has fallen behind processing outstanding feed items.
         -->
         <!-- Stop feeding if the backlog exceeds this value. -->
-        <prop key="feed.backlog.ceiling">1000</prop>
+        <prop key="feed.backlog.ceiling">10000</prop>
         <!-- Resume feeding if the backlog falls below this value. -->
-        <prop key="feed.backlog.floor">200</prop>
+        <prop key="feed.backlog.floor">1000</prop>
         <!-- How often to check for feed backlog (in seconds). -->
-        <prop key="feed.backlog.interval">120</prop>
+        <prop key="feed.backlog.interval">900</prop>
 
         <!-- The target size in bytes of an accumulated feed file. -->
         <prop key="feed.file.size">10485760</prop>
@@ -360,13 +360,14 @@
   -->
   <!-- This PersistentStore implementation stores the information
        in the configured JDBC accessible database.
-  -->
   <alias name="${jdbc.datasource.type}PersistentStore" alias="PersistentStore"/>
+  -->
 
   <!-- This Persistent Store implementation stores the information
        in files in the Connector instance directory.
-  <alias name="FilePersistentStore" alias="PersistentStore"/>
   -->
+  <alias name="FilePersistentStore" alias="PersistentStore"/>
+
   <bean id="FilePersistentStore" lazy-init="true"
         class="com.google.enterprise.connector.persist.FileStore">
     <property name="typeMap" ref="TypeMap"/>
@@ -409,9 +410,23 @@
     <constructor-arg index="1" ref="Clock"/>
   </bean>
 
+  <bean id="InternalDocumentFilters"
+        class="com.google.enterprise.connector.util.filter.DocumentFilterChain">
+    <constructor-arg>
+      <list>
+        <ref bean="DocumentFilters"/>
+        <!-- These filters are required for correctness, so we apply them last.
+        -->
+        <bean class="com.google.enterprise.connector.pusher.AclDocumentFilter">
+          <constructor-arg index="0" ref="FeedConnection"/>
+        </bean>
+      </list>
+    </constructor-arg>
+  </bean>
+
   <bean id="DocumentFilterFactoryFactory"
         class="com.google.enterprise.connector.instantiator.DocumentFilterFactoryFactoryImpl">
-    <constructor-arg index="0" ref="DocumentFilters"/>
+    <constructor-arg index="0" ref="InternalDocumentFilters"/>
     <constructor-arg index="1" ref="ConnectorCoordinatorMap"/>
   </bean>
 
@@ -420,6 +435,7 @@
     <constructor-arg index="0" ref="FeedConnection" />
     <constructor-arg index="1" ref="FileSizeLimitInfo"/>
     <constructor-arg index="2" ref="DocumentFilterFactoryFactory"/>
+    <property name="contentUrlPrefix" value="${feed.contenturl.prefix}"/>
   </bean>
 
   <bean id="LoadManagerFactory"
@@ -478,7 +494,6 @@
   <bean id="Manager"
         class="com.google.enterprise.connector.manager.ProductionManager">
     <property name="instantiator" ref="Instantiator"/>
-    <property name="feedConnection" ref="FeedConnection"/>
     <property name="documentFilterFactoryFactory" ref="DocumentFilterFactoryFactory"/>
   </bean>
 

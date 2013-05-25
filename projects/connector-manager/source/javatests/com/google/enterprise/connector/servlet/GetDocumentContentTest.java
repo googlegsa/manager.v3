@@ -188,7 +188,6 @@ public class GetDocumentContentTest extends TestCase {
         new MockConnector(null, null, null, new MockRetriever(), null));
     ProductionManager manager = new ProductionManager();
     manager.setInstantiator(instantiator);
-    manager.setFeedConnection(new MockFeedConnection());
     return manager;
   }
 
@@ -612,20 +611,5 @@ public class GetDocumentContentTest extends TestCase {
     MockHttpServletRequest req = createMockRequest(connectorName, docid);
     MockHttpServletResponse res = getDocumentContent(req, " ");
     assertEquals(0, res.getContentLength());
-  }
-
-  /**
-   * Test document metadata is returned in a MetaData header.
-   */
-  public void testMetadataInHeader() throws Exception {
-    patchRealProductionManager();
-    MockHttpServletRequest req = createMockRequest(connectorName, docid);
-    MockHttpServletResponse res = getDocumentContent(req, docid);
-    String expected = "google%3Adisplayurl=http%3A%2F%2Fwww.comtesturl.com%2F"
-        + "test%3Fdocid,google%3Alastmodified=1969-12-31,google%3Amimetype=text"
-        + "%2Fplain";
-    String extMetadata = (String) res.getHeader("X-Gsa-External-Metadata");
-    assertNotNull(extMetadata);
-    assertEquals(expected, extMetadata);
   }
 }

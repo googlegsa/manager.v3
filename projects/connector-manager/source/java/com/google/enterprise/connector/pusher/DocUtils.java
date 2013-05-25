@@ -14,22 +14,25 @@
 
 package com.google.enterprise.connector.pusher;
 
-import com.google.common.base.Predicate;
-import com.google.common.collect.Iterables;
+import com.google.common.base.Strings;
 import com.google.enterprise.connector.spi.Document;
+import com.google.enterprise.connector.spi.Principal;
 import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.RepositoryDocumentException;
 import com.google.enterprise.connector.spi.RepositoryException;
+import com.google.enterprise.connector.spi.SimpleProperty;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.spi.SpiConstants.FeedType;
 import com.google.enterprise.connector.spiimpl.BinaryValue;
 import com.google.enterprise.connector.spiimpl.DateValue;
+import com.google.enterprise.connector.spiimpl.PrincipalValue;
 import com.google.enterprise.connector.spiimpl.ValueImpl;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.util.LinkedList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -42,6 +45,71 @@ public class DocUtils {
 
   private DocUtils() {
     // Prevents instantiation.
+  }
+
+  /**
+   * Utility function to convert a set of document properties that look like:
+   * <pre>
+   *   google:aclusers=[joe, mary, admin]
+   *   google:user:roles:joe=[reader]
+   *   google:user:roles:mary=[reader, writer]
+   *   google:user:roles:admin=[owner]
+   * </pre>
+   * into one property that looks like:
+   * <pre>
+   *   google:aclusers=[joe=reader, mary=reader, mary=writer, admin=owner]
+   * </pre>
+   *
+   * @param document the document being processed.
+   * @param aclPropName the name of the property being processed.  Should be one
+   *        of {@link SpiConstants#PROPNAME_ACLGROUPS} or
+   *        {@link SpiConstants#PROPNAME_ACLUSERS}.
+   * @return either the original property if no conversion was necessary or a
+   *         new converted property containing ACL Entries.
+   * @throws RepositoryException if there was a problem extracting properties.
+   */
+  public static Property processAclProperty(Document document,
+      String aclPropName) throws RepositoryException {
+    LinkedList<Value> acl = new LinkedList<Value>();
+    Property scopeProp = document.findProperty(aclPropName);
+    Value scopeVal = null;
+    while ((scopeVal = scopeProp.nextValue()) != null) {
+      Principal principal = (scopeVal instanceof PrincipalValue)
+          ? ((PrincipalValue) scopeVal).getPrincipal()
+          : new Principal(scopeVal.toString().trim());
+      String aclScope = principal.getName();
+      if (Strings.isNullOrEmpty(aclScope)) {
+        continue;
+      }
+      Property scopeRoleProp = null;
+      if (SpiConstants.PROPNAME_ACLGROUPS.equals(aclPropName)) {
+        scopeRoleProp = document.findProperty(
+            SpiConstants.GROUP_ROLES_PROPNAME_PREFIX + aclScope);
+      } else if (SpiConstants.PROPNAME_ACLUSERS.equals(aclPropName)) {
+        scopeRoleProp = document.findProperty(
+            SpiConstants.USER_ROLES_PROPNAME_PREFIX + aclScope);
+      }
+      if (scopeRoleProp != null) {
+        // Add ACL Entry (scope=role pair) to the list.
+        Value roleVal = null;
+        while ((roleVal = scopeRoleProp.nextValue()) != null) {
+          String role = roleVal.toString().trim();
+          if (role.length() > 0) {
+            acl.add(Value.getPrincipalValue(new Principal(
+                principal.getPrincipalType(),
+                principal.getNamespace(), aclScope + '=' + role,
+                principal.getCaseSensitivityType())));
+          } else {
+            // XXX: Empty role implies reader?
+            acl.add(scopeVal);
+          }
+        }
+      } else {
+        // No roles for this scope; just add scope to the list.
+        acl.add(scopeVal);
+      }
+    }
+    return new SimpleProperty(acl);
   }
 
   /**
@@ -211,21 +279,5 @@ public class DocUtils {
     String searchUrl =
         getOptionalString(document, SpiConstants.PROPNAME_SEARCHURL);
     return (searchUrl == null) ? FeedType.CONTENT : FeedType.WEB;
-  }
-
-  public static Predicate<String> aclPredicate = new Predicate<String>() {
-    public boolean apply(String input) {
-      return (input.startsWith(SpiConstants.ACL_PROPNAME_PREFIX) ||
-              input.startsWith(SpiConstants.GROUP_ROLES_PROPNAME_PREFIX) ||
-              input.startsWith(SpiConstants.USER_ROLES_PROPNAME_PREFIX));
-    }
-  };
-  
-  /**
-   * Returns true if the document exposes any acl properties, false otherwise.
-   */
-  public static boolean hasAclProperties(Document document)
-      throws RepositoryException {
-    return Iterables.any(document.getPropertyNames(), aclPredicate);
   }
 }

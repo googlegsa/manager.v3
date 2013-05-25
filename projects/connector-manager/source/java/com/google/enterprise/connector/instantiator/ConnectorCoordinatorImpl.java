@@ -69,11 +69,6 @@ import java.util.logging.Logger;
  * ConnectorCoordinator that supports Spring based connector instantiation and
  * persistent storage of connector configuration, schedule and traversal state.
  */
-// TODO (jlacey): Context and ConnectorCoordinatorImpl are dangerously close
-// to encountering deadlock issues, calling each other from synchronized 
-// methods.  The most likely scenerio for deadlock would probably be when
-// registering the CM with a new GSA.  Be wary when adding addition
-// synchronization to these classes.
 class ConnectorCoordinatorImpl implements
      ConnectorCoordinator, ChangeHandler, BatchResultRecorder {
 

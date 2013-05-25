@@ -38,15 +38,13 @@ public class SkipDocumentFilterTest extends DocumentFilterTest {
 
   /** Creates a SkipDocumentFilter. */
   private Document createFilter(
-      String propName, String pattern, boolean skipOnMatch)
-      throws Exception {
+        String propName, String pattern, boolean skipOnMatch) {
     return createFilter(propName, pattern, skipOnMatch, createDocument());
   }
 
   /** Creates a SkipDocumentFilter. */
   private Document createFilter(
-      String propName, String pattern, boolean skipOnMatch, Document source)
-      throws Exception {
+      String propName, String pattern, boolean skipOnMatch, Document source) {
     SkipDocumentFilter factory = new SkipDocumentFilter();
     factory.setPropertyName(propName);
     factory.setPattern(pattern);

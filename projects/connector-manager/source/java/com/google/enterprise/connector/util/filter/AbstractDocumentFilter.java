@@ -40,8 +40,7 @@ public abstract class AbstractDocumentFilter implements DocumentFilterFactory {
   protected final Logger LOGGER = Logger.getLogger(this.getClass().getName());
 
   @Override
-  public Document newDocumentFilter(Document source)
-      throws RepositoryException {
+  public Document newDocumentFilter(Document source) {
     Preconditions.checkNotNull(source, "Source document must not be null");
     return new DocumentFilter(source);
   }

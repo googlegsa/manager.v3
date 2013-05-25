@@ -26,7 +26,6 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.net.URLDecoder;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -58,32 +57,6 @@ public class ServletUtilTest extends TestCase {
     String result = ServletUtil.prependCmPrefix(original);
     assertEquals(expected, result);
     assertEquals(original, ServletUtil.stripCmPrefix(result));
-  }
-
-  public void testPercentEncode() throws Exception {
-    StringBuilder input = new StringBuilder();
-    for (int i = 1; i < 256; i++) {
-      input.append((char) i);
-    }
-    StringBuilder output = new StringBuilder();
-    ServletUtil.percentEncode(output, input.toString());
-    assertTrue(output.length() > 256);
-    assertTrue(output.toString().matches("[-_\\.%~A-Za-z0-9]+"));
-    assertEquals(input.toString(), URLDecoder.decode(output.toString(), "UTF-8"));
-  }
-
-  public void testPercentEncodeKeyValuePair() {
-    testEncodeKeyValue("foo", "bar", "foo=bar");
-    testEncodeKeyValue("google:mimetype", "text/plain",
-                       "google%3Amimetype=text%2Fplain");
-    testEncodeKeyValue("google:displayurl", "http://test.com/test.txt",
-        "google%3Adisplayurl=http%3A%2F%2Ftest.com%2Ftest.txt");
-  }
-
-  private void testEncodeKeyValue(String key, String value, String expected) {
-    StringBuilder buff = new StringBuilder();
-    ServletUtil.percentEncode(buff, key, value);
-    assertEquals(expected, buff.toString());
   }
 
   public void testGetRealPath() throws Exception {

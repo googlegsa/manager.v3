@@ -20,7 +20,6 @@ import com.google.enterprise.connector.instantiator.Configuration;
 import com.google.enterprise.connector.instantiator.MockInstantiator;
 import com.google.enterprise.connector.instantiator.ThreadPool;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
-import com.google.enterprise.connector.pusher.MockFeedConnection;
 import com.google.enterprise.connector.scheduler.Schedule;
 import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.AuthenticationManager;
@@ -66,7 +65,6 @@ public class ProductionManagerTest extends TestCase {
     instantiator.setupTestTraversers();
     manager = new ProductionManager();
     manager.setInstantiator(instantiator);
-    manager.setFeedConnection(new MockFeedConnection());
     connectorName = MockInstantiator.TRAVERSER_NAME1;
     identity = new SimpleAuthenticationIdentity("bar");
   }

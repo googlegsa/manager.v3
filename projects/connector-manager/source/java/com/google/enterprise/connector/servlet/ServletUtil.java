@@ -460,49 +460,6 @@ public class ServletUtil {
   }
 
   /**
-   * Percent-encode the {@code kay, value} pair into the supplied StringBuilder.
-   */
-  public static void percentEncode(StringBuilder sb, String key, String value) {
-    percentEncode(sb, key);
-    sb.append('=');
-    percentEncode(sb, value);    
-  }
-
-  private static final String HEX = "0123456789ABCDEF";
-  private static final String PERCENT = "-.%0123456789%%%%%%"
-      + "%ABCDEFGHIJKLMNOPQRSTUVWXYZ%%%%_"
-      + "%abcdefghijklmnopqrstuvwxyz%%%~";
-
-  /**
-   * Percent-encode {@code text} as described in
-   * <a href="http://tools.ietf.org/html/rfc3986#section-2">RFC 3986</a> and
-   * using UTF-8. This is the most common form of percent encoding. 
-   * The characters A-Z, a-z, 0-9, '-', '_', '.', and '~' are left as-is;
-   * the rest are percent encoded.
-   *
-   * @param sb StringBuilder in which to encode the text
-   * @param text some plain text
-   */
-  public static void percentEncode(StringBuilder sb, String text) {
-    byte[] bytes;
-    try {
-      bytes = text.getBytes("UTF-8");
-    } catch (java.io.UnsupportedEncodingException e) {
-      // Not going to happen with built-in encoding.
-      throw new AssertionError(e);
-    }
-    for (byte b : bytes) {
-      if (b >= '-' && b <= '~' && PERCENT.charAt(b - '-') != '%') {
-        sb.append((char) b);
-      } else {
-        sb.append('%');
-        sb.append(HEX.charAt((b >>> 4) & 0xF));
-        sb.append(HEX.charAt(b & 0xF));
-      }
-    }
-  }
-
-  /**
    * Append a query parameter to a URL.
    *
    * @param url an Appendable with URL under contruction
@@ -518,26 +475,8 @@ public class ServletUtil {
         url.append(((url.indexOf("?") == -1) ? '?' : '&'));
         url.append(URLEncoder.encode(paramName, "UTF-8")).append('=');
         url.append(URLEncoder.encode(paramValue, "UTF-8"));
-      } catch (UnsupportedEncodingException e) {
+      } catch (UnsupportedEncodingException ignored) {
         // Can't happen with UTF-8.
-        throw new AssertionError(e);
-      }
-    }
-  }
-
-  /**
-   * Append a fragment to a URL.
-   *
-   * @param url an Appendable with URL under contruction
-   * @param fragment the fragment to append to the URL.
-   */
-  public static void appendFragment(StringBuilder url, String fragment) {
-    if (!Strings.isNullOrEmpty(fragment)) {
-      try {
-        url.append('#').append(URLEncoder.encode(fragment, "UTF-8"));
-      } catch (UnsupportedEncodingException e) {
-        // Can't happen with UTF-8.
-        throw new AssertionError(e);
       }
     }
   }

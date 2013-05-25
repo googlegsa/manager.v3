@@ -30,22 +30,19 @@ import java.util.Set;
 public class ModifyPropertyFilterTest extends DocumentFilterTest {
 
   /** Creates a ModifyPropertyFilter. */
-  protected Document createFilter(String propName, String pattern)
-      throws Exception {
+  protected Document createFilter(String propName, String pattern) {
     return createFilter(propName, pattern, false);
   }
 
   /** Creates a ModifyPropertyFilter. */
   protected Document createFilter(
-      String propName, String pattern, boolean overwrite)
-      throws Exception {
+      String propName, String pattern, boolean overwrite) {
     return createFilter(Collections.singleton(propName), pattern, overwrite);
   }
 
   /** Creates a ModifyPropertyFilter. */
   protected Document createFilter(
-      Set<String> propNames, String pattern, boolean overwrite)
-      throws Exception {
+      Set<String> propNames, String pattern, boolean overwrite) {
     ModifyPropertyFilter factory = new ModifyPropertyFilter();
     factory.setPropertyNames(propNames);
     factory.setPattern(pattern);

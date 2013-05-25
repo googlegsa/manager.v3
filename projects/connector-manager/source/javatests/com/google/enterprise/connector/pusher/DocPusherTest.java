@@ -20,7 +20,6 @@ import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.mock.MockRepository;
 import com.google.enterprise.connector.mock.MockRepositoryEventList;
 import com.google.enterprise.connector.mock.jcr.MockJcrQueryManager;
-import com.google.enterprise.connector.pusher.ExtractedAclDocumentFilter;
 import com.google.enterprise.connector.pusher.Pusher.PusherStatus;
 import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.spi.Document;
@@ -33,7 +32,6 @@ import com.google.enterprise.connector.spi.SecureDocument;
 import com.google.enterprise.connector.spi.SkippedDocumentException;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.SpiConstants.ContentEncoding;
-import com.google.enterprise.connector.spi.SpiConstants.FeedType;
 import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
@@ -82,8 +80,14 @@ import javax.jcr.query.QueryManager;
 public class DocPusherTest extends TestCase {
   private FileSizeLimitInfo fsli;
   private DocumentFilterChain dfc;
-  private String dataSource;
   private String contentUrlPrefix;
+
+  private FeedConnection aclsUnsupportedFeedConnection
+      = new MockFeedConnection() {
+    public boolean supportsInheritedAcls() {
+      return false;
+    }
+  };
 
   @Override
   protected void setUp() throws Exception {
@@ -95,13 +99,11 @@ public class DocPusherTest extends TestCase {
     fsli.setMaxFeedSize(1024 * 1024);
     fsli.setMaxDocumentSize(1024 * 1024);
 
-    dataSource = "junit";
-
     // Set up an empty filter document chain.
     dfc = new DocumentFilterChain();
 
     // A distinct contentUrlPrefix.
-    setContentUrlPrefix("http://contentUrlPrefix");
+    contentUrlPrefix = "http://contentUrlPrefix";
 
     // We're comparing date strings here, so we need a fixed time zone.
     Value.setFeedTimeZone("GMT");
@@ -114,23 +116,6 @@ public class DocPusherTest extends TestCase {
   public void tearDown() {
     // Reset the default time zone.
     Value.setFeedTimeZone("");
-  }
-
-  private void setContentUrlPrefix(String contentUrlPrefix) {
-    this.contentUrlPrefix = contentUrlPrefix;
-    Context.getInstance().setContentUrlPrefix(contentUrlPrefix);
-  }
-
-  private String buildContentUrl(String docid) {
-    return contentUrlPrefix + "?"
-        + ServletUtil.XMLTAG_CONNECTOR_NAME + "=junit&amp;"
-        + ServletUtil.QUERY_PARAM_DOCID + "=" + docid;
-  }
-
-  private String buildContentUrl(String docid, String fragment) {
-    // TODO(bmj): GSA 7.0 strips fragments off of URLs in the feed, so we
-    // append the fragment as another query parameter until that is fixed.
-    return buildContentUrl(docid) + "&amp;" /*"#"*/ + fragment;
   }
 
   /**
@@ -178,7 +163,7 @@ public class DocPusherTest extends TestCase {
 
     MockFeedConnection feedConnection = new MockFeedConnection();
     DocPusher dpusher =
-        new DocPusher(feedConnection, dataSource, fsli, dfc);
+        new DocPusher(feedConnection, "junit", fsli, dfc, null);
     dpusher.take(document, null);
     dpusher.flush();
     assertEquals(expectedXml, feedConnection.getFeed());
@@ -460,7 +445,7 @@ public class DocPusherTest extends TestCase {
       }
     };
 
-    DocPusher dpusher = new DocPusher(feedConnection, dataSource, fsli, dfc);
+    DocPusher dpusher = new DocPusher(feedConnection, "junit", fsli, dfc, null);
     DocumentList documentList = qtm.startTraversal();
 
     Document document = null;
@@ -535,7 +520,7 @@ public class DocPusherTest extends TestCase {
       System.out.println("Test " + i + " output");
       assertFalse(i == expectedXml.length);
       DocPusher dpusher =
-          new DocPusher(feedConnection, dataSource, fsli, dfc);
+          new DocPusher(feedConnection, "junit", fsli, dfc, null);
       assertEquals(PusherStatus.OK, dpusher.take(document, null));
       dpusher.flush();
       System.out.println("Test " + i + " assertions");
@@ -998,27 +983,26 @@ public class DocPusherTest extends TestCase {
 
     // ContentURL feed.
     String resultXML = feedJsonEvent(json1);
-    assertStringContains("url=\"" + buildContentUrl("doc1") + "\"", resultXML);
+    assertStringContains("url=\"" + contentUrlPrefix + "?"
+        + ServletUtil.XMLTAG_CONNECTOR_NAME + "=junit&amp;"
+        + ServletUtil.QUERY_PARAM_DOCID + "=doc1\"", resultXML);
     assertStringContains("displayurl=\"http://www.sometesturl.com/test\"",
         resultXML);
     assertStringContains("<feedtype>metadata-and-url</feedtype>", resultXML);
-    assertStringNotContains("<content encoding=", resultXML);
-    // Assert there is no metadata in the feed.
-    // Metadata will be supplied at crawl time.
-    assertStringNotContains("<metadata", resultXML);
+    assertStringNotContains("<content encoding=\"base64binary\">", resultXML);
 
     // ContentURL feed - docid has special chars (Issue 214 regression).
     resultXML = feedJsonEvent(json2);
-    assertStringContains("url=\"" + buildContentUrl("doc1%26evil%2Fvalue")
-        + "\"", resultXML);
+    assertStringContains("url=\"" + contentUrlPrefix + "?"
+        + ServletUtil.XMLTAG_CONNECTOR_NAME + "=junit&amp;"
+        + ServletUtil.QUERY_PARAM_DOCID + "=doc1%26evil%2Fvalue\"", resultXML);
     assertStringContains("displayurl=\"http://www.sometesturl.com/test\"",
         resultXML);
     assertStringContains("<feedtype>metadata-and-url</feedtype>", resultXML);
-    assertStringNotContains("<content encoding=", resultXML);
-    assertStringNotContains("<metadata", resultXML);
+    assertStringNotContains("<content encoding=\"base64binary\">", resultXML);
 
     // Test unset contentUrlPrefix.
-    setContentUrlPrefix(null);
+    contentUrlPrefix = null;
     try {
       resultXML = feedJsonEvent(json1);
       fail("Expected RepositoryDocumentException");
@@ -1028,7 +1012,7 @@ public class DocPusherTest extends TestCase {
     }
 
     // Test empty contentUrlPrefix.
-    setContentUrlPrefix("");
+    contentUrlPrefix = "";
     try {
       resultXML = feedJsonEvent(json1);
       fail("Expected RepositoryDocumentException");
@@ -1566,7 +1550,7 @@ public class DocPusherTest extends TestCase {
     };
 
     DocPusher dpusher =
-        new DocPusher(mockFeedConnection, dataSource, fsli, dff);
+        new DocPusher(mockFeedConnection, "junit", fsli, dff, contentUrlPrefix);
     assertEquals(PusherStatus.OK, dpusher.take(document, null));
     dpusher.flush();
     return mockFeedConnection.getFeed();
@@ -1594,7 +1578,7 @@ public class DocPusherTest extends TestCase {
     };
 
     DocPusher dpusher =
-        new DocPusher(mockFeedConnection, dataSource, fsli, dff);
+        new DocPusher(mockFeedConnection, "junit", fsli, dff, contentUrlPrefix);
     assertEquals(PusherStatus.OK, dpusher.take(document, null));
     dpusher.flush();
     return mockFeedConnection.getFeed();
@@ -1628,7 +1612,7 @@ public class DocPusherTest extends TestCase {
       // Setup the DocPusher.
       MockFeedConnection mockFeedConnection = new MockFeedConnection();
       DocPusher dpusher =
-          new DocPusher(mockFeedConnection, dataSource, fsli, dfc);
+          new DocPusher(mockFeedConnection, "junit", fsli, dfc, null);
       assertEquals(PusherStatus.OK, dpusher.take(document, null));
       dpusher.flush();
       String resultXML = mockFeedConnection.getFeed();
@@ -1802,14 +1786,14 @@ public class DocPusherTest extends TestCase {
       // Create DocPusher and send feed.
       MockFeedConnection mockFeedConnection = new MockFeedConnection();
       DocPusher dpusher =
-          new DocPusher(mockFeedConnection, dataSource, fsli, dfc);
+          new DocPusher(mockFeedConnection, "junit", fsli, dfc, null);
       assertEquals(PusherStatus.OK, dpusher.take(document, null));
       dpusher.flush();
       String resultXML = mockFeedConnection.getFeed();
       assertFeedTeed(resultXML, tffName);
 
       // Now send the feed again and compare with existing teed feed file.
-      dpusher = new DocPusher(mockFeedConnection, dataSource, fsli, dfc);
+      dpusher = new DocPusher(mockFeedConnection, "junit", fsli, dfc, null);
       assertEquals(PusherStatus.OK, dpusher.take(document, null));
       dpusher.flush();
       String secondResultXML = mockFeedConnection.getFeed();
@@ -2748,7 +2732,7 @@ public class DocPusherTest extends TestCase {
     limit.setMaxDocumentSize(1024 * 1024); // 1 MB
     limit.setMaxFeedSize(64 * 1024); // 64 KB
     DocPusher dpusher =
-        new DocPusher(mockFeedConnection, dataSource, limit, dfc);
+        new DocPusher(mockFeedConnection, "junit", limit, dfc, null);
     assertEquals(PusherStatus.OK, dpusher.take(document, null));
     dpusher.flush();
     return mockFeedConnection.getFeed();
@@ -2874,7 +2858,7 @@ public class DocPusherTest extends TestCase {
     try {
       FeedConnection badFeedConnection = new BadFeedConnection1();
       DocPusher dpusher =
-          new DocPusher(badFeedConnection, dataSource, fsli, dfc);
+          new DocPusher(badFeedConnection, "junit", fsli, dfc, null);
       dpusher.take(document, null);
       dpusher.flush();
       fail("Expected FeedException, but got none.");
@@ -2894,7 +2878,7 @@ public class DocPusherTest extends TestCase {
     try {
       FeedConnection badFeedConnection = new BadFeedConnection2();
       DocPusher dpusher =
-          new DocPusher(badFeedConnection, dataSource, fsli, dfc);
+          new DocPusher(badFeedConnection, "junit", fsli, dfc, null);
       dpusher.take(document, null);
       dpusher.flush();
       fail("Expected PushException, but got none.");
@@ -2921,7 +2905,7 @@ public class DocPusherTest extends TestCase {
     // to back up on this end of the connection.
     SlowFeedConnection slowFeedConnection = new SlowFeedConnection();
     DocPusher dpusher =
-        new DocPusher(slowFeedConnection, dataSource, limit, dfc);
+        new DocPusher(slowFeedConnection, "junit", limit, dfc, null);
     int count;
     PusherStatus status = PusherStatus.OK;
     for (count = 0; count < 30; count++) {
@@ -2950,7 +2934,7 @@ public class DocPusherTest extends TestCase {
     limit.setMaxDocumentSize(64 * 1024);
 
     DocPusher dpusher =
-        new DocPusher(backlogFeedConnection, dataSource, limit, dfc);
+        new DocPusher(backlogFeedConnection, "junit", limit, dfc, null);
     assertEquals(PusherStatus.OK, dpusher.take(document, null));
     backlogFeedConnection.setBacklogged(true);
     assertEquals(PusherStatus.GSA_FEED_BACKLOG, dpusher.take(document, null));
@@ -2975,7 +2959,7 @@ public class DocPusherTest extends TestCase {
     // If plenty of memory is available, DocPusher should indicate it is
     // OK to feed more (return true).
     DocPusher dpusher =
-        new DocPusher(feedConnection, dataSource, limit, dfc);
+        new DocPusher(feedConnection, "junit", limit, dfc, null);
     assertEquals(PusherStatus.OK, dpusher.take(document, null));
     dpusher.flush();
   }
@@ -2998,7 +2982,7 @@ public class DocPusherTest extends TestCase {
     limit.setMaxFeedSize(memAvailable/3);
 
     DocPusher dpusher =
-        new DocPusher(feedConnection, dataSource, limit, dfc);
+        new DocPusher(feedConnection, "junit", limit, dfc, null);
     Map<String, Object> config = getTestDocumentConfig();
     config.put(SpiConstants.PROPNAME_CONTENT,
                new HugeInputStream(limit.maxDocumentSize() - 10));
@@ -3028,7 +3012,9 @@ public class DocPusherTest extends TestCase {
     props.put(SpiConstants.PROPNAME_ACLINHERITFROM_DOCID, parentId);
     props.put(SpiConstants.PROPNAME_ACLINHERITFROM_FEEDTYPE,
               SpiConstants.FeedType.CONTENTURL.toString());
-    String parentUrl = buildContentUrl(parentId);
+    String parentUrl = contentUrlPrefix + "?"
+        + ServletUtil.XMLTAG_CONNECTOR_NAME + "=junit&amp;"
+        + ServletUtil.QUERY_PARAM_DOCID + "=" + parentId;
     testAclInheritFrom(props, parentUrl);
     testDocumentAclInheritFrom(props, parentUrl);
   }
@@ -3074,13 +3060,14 @@ public class DocPusherTest extends TestCase {
     fileSizeLimit.setMaxFeedSize(32);
     fileSizeLimit.setMaxDocumentSize(1024 * 1024);
 
-    DocPusher dpusher =
-        new DocPusher(feedConnection, dataSource, fileSizeLimit, dfc);
+    DocPusher dpusher = new DocPusher(feedConnection, "junit",
+        fileSizeLimit, dfc, contentUrlPrefix);
 
     String parentId = "parent-doc";
     Map<String, Object> props = getTestAclDocumentConfig();
     props.put(SpiConstants.PROPNAME_FEEDTYPE,
               SpiConstants.FeedType.CONTENT.toString());
+    props.put(SpiConstants.PROPNAME_ACLINHERITFROM_DOCID, parentId);
     String parentUrl = ServletUtil.PROTOCOL + "junit.localhost"
         + ServletUtil.DOCID + parentId;
 
@@ -3221,11 +3208,12 @@ public class DocPusherTest extends TestCase {
     String parentUrl = "http://foo/parent-doc";
     Map<String, Object> props = getTestAclDocumentConfig();
     props.put(SpiConstants.PROPNAME_ACLINHERITFROM, parentUrl);
-
     props.put(SpiConstants.PROPNAME_FEEDTYPE,
         SpiConstants.FeedType.CONTENT.toString());
     Document document = ConnectorTestUtils.createSimpleDocument(props);
-    String resultXML = feedDocument(document, true);
+    dfc = new DocumentFilterChain(Collections.singletonList(
+        new AclDocumentFilter(new MockFeedConnection())));
+    String resultXML = feedDocument(document);
     assertStringContains("parent-doc", resultXML);
     assertStringNotContains("httpbasic", resultXML);
   }
@@ -3235,7 +3223,9 @@ public class DocPusherTest extends TestCase {
     props.put(SpiConstants.PROPNAME_FEEDTYPE,
         SpiConstants.FeedType.CONTENT.toString());
     Document document = ConnectorTestUtils.createSimpleDocument(props);
-    String resultXML = feedDocument(document, false);
+    dfc = new DocumentFilterChain(Collections.singletonList(
+        new AclDocumentFilter(aclsUnsupportedFeedConnection)));
+    String resultXML = feedDocument(document);
     assertStringNotContains("httpbasic", resultXML);
   }
 
@@ -3246,7 +3236,9 @@ public class DocPusherTest extends TestCase {
     props.put(SpiConstants.PROPNAME_FEEDTYPE,
         SpiConstants.FeedType.CONTENT.toString());
     Document document = ConnectorTestUtils.createSimpleDocument(props);
-    String resultXML = feedDocument(document, false);
+    dfc = new DocumentFilterChain(Collections.singletonList(
+        new AclDocumentFilter(aclsUnsupportedFeedConnection)));
+    String resultXML = feedDocument(document);
     assertStringNotContains("parent-doc", resultXML);
     assertStringContains("httpbasic", resultXML);
   }
@@ -3260,50 +3252,13 @@ public class DocPusherTest extends TestCase {
     props.put(SpiConstants.PROPNAME_DOCUMENTTYPE,
         SpiConstants.DocumentType.ACL.toString());
     Document document = ConnectorTestUtils.createSimpleDocument(props);
+    dfc = new DocumentFilterChain(Collections.singletonList(
+        new AclDocumentFilter(aclsUnsupportedFeedConnection)));
     try {
-      feedDocument(document, false);
+      feedDocument(document);
       fail("Excepted SkippedDocumentException");
     } catch (SkippedDocumentException ex) {
     }
-  }
-
-  public void testExtractAclSmartGsa() throws Exception {
-    String parentDocid = "parent-doc";
-    Map<String, Object> props = getTestAclDocumentConfig();
-    props.put(SpiConstants.PROPNAME_ACLINHERITFROM_DOCID, parentDocid);
-    props.put(SpiConstants.PROPNAME_FEEDTYPE,
-        SpiConstants.FeedType.CONTENTURL.toString());
-    Document document = ConnectorTestUtils.createSimpleDocument(props);
-    String resultXML = feedDocument(document, true);
-
-    String[] records = resultXML.split("</acl>", 2);
-    // Should get ACL entry, followed by RECORD entry.
-    assertTrue(records.length == 2);
-
-    // Verify the ACL information was extracted into a separate feed record.
-    assertStringContains("<acl url=\"" + buildContentUrl("doc1",
-        ExtractedAclDocumentFilter.EXTRACTED_ACL_FRAGMENT)
-        + "\" inheritance-type=\"parent-overrides\" inherit-from=\""
-        + buildContentUrl(parentDocid) + "\">", records[0]);
-    assertStringContains(
-        "<principal scope=\"user\" access=\"permit\">John Doe</principal>",
-        records[0]);
-    assertStringContains(
-        "<principal scope=\"user\" access=\"deny\">Jason Wang</principal>",
-        records[0]);
-    assertStringContains(
-        "<principal scope=\"group\" access=\"permit\">Engineering</principal>",
-        records[0]);
-    assertStringNotContains("<record", records[0]);
-
-    // Verify the document record contains only InheritFrom the extracted ACL.
-    assertStringContains("<record url=\"" + buildContentUrl("doc1") + "\"",
-                         records[1]);
-    assertStringContains("<acl inheritance-type=\"child-overrides\" "
-         + "inherit-from=\"" + buildContentUrl("doc1",
-         ExtractedAclDocumentFilter.EXTRACTED_ACL_FRAGMENT) + "\">",
-         records[1]);
-    assertStringNotContains("<principal ", records[1]);
   }
 
   private static class MockIdGenerator implements UniqueIdGenerator {

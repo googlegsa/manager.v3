@@ -18,7 +18,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.Property;
-import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.SkippedDocumentException;
 
 import java.util.Collections;
@@ -68,8 +67,7 @@ public class DocumentFilterChain implements DocumentFilterFactory {
    * @return the head of the chain of filters
    */
   @Override
-  public Document newDocumentFilter(Document source)
-      throws RepositoryException {
+  public Document newDocumentFilter(Document source) {
     Preconditions.checkNotNull(source);
     for (DocumentFilterFactory factory : factories) {
       source = factory.newDocumentFilter(source);
