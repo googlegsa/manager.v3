@@ -11,7 +11,7 @@ issues and work-arounds.
 Web Site: http://code.google.com/p/google-enterprise-connector-manager/
 
 
-Release 3.0.8, 08 May 2013
+Release 3.0.8, 24 May 2013
 ==========================
 
 Introduction
@@ -34,12 +34,6 @@ Fix issue 6734754: GSA cannot handle null Schedule.  The GSA, while claiming
 
 Fix issue 7040140: The GetDocumentContent servlet should provide Last-Modified
                    date in HttpResponse.
-
-Fix issue 7766078: Reduce the default feed backlog configuration parameters.
-                   The default feed.backlog.ceiling dropped from 10000 to 1000.
-                   The default feed.backlog.floor dropped from 1000 to 200.
-                   The default feed.backlog.interval dropped from 900 to 120
-                   seconds.
 
 Fix issue 7928861: Avoid unordered snapshots in the snapshot files of Diffing
                    Connectors.
