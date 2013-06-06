@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.instantiator;
 
+import com.google.common.base.Charsets;
 import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.common.SecurityUtils;
 import com.google.enterprise.connector.util.Base64;
@@ -30,6 +31,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.nio.channels.FileLock;
@@ -40,6 +42,7 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.Properties;
 import java.util.logging.Level;
@@ -276,13 +279,12 @@ public class EncryptedPropertyPlaceholderConfigurer extends
   }
 
   public static String encryptString(String name, String plainText) {
-    try {
-      // Convert the String into bytes using utf-8
-      return encryptBytes(name, plainText.getBytes("UTF8"));
-    } catch (UnsupportedEncodingException e) {
-      // Can't happen with UTF-8.
-    }
-    return null;
+    // Convert the String into bytes using utf-8
+    byte[] bytes = plainText.getBytes(Charsets.UTF_8);
+    String cipherText = encryptBytes(name, bytes);
+    // Overwrite the temporary array.
+    Arrays.fill(bytes, (byte) 0);
+    return cipherText;
   }
 
   public static String encryptChars(char[] plainText) {
@@ -291,8 +293,15 @@ public class EncryptedPropertyPlaceholderConfigurer extends
 
   public static String encryptChars(String name, char[] plainText) {
     // Convert the char[] into bytes using utf-8
-    return encryptBytes(name,
-        Charset.forName("UTF8").encode(CharBuffer.wrap(plainText)).array());
+    // We do this the hard way to avoid using a String we can't overwrite.
+    ByteBuffer buffer = Charsets.UTF_8.encode(CharBuffer.wrap(plainText));
+    byte[] bytes = new byte[buffer.remaining()];
+    buffer.get(bytes);
+    String cipherText = encryptBytes(name, bytes);
+    // Overwrite the temporary arrays.
+    Arrays.fill(bytes, (byte) 0);
+    Arrays.fill(buffer.array(), (byte) 0);
+    return cipherText;
   }
 
   public static String encryptBytes(byte[] plainText) {
