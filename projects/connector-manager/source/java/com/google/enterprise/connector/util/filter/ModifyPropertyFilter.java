@@ -188,7 +188,7 @@ public class ModifyPropertyFilter extends AbstractDocumentFilter {
   /**
    * Sets the regular expression pattern to match in the values.
    * The supplied {@code pattern} must conform to the syntax defined in
-   * <a href="http://java.sun.com/j2se/1.5/docs/api/java/util/regex/Pattern.html">
+   * <a href="http://docs.oracle.com/javase/6/docs/api/java/util/regex/Pattern.html">
    * {@code java.util.regex.Pattern}</a>.
    *
    * @param pattern the regular expression pattern to match in the values
@@ -205,11 +205,11 @@ public class ModifyPropertyFilter extends AbstractDocumentFilter {
   /**
    * Sets the replacement string for matching regions in the values.
    * The {@code replacement} string may refer to
-   * <a href="http://download.oracle.com/javase/1.5.0/docs/api/java/util/regex/Pattern.html#cg">
+   * <a href="http://docs.oracle.com/javase/6/docs/api/java/util/regex/Pattern.html#cg">
    * capturing groups</a> from the {@code pattern} as {@code $1, $2}, etc.
    * Therefore, literal instances of {@code '\'} and {@code '$'} in the
    * replacement string need to be properly
-   * <a href="http://download.oracle.com/javase/1.5.0/docs/api/java/util/regex/Matcher.html#appendReplacement(java.lang.StringBuffer,%20java.lang.String)">
+   * <a href="http://docs.oracle.com/javase/6/docs/api/java/util/regex/Matcher.html#appendReplacement(java.lang.StringBuffer,%20java.lang.String)">
    * escaped</a>.
    *
    * @param replacement the replacement String for matching regions in the
