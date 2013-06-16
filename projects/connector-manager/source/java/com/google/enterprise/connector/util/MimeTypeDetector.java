@@ -47,20 +47,26 @@ public class MimeTypeDetector {
   public static final String UNKNOWN_MIME_TYPE =
       mimeTypeStringValue(MimeUtil2.UNKNOWN_MIME_TYPE);
 
-  private static MimeUtil2 delegate;
+  private static MimeUtil2 extensionDetector;
+  private static MimeUtil2 magicDetector;
 
   /**
-   * The mime-util library leaks memory like a sieve on each new instance.
-   * So just keep a single instance that everybody uses.
+   * The mime-util library leaks memory like a sieve on each new instance,
+   * and is not thread-safe. So we want to share instances of MimeUtil2.
+   * To avoid problems with mime-util trying to open a file with the given
+   * name, we use two separate instances, one using only the extension
+   * detector which we give the file name to, and the other using only the
+   * magic detector which we give the byte[] to.
    */
   private static synchronized void init() {
-    if (delegate == null) {
+    if (magicDetector == null) {
       LOGGER.info("Initializing MimeTypeDetector");
       setSupportedEncodings(
           Sets.newHashSet("UTF-8", "ISO-8859-1", "windows-1252"));
 
-      delegate = new MimeUtil2();
-      delegate.registerMimeDetector(ExtensionMimeDetector.class.getName());
+      extensionDetector = new MimeUtil2();
+      extensionDetector.registerMimeDetector(
+          ExtensionMimeDetector.class.getName());
       // TODO: Should we add the WindowsRegistryMimeDetector?  This might
       // yield different results when run on Windows vs. Unix.
 
@@ -68,7 +74,8 @@ public class MimeTypeDetector {
       // OpendesktopMimeDetector instead of MagicMimeMimeDetector. It seems
       // more accurate but was logging NullPointerExceptions so I temporarily
       // removed it pending further testing/fixing.
-      delegate.registerMimeDetector(MagicMimeMimeDetector.class.getName());
+      magicDetector = new MimeUtil2();
+      magicDetector.registerMimeDetector(MagicMimeMimeDetector.class.getName());
     }
   }
 
@@ -98,10 +105,9 @@ public class MimeTypeDetector {
    * The default set of supported encodings is "UTF-8", "ISO-8859-1",
    * "windows-1252", and the current JVM default encoding.
    * <p/>
-   * @see <a href="http://docs.oracle.com/javase/6/docs/technotes/guides/intl/encoding.doc.html">Java Supported Encodings</a>
-   *
    *
    * @param encodings a Set of canonical encoding names.
+   * @see <a href="http://docs.oracle.com/javase/6/docs/technotes/guides/intl/encoding.doc.html">Java Supported Encodings</a>
    */
   public static synchronized void setSupportedEncodings(Set<String> encodings) {
     Set<String> enc = Sets.newHashSet(encodings);
@@ -211,12 +217,8 @@ public class MimeTypeDetector {
     if (filename == null) {
       return null;
     }
-
-    // We munge the file name we pass to getMimeTypes so that it will
-    // not find the file exists, open it and perform content based
-    // detection here.
-    synchronized (delegate) {
-      return delegate.getMimeTypes("/dev/null/" + filename);
+    synchronized (extensionDetector) {
+      return extensionDetector.getMimeTypes(filename);
     }
   }
 
@@ -225,8 +227,8 @@ public class MimeTypeDetector {
     if (content == null) {
       return null;
     }
-    synchronized (delegate) {
-      return delegate.getMimeTypes(content);
+    synchronized (magicDetector) {
+      return magicDetector.getMimeTypes(content);
     }
   }
 

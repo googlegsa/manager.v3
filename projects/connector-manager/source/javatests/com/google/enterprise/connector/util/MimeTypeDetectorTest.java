@@ -14,7 +14,9 @@
 
 package com.google.enterprise.connector.util;
 
+import com.google.common.base.Charsets;
 import com.google.common.collect.Sets;
+import com.google.common.io.Files;
 import com.google.enterprise.connector.traversal.MimeTypeMap;
 import com.google.enterprise.connector.traversal.ProductionTraversalContext;
 import com.google.enterprise.connector.util.diffing.testing.FakeTraversalContext;
@@ -22,6 +24,8 @@ import com.google.enterprise.connector.util.diffing.testing.FakeTraversalContext
 import eu.medsea.util.EncodingGuesser;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.Collection;
@@ -30,6 +34,16 @@ import junit.framework.TestCase;
 
 /** Tests for MimeTypeDetector.  */
 public class MimeTypeDetectorTest extends TestCase {
+  private static final File NO_EXTENSION =
+      new File("testdata/tmp/mimeTypeDetectorTest");
+
+  /**
+   * Include two consecutive nulls to force MimeTypeDetector to think
+   * it's binary rather than text/plain.
+   */
+  private static final byte[] PDF_PREFIX =
+      "%PDF-1.3\n%\0\0\n".getBytes(Charsets.UTF_8);
+
   private MimeTypeDetector mimeTypeDetector;
   private final InputStreamFactory notUsedInputStreamFactory =
       new NotUsedInputStreamFactory();
@@ -175,6 +189,23 @@ public class MimeTypeDetectorTest extends TestCase {
         new FileInputStreamFactory("testdata/mocktestdata/test.doc");
     assertEquals("application/msword", mimeTypeDetector.getMimeType(
         null, inputStreamFactory));
+  }
+
+  /** Tests that MimeTypeDetector does not try to read the file. */
+  public void testNoFileAccess() throws IOException {
+    // Testing a file with no extension that looks like PDF.
+    Files.write(PDF_PREFIX, NO_EXTENSION);
+    try {
+      // With no content, we should get an unknown type.
+      assertEquals(MimeTypeDetector.UNKNOWN_MIME_TYPE,
+          mimeTypeDetector.getMimeType(NO_EXTENSION.getPath(), (byte[]) null));
+
+      // With text content, we should get text/plain.
+      assertEquals("text/plain", mimeTypeDetector.getMimeType(
+          NO_EXTENSION.getPath(), "I am a string of text".getBytes()));
+    } finally {
+      NO_EXTENSION.delete();
+    }
   }
 
   private static class NotUsedInputStreamFactory implements InputStreamFactory {
