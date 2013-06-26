@@ -16,6 +16,9 @@ package com.google.enterprise.connector.util.filter;
 
 import junit.framework.TestCase;
 
+import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.Property;
@@ -29,6 +32,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Mostly useful for other DocumentFilter tests to subclass.
@@ -94,7 +98,28 @@ public class DocumentFilterTest extends TestCase {
   /** Checks that the Document Properties match the expected Properties. */
   protected void checkDocument(Document document,
       Map<String, List<Value>> expectedProps) throws Exception {
-    assertEquals(expectedProps.keySet(), document.getPropertyNames());
+    checkDocument(document, expectedProps, null);
+  }
+
+  /**
+   * Checks that the Document Properties match the expected Properties.
+   *
+   * @param document the document to check
+   * @param expectedProps the expected properties of the document
+   * @param skipProp a property who's value should not be checked
+   *    but is still returned in getPropertyNames
+   */
+  protected void checkDocument(Document document,
+      Map<String, List<Value>> expectedProps, String skipProp)
+      throws Exception {
+    Set<String> expectedSet;
+    if (Strings.isNullOrEmpty(skipProp)) {
+      expectedSet = expectedProps.keySet();
+    } else {
+      expectedSet = Sets.union(expectedProps.keySet(),
+          ImmutableSet.of(skipProp));
+    }
+    assertEquals(expectedSet, document.getPropertyNames());
     checkDocumentProperties(document, expectedProps);
   }
 
