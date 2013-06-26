@@ -16,6 +16,8 @@ package com.google.enterprise.connector.util.filter;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.RepositoryException;
@@ -24,6 +26,7 @@ import com.google.enterprise.connector.spi.Value;
 
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import java.util.Set;
 
 /**
  * A {@link Document} filter that forces a Document to be skipped (or not)
@@ -38,7 +41,7 @@ import java.util.regex.PatternSyntaxException;
    &lt;bean id="NoIndex"
       class="com.google.enterprise.connector.util.filter.SkipDocumentFilter"&gt;
      &lt;property name="propertyName" value="NoIndex"/&gt;
-     &lt;property name "skipOnMatch" value="true"/&gt;
+     &lt;property name="skipOnMatch" value="true"/&gt;
    &lt;/bean&gt;
    </code></pre>
  * The following example skips documnents whose {@code Classification Property}
@@ -49,7 +52,7 @@ import java.util.regex.PatternSyntaxException;
       class="com.google.enterprise.connector.util.filter.SkipDocumentFilter"&gt;
      &lt;property name="propertyName" value="Classification"/&gt;
      &lt;property name="pattern" value="(PUBLIC)|(DECLASSIFIED)"/&gt;
-     &lt;property name "skipOnMatch" value="false"/&gt;
+     &lt;property name="skipOnMatch" value="false"/&gt;
    &lt;/bean&gt;
    </code></pre>
  *
@@ -118,6 +121,14 @@ public class SkipDocumentFilter extends AbstractDocumentFilter {
   }
 
   @Override
+  public Set<String> getPropertyNames(Document source)
+      throws RepositoryException {
+    Preconditions.checkState(propertyName != null, "must set propertyName");
+    return Sets.union(source.getPropertyNames(),
+        ImmutableSet.of(propertyName));
+  }
+
+  @Override
   public Property findProperty(Document source, String name)
       throws RepositoryException {
     Preconditions.checkState(propertyName != null, "must set propertyName");
@@ -131,7 +142,8 @@ public class SkipDocumentFilter extends AbstractDocumentFilter {
               + propertyName);
         }
       } else if (prop != null) {
-        return new SkipProperty(prop);
+        Set<String> propNames = source.getPropertyNames();
+        return new SkipProperty(prop, propNames.contains(propertyName));
       }
     }
     return prop;
@@ -148,9 +160,11 @@ public class SkipDocumentFilter extends AbstractDocumentFilter {
    */
   private class SkipProperty implements Property {
     private final Property property;
+    private final boolean isPublished;
 
-    public SkipProperty(Property property) {
+    public SkipProperty(Property property, boolean isPublished) {
       this.property = property;
+      this.isPublished = isPublished;
     }
 
     @Override
@@ -165,6 +179,9 @@ public class SkipDocumentFilter extends AbstractDocumentFilter {
             ^ !skipOnMatch) {
           throw new SkippedDocumentException("Skipping document based upon "
               + "property " + propertyName + " value: " + value.toString());
+        }
+        if (!isPublished) {
+          value = Value.getStringValue("");
         }
       }
       return value;
