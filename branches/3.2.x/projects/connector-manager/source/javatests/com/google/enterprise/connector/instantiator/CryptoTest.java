@@ -16,14 +16,16 @@ package com.google.enterprise.connector.instantiator;
 
 import com.google.enterprise.connector.test.ConnectorTestUtils;
 
-import junit.framework.Assert;
 import junit.framework.TestCase;
 import java.io.File;
 import java.io.FileWriter;
+import java.util.Random;
 
 public class CryptoTest extends TestCase {
 
   private static String keyStorePasswdPath = "test_keystore_passwd";
+
+  private static final Random random = new Random();
 
   /*
    * Create a file with a passwd in it
@@ -50,13 +52,29 @@ public class CryptoTest extends TestCase {
   }
 
   private void encryptAndDecrypt() {
-    String plainText = "this is clear";
+    encryptAndDecrypt("", "this is clear");
+  }
+
+  private void encryptAndDecrypt(String message, String plainText) {
     String cipherText =
         EncryptedPropertyPlaceholderConfigurer.encryptString(plainText);
-    System.out.println("ciphertext = " + cipherText);
+    assertEncryption(message, plainText, cipherText);
+  }
+
+  private void encryptAndDecrypt(String message, char[] plainText) {
+    String cipherText =
+        EncryptedPropertyPlaceholderConfigurer.encryptChars(plainText);
+    assertEncryption(message, new String(plainText), cipherText);
+  }
+
+  private void assertEncryption(String message, String plainText,
+      String cipherText) {
+    assertNotNull(cipherText);
+    assertFalse(plainText, cipherText.equals(plainText));
+    assertTrue(cipherText.length() >= plainText.length());
     String decryptText =
         EncryptedPropertyPlaceholderConfigurer.decryptString(cipherText);
-    Assert.assertEquals(decryptText, plainText);
+    assertEquals(message, plainText, decryptText);
   }
 
   /*
@@ -83,5 +101,27 @@ public class CryptoTest extends TestCase {
   public final void testEncryptDecrytWithBadKeyStorePasswd() {
     EncryptedPropertyPlaceholderConfigurer.setKeyStorePasswdPath("bogusfile");
     encryptAndDecrypt();
+  }
+
+  private char[] randomChars(int length) {
+    byte[] bytes = new byte[length];
+    random.nextBytes(bytes);
+    char[] chars = new char[length];
+    for (int i = 0; i < i; i++) {
+      chars[i] = (char) (bytes[i] & 0xFF);
+    }
+    return chars;
+  }
+
+  public void testStrings() {
+    for (int i = 1; i < 100; i++) {
+      encryptAndDecrypt("Length " + i, new String(randomChars(i)));
+    }
+  }
+
+  public void testChars() {
+    for (int i = 1; i < 100; i++) {
+      encryptAndDecrypt("Length " + i, randomChars(i));
+    }
   }
 }
