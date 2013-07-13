@@ -1,2 +1,0 @@
-# Test word doc
-{"timestamp":"100000","type":"save","docid":"worddoc","google:mimetype":"application/msword","contentfile":"testdata/mocktestdata/test.doc"}
