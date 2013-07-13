@@ -1,0 +1,2 @@
+# testing pusher with SMB searchurl
+{"timestamp":"10","type":"save","docid":"doc1", "google:searchurl":"smb://localhost/share/test", "google:lastmodified":"Tue, 15 Nov 1994 12:45:26 GMT"}
