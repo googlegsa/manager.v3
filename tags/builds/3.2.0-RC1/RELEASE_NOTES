@@ -1,0 +1,1733 @@
+
+     Google Search Appliance Connector Manager
+                   Release Notes
+
+This document contains the release notes for Google Search Appliance
+Connector Manager.  The following sections describe the release in
+detail and provide information that supplements the main documentation.
+See the Issues Tab on the Code Site for the current list of known
+issues and work-arounds.
+
+Web Site: http://code.google.com/p/google-enterprise-connector-manager/
+
+
+Release 3.2.0, 12 July 2013
+===========================
+
+Introduction
+------------
+This is a patch release that fixes a few small problems discovered in the
+the previous release. Users of previous releases are encouraged to upgrade.
+
+Summary of Changes
+------------------
+Fix issue 7766078: Reduce the default feed backlog configuration parameters.
+                   The default feed.backlog.ceiling dropped from 10000 to 1000.
+                   The default feed.backlog.floor dropped from 1000 to 200.
+                   The default feed.backlog.interval dropped from 900 to 120
+                   seconds.
+
+Fix issue 8161087: Lister/Retriever connectors may now supply metadata at
+                   crawl-time, rather than feed-time, for GSA 7.2 and newer.
+                   This avoids issue 6781122, wherin the internal metadata
+                   extracted from documents is overwritten by the external
+                   metadata when the document is sent again in a feed.
+
+Fix issue 8256145: Passwords longer than 9 characters were incorrectly
+                   encrypted, and could not be successfully decrypted.
+                   This typically manifested as failures logging into
+                   content reposistories for the connectors.
+
+Fix issue 9415184: MimeTypeDetector would inadvertently attempt to open 
+                   some of the supplied files when it was attempting to
+                   determine the MIME type by filename extension only.
+                   Since the supplied names were rarely local files,
+                   the MimeTypeDetector would quickly become backlogged
+                   on blocked file I/O. The use of the underlying third
+                   party MimeUtil library was altered to ensure that no
+                   attempt would be made to open the named file.
+
+Version Compatibility
+=====================
+This version of the Connector Manager requires Java 6 JRE or newer.
+The use of a Java 5 runtime is no longer supported.
+
+
+Release 3.0.8, 08 May 2013
+==========================
+
+Introduction
+------------
+This is a patch release that fixes a few small problems discovered in the
+the previous release. Users of previous releases are encouraged to upgrade.
+
+Summary of Changes
+------------------
+Fix Issue 6513938: Allow the connector to specify a document's content encoding
+                   with a google:contentencoding SPI property.  This allows the
+                   connector to return content that has already been encoded in
+                   one of the supported content encodings (e.g. base64binary).
+
+Fix issue 6734754: GSA cannot handle null Schedule.  The GSA, while claiming
+                   to support null or empty schedules, actually does not.
+                   If a connector does not have a schedule, getConnectorStatus
+                   servlet will supply a schedule with default load, retryDelay,
+                   and interval, but disabled.
+
+Fix issue 7040140: The GetDocumentContent servlet should provide Last-Modified
+                   date in HttpResponse.
+
+Fix issue 7928861: Avoid unordered snapshots in the snapshot files of Diffing
+                   Connectors.
+
+Fix Issue 8078850: Add a configuration option to AclPropertyFilter to specify
+                   a domain for the users in Prinicipals.
+
+Fix issue 8207127: Reduce the memory footprint of DocumentHandle
+                   serialization for Diffing connectors.
+
+Fix issue 8237465: Connector instantiation would fail with non-ASCII
+                   characters in the advanced properties XML.
+
+Fix Issue 8394155: SkipDocumentFilter and ModifyPropertyFilter would throw
+                   NullPointerException if the target property has a null
+                   string value.
+
+Fix Issue 8461333: Add google:authmethod. Added an optional, single-valued
+                   string SPI property, google:authmethod, to specify the
+                   authentication method. Users can override the default
+                   (httpbasic) by adding an AddPropertyFilter to set
+                   google:authmethod in a connector's advanced configuration:
+   <bean class="com.google.enterprise.connector.util.filter.AddPropertyFilter">
+      <property name="propertyName" value="google:authmethod"/>
+      <property name="propertyValue" value="ntlm"/>
+      <property name="overwrite" value="true"/>
+   </bean>
+
+Fix issue 8592252: GetDocumentContent now optionally supplies a Content-Length
+                   header in its servlet response. This adds a new SPI property,
+                   google:contentlength, that the connector may supply,
+                   which specifies the length of the document content, in bytes.
+                   If the google:contentLength is supplied by the connector,
+                   that value is used in the Content-Length HTTP header in
+                   the servlet response.  This feature only applies to
+                   connectors with a Retriever implementation.
+
+
+Release 3.0.4, 19 November 2012
+===============================
+
+Introduction
+------------
+This is a patch release that fixes a few small problems discovered in the
+the previous release. Users of previous releases are encouraged to upgrade.
+
+Summary of Changes
+------------------
+Fix Issue 7341404: Diffing connectors ignored Retry Delay setting.  Diffing
+                   connectors will now schedule incremental traversals
+                   according to the Retry Delay setting specified on the
+                   connector configuration page.
+
+Fix Issue 7364602: Inaccessible LDAP server kills Connector Manager.
+                   Loading the connector instances asynchronously now moves
+                   their creation out of the Connector Manager servlet StartUp
+                   code path, so an individual connector instance timing out
+                   will not cause the Connector Manager to fail start-up.
+
+Fix Issue 7409537: Support more unregistered Microsoft Office 2007 media types:
+                   "application/vnd.ms-excel.12",
+                   "application/vnd.ms-powerpoint.12",
+                   "application/vnd.ms-word.12".
+
+Fix Issue 7554816: Support DENY with flattened ACLs in SharePoint connector.
+                   This change adds a TraversalContext.supportsDenyAcls method
+                   that is distinct from the supportsInheritedAcls method.
+                   Previously DENY ACL support was implied if inherited ACLs
+                   were supported.  This change allows DENY ACLs to be sent
+                   to GSA 7.x, even if feed.disable.inherited.acls property
+                   is set.
+
+Fix Issue 7584684: GsaFeedConnection needs to invalidate the cached DTD when
+                   switching GSAs. If a running connector manager is
+                   reregistered with a different version of the GSA, it
+                   would continue to assume the capabilities of the original
+                   GSA version, based on an inspection of the feed DTD.
+
+
+Release 3.0.2, 17 October 2012
+==============================
+
+Introduction
+------------
+This is a patch release that fixes a few small problems discovered in the
+the previous release. Users of previous releases are encouraged to upgrade.
+
+Summary of Changes
+------------------
+Fix Issue 7166051: Deny HTTP HEAD requests from legacy authorization, which
+                   would always permit access to secure documents.
+
+Fix Issues 7312517, 7343328: Multiple cases of NullPointerException
+                   thrown from the diffing connector SnapshotStore.
+
+Fix Issue 7343330: BasicChecksumGenerator.getDigest() throws NullPointerException.
+
+Fix Issue 7369686: Diffing connectors ignore the configured schedule intervals.
+                   Diffing connectors would continue to run, consuming 
+                   resources and traversing the repositories when outside
+                   of a scheduled traversal interval.
+
+
+Release 3.0.0, 13 September 2012
+================================
+
+Introduction
+------------
+This is a patch release that fixes a few small problems discovered in the
+the previous release. Users of previous releases are encouraged to upgrade.
+
+Summary of Changes
+------------------
+Fix Issue 4765123: Set a logging context in the diffing package. This provides
+                   more informative logging from the various diffing connector
+                   threads.
+
+Fix Issue 6299907: Connector Manager restart resets the logging level.
+
+Fix Issue 6441063: Set the feed.contenturl.prefix advanced configuration
+                   property when Connector Manager is registered with the GSA.
+
+Fix Issue 6449767: Initial diffing connector snapshot fails in Java 7.
+
+Fix Issue 6861210: Diffing fileSystemMonitorsByName is not cleared when
+                   DocumentSnapshotRepositoryMonitorManagerImpl is stopped.
+
+Fix Issue 6867242: Diffing connector may leak DocumentSnapshotRepositoryMonitor
+                   threads when toggling "Disable traversal" check box and the
+                   connector may go into inconsistent state. 
+
+Fix Issue 6942176: CheckpointAndChangeQueue throws NullPointerException.
+
+Fix Issue 6996468: Provide advanced configuration option to not use inherited
+                   ACLs with GSA v7.0.  This is provided as a workaround for
+                   GSA issue 6969557, where inherited ACLs do not work correctly
+                   with Distributed Crawl and Serve.
+
+
+Release 2.8.10, 28 November 2012
+================================
+
+Introduction
+------------
+This is a patch release that fixes a few small problems discovered in the
+the previous release. Users of previous releases are encouraged to review
+the changes below to determine whether to upgrade.
+
+Summary of Changes
+------------------
+Fix Issue 4765123: Set a logging context in the diffing package. This provides
+                   more informative logging from the various diffing connector
+                   threads.
+
+Fix Issue 5599305: Retry Connector startup if instantiation fails. The
+                   FileSystem Connector fails Connector bean instantiation if
+                   the file share is off-line. The other connectors that use
+                   the Diffing package (LDAP and Database) can suffer similar
+                   failures. This fix allows a failed Connector instantiation
+                   to be retried after a period, in hopes that any transient
+                   errors may have been corrected.
+
+Fix Issue 6299907: Connector Manager restart resets the logging level.
+
+Fix Issue 6861210: Diffing fileSystemMonitorsByName is not cleared when
+                   DocumentSnapshotRepositoryMonitorManagerImpl is stopped.
+
+Fix Issue 6867242: Diffing connector may leak DocumentSnapshotRepositoryMonitor
+                   threads when toggling "Disable traversal" check box and the
+                   connector may go into inconsistent state. 
+
+Fix Issue 6942176: CheckpointAndChangeQueue throws NullPointerException.
+
+Fix Issues 7312517, 7343328: Multiple cases of NullPointerException
+                   thrown from the diffing connector SnapshotStore.
+
+Fix Issue 7341404: Diffing connectors ignored Retry Delay setting.  Diffing
+                   connectors will now schedule incremental traversals
+                   according to the Retry Delay setting specified on the
+                   connector configuration page.
+
+Fix Issue 7343330: BasicChecksumGenerator.getDigest() throws
+                   NullPointerException.
+
+Fix Issue 7364602: Inaccessible LDAP server kills Connector Manager.
+                   Loading the connector instances asynchronously now moves
+                   their creation out of the Connector Manager servlet StartUp
+                   code path, so an individual connector instance timing out
+                   will not cause the Connector Manager to fail start-up.
+
+Fix Issue 7369686: Diffing connectors ignore the configured schedule intervals.
+                   Diffing connectors would continue to run, consuming 
+                   resources and traversing the repositories when outside
+                   of a scheduled traversal interval.
+
+Fix Issue 7409537: Support more unregistered Microsoft Office 2007 media types:
+                   "application/vnd.ms-excel.12",
+                   "application/vnd.ms-powerpoint.12",
+                   "application/vnd.ms-word.12".
+
+
+Release 2.8.6, 5 May 2012
+=========================
+
+Introduction
+------------
+This is a patch release that fixes a few small problems discovered in the
+the previous release. Users of previous releases are encouraged to review
+the changes below to determine whether to upgrade.
+
+Summary of Changes
+------------------
+  * Fix Issue 6305209 - Text conversion fails on PDF files when skipping
+    the content. Handle PDF documents that are zero-length or too long more
+    gracefully. Rather than skip the document entirely, feed a stub
+    document with just the document's title, if available.
+
+  * Fix file system connector code site issue 32 - Initial snapshot fails
+    in Java 7 with error "two snapshots with the same number". Note that
+    Java 7 is not officially supported.
+
+  * Differentiate between no password and empty-string password in the
+    user authentication servlet.
+
+  * Remove the google:feedid property from records in the feeds.
+
+
+Release 2.8.4, 23 February 2012
+===============================
+
+Introduction
+------------
+This is a patch release that fixes a few small problems discovered in the
+the previous release. Users of the previous release are encouraged to upgrade.
+
+Summary of Changes
+------------------
+  * Fix Issue 5973714: Exceptions thrown while prefetching the Authorization
+    Manager on connector startup would leave the connector instance in an
+    inconsistent state.
+
+  * Fix Issue 5723358 - Escape special characters in user and group names
+    returned in an Authentication response.  User or group names that contained
+    certain characters that have special meaning in XML syntax would cause
+    failures reading the Authentication response.
+
+  * Fix Issues 5370948 and 5481676 - Better recovery from FeedExceptions.
+    If submitting a feed to the GSA fails for some reason, the Connector
+    Manager retrys the feed after 15 minutes.  But first, the Connector
+    Manager would test the GSA to verify that it is accepting feeds.
+    Unfortunately, that test would actually kill a functioning GSA
+    feedergate, disabling feeds for a short period of time while it
+    restarts. Effectively, the feed problem recovery strategy would
+    kill feeds every 15 minutes.  This problem only affects GSA version
+    6.12. This fix avoids the problem, using a slightly different strategy
+    to check for GSA feed availability.
+
+  * Address Issue 5382030 - If Flexible Authorization is misconfigured
+    to use connector authorization with a credential group which has no
+    authentication rules defined, the GSA sends a null Identity to the
+    Connector Manager during Authorization.  This was handled poorly
+    by most Connectors.  Although Issue 5382030 is actually a problem
+    with the Security Manager, the Connector Manager now considers a null
+    Identity to be an error, and returns an error status code to the
+    GSA.
+
+  * Adds rudimentary GData configuration for Connectors.  The new
+    googleFeedHost property supplied to Connectors may be used to
+    access the GData interface on the GSA.  This should be considered,
+    at best, a temporary solution.  This change also removes the
+    googleWorkDir and googleConnectorWorkDir properties from the saved
+    properties files, to avoid problems when moving connector instances
+    to a different directory. The properties still appear in the Properties
+    objects in the SPI.
+
+  * Adds several improvements to the Document Filters.
+    The ModifyPropertyFilter adds support for modifying the CONTENT
+    property of text documents (determined according to MIME type).
+    A SkipDocumentFilter can force a document to be skipped (or not)
+    based upon the presence/abscence of a specific Property, or based
+    upon a match on one of the values of that property.
+    The JavaDoc documentation for the Document Filters has been
+    improved, including example configurations.
+
+  * Various improvements in diagnostic logging.
+
+  * Fix Issues 233, 5028655, 6019938 - Fix logic bug in diffing where
+    recovery-files' age comparison was broken.  This could lead to the
+    connector resending the same files again after Tomcat was restarted.
+
+  * Fix Issue 232 - A small memory leak in ThreadPool would leak
+    QueryTraversers (and all the objects they held).
+
+Version Compatibility
+=====================
+The diffing library has a change effecting diffing connectors (File System,
+LDAP, and Database).  The method for assigning file name extensions to
+recovery files has changed. This change causes no issues migrating forward to
+this release, but reverting to an earlier release after running 2.8.4 requires
+diffing connectors to be reset.
+
+
+Release 2.8.2, 10 October 2011
+==============================
+
+Introduction
+------------
+This is a patch release that fixes a few small problems discovered in the
+the previous release. Users of the previous release are encouraged to upgrade.
+
+Summary of Changes
+------------------
+  * Enable editing of Connector Advanced configuration XML from the
+    GSA Admin console.
+
+  * Adds support for Flexible Authorization for Connectors.
+
+  * Improves MIME type recognition for many Microsoft Office file formats
+    when using the third-party mime-util detector.
+
+  * Reduces the likelihood of search result authorization timeouts.
+
+
+Release 2.8.0, 08 July 2011
+===========================
+
+Introduction
+------------
+This release has significant infrastructure changes, fixes several
+problems, and adds several new utility classes to the connector SPI
+for the benefit of connector developers.
+
+Summary of Changes
+------------------
+  * Issue 104 - Servlet to dynamically change logging levels.  New servlets
+    getConnectorLogLevel, setConnectorLogLevel, getFeedLogLevel and
+    setFeedLogLevel allow the connector administrator to adjust the connector
+    and feed logging verbosity without shutting down the connector.
+    These are especially useful in conjunction with the existing
+    getConnectorLogs and getFeedLogs servlets.
+
+  * Issue 168 - Make Base64 encode/decode available to the connector developer.
+    Base64, Base64FilterInputStream, and Base64ChecksumGenerator are several
+    of the new utility classes made available to connector developers.
+
+  * Issue 199 - SPI enhancement to expose JDBC to the connector developer.
+    Enabled by the new ConnectorPersistentStore SPI interface. Connectors
+    that wish to be given access to the JDBC DataSource should implement the
+    ConnectorPersistentStoreAware interface in their Connector implementation.
+    Given the DataSource, the connector developer may also take advantage
+    of several new database access utility classes, such as JdbcDatabase,
+    DatabaseConnectionPool, and DatabaseResourceBundle.
+    Note that ConnectorPersistentStore.getLocalDocumentStore() is disabled
+    in this release.
+
+  * Fixed Issue 4062256 - Failure to delete snapshot files would throw
+    IllegalStateException.  This affected the File System, LDAP, and
+    Database Connectors.
+
+  * Fix Issue 4524076 - Backward compatibility issue in diffing connectors
+    for recovery files.  This affected the File System, LDAP, and
+    Database Connectors.
+
+  * Fix Issues 4581062, 4613042 - Add configurable diffing connector delay
+    interval after each scan: 'introduceDelayAfterEachScan'.  This should
+    relieve some of the continuous file system scanning behaviour in the
+    File System Connector.
+
+  * The SPI AuthenticationManager and AuthenticationResponse classes have
+    been enhanced to allow the connector to return repository local groups
+    for a user.
+
+  * A new pagerank document property is now supported.
+    The SpiConstants.PROPNAME_PAGERANK property allows the connector to
+    recommend a pagerank (0-100) for the document if it matches queries.
+    For more information on pagerank see:
+    http://code.google.com/apis/searchappliance/documentation/610/feedsguide.html#defining_the_xml
+
+  * Fixed a minor problem that prevented connectors from running in the
+    JBoss Application Server.  See the JBoss deployment wiki page:
+    http://code.google.com/p/google-enterprise-connector-manager/wiki/JBossCM
+
+  * Added support for these Microsoft Office 2007 and later media types:
+      - application/vnd.ms-outlook
+      - application/vnd.ms-excel.sheet.12
+      - application/vnd.ms-powerpoint.presentation.12
+      - application/vnd.ms-word.document.12
+
+  * Added support for Secure Socket Layer (SSL) feeds to the Google Search
+    Appliance.  At the present time, SSL feeds must be manually configured.
+    For additional details, see the Advanced Configuration wiki page:
+    http://code.google.com/p/google-enterprise-connector-manager/wiki/AdvancedConfiguration
+
+  * New Document Filters utility package additions to the SPI for use by
+    connector developers, connector administrators, and systems integrators.
+    Document filters act to transform their source Document's Properties.
+    Document filters can add, remove, or modify a document's properties,
+    including the document content.  Properties in which the filter has
+    no interest are passed through unmodified. A document filter might
+    even throw a SkippedDocumentException to prevent a document from being
+    fed to the Google Search Appliance.
+    Multiple document filters may be chained together, forming
+    a transformational document processing pipeline.  Similar to a
+    Unix command pipeline, the filters are linked together, each using
+    the previous one as its source Document.
+    For more information see the Document Filters wiki page:
+    http://code.google.com/p/google-enterprise-connector-manager/wiki/DocumentFilters
+
+  * New additions to the SPI:
+      - ConnectorPersistentStore - Provides access to the LocalDatabase
+      - ConnectorPersistentStoreAware - Advertises that the Connector
+        wishes access to the LocalDatabase
+      - DatabaseResourceBundle - Vendor-specific SQL language translations
+      - LocalDatabase - Provides access to the configured JDBC DataSource and
+        DatabaseResourceBundles
+      - SpiConstants.PROPNAME_PAGERANK
+    For additional information, please refer to the JavaDoc at:
+    http://google-enterprise-connector-manager.googlecode.com/svn/docs/javadoc/2.8.0/index.html
+
+  * New utility package additions to the SPI for use by connector developers:
+    (available in package com.google.enterprise.connector.util)
+      - Base64 - Base64 encode/decode utility
+      - Base64DecoderException
+      - Base64FilterInputStream - InputStream filter that Base64 encodes
+        data read from its input
+
+      - ChecksumGenerator - Interface for checksum generators
+      - BasicChecksumGenerator - Generates MD2, MD5, SHA-1, SHA-256, SHA-384
+        and SHA-512 message digest checksums of data from an InputStream
+      - Base64ChecksumGenerator - Derived from BasicChecksumGenerator, but
+        returns Base64 encoded checksums
+
+      - Clock - a interface for getting the time; useful to replace for testing
+      - SystemClock - a Clock implementation using System.getCurrentTimeMillis()
+
+      - EofFilterInputStream - InputStream filter that avoids a read at
+        end-of-file problem with Apache Commons IO AutoCloseInputStream
+      - IOExceptionHelper - creates IOExceptions with a root cause on Java 5
+
+      - UniqueIdGenerator - Interface for producing unique IDs
+      - UuidGenerator - UniqueIdGenerator implementation based on UUID
+
+      - XmlParseUtil - utility methods for parsing XML data
+      - SAXParseErrorHandler
+    For additional information, please refer to the JavaDoc at:
+    http://google-enterprise-connector-manager.googlecode.com/svn/docs/javadoc/2.8.0/index.html
+
+  * New utility database package additions to the SPI for use by connector
+    developers:
+    (available in package com.google.enterprise.connector.util.database)
+      - JdbcDatabase - database info, utilities for creating and maintaining
+        database tables for connector instances.
+      - DatabaseConnectionPool - a pool of connections to the JDBC DataSource
+      - DatabasePropertyResourceBundle - DatabaseResourceBundles implemented
+        as properties files
+      - DatabaseResourceBundleManager - loads DatabaseResourceBundles
+    For additional information, please refer to the JavaDoc at:
+    http://google-enterprise-connector-manager.googlecode.com/svn/docs/javadoc/2.8.0/index.html
+
+  * New utility diffing package addition to the SPI provides a snapshot
+    diffing connector framework for use by connector developers:
+    (available in package com.google.enterprise.connector.util.diffing)
+      - Change, ChangeQueue, ChangeSource
+      - CheckpointAndChange, CheckpointAndChangeQueue
+      - DeleteDocumentHandle, DeleteDocumentHandleFactory
+      - DocumentHandle, DocumentHandleFactory
+      - DiffingConnector, DiffingConnectorTraversalManager
+      - DiffingConnectorCheckpoint, DiffingConnectorDocumentList
+      - DocIdUtil
+      - FilterReason
+      - GenericDocument
+      - DocumentSink, LoggingDocumentSink
+      - DocumentSnapshot, DocumentSnapshotFactory
+      - DocumentSnapshotRepositoryMonitor
+      - DocumentSnapshotRepositoryMonitorManager
+      - DocumentSnapshotRepositoryMonitorManagerImpl
+      - MonitorCheckpoint
+      - SnapshotRepository, SnapshotRepositoryRuntimeException
+      - SnapshotStore, SnapshotStoreException
+      - SnapshotReader, SnapshotReaderException
+      - SnapshotWriter, SnapshotWriterException
+      - TraversalContextManager
+    For additional information, please refer to the JavaDoc at:
+    http://google-enterprise-connector-manager.googlecode.com/svn/docs/javadoc/2.8.0/index.html
+
+  * New utility database and diffing testing packages additions to the SPI
+    provides test classes for use by connector developers:
+    (available in package com.google.enterprise.connector.util.database.testing)
+      - TestJdbcDatabase
+      - TestLocalDatabase
+      - TestResourceClassLoader
+    (available in package com.google.enterprise.connector.util.diffing.testing)
+      - FakeDocumentSnapshotRepositoryMonitorManager
+      - FakeTraversalContext
+      - TestDirectoryManager
+
+  * The Connector Manager now ships with several new third party JARs.
+    The connector developer may find these functionally useful, however
+    they should note that these are now distributed with the Connector
+    Manager and the connectors should take care not to replace them
+    with older or incompatible versions.
+      - commons-cli.jar  v1.2    http://commons.apache.org/cli
+      - eproperties.jar  v1.1.0  http://code.google.com/p/eproperties
+      - h2.jar  v1.2.147  http://www.h2database.com
+
+
+Release 2.6.10, 04 February 2011
+================================
+
+Introduction
+------------
+This is an internal release for the Connector Manager on-board the GSA,
+not for general use.
+
+
+Release 2.6.6,  7 December 2010
+===============================
+
+Introduction
+------------
+This is a patch release that fixes a few small problems discovered in the
+the previous release. New additions have been made to the connector SPI.
+Users of the previous release are encouraged to upgrade.
+
+Summary of Changes
+------------------
+   * Issue 217 - Schedule intervals that include midnight were treated as
+     empty and ignored.
+
+   * Issue 224 - Fixes a potential loss of information about exceptions in
+     the connector logs.
+
+   * Issue 225 - Fixes a series of problems with the ImportExport utility.
+
+   * Issue 227 - Use &#39; instead of &apos; when escaping single quotes,
+     for HTML compatibility. The use of &apos; could lead to errors when
+     configuring connector instances using Internet Explorer.
+
+   * Improved log messages when free memory is low, when the feeds are
+     paused due to a backlog on the GSA, and when constructing a new
+     connector instance throws an exception while starting a new traversal
+     batch.
+
+   * New additions to the SPI:
+
+        o SpiConstants.RESERVED_PROPNAME_PREFIX
+        o SpiConstants.PROPNAME_FOLDER
+        o SpiConstants.PROPNAME_LOCK
+        o UrlValidator class
+        o UrlValidatorException class
+
+     The UrlValidator class is in a new com.google.enterprise.connector.util
+     package. This package will be used for utility classes that are not
+     part of or related to the spi package, but which connector
+     implementers might find useful.
+
+
+Release 2.6.4, 16 September 2010
+================================
+
+Introduction
+------------
+This is an internal release for the Connector Manager on-board the GSA,
+not for general use.
+
+Summary of Changes
+------------------
+  * Servlet access to the Connector Manager on-board the GSA has been
+    largely locked down. The getConfiguration and getConnectorLogs
+    servlets remain accessible for the benefit of connector administrators
+    and support personnel.
+
+
+Release 2.6.2, 09 September 2010
+================================
+
+Introduction
+------------
+This is an internal release for the Connector Manager on-board the GSA,
+not for general use.
+
+
+Release 2.6.0,  14 June 2010
+============================
+
+Introduction
+------------
+This is a patch release that fixes a few small problems discovered in the
+previous release.  Users of the previous release are encouraged to upgrade.
+
+
+Summary of Changes
+------------------
+   * Issue 189 - Fixes a problem with the HostLoadManager that would
+     impose artificial traversal delays.  The delays, although short,
+     would occur frequently.  This fix allows the Connector Manager to
+     more accurately adhere to the configured documents per minute
+     traversal rate.
+
+   * Issue 194 - Enhances the HostLoadManager to more accurately adhere
+     to the configured documents per minute traversal rate; while allowing
+     the Connector to occasionally exceed that rate to improve efficiency.
+
+   * Issue 220 - Fixes the representation of multiple-valued metadata supplied
+     by the Connector as it is fed to the Google Search Appliance.  This
+     corrects a problem with parametric navigation.
+
+   * Fixed a problem where restarting a traversal from the beginning
+     of a Connector's Repository or changing a Connector's traversal
+     schedule might not take immediate effect.
+
+   * Added a 'traversal.enabled' property that may be set in the Connector
+     Manager's applicationContext.properties is used to enable or disable
+     Traversals and Feeds for all Connector instances in the Connector
+     Manager.  Disabling Traversal would be desirable if configuring a
+     Connector Manager deployment that only authorizes search results.
+     This feature is designed for turning off traversal for replica
+     Connector Managers in a clustered, load-balanced, or fail-over
+     environment.  Traversals are enabled by default.
+
+   * Added an EncryptPassword command line utility that can be used by
+     an administrator to encrypt passwords that will be manually added to
+     Connector Manager or Connector properties files.  For details, see
+     the EncryptPassword wiki page at:
+     http://code.google.com/p/google-enterprise-connector-manager/wiki/EncryptPassword
+
+   * Enhanced support for the Apache JULI LogManager and FileHandler.
+
+   * Corrected a minor issue with regards to the naming of log file
+     archives that are generated by the GetConnectorLogs servlet.
+
+   * Enhanced logging support for the testing environment by adding a
+     connector-manager/testdata/config/logging.properties file.
+
+   * Fixed the Connector Manager web application web.xml file to more
+     closely follow its DTD.
+
+   * Fixed a Daylight Saving Time bug in one of the tests.  This issue
+     affected the test only, not the production Connector Manager.
+
+
+Release 2.4.4, 05 February 2010
+===============================
+
+Introduction
+------------
+This is a patch release that fixes a few small problems discovered in the
+previous release.  Users of the previous release are encouraged to upgrade
+immediately.
+
+Summary of Changes
+------------------
+  * Issue 209: Changed the default feed time zone from UTC to the
+    local time zone.  Added a new configuration property, feed.timezone,
+    that may be set in applicationContext.properties if the local time
+    zone should not be used.
+
+    The 'feed.timezone' property defines the default time zone used
+    for Date metadata values for Documents.  A null or empty string
+    indicates that the local time zone of the machine running the
+    Connector Manager should be used.  Standard TimeZone identifiers
+    may be specified.  For example:
+      feed.timezone=America/Los_Angeles
+    If a standard TimeZone identifier is unavailable, then a custom
+    TimeZone identifier can be constructed as +/-hours[minutes] offset
+    from GMT.  For example:
+      feed.timezone=GMT+10    # GMT + 10 hours
+      feed.timezone=GMT+0630  # GMT + 6 hours, 30 minutes
+      feed.timezone=GMT-0800  # GMT - 8 hours, 0 minutes
+
+    This modification has compatibility implications when upgrading;
+    refer to the Version Compatibility section, below.
+
+  * Issue 211: Moved common Connector Manager configuration properties
+    from applicationContext.xml to applicationContext.properties.
+    This makes it much easier to upgrade to a newer version of the
+    Connector Manager, while preserving properties that had been
+    customized by the administrator.
+
+    This modification has compatibility implications when upgrading;
+    refer to the Version Compatibility section, below.
+
+  * Issue 212: Fixes "IOException: Attempted read on closed stream."
+    exceptions that might be generated if a Connector uses the
+    Apache Commons AutoCloseInputStream to provide document content
+    to the Connector Manager.  Currently, only the SharePoint Connector
+    seems to have been affected by this problem.
+
+Version Compatibility
+---------------------
+The time zone change has the most dramatic impact when upgrading.
+Previous versions of Connector Manager would convert all date/time
+values provided by the Connector to UTC dates when supplying the date
+to the GSA.  This had undesired consequences for users performing
+date-range searches, where expected search results may have been
+discarded as their adjusted date-stamps may have pushed the document
+into the previous or next day.  Consider this: a document modified
+at 8:00PM PST today in California will have a calendar date of
+tomorrow when adjusted to UTC time, so if you search for documents
+modified today, it won't be found.
+
+The Issue 209 change assumes date values supplied to the GSA are
+local time, unless otherwise specified.  This allows date-range
+queries to function as expected when the Document Repository,
+the Connector Manager, and the Search Appliance are in the same
+time zone (or near enough time zones that 'normal working hours'
+significantly overlap).
+
+Upgrading an existing deployment to this new Connector Manager will
+result in all newly indexed content feeding date values in the
+local time zone, whereas all previously indexed content will have
+UTC date values.  The connector administrator may choose to handle
+this inconsistency in one of several ways:
+ 1) Do nothing.  This may be desirable if date-range searches
+    for older materials need not be accurate to the day; or if
+    re-indexing all content is untenable; or if the Repository,
+    Connector Manager, Search Appliance, and search users are
+    widely dispersed across time zones.
+ 2) Set the feed.timezone property in applicationContext.properties
+    to GMT.  If your local time zone differs significantly from GMT,
+    then date-range searches will continue to be unreliable.
+    However, all dates in the index will be consistently inaccurate.
+ 3) Re-index all content fed by Connectors.  This is the preferred
+    solution if date-range searches are required to be accurate to
+    the day, or if re-indexing the content is not an onerous task.
+    The mechanics of re-indexing depends upon the GSA and Connector
+    Manager versions.  Please consult the appropriate documentation
+    for details.
+ 4) Set the feed.timezone property in applicationContext.properties
+    to a value other than the local time zone or GMT.  This would
+    be appropriate if the Connector Manager and/or GSA were in
+    significantly different timezones than the Repository and/or
+    search users.  The options to re-index or not still apply.
+--
+
+As a result of the modifications for Issue 211, the Connector Manager
+applicationContext.xml and applicationContext.properties files have
+changed significantly.  Consequently, simply dropping the v2.4.4
+JAR files into an existing installation will not function properly.
+An in-place upgrade must include the applicationContext.xml file
+as well.
+
+If the connector administrator has made no modifications to
+applicationContext.xml, then a drop-in update of just the
+Connector Manager v2.4.4 JAR files and the applicationContext.xml
+file over an existing v2.4.x installation should proceed uneventfully.
+If using the GCI Connector Installer v2.4.4 to upgrade or following the
+procedures as described in the UpdatePatchReleasewiki page (see below),
+then installation of the applicationContext.xml file will be automatic.
+
+However, if the connector administrator has made modifications to
+the applicationContext.properties, those modifications must be
+re-applied after installation.  But because of the restructuring of
+applicationContext.xml, it may be difficult to merge the differences.
+Before upgrading, the administrator should make back-up copies of the
+existing applicationContext.xml and applicationContext.properties files.
+These may be used as reference when modifying the newer versions of
+these files.
+
+Once the backup files have been made, follow the instructions for applying
+an update as described in the UpdatePatchRelease wiki page (see below).
+EXCEPT - do not copy the old applicationContext.properties file over
+the new one (step 5 in the instructions), and don't restart Tomcat yet
+(step 6), or if using the GCI Connector Installer v2.4.4 to upgrade,
+shut down Tomcat after the upgrade completes, before re-applying the
+modifications.
+
+Copy the few set properties from the old applicationContext.properties
+to the new one.  The old properties file contains only a half-dozen or so
+properties and they are clearly documented in the new properties file.
+
+Next it is time to reapply your old applicationContext.xml modifications.
+Most of the properties an administrator would wish to change will now
+be set in applicationContext.properties rather than the XML file.
+For instance, rather than modifying the constructor-arg for the
+TraversalTimeLimitSecondsDefault bean in the applicationContext.xml file,
+the administrator should set the traversal.time.limit property in the
+applicationContext.properties file.  This process may be tedious, but
+the v2.4.4 applicationContext.properties file is well commented, so
+the appropriate modifications should be clear.
+
+Finally, once the appropriate modifications have been made to the
+new applicationContext.properties file, the Tomcat server may be
+restarted as described in the UpdatePatchRelease wiki page.  Once
+the server is restarted, the administrator is encouraged to examine
+the Connector Manager logs to check for any configuration errors.
+
+For additional details, please refer to the Connector Manager wiki
+page describing how to manually install an update or patch release:
+http://code.google.com/p/google-enterprise-connector-manager/wiki/UpdatePatchRelease
+
+
+Release 2.4.2, 11 January 2010
+==============================
+
+Introduction
+------------
+This is a patch release that fixes a few small problems discovered in the
+previous release.  Users of the previous release are encouraged to upgrade
+immediately.
+
+Summary of Changes
+------------------
+  * Issue 3: Changed MockJcrRepository.login() to throw LoginException as
+    described by the Repository Interface rather than just return null Session.
+    The scope of this change is limited to the quality control unit tests.
+
+  * Issue 197: Added Microsoft Office 2007 OpenXML media types to the set of
+    supportedMimeTypes in applicationContext.xml.
+
+  * Issue 204: Handle XML CDATA end markers "]]>" embedded in the form
+    snippet returned by ConnectorType.getConfigForm() and
+    ConnectorType.getPopulatedConfigForm().
+
+  * Issue 206: Auto-Disabled connectors could not be re-enabled.  This
+    problem would have been encountered if the connector administrator
+    entered a negative value for the Retry Delay in a connector's
+    configuration, and then tried to re-enable traversal after it had been
+    automatically disabled at the end of the traversal.  This is the
+    preferred mechanism to "catch up", indexing documents that have been
+    added or changed since a "run-once" traversal finished.
+
+  * Issue 207: Fixes OutOfMemoryError when submitting feeds over a slow
+    feed connection or to busy Search Appliance.  If the GSA is slow to
+    accept feeds, then too many feeds could be queued up waiting to be sent,
+    each with an attached 10MB buffer of data.  Memory allocation would
+    grow with each new feed created until the heap was exhausted.
+
+
+Release 2.4.0, 20 November 2009
+===============================
+
+Introduction
+------------
+This is an upgrade release with some enhancements.  Users of previous
+releases are encouraged to upgrade.  It also contains some new features.
+Users of previous releases should check the "Version Compatibility" section
+below for instructions on how to use existing data with this new release.
+
+This release focuses primarily on improving the performance and robustness
+of the document traversal and feed process.  Informal measurements show
+feeding documents to the GSA 3 to 10 times faster than version 2.0.0.
+Within the Connector Manager, these gains were achieved by:
+ - Reducing the number of feeds sent to the GSA by generating larger feeds
+   with more documents per feed.
+ - Sending compressed document content to newer GSAs that support compressed
+   content feeds (GSA v6.2).
+ - Traversing the repository in larger swaths.
+ - Reducing traversal work redundancy.
+Performance analysis also identified some bottlenecks in several of the
+individual Connectors that were addressed. (See each Connector's Release
+Notes for details).
+
+Summary of Changes
+------------------
+  * Issue 106: Added support for feeding multiple documents to the GSA
+    in a single feed file.  Previously, the Connector Manager would create
+    a new feed file for each Document.  This was inefficient and could
+    result in slow feed performance.  The Connector Manager will now
+    accumulate feed data into a single feed per connector traversal.
+    Once that feed exceeds a set size or when the traversal batch
+    completes, the feed is wrapped up and sent to the GSA.  The default
+    maxFeedSize is 10MB, and is configurable in applicationContext.xml.
+    An early version of this feature was made available in the v2.0.2
+    release.  This release provides the full implementation of the feature.
+
+  * Issue 111: A catch-all for small performance-related issues, including
+    a faster Base64 encoder, larger I/O buffer sizes, reduced data copying,
+    processing additional records from a returned traversal DocumentList,
+    even if it would exceed the supplied hint size and host load constraints.
+    Several other items were spun off into separate Issues.
+
+  * Issue 117: Fixes a problem where some Date meta-data fields are being
+    incorrectly formatted for non-English locales. The RFC 822 specification
+    explicitly states that month and day names are specified in English.
+    Previous releases would translate them to the current locale.
+
+  * Issue 124: Throttle feeds to GSAs that seem to be falling behind
+    in feed processing.  GSA revisions 5.2.0.G28 and later allow the
+    Connector Manager to query the backlog of unprocessed feed files.
+    This feature is used to throttle back the document feed if the GSA has
+    fallen behind processing outstanding feed items.  The Connector Manager
+    will periodically poll the GSA, asking for the count of unprocessed
+    feed items (the backlog count).  If the backlog count exceeds the
+    a configured ceiling we pause the feed.  We resume the feed once the
+    backlog count drops down below a floor value.  The floor, ceiling, and
+    poll interval are configurable by editing the FeedBacklogFloor,
+    FeedBacklogCeiling, and FeedBacklogCheckIntervalSeconds bean definitions
+    in applicationContext.xml.
+
+  * Issue 141: Replaces many of the home-rolled multi-threading constructs
+    with newer java.util.concurrent technologies available in Java 1.5
+
+  * Issue 143: Adds an 'excluded' set to the mime type map.  This allows
+    administrators to specify a set of document types that should be
+    excluded during traversals.  Neither their content, nor their meta-data
+    should be fed to the GSA.  Note that not all Connectors yet support
+    this feature.
+
+  * Issue 153: Adds support for compressing the document content data
+    in Content Feeds.  This reduces the size of the feed file sent to
+    the GSA.  Compressed Content Feeds are supported in GSA versions
+    6.2 and above.  The Connector Manager automatically detects whether
+    the GSA feed host supports compressed feeds and provides either
+    compressed or uncompressed data accordingly.
+
+  * Issue 164: Enhanced the SimpleProperty class, adding a single-value
+    constructor.  This should make it much easier for Connectors to
+    use this class.
+
+  * Issue 171: Moves the traversal schedule check into a synchronized
+    block, eliminating the risk of using a stale schedule.
+
+  * Issue 172: Corrects a problem when shutting down the Connector Manager
+    after a feed error is encountered.
+
+  * Issue 173: Properly format the HTTP feed requests packets sent to
+    the GSA.  The HTTP protocol explicitly specifies the use of MS-DOS
+    style CR-LF line endings.
+
+  * Issue 174: Fixes a unit test failure for non-English locales.
+
+  * Issue 175: Fixes a NullPointerException that would occur if the
+    Connector Manager was not an authorized feed client of the GSA
+    it was attempting to feed.
+
+  * Issue 177: Fixes an IOException thrown on startup if a GSA
+    feed host is not defined.
+
+  * Issue 178: Cleans up handling of legacy Connector traversal
+    schedule strings exchanged between the GSA and the Connector Manager.
+
+  * Issue 182: Submit feeds to the GSA in a separate thread.  In the
+    case where a traversal batch generates multiple feed files, a
+    full feed file is submitted to the GSA in separate thread, while
+    the traversal thread builds the next feed file.  This overlaps
+    I/O, adding better concurrency.  One thread is focused on I/O
+    between the Connector Manager and the GSA, the other thread
+    is focused on I/O between the Connector Manager and the document
+    Repository.
+
+  * Issue 187: Fix a problem that would add a redundant and unnecessary
+    log message once per second during connector traversals.
+
+  * Issue 188: Adds simple implementations of the SPI callback
+    interfaces, SimpleConnectorFactory and SimpleTraversalContext.
+    These make it easier for Connector Developers to create tests
+    that use these features.
+
+  * Issue 190: Fixes a regression in handling non-lowercase connector
+    names.  Although fixed in release v1.3.0, this got broken again
+    in release v2.0.0.  For details, see:
+    http://code.google.com/p/google-enterprise-connector-manager/wiki/LowerCaseConnectorNames
+
+  * Issue 193: Adds code to check for the presence of a "password" attribute in
+    the <Identity> element sent within the Authorization query.  If the
+    attribute is present it is now read and stored in the parsed
+    AuthenticationIdentity object.
+
+  * Issue 196: Connections between the Connector Manager and the feed reader
+    used when the Connector Manager pushes feeds are now explicitly being
+    closed.
+
+
+Version Compatibility
+---------------------
+Connector authors should note the changes for Issue 143 ('excluded' mime
+type) subtly changes the meaning of values returned by the method,
+TraversalContext.mimeTypeSupportLevel(String).  Previously, values
+less than or equal to zero were considered 'unsupported'.  With this
+release, values equal to zero are considered 'unsupported', while
+values less than zero are considered 'excluded'.
+
+Connector authors and administrators should note the changes related to
+Issue 111 change the behavior of the Connector Manager regarding DocumentList
+objects that contain more Documents than was specified by the batchHint
+(as provided to TraversalManager.setBatchHint(int)).  Previously, the
+Connector Manager would process no more than batchHint number of
+Documents from the returned DocumentList.  The current release will
+continue to process the DocumentList until it is exhausted, or the
+number of documents exceeds twice the batchHint, or the traversal
+time limit is reached.  This could result in the Connector Manager
+processing up to twice as many documents from each batch.  The current
+host load management does not take this into consideration, so in
+certain instances, traversal rates may exceed the configured host
+load for brief periods. This load management issue will be corrected
+in a subsequent release.
+
+
+Known Issues
+------------
+Connector administrators should note the changes related to Issue 111
+can result in traversal rates that may exceed the configured host load.
+For most of the current Google-supplied Connectors this has little
+impact.  For instance the additional documents returned by the Livelink
+and Documentum connectors are deleted documents, which pull no content
+from the repository.  However, the Sharepoint Connector might regularly
+exceed the configured load.  In this case, the administrator may wish
+to reduce the configured load to compensate.
+
+
+Release 2.0.4, 09 October 2009
+===============================
+
+Introduction
+------------
+This is a patch release that fixes a few small problems discovered in the
+previous release.  Users of previous releases are encouraged to upgrade if they
+are pushing large documents or using the ImportExport utility.
+
+
+Summary of Changes
+------------------
+  * r2259: This change fixes an error in handling big documents. The code for
+    supplying the alternate content (title or space) for documents that exceed
+    the maximum document size was broken. The alternate content was the right
+    size, but was read into the wrong location of the I/O buffer.
+
+  * r2263: Fixed ImportExport utility on the branch.  There was a series of
+    failures with the current ImportExport utility.
+
+
+Release 2.0.2, 02 Sept 2009
+============================
+
+Introduction
+------------
+This is a patch release that addresses performance issues and
+fixes several small problems discovered in the previous release.
+Users of previous releases are encouraged to upgrade.
+
+
+Summary of Changes
+------------------
+  * Issue 162: Fixed a NullPointerException in logging XmlFormatter.
+    This fix now allows use of the XmlFormatter without requiring a
+    format to be specified.
+
+  * Fixed a NullPointerException in context logging on shutdown.
+
+  * Issue 106: Added support for feeding multiple documents to the GSA
+    in a single feed file.  Previously, the Connector Manager would create
+    a new feed file for each Document.  This was inefficient and could
+    result in slow feed performance.  The Connector Manager will now
+    accumulate feed data into a single feed per connector traversal.
+    Once that feed exceeds a set size or when the traversal batch
+    completes, the feed is wrapped up and sent to the GSA.  The default
+    maxFeedSize is 10MB, and is configurable in applicationContext.xml.
+
+  * Issue 180: Increased the default size of traversal batches from 100
+    documents to 500 documents.  This provides improved efficiency in most
+    connectors.  The size of traversal batches can now be configured
+    by setting the batchSize property of the HostLoadManager bean
+    in applicationContext.xml.
+
+  * Fixed a rounding error in the HostLoadManager documents-per-minute
+    computation.
+
+  * The Connector Manager now enforces the FileSizeLimitInfo.maxDocumentSize
+    configuration property.  This property sets the maximum size of a Document's
+    content and is specified in applicationContext.xml.  The default value is
+    30 megabytes.  When constructing a document feed, if the number of bytes
+    read from the Document's content exceeds the maxDocumentSize, the
+    content will be discarded.  The Document's meta-data will be supplied in
+    the feed, but its content will not.
+
+    It is still preferable for TraversalContextAware Connector implementations
+    to make use of the maxDocumentSize supplied in TraversalContext to avoid
+    feeding the content of large documents.  If the Connector knows in advance
+    that a Document's content will exceed the maximum size, it can avoid the
+    Connector Manager pulling megabytes of data from the Repository, only to
+    have it discarded.
+
+
+Release 2.0.0, 01 June 2009
+============================
+
+Introduction
+------------
+This is an upgrade release with some enhancements.  Users of previous
+releases are encouraged to upgrade.  It also contains some new features.
+Users of previous releases should check the "Version Compatibility" section
+below for instructions on how to use existing data with this new release.
+
+Summary of Changes
+------------------
+  * Issues 79, 127, 134, 135: Connector Traversal Schedule improvements
+       that allow traversals to be disabled, paused, resumed, or to be empty.
+
+  * Issue 94: Enhanced documentation with regards to the meaning of
+       a null return value from DocumentList.checkpoint().
+
+  * Issue 107: Connector Instance name added to log messages makes it much
+       easier to troubleshoot problems with multiple Connector instances.
+       This has deployment configuration issues in manual deployments and
+       upgrading existing deployments.  See the Compatibility section below.
+
+  * Issues 111, 119, 142: Infrastructure upgrades to Java 5 language features,
+       faster Base64 encoding in feeds, and deployment using Apache
+       Tomcat 6.0.18 and Spring Framework 2.5.6.
+
+  * Issue 114: Changes to connectorInstance.xml make it easier to add new
+       configuration parameters and to change the default values of existing
+       ones in the future, even if a customer has a customized configuration..
+
+  * Issue 122: The Connector's name is now passed to the connector via its
+       configuration properties so that connectors may know their own name.
+
+  * Issues 126, 145: Enhanced reliability and error handling in the
+       AuthenticationManager and AuthorizationManager.
+
+  * Issue 128: Invalid characters are now either removed or properly quoted
+       in the Feed XML attribute values.
+
+  * Issues 131, 148: "Domain" gets preserved when the Connector Manager creates
+       an AuthenticationIdentity for the Connector. This has compatibility
+       implications for connector writers.  See Compatibility section below.
+
+  * Issues 133, 152: Fixed problems that would corrupt the Connector's
+       configuration or leave a partially constructed connector directory
+       on disk if an error occurred when creating a new Connector instance.
+
+  * Issues 146, 149: The Connector Manager servlet now has a simple main page
+       it may be useful for connectivity test, rather than returning a 404.
+
+
+Version Compatibility
+---------------------
+Connector authors should note the Issues 131 and 148 changes to the
+AuthenticationIdentity Interface, adding the Domain element and getDomain()
+method.  The AuthenticationIdentity supplied to the Connector's
+AuthenticationManager and the AuthorizationManager.  Older versions
+of the Google Search Appliance do not supply the domain, so connectors often
+required a configuration setting that specified the Windows domain used.
+Connectors that implemented this work-around should continue to do so for the
+indefinite future.  However, if the connector received a domain from the GSA,
+that domain should be used in deference to any locally configured domain.
+For additional details, please see:
+http://code.google.com/p/google-enterprise-connector-manager/issues/detail?id=131
+http://code.google.com/p/google-enterprise-connector-manager/issues/detail?id=148
+
+The Issue 107 changes provide enhanced logging capabilities that make it
+easier to troubleshoot installations with multiple Connector instances.
+This feature requires the configuration of a custom log formatter.
+The Google Connectors Installer will automatically configure this properly.
+However manual installations will require two small changes to enable this
+feature:
+ - In $TOMCAT_HOME/webapps/connector-manager/WEB-INF/classes/logging.properties,
+   change the FileHandler.formatter to one of our custom formatters:
+   java.util.logging.FileHandler.formatter=com.google.enterprise.connector.logging.SimpleFormatter
+     or
+   java.util.logging.FileHandler.formatter=com.google.enterprise.connector.logging.XmlFormatter
+
+ - If $TOMCAT_HOME/webapps/connector-manager/WEB-INF/classes/logging.properties
+   specifies using the java.util.logging.FileHandler, then you must add the
+   new connector-logging.jar file to the system classpath that Tomcat uses at
+   startup.  Tomcat ignores the CLASSPATH environment variable and builds a
+   custom classpath using the $TOMCAT_HOME/bin/setclasspath.sh or
+   $TOMCAT_HOME/bin/setclasspath.bat scripts.  Modify these scripts, adding
+   connector-logging.jar to the CLASSPATH constructed: For instance:
+   CLASSPATH="$CLASSPATH":"$BASEDIR"/webapps/connector-manager/WEB-INF/lib/connector-logging.jar
+
+
+Release 1.3.2, Apr 07, 2009
+===========================
+
+Introduction
+------------
+This is an upgrade release that addresses some problems discovered since
+the 1.3.0 release.  It also adds some enhanced security measures that
+obfuscates configuration data communicated between the Google Search
+Appliance and the Connector Manager, and prevents hijacking of a content feed.
+These enhanced security measures impact Connector Manager administrators
+and Connector Developers.  For details see the Version Compatibility
+section below.  Users of previous releases are encouraged to upgrade.
+
+Summary of Changes
+------------------
+  * Fixed a Concurrency issue with the HostLoadManager.
+  * Fix Issue 137: Obfuscate configuration data transported between the
+                   Google Search Appliance and the Connector Manager.
+                   This has compatibility implications for connector
+                   writers.  See the Compatibility section below.
+  * Fix Issue 138: Prevent hijacking a Connector Manager Content Feed
+                   using a "set once latch".  This makes it difficult to
+                   implement man-in-the middle attacks that observes
+                   document content as it is being fed to the GSA.
+                   Redirecting a content feed now requires manual intervention.
+                   This has compatibility implications for Connector Manager
+                   administrators.  See the Compatibility section below.
+  * Fix Issue 139: A followup change to Issue 137 that corrects a problem
+                   filtering forms that have embedded scripts, but no
+                   sensitive data.
+  * Fix Issue 140: Fix a problem where the GsaFeedConnection did not
+                   handle OutOfMemoryErrors correctly, resulting in a
+                   loop feeding the same content indefinitely.
+
+Version Compatibility
+---------------------
+The two security enhancements (Issues 137 and 138) have compatibility
+issues for connector authors and administrators.
+
+The Connector Manager now obfuscates the connector configuration form data
+sent between the GSA and Connector Manager.  This prevents sensitive
+configuration settings (such as ECM account passwords) from being trasmitted
+in the clear.  However to accomplish this, the Connector Manager must parse
+the configuration form returned by ConnectorType getPopulatedConfigForm(),
+getConfigForm(), and validateConfig() methods.  These forms must now be
+well-formed XHTML fragments.  For additional details, please see:
+http://code.google.com/p/google-enterprise-connector-manager/issues/detail?id=137
+
+The Connector Manager now has a latch that prevents redirecting a content
+feed without manual intervention by an administrator.  Connector administrators
+must now clear a flag in the Connector Manager properties before configuring
+the Connector Manager to feed a different Search Appliance.  For details see:
+http://code.google.com/p/google-enterprise-connector-manager/issues/detail?id=138
+
+
+Release 1.3.1, Mar 16, 2009
+===========================
+
+Introduction
+------------
+This is an upgrade release that addresses some problems discovered since
+the 1.3.0 release.  Users of previous releases are encouraged to upgrade.
+
+Summary of Changes
+------------------
+  * Fix Issue 110: Multiple threading issues, including a race condition,
+                   a deadlock condition, and failures when handling hanging
+                   traversers.  This should fix a large number of traversals
+                   that stop and never resume.  Some timeouts were lengthened
+                   as well, so some long-running tasks should no longer be
+                   considered "hung" and are likely to complete successfully.
+
+  * Fix Issue 123: Properties, including passwords, were inadvertently logged.
+
+  * Fix Issue 130: Wrong error messaged displayed if error status is returned
+                   from SetConnectorConfig servlet.
+
+
+Release 1.3.0, Jan 13, 2009
+===========================
+
+Introduction
+------------
+This is an upgrade release with some enhancements.  Users of previous
+releases are encouraged to upgrade.  It also contains some new features.  Users
+of previous releases should check the "Version Compatibility" section below for
+instructions on how to use existing data with this new release.
+
+Summary of Changes
+------------------
+  * Fix Issue 9:   Miscellaneous minor issues in mock pusher
+  * Fix Issue 49:  Connector instance properties are stored before they are validated.
+  * Fix Issue 52:  ConnectorFactory interface in the Javadoc is not documented
+  * Fix Issue 57:  AuthorizationResponse.equals should use the valid field
+  * Fix Issue 58:  site: operator doesn't work with connector feeds
+  * Fix Issue 59:  Add a canonical title property
+  * Fix Issue 62:  TraversalContextAware interface is not used
+  * Fix Issue 72:  Multiple problems with exception handling in QueryTraverser.runBatch
+  * Fix Issue 78:  Fix config storage
+  * Fix Issue 80:  Implement ConnectorFactory
+  * Fix Issue 81:  Encrypt property with 'password' case insensitive
+  * Fix Issue 85:  Property accesses are not documented clearly
+  * Fix Issue 100: Sending documents with a search url causes exception for smb paths.
+  * Fix Issue 102: Tomcat process may not exit on Linux
+  * Fix Issue 105: Allow retrieval of CM and/or Connector config by the GSA
+  * Fix Issue 108: Fix exception handling in DocPusher
+  * Fix Issue 109: Latest svn connector-manager builds (post 1.1) do not set googleworkdir
+                   and googleconnectorworkdir in connector.properties file
+  * Fix Issue 112: Use PropertyPlaceholderConfigurer for feedLoggingLevel property
+  * Fix Issue 116: restartConnectorTraversal is broken
+
+
+Version Compatibility
+---------------------
+
+Connector Names Should Not Contain Upper Case Alphabetics
+---------------------------------------------------------
+Newer releases of the Google Search Appliance require that
+Connector names contain only lower case alphabetic characters.
+Numeric digits, dashes, and underscores are still allowed,
+with the previously documented limitations, however upper case
+alphabetics should no longer be used.  Problems using upper
+case characters in Connector names first appeared in GSA
+version 5.0.4.G22, showing only minor inconsistencies in
+crawl diagnostics.  In GSA version 5.2, search authorizations
+fail.
+
+Unfortunately, the new lower case connector name limitation
+is not enforced when creating Connectors on the GSA
+Connector Administration page.
+
+Connector Manager version 1.3.0 makes small concessions to
+this issue.  For instance, new Connectors have their name
+lower cased at the time of creation.
+
+The Connector Manager does not, however, change the case
+of existing Connectors or migrate existing Connectors to
+the new lower case form.  Doing so would lead to inconsistent
+search results and make previously indexed content inaccessable.
+
+If you have existing Connector instances with mixed case or
+upper case names, you must changed them before upgrading to
+GSA version 5.2, or existing content fed from that Connector
+will become unsearchable.
+
+Further details and instructions may be found at:
+http://code.google.com/p/google-enterprise-connector-manager/wiki/LowerCaseConnectorNames
+
+
+Connector Manager SPI Changes that Affect Connector Implementation
+------------------------------------------------------------------
+Connectors created using previous 1.0.x and 1.1.0 versions of this
+product may not be compatible with this version. There have been
+several small changes to the SPI, some additional functionality made
+available for the Connectors, and some clarification of flow of control.
+
+The following changes to the Connector Manager may have direct impact on
+existing connectors:
+
+ConnectorFactory for use by ConnectorType.validateConfig()
+----------------------------------------------------------
+The Connector Factory is provided to ConnectorType.validateConfig(),
+which may use it to construct Connector instances for the purpose
+of validation.  The ConnectorFactory uses the same mechanism to
+create the Connector instance that the ConnectorManager uses to
+create the "Normal" running instances.  However, the instances
+created by the ConnectorFactory are considered transient - they
+are not scheduled for traversal or used to authorize search
+results.
+
+For additional information see:
+http://code.google.com/p/google-enterprise-connector-manager/issues/detail?id=80
+http://code.google.com/p/google-enterprise-connector-manager/source/browse/trunk/projects/connector-manager/source/java/com/google/enterprise/connector/spi/ConnectorFactory.java
+For an example of ConnectorFactory use:
+http://code.google.com/p/google-enterprise-connector-otex/source/browse/trunk/projects/otex-core/source/java/com/google/enterprise/connector/otex/LivelinkConnectorType.java
+
+
+ConnectorType.validateConfig() May Return a Modified Configuration
+------------------------------------------------------------------
+ConnectorType.validateConfig() may now return a modified configuration
+in the ConfigureResponse if desired.  That modified configuration
+will be saved and used to create the running connector instance.
+
+For additional information see:
+http://code.google.com/p/google-enterprise-connector-manager/source/browse/trunk/projects/connector-manager/source/java/com/google/enterprise/connector/spi/ConnectorType.java
+http://code.google.com/p/google-enterprise-connector-manager/source/browse/trunk/projects/connector-manager/source/java/com/google/enterprise/connector/spi/ConfigureResponse.java
+
+
+Exception Handling in TraversalManager, DocumentList, Document, Property, Value
+-------------------------------------------------------------------------------
+The handling of Exceptions thrown during document traversal and feeding
+has been greatly improved.  In the previous releases, exceptions thrown
+during traversal would often result in loops or hangs, usually halting
+traversal progress.  Connectors should only ever throw RepositoryExceptions
+out of these interfaces, however we now provide a new subclass of
+RepositoryException, called RepositoryDocumentException, that is handled
+differently.  In short, throwing a RepositoryDocumentException will
+force the Connector Manager to skip the document currently being processed,
+proceeding to the next one.  Throwing a RepositoryException will instruct
+the Connector Manager to abandon the current batch of documents and
+retry later.  The Connector must also properly handle a call to
+DocumentList.checkpoint() after an exception is thrown.
+
+For more information, see:
+http://code.google.com/p/google-enterprise-connector-manager/issues/detail?id=72
+http://code.google.com/p/google-enterprise-connector-manager/issues/detail?id=108
+http://code.google.com/p/google-enterprise-connector-manager/source/browse/trunk/projects/connector-manager/source/java/com/google/enterprise/connector/spi/DocumentList.java
+http://code.google.com/p/google-enterprise-connector-manager/source/browse/trunk/projects/connector-manager/source/java/com/google/enterprise/connector/spi/Document.java
+
+
+Returning Null DocumentList vs. Empty DocumentList from TraversalManager
+------------------------------------------------------------------------
+Previous versions of the Connector Manager handled a null return value
+and an empty DocumentList [non-null, but zero items] returned from
+TraversalManager.startTraversal() and TraversalManager.resumeTraversal()
+identically.  This version of the Connector Manager makes a subtle
+differentiation between the two.  A null return value is interpreted
+as before: no new content is available for indexing, sleep for a few
+minutes and try again.  An returned empty DocumentList is interpreted
+differently: although no suitable documents were found yet, the
+Connector is performing a rather time-consuming search looking for
+appropriate content.  The Connector Manager will call checkpoint()
+and reschedule the Connector for an immediate call to resumeTraversal().
+This allows the Connector to time-slice or monitor a time-consuming
+search for content without running afoul of the Connector Manager
+time-out of work threads.  Connectors that return an empty DocumentList,
+when they should be returning null, will effectively run in a busy loop.
+
+For more information, see:
+http://code.google.com/p/google-enterprise-connector-manager/issues/detail?id=72
+For an example of a Connector that uses this model, see the
+LivelinkTraversalManager.listNodes() method at:
+http://code.google.com/p/google-enterprise-connector-otex/source/browse/trunk/projects/otex-core/source/java/com/google/enterprise/connector/otex/LivelinkTraversalManager.java
+
+
+New "google:title" Property
+---------------------------
+The named link that the GSA presents in search results is usually
+a title or headline that the GSA extracts from the document content.
+At this time, the GSA does not make use of other metadata supplied
+by the Connector to display this title, so if the feed has no content
+or the GSA cannot extract a meaningful title from the supplied
+content, it instead displays the URL to the document in the search
+result.  Unfortunately, the URLs of documents from Connector Feeds
+are usually uninformative to the viewer.
+
+The Connector Manager has created a new canonical metadata field,
+"google:title", defined as SpiConstants.PROPNAME_TITLE.  At this
+point, the GSA makes no special use of this field.  However, if
+the Connector Manager receives a metadata and content feed with
+no actual "google:content" field, it will create stub content
+consisting of an html title fragment.  This causes the current
+GSA versions to display that title in the search results.
+
+In the future the GSA may make more direct use of the google:title
+field, so even if your Connector does provide content, it should
+still present the document name/title/headline/subject as google:title.
+
+For more information see:
+http://code.google.com/p/google-enterprise-connector-manager/issues/detail?id=59
+
+
+TraversalContext and TraversalContextAware
+------------------------------------------
+
+The Connector Manager now provides a TraversalContext implementation
+to Connectors so that they may better determine what types of
+document content to provide during a traversal.  Connectors may use
+the information provided by the TraversalContext to limit content
+provided for indexing, based upon document size or MIME type.
+
+For instance, the Connector might use TraversalContext information to:
+ - Provide a Document with metadata and full content.
+ - Provide a Document with metadata but supply content in an
+   alternate format (such as HTML or PDF).
+ - Provide a Document with metadata and summarized content.
+ - Provide a Document with metadata but no content.
+ - Skip a Document entirely.
+
+If a Connector's TraversalManager implementation adds the
+com.google.enterprise.connector.spi.TraversalContextAware interface,
+the Connector Manager will then call the setTraversalContext()
+method, supplying a TraversalContext for the Connector to use,
+before calling any methods in the TraversalManager interface.
+
+If a TraversalContext is provided, the Connector's TraversalManager
+may then use it to tailor its Document feed.  For instance, the
+TraversalContext could be used to determine whether or not to
+supply a "google:content" property for a Document, based upon
+the document size or MIME type.  Note that the TraversalContext
+interface has changed slightly from its previous (unimplemented)
+version.
+
+For additional information, see:
+http://code.google.com/p/google-enterprise-connector-manager/wiki/TraversalContext
+http://code.google.com/p/google-enterprise-connector-manager/issues/detail?id=78
+
+
+Connector Configuration Storage
+-------------------------------
+
+This version of the Connector Manager moves the stored Connector
+schedule and traversal state (checkpoint) from the Java Preferences
+to files stored in the Connector instance directory (found under
+$TOMCAT_HOME/webapps/connector-manager/WEB-INF/connectors).  This
+is the same directory that the Connector's configuration properties
+file and optional connectorInstance.xml file is stored.
+
+The presence of these two additional files is unlikely to affect the
+Connectors.  The files are named $CONNECTOR_NAME_schedule.txt and
+$CONNECTOR_NAME_state.txt, where $CONNECTOR_NAME is the name of the
+Connector instance.
+
+For more information, see:
+http://code.google.com/p/google-enterprise-connector-manager/issues/detail?id=78
+
+
+Password Encryption with EncryptedPropertyPlaceholderConfigurer
+---------------------------------------------------------------
+All properties in the Connector's configuration properties file,
+whose property key contains the substring "password" (case-insensitive
+match) are now encrypted by default.  In the past, only properties
+with the key "Password" were encrypted.  Connectors using the
+EncryptedPropertyPlaceholderConfigurer are unlikely to notice the
+change.
+
+The names of future new configuration properties should be chosen
+accordingly.  For instance, this now allows a Connector to maintain
+separate passwords for different repository services.  However,
+the Livelink Connector configuration now has an encrypted boolean
+property, because it happens to contain the substring "password"
+in its name.
+
+For more information, see:
+http://code.google.com/p/google-enterprise-connector-manager/issues/detail?id=81
+
+
+SMB Search URLs
+---------------
+Previous versions of the Connector Manager would reject
+google:searchurl metadata that used the "smb:" scheme for
+the URL.  This has been fixed.
+
+For additional information, see:
+http://code.google.com/p/google-enterprise-connector-manager/issues/detail?id=100
+
+
+AuthorizationResponse.equals() and AuthorizationResponse.hashCode()
+-------------------------------------------------------------------
+
+The AuthorizationResponse.equals() and AuthorizationResponse.hashCode()
+methods have been changed to include the AuthorizationResponse.valid
+member in the computations.  In previous versions of the Connector
+Manager, only the AuthorizationResponse.docid member was used in
+AuthorizationResponse.equals() and AuthorizationResponse.hashCode().
+The change is subtle, but AuthorizationResponse instances
+{ "1234", true } and { "1234", false } are now considered unequal,
+where they would have been considered equal in the past.
+
+For more information, see:
+http://code.google.com/p/google-enterprise-connector-manager/issues/detail?id=57
+
+
+Release 1.1.0, Jun 30, 2008
+===========================
+
+Introduction
+------------
+This is an upgrade release with some enhancements.  Users of previous
+releases are encouraged to upgrade.  It also contains some new features.  Users
+of previous releases should check the "Version Compatibility" section below for
+instructions on how to use existing data with this new release.
+
+Summary of Changes
+------------------
+
+  * Fix Issue 25: Can't recrawl an existing connector
+  * Fix Issue 35: Better handling of null QueryTraversalManager
+  * Fix Issue 41: Typo in ConnectorManagerGetServlet documentation
+  * Fix Issue 45: DocPusher uses a logger named WorkQueue
+  * Fix Issue 47: Deleting a connector may leave behind connector state
+  * Fix Issue 53: ServletUtil methods have unused StringBuffers
+  * Fix Issue 60: Connector instances can be used after being deleted
+  * Fix Issue 63: Editing a connector instance has no effect until Tomcat is restarted
+  * Fix Issue 66: TraversalWorkQueueItem.doWork calls connectorFinishedTraversal too often
+  * Fix Issue 67: Scheduler runs traversals faster than configured traversal rate
+  * Fix Issue 69: Remove keystore warning from logs as it is harmless and confuses everyone
+  * Fix Issue 70: Allow GSA to request log files from connector manager
+  * Fix Issue 71: InstanceInfo and InstanceMap are missing spaces in log messages
+  * Fix Issue 74: Log an error if GSA is rejecting feeds from connector(s)
+  * Fix Issue 75: HTTP 400 error thrown for correct feeds
+  * Fix Issue 76: Last Modified date that is sent to the GSA should be in
+      YYYY-MM-DD (ISO 8601) format
+  * Fix Issue 89: Try to avoid calling Connector classes from an interrupted thread
+  * Fix Issue 90: Enable the WorkQueueItem.timeout to be configurable
+  * Fix Issue 91: When Registering a running Connector Manager to the GSA, it
+      shuts down the TraversalScheduler and it is not restarted
+
+  * Added support for deleting documents.  See r757 for details.
+  * Added new feed logger as an alternative to the teedFeedFile.  See r783 for details.
+  * Added support to extracting Connector Manager log files from the GSA.  See r832 for details.
+  * Changed default retry interval.  See r781 for details.
+  * Changed SPI related to SimpleDocument.  See r824 for details.
+  * Improved logging.
+
+Version Compatibility
+---------------------
+Connectors created using previous 1.0.x versions of this product may not be
+compatible with this version.  In particular, if SimpleDocument is used within
+the Connector there are SPI changes that need to be made.  Also, the Connector
+Manager will now check all Document implementations for the new optional
+SpiConstants.PROPNAME_ACTION property and that needs to be handled gracefully.
+
+
+Release 1.0.3, Dec 07, 2007
+===========================
+
+Introduction
+------------
+This is a maintenance release that improves quality, reliability, and
+performance without adding any new functionality.  All users of
+previous 1.0.x releases should upgrade to this release.
+
+Summary of Changes
+------------------
+
+  * Fix Issue 64 where the googleWorkDir property has an extra file separator
+  * Fix Issue 65 added code to ProductionManager to check for
+    AuthenticationManager before using
+  * Fix Bug 922427 two copies of feed appearing in Teed Feed File
+  * Fix Issue 40 pass language parameter down to getPopulatedConfigForm()
+  * Fix Bug 950013 where Unicode characters did not display correctly (????)
+    when adding a new connector.
+  * Added argument to PrefsStore constructor to enable use of systemNode rather
+    than userNode as the root node.
+
+Version Compatibility
+---------------------
+Connectors created using version 1.0.1 or 1.0.2 of this product may be used
+with this version.
+
+
+Release 1.0.2, Oct 03, 2007
+===========================
+
+Introduction
+------------
+This is the first full release of this product. See the product
+website for a complete description.
+
+Summary of Changes
+------------------
+
+  * FIX Issue 50 Password encryption reencrypts strings multiple times
+  * Moved and updated README and RELEASE_NOTES files
+
+Version Compatibility
+---------------------
+Connectors created using version 1.0.1 of this product may be used
+with this version.
+
+
+Release 1.0.1, Sep 25, 2007
+===========================
+
+Introduction
+------------
+This is an early access release for wide evaluation and usage.  Your
+feedback is important to us.  Keep in mind that we are continuing to
+work on the Connector Manager and things may change in the future.
+
+Summary of Changes
+------------------
+
+  * Two SPI changes
+  * Some code cleanup
+  * Changed build files to compile for 1.4
+  * FIX 749919 AdminConsole GUI: Connector error message
+
+Version Compatibility
+---------------------
+Since the SPI has changed for this release, Connectors written to the
+previous SPI available in Release 1.0.0 will have to be recompiled.
+
+
+Release 1.0.0, Aug 16, 2007
+===========================
+
+Introduction
+------------
+This is an early access release for evaluation and usage by select
+partners.  Your feedback is important to us.
