@@ -1,0 +1,11 @@
+## 
+# These properties are specific to the individual's development and
+# test environment. This properties file should be located in your
+# home directory, e.g.: ~/google-enterprise-connector-manager.properties
+
+
+## 
+# Build Properties
+
+# JDK 6 bootclasspath.
+build.bootclasspath = /System/Library/Frameworks/JavaVM.framework/Versions/1.6.0/Classes/classes.jar:/System/Library/Frameworks/JavaVM.framework/Versions/1.6.0/Classes/jsse.jar:/System/Library/Frameworks/JavaVM.framework/Versions/1.6.0/Classes/jce.jar
