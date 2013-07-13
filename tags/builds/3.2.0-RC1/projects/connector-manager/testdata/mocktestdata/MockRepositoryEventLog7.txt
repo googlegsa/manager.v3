@@ -1,4 +1,0 @@
-# this is a comment: test data for google:ispublic
-{"timestamp":"0","type":"save","docid":"users","acl":{type:string, value:[joe,mary,fred,mark,bill,admin]},"google:ispublic":"false", "content":"This is a secure document"}
-{"timestamp":"10","type":"save","docid":"doc1","content":"This is the public document.","acl":{type:string, value:[joe,mary]},"google:ispublic":"true"}
-{"timestamp":"10","type":"save","docid":"doc2","content":"This is a document.","acl":{type:string, value:[joe,"",mary]},"google:ispublic":"public"}
