@@ -11,6 +11,48 @@ issues and work-arounds.
 Web Site: http://code.google.com/p/google-enterprise-connector-manager/
 
 
+Release 3.2.0, 12 July 2013
+===========================
+
+Introduction
+------------
+This is a patch release that fixes a few small problems discovered in the
+the previous release. Users of previous releases are encouraged to upgrade.
+
+Summary of Changes
+------------------
+Fix issue 7766078: Reduce the default feed backlog configuration parameters.
+                   The default feed.backlog.ceiling dropped from 10000 to 1000.
+                   The default feed.backlog.floor dropped from 1000 to 200.
+                   The default feed.backlog.interval dropped from 900 to 120
+                   seconds.
+
+Fix issue 8161087: Lister/Retriever connectors may now supply metadata at
+                   crawl-time, rather than feed-time, for GSA 7.2 and newer.
+                   This avoids issue 6781122, wherin the internal metadata
+                   extracted from documents is overwritten by the external
+                   metadata when the document is sent again in a feed.
+
+Fix issue 8256145: Passwords longer than 9 characters were incorrectly
+                   encrypted, and could not be successfully decrypted.
+                   This typically manifested as failures logging into
+                   content reposistories for the connectors.
+
+Fix issue 9415184: MimeTypeDetector would inadvertently attempt to open 
+                   some of the supplied files when it was attempting to
+                   determine the MIME type by filename extension only.
+                   Since the supplied names were rarely local files,
+                   the MimeTypeDetector would quickly become backlogged
+                   on blocked file I/O. The use of the underlying third
+                   party MimeUtil library was altered to ensure that no
+                   attempt would be made to open the named file.
+
+Version Compatibility
+=====================
+This version of the Connector Manager requires Java 6 JRE or newer.
+The use of a Java 5 runtime is no longer supported.
+
+
 Release 3.0.8, 08 May 2013
 ==========================
 
@@ -34,12 +76,6 @@ Fix issue 6734754: GSA cannot handle null Schedule.  The GSA, while claiming
 
 Fix issue 7040140: The GetDocumentContent servlet should provide Last-Modified
                    date in HttpResponse.
-
-Fix issue 7766078: Reduce the default feed backlog configuration parameters.
-                   The default feed.backlog.ceiling dropped from 10000 to 1000.
-                   The default feed.backlog.floor dropped from 1000 to 200.
-                   The default feed.backlog.interval dropped from 900 to 120
-                   seconds.
 
 Fix issue 7928861: Avoid unordered snapshots in the snapshot files of Diffing
                    Connectors.

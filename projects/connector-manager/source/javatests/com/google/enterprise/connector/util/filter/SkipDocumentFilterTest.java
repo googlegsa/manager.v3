@@ -19,7 +19,9 @@ import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.SkippedDocumentException;
 import com.google.enterprise.connector.spi.SimpleDocument;
+import com.google.enterprise.connector.spi.SimpleProperty;
 import com.google.enterprise.connector.spi.Value;
+import com.google.enterprise.connector.test.ConnectorTestUtils;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -108,14 +110,14 @@ public class SkipDocumentFilterTest extends DocumentFilterTest {
     } catch (SkippedDocumentException expected) {
       // Expected.
     }
-    checkDocument(filter, createProperties());
+    checkDocument(filter, createProperties(), "nonExistentProperty");
   }
 
   /** Tests that non-existent property should not skip if skipOnMatch is true */
   public void testNoSkipNonExistentProperty() throws Exception {
     Document filter = createFilter("nonExistentProperty", null, true);
     assertNull(filter.findProperty("nonExistentProperty"));
-    checkDocument(filter, createProperties());
+    checkDocument(filter, createProperties(), "nonExistentProperty");
   }
 
   /** Tests that existing property should skip if skipOnMatch is true. */
@@ -219,5 +221,89 @@ public class SkipDocumentFilterTest extends DocumentFilterTest {
     factory.setSkipOnMatch(true);
     assertEquals("SkipDocumentFilter: (foo , \"bar\" , true)",
         factory.toString());
+  }
+
+  /**
+   * Tests that an unpublished property with a null value is skipped if
+   * skipOnMatch is true.
+   */
+  public void testSkipUnpublishedNullProperty() throws Exception {
+    Document filter = createFilter("nonExistentProperty", null, true,
+        createDocumentWithUnpublishedProperty());
+    try {
+      filter.findProperty("nonExistentProperty");
+      fail("SkippedDocumentException expected");
+    } catch (SkippedDocumentException expected) {
+      // Expected.
+    }
+  }
+
+  /**
+   * Tests that an unpublished property with a null value is not skipped if
+   * skipOnMatch is false.
+   */
+  public void testNoSkipUnpublishedNullProperty() throws Exception {
+    Document filter = createFilter("nonExistentProperty", null, false,
+        createDocumentWithUnpublishedProperty());
+    assertNotNull(filter.findProperty("nonExistentProperty"));
+  }
+
+  /** Tests that an unpublished property is skipped if skipOnMatch is true. */
+  public void testSkipUnpublishedProperty() throws Exception {
+    Document filter = createFilter("nonExistentProperty", "dummy", true,
+        createDocumentWithUnpublishedProperty());
+    try {
+      checkProperty(filter.findProperty("nonExistentProperty"));
+      fail("SkippedDocumentException expected");
+    } catch (SkippedDocumentException expected) {
+      // Expected.
+    }
+  }
+
+  /**
+   * Tests that an unpublished property is not skipped if skipOnMatch is false.
+   */
+  public void testNoSkipUnpublishedProperty() throws Exception {
+    Document filter = createFilter("nonExistentProperty", "dummy", false,
+        createDocumentWithUnpublishedProperty());
+    assertNotNull(filter.findProperty("nonExistentProperty"));
+  }
+
+  /**
+   * Tests that an unpublished property is not return in
+   * Document.getPropertyNames and is return in 
+   * SkipDocumentFilter.getPropertyNames with a value of empty string.
+   */
+  public void testUnpublishedPropertyInFilterNotDocument() throws Exception {
+    Document doc = createDocumentWithUnpublishedProperty();
+    assertFalse(doc.getPropertyNames().toString(),
+        doc.getPropertyNames().contains("nonExistentProperty"));
+    Document filter = createFilter("nonExistentProperty", "nondummy", true,
+        doc);
+    assertTrue(filter.getPropertyNames().toString(),
+        filter.getPropertyNames().contains("nonExistentProperty"));
+    Property unpublished = filter.findProperty("nonExistentProperty");
+    assertNotNull(unpublished);
+    assertEquals("", unpublished.nextValue().toString());
+    assertNull(unpublished.nextValue());
+  }
+
+  /**
+   * Creates a {@link SimpleDocument} with the id of "dummy" and the 
+   * non-public property "nonExistentProperty" that has the value "dummy".
+   */
+  private SimpleDocument createDocumentWithUnpublishedProperty() {
+    Map<String, Object> props =
+        ConnectorTestUtils.createSimpleDocumentBasicProperties("dummy");
+    return new SimpleDocument(ConnectorTestUtils.createSpiProperties(props)) {
+      @Override
+      public Property findProperty(String name) {
+        if (name.equals("nonExistentProperty")) {
+          return new SimpleProperty(valueList("dummy"));
+        } else {
+          return super.findProperty(name);
+        }
+      }
+    };
   }
 }
