@@ -1,7 +1,0 @@
-      <!-- Add LoadBalancerValve to distribute 'connector-manager'
-           requests to multiple deployed connector manager web apps
-           in a round-robin manner.
-       -->
-       <Valve className="com.google.enterprise.connector.loadbalancer.LoadBalancerValve"
-              manager="connector-manager" workers="connector-manager-1,connector-manager-2"/>
-
