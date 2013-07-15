@@ -23,7 +23,7 @@ Summary of Changes
 ------------------
 Fix issue 8161087: Lister/Retriever connectors may now supply metadata at
                    crawl-time, rather than feed-time, for GSA 7.2 and newer.
-                   This avoids issue 6781122, wherin the internal metadata
+                   This avoids issue 6781122, wherein the internal metadata
                    extracted from documents is overwritten by the external
                    metadata when the document is sent again in a feed.
 
