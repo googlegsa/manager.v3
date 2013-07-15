@@ -59,7 +59,7 @@ Fix issue 9415184: MimeTypeDetector would inadvertently attempt to open
                    attempt would be made to open the named file.
 
 Version Compatibility
-=====================
+---------------------
 This version of the Connector Manager requires Java 6 JRE or newer.
 The use of a Java 5 runtime is no longer supported.
 
