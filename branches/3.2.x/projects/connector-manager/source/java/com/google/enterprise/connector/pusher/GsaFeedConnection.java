@@ -88,10 +88,10 @@ public class GsaFeedConnection implements FeedConnection {
   private URL backlogUrl = null;
 
   // BacklogCount Ceiling. Throttle back feed if backlog exceeds the ceiling.
-  private int backlogCeiling = 1000;
+  private int backlogCeiling = 10000;
 
   // BacklogCount Floor. Stop throttling feed if backlog drops below floor.
-  private int backlogFloor = 200;
+  private int backlogFloor = 1000;
 
   // True if the feed is throttled back due to excessive backlog.
   private boolean isBacklogged = false;
@@ -103,7 +103,7 @@ public class GsaFeedConnection implements FeedConnection {
   private long lastBacklogCheck;
 
   // How often to check for backlog (in milliseconds).
-  private long backlogCheckInterval = 2 * 60 * 1000L;
+  private long backlogCheckInterval = 15 * 60 * 1000L;
 
   /** Whether HTTPS connections validate the server certificate. */
   private boolean validateCertificate = true;
@@ -112,7 +112,7 @@ public class GsaFeedConnection implements FeedConnection {
       int securePort) throws MalformedURLException {
     if (Strings.isNullOrEmpty(protocol)) {
       protocol = (securePort < 0) ? "http" : "https";
-  }
+    }
     this.setFeedHostAndPort(protocol, host, port, securePort);
   }
 
