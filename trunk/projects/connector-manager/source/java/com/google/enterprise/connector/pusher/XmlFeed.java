@@ -95,22 +95,24 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
   private int recordCount;
 
   public static final Set<String> propertySkipSet = ImmutableSet.<String>of(
-      // TODO: What about action, contenturl, displayurl, ispublic,
-      // securitytoken, searchurl? Should we have an explicit opt-in
-      // list of google: properties instead an opt-out list?
+      // TODO: What about displayurl, ispublic, searchurl? Should we
+      // have an explicit opt-in list of google: properties instead an
+      // opt-out list?
       SpiConstants.PROPNAME_ACLINHERITFROM_DOCID,
       SpiConstants.PROPNAME_ACLINHERITFROM_FEEDTYPE,
       SpiConstants.PROPNAME_ACTION,
       SpiConstants.PROPNAME_AUTHMETHOD,
       SpiConstants.PROPNAME_CONTENT,
+      SpiConstants.PROPNAME_CONTENTURL,
       SpiConstants.PROPNAME_CONTENT_ENCODING,
       SpiConstants.PROPNAME_CONTENT_LENGTH,
       SpiConstants.PROPNAME_DOCID,
       SpiConstants.PROPNAME_DOCUMENTTYPE,
       SpiConstants.PROPNAME_FEEDTYPE,
       SpiConstants.PROPNAME_LOCK,
+      SpiConstants.PROPNAME_OVERWRITEACLS,
       SpiConstants.PROPNAME_PAGERANK,
-      SpiConstants.PROPNAME_OVERWRITEACLS);
+      SpiConstants.PROPNAME_SECURITYTOKEN);
 
   // Strings for XML tags.
   public static final String XML_DEFAULT_ENCODING = "UTF-8";

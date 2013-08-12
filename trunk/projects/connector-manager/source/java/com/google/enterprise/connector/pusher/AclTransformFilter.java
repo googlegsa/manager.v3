@@ -68,6 +68,7 @@ public class AclTransformFilter implements DocumentFilterFactory {
    * @return the head of the chain of filters
    */
   @Override
+  @SuppressWarnings("deprecation")
   public Document newDocumentFilter(Document source)
       throws RepositoryException {
     Preconditions.checkNotNull(source);

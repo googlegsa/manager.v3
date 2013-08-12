@@ -48,7 +48,7 @@ public class JcrDocumentTest extends TestCase {
       String json1 =
           "{\"timestamp\":\"10\",\"docid\":\"doc1\","
               + "\"content\":\"now is the time\", "
-              + "\"google:contenturl\":\"http://www.sometesturl.com/test\""
+              + "\"google:displayurl\":\"http://www.sometesturl.com/test\""
               + ", \"google:lastmodified\":\"Tue, 15 Nov 1994 12:45:26 GMT\""
               + "}\r\n" + "";
       String date1 = "1970-01-01T00:00:10.000Z";
@@ -59,7 +59,7 @@ public class JcrDocumentTest extends TestCase {
       validateProperty(document, "jcr:lastModified", date1);
       validateProperty(document, SpiConstants.PROPNAME_CONTENT,
           "now is the time");
-      validateProperty(document, SpiConstants.PROPNAME_CONTENTURL,
+      validateProperty(document, SpiConstants.PROPNAME_DISPLAYURL,
           "http://www.sometesturl.com/test");
 
       int count = countProperties(document);
@@ -69,14 +69,14 @@ public class JcrDocumentTest extends TestCase {
       String json1 =
           "{\"timestamp\":\"10\",\"docid\":\"doc1\","
               + "\"content\":\"now is the time\", "
-              + "\"google:contenturl\":\"http://www.sometesturl.com/test\""
+              + "\"google:displayurl\":\"http://www.sometesturl.com/test\""
               + "}\r\n" + "";
       String date1 = "1970-01-01T00:00:10.000Z";
       Document document = makeDocumentFromJson(json1);
       validateProperty(document, SpiConstants.PROPNAME_LASTMODIFIED, date1);
       validateProperty(document, SpiConstants.PROPNAME_CONTENT,
           "now is the time");
-      validateProperty(document, SpiConstants.PROPNAME_CONTENTURL,
+      validateProperty(document, SpiConstants.PROPNAME_DISPLAYURL,
           "http://www.sometesturl.com/test");
 
       int count = countProperties(document);

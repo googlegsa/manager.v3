@@ -92,10 +92,13 @@ public class SpiConstants {
   public static final String PROPNAME_TITLE = "google:title";
 
   /**
-   * Reserved for future use.
+   * Not used.
    * <p/>
    * Value: google:contenturl
+   *
+   * @deprecated This property is unused.
    */
+  @Deprecated
   public static final String PROPNAME_CONTENTURL = "google:contenturl";
 
   /**
@@ -153,14 +156,13 @@ public class SpiConstants {
   public static final String PROPNAME_CONTENT = "google:content";
 
   /**
-   * Identifies a single-valued string property that serves as a security
-   * token. At serve time, the Search Appliance presents this token along
-   * with the querying user's identity, and the connector tells us whether
-   * this user has permission to view a document of this class. This may be
-   * implemented by a textual pointer to an ACL.
+   * Not used.
    * <p/>
    * Value: google:securitytoken
+   *
+   * @deprecated This property is unused.
    */
+  @Deprecated
   public static final String PROPNAME_SECURITYTOKEN = "google:securitytoken";
 
   /**
@@ -223,7 +225,7 @@ public class SpiConstants {
 
   /**
    * Identifies a multiple-valued String property that gives the list of group
-   * ACL Scope IDs that are permitted {@link RoleType#READER RoleType.READER}
+   * ACL Scope IDs that are permitted
    * access to this document. If either of the {@link #PROPNAME_ACLGROUPS} or
    * {@link #PROPNAME_ACLUSERS} properties are non-{*code null}, then the
    * Search Appliance will grant or deny access to this document for a given
@@ -232,6 +234,14 @@ public class SpiConstants {
    * appears as one of the Scope IDs in the {@link #PROPNAME_ACLGROUPS} list.
    * <p/>
    * ACL Scope ID is a group or user name within the scope of the Connector.
+   * <p/>
+   * <strong>Note: Roles are ignored by the Google Search
+   * Appliance.</strong> Support for roles should be removed from
+   * connectors, as this feature will be removed from a future release
+   * of Connector Manager. Without roles, users or groups with
+   * {@link RoleType#PEEKER RoleType.PEEKER} should not appear in the
+   * {@link #PROPNAME_ACLUSERS} or {@link #PROPNAME_ACLGROUPS} lists,
+   * since {@link RoleType#READER RoleType.READER} access is implied.
    * <p/>
    * To specify more than just {@code RoleType.READER} access to the document,
    * the Connector must add additional multi-value role properties to the
@@ -398,7 +408,13 @@ public class SpiConstants {
    * Name = "google:group:roles:eng"
    * Value = [reader, writer]
    * </pre>
+   *
+   * @deprecated Roles are ignored by the Google Search Appliance.
+   * Support for roles should be removed from connectors, as this
+   * feature will be removed from a future release of Connector
+   * Manager.
    */
+  @Deprecated
   public static final String GROUP_ROLES_PROPNAME_PREFIX =
       "google:group:roles:";
 
@@ -419,7 +435,13 @@ public class SpiConstants {
    * Name = "google:user:roles:joe"
    * Value = [reader, writer]
    * </pre>
+   *
+   * @deprecated Roles are ignored by the Google Search Appliance.
+   * Support for roles should be removed from connectors, as this
+   * feature will be removed from a future release of Connector
+   * Manager.
    */
+  @Deprecated
   public static final String USER_ROLES_PROPNAME_PREFIX = "google:user:roles:";
 
   /**
@@ -609,7 +631,13 @@ public class SpiConstants {
 
   /**
    * Enum for known role types.
+   *
+   * @deprecated Roles are ignored by the Google Search Appliance.
+   * Support for roles should be removed from connectors, as this
+   * feature will be removed from a future release of Connector
+   * Manager.
    */
+  @Deprecated
   public enum RoleType {
     PEEKER("peeker"), READER("reader"), WRITER("writer"), OWNER("owner"),
     ERROR("error");
