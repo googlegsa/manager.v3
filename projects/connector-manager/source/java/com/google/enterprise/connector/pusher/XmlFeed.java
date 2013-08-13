@@ -36,6 +36,7 @@ import com.google.enterprise.connector.spi.SpiConstants.AclScope;
 import com.google.enterprise.connector.spi.SpiConstants.ContentEncoding;
 import com.google.enterprise.connector.spi.SpiConstants.DocumentType;
 import com.google.enterprise.connector.spi.SpiConstants.FeedType;
+import com.google.enterprise.connector.spi.SpiConstants.RoleType;
 import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.spi.XmlUtils;
 import com.google.enterprise.connector.spi.SpiConstants.ActionType;
@@ -66,6 +67,17 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
   private static final Logger LOGGER =
       Logger.getLogger(XmlFeed.class.getName());
 
+  /** Roles are deprecated, so we will strip them out of Principals. */
+  @SuppressWarnings("deprecation")
+  private static final String PEEKER_ROLE_SUFFIX =
+      "=" + RoleType.PEEKER.toString();
+
+  @SuppressWarnings("deprecation")
+  private static final String[] OTHER_ROLES_SUFFIXES = {
+      "=" + RoleType.READER.toString(),
+      "=" + RoleType.WRITER.toString(),
+      "=" + RoleType.OWNER.toString() };
+
   private final String dataSource;
   private final FeedType feedType;
   private final UrlConstructor urlConstructor;
@@ -94,6 +106,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
   private boolean isClosed;
   private int recordCount;
 
+  @SuppressWarnings("deprecation")
   public static final Set<String> propertySkipSet = ImmutableSet.<String>of(
       // TODO: What about displayurl, ispublic, searchurl? Should we
       // have an explicit opt-in list of google: properties instead an
@@ -648,7 +661,8 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
       Principal principal = (value instanceof PrincipalValue)
           ? ((PrincipalValue) value).getPrincipal()
           : new Principal(value.toString().trim());
-      if (!Strings.isNullOrEmpty(principal.getName())) {
+      String name = stripRoles(principal.getName());
+      if (!Strings.isNullOrEmpty(name)) {
         buff.append("<").append(XML_PRINCIPAL);
         if (principal.getPrincipalType() ==
             SpiConstants.PrincipalType.UNQUALIFIED) {
@@ -672,10 +686,31 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
         XmlUtils.xmlAppendAttr(XML_SCOPE, scope.toString(), buff);
         XmlUtils.xmlAppendAttr(XML_ACCESS, access.toString(), buff);
         buff.append(">");
-        XmlUtils.xmlAppendAttrValue(principal.getName(), buff);
+        XmlUtils.xmlAppendAttrValue(name, buff);
         XmlUtils.xmlAppendEndTag(XML_PRINCIPAL, buff);
       }
     }
+  }
+
+  /*
+   * Strip any Roles from the supplied Principal name.
+   * Peeker users are discarded entirely, whereas other roles are simply
+   * removed from the end of the name.
+   */
+  private static String stripRoles(String name) {
+    if (!Strings.isNullOrEmpty(name) && name.indexOf('=') >= 0) {
+      // Drop peekers on the floor.
+      if (name.endsWith(PEEKER_ROLE_SUFFIX)) {
+        return null;
+      }
+      // For all others, just strip them off.
+      for (String role : OTHER_ROLES_SUFFIXES) {
+        if (name.endsWith(role)) {
+          return name.substring(0, name.length() - role.length());
+        }
+      }
+    }
+    return name;
   }
 
   /**
