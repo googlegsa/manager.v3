@@ -214,6 +214,7 @@ public class DocUtils {
   }
 
   public static Predicate<String> aclPredicate = new Predicate<String>() {
+    @SuppressWarnings("deprecation")
     public boolean apply(String input) {
       return (input.startsWith(SpiConstants.ACL_PROPNAME_PREFIX) ||
               input.startsWith(SpiConstants.GROUP_ROLES_PROPNAME_PREFIX) ||

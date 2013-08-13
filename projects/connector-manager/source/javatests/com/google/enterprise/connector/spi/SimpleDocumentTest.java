@@ -37,7 +37,7 @@ public class SimpleDocumentTest extends TestCase {
         SpiConstants.ActionType.DELETE.toString());
     props.put(SpiConstants.PROPNAME_DOCID, "doc1");
     props.put(SpiConstants.PROPNAME_CONTENT, "now is the time");
-    props.put(SpiConstants.PROPNAME_CONTENTURL,
+    props.put(SpiConstants.PROPNAME_DISPLAYURL,
         "http://www.comtesturl.com/test");
 
     document = ConnectorTestUtils.createSimpleDocument(props);
@@ -68,6 +68,6 @@ public class SimpleDocumentTest extends TestCase {
     assertTrue(propNames.contains(SpiConstants.PROPNAME_ACTION));
     assertTrue(propNames.contains(SpiConstants.PROPNAME_DOCID));
     assertTrue(propNames.contains(SpiConstants.PROPNAME_CONTENT));
-    assertTrue(propNames.contains(SpiConstants.PROPNAME_CONTENTURL));
+    assertTrue(propNames.contains(SpiConstants.PROPNAME_DISPLAYURL));
   }
 }

@@ -87,12 +87,12 @@ public class QueryTraversalUtil {
     String name = Value.getSingleValueString(document,
         SpiConstants.PROPNAME_DOCID);
 
-    // if a CONTENTURL was specified, use it
+    // if a SEARCHURL was specified, use it
     String contentSnippet = Value.getSingleValueString(document,
-        SpiConstants.PROPNAME_CONTENTURL);
+        SpiConstants.PROPNAME_SEARCHURL);
 
     if (contentSnippet == null) {
-      // if there is no contentUrl, the connector manager will ask for
+      // if there is no search URL, the connector manager will ask for
       // the content property and will base-64 encode it. Here we will
       // only access the first so many characters of the content and
       // print it out
