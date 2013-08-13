@@ -58,6 +58,7 @@ import java.util.Set;
 public class AclUserGroupRolesFilter extends AbstractDocumentFilter {
 
   private static Predicate<String> rolesPredicate = new Predicate<String>() {
+    @SuppressWarnings("deprecation")
     public boolean apply(String input) {
       return !(input.startsWith(SpiConstants.GROUP_ROLES_PROPNAME_PREFIX) ||
                input.startsWith(SpiConstants.USER_ROLES_PROPNAME_PREFIX));
@@ -71,6 +72,7 @@ public class AclUserGroupRolesFilter extends AbstractDocumentFilter {
   }
 
   @Override
+  @SuppressWarnings("deprecation")
   public Property findProperty(Document source, String name)
       throws RepositoryException {
     if (SpiConstants.PROPNAME_ACLGROUPS.equals(name)) {
