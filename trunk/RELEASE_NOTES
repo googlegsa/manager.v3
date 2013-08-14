@@ -22,8 +22,8 @@ the previous release. Users of previous releases are encouraged to upgrade.
 Summary of Changes
 ------------------
 Fix issue 7766078: Reduce the default feed backlog configuration parameters.
-                   The default feed.backlog.ceiling dropped from 10000 to 1000.
-                   The default feed.backlog.floor dropped from 1000 to 200.
+                   The default feed.backlog.ceiling dropped from 10000 to 4000.
+                   The default feed.backlog.floor remains 1000.
                    The default feed.backlog.interval dropped from 900 to 120
                    seconds.
 
