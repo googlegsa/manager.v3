@@ -28,8 +28,8 @@ Fix issue 7766078: Reduce the default feed backlog configuration parameters.
                    seconds.
 
 
-Release 3.2.0, 12 July 2013
-===========================
+Release 3.2.0, 13 August 2013
+=============================
 
 Introduction
 ------------
@@ -58,10 +58,34 @@ Fix issue 9415184: MimeTypeDetector would inadvertently attempt to open
                    party MimeUtil library was altered to ensure that no
                    attempt would be made to open the named file.
 
+Fix issue 10263958: ACL Principals with a peeker role were not removed from
+                    the feed. This would inadvertently grant full read
+                    access to users and groups that had only peeker access.
+                    This first appeared in Connector Manager version 3.0.0,
+                    but only if used with GSA version 7.0 and newer.  This
+                    affected the SharePoint connector and any third-party
+                    connectors that implemented the peeker role.
+
 Version Compatibility
 ---------------------
 This version of the Connector Manager requires Java 6 JRE or newer.
 The use of a Java 5 runtime is no longer supported.
+
+Deprecated Features
+-------------------
+The following SPI features have been deprecated and are targeted for
+removal in a future release. These features were never fully implemented
+or functional in any version of the Connector Manager or GSA.
+
+  * Roles in ACLs ('reader', 'writer', 'owner', 'peeker').
+    This includes the SpiConstants.RoleType enum and the associated Role
+    Properties prefixes SpiConstants.GROUP_ROLES_PROPNAME_PREFIX, and
+    SpiConstants.USER_ROLES_PROPNAME_PREFIX. Roles were never used, and
+    were stripped from ACL entries if supplied.
+
+  * SpiConstants.PROPNAME_CONTENTURL. This was never used.
+
+  * SpiConstants.PROPNAME_SECURITYTOKEN. This was never used.
 
 
 Release 3.0.8, 08 May 2013
