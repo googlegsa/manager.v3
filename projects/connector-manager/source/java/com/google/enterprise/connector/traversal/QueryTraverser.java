@@ -32,7 +32,6 @@ import com.google.enterprise.connector.spi.TraversalContext;
 import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.util.Clock;
-import com.google.enterprise.connector.database.DocumentStore;
 
 import java.util.Set;
 import java.util.logging.Level;
@@ -48,7 +47,6 @@ public class QueryTraverser implements Traverser {
   private final PusherFactory pusherFactory;
   private final TraversalManager queryTraversalManager;
   private final TraversalStateStore stateStore;
-  private final DocumentStore documentStore;
   private final String connectorName;
   private final TraversalContext traversalContext;
   private final Clock clock;
@@ -57,20 +55,33 @@ public class QueryTraverser implements Traverser {
   private final Object cancelLock = new Object();
   private boolean cancelWork = false;
 
+  /**
+   * The {@code DocumentStore} parameter is ignored and may be null.
+   *
+   * @deprecated Use the overload without the {@code DocumentStore} parameter
+   */
+  @SuppressWarnings("deprecation")
+  @Deprecated
   public QueryTraverser(PusherFactory pusherFactory,
       TraversalManager traversalManager, TraversalStateStore stateStore,
       String connectorName, TraversalContext traversalContext, Clock clock,
-      DocumentStore documentStore) {
+      com.google.enterprise.connector.database.DocumentStore documentStore) {
+    this(pusherFactory, traversalManager, stateStore, connectorName,
+        traversalContext, clock);
+  }
+
+  public QueryTraverser(PusherFactory pusherFactory,
+      TraversalManager traversalManager, TraversalStateStore stateStore,
+      String connectorName, TraversalContext traversalContext, Clock clock) {
     this.pusherFactory = pusherFactory;
     this.queryTraversalManager = traversalManager;
     this.stateStore = stateStore;
     this.connectorName = connectorName;
     this.traversalContext = traversalContext;
     this.clock = clock;
-    this.documentStore = documentStore;
   }
 
-  //@Override
+  @Override
   public void cancelBatch() {
     synchronized(cancelLock) {
       cancelWork = true;
@@ -84,7 +95,7 @@ public class QueryTraverser implements Traverser {
     }
   }
 
-  //@Override
+  @Override
   public BatchResult runBatch(BatchSize batchSize) {
     final long startTime = clock.getTimeMillis();
     final long timeoutTime = startTime
@@ -197,7 +208,7 @@ public class QueryTraverser implements Traverser {
           LOGGER.finer("Sending document (" + docid + ") from connector "
               + connectorName + " to Pusher");
 
-          if (pusher.take(nextDocument, documentStore) != PusherStatus.OK) {
+          if (pusher.take(nextDocument) != PusherStatus.OK) {
             LOGGER.fine("Traversal batch for connector " + connectorName
                 + " is completing at the request of the Pusher,"
                 + " after processing " + counter + " documents.");
@@ -221,15 +232,9 @@ public class QueryTraverser implements Traverser {
       // No more documents. Wrap up any accumulated feed data and send it off.
       if (!isCancelled()) {
         pusher.flush();
-        if (documentStore != null) {
-          documentStore.flush();
-        }
       }
     } catch (OutOfMemoryError e) {
       pusher.cancel();
-      if (documentStore != null) {
-        documentStore.cancel();
-      }
       System.runFinalization();
       System.gc();
       result = new BatchResult(TraversalDelayPolicy.ERROR);
@@ -284,9 +289,6 @@ public class QueryTraverser implements Traverser {
       // We are returning an error from this batch. Cancel any feed that
       // might be in progress.
       pusher.cancel();
-      if (documentStore != null) {
-        documentStore.cancel();
-      }
     }
     return result;
   }
@@ -331,47 +333,6 @@ public class QueryTraverser implements Traverser {
     if (LOGGER.isLoggable(Level.FINER)) {
       LOGGER.log(Level.FINER, "Skipping document (" + docid
           + ") from connector " + connectorName + ": " + e.getMessage());
-    }
-    if (documentStore != null && document != null) {
-      documentStore.storeDocument(new SkippedDocument(document, e));
-    }
-  }
-
-  /**
-   * Wraps the supplied {@link Document}, adding a
-   * {@code SpiConstants.PROPNAME_MESSAGE} property to the set of
-   * properties.
-   */
-  private class SkippedDocument implements Document {
-    private Document document;
-    private Exception exception;
-
-    SkippedDocument(Document document, Exception exception) {
-      this.document = document;
-      this.exception = exception;
-    }
-
-    /* @Override */
-    public Property findProperty(String name) throws RepositoryException {
-      if (SpiConstants.PROPNAME_MESSAGE.equals(name)) {
-        String message = Value.getSingleValueString(document, name);
-        message = exception.getMessage() + ((message == null) ? "" : ": " + message);
-        return new SimpleProperty(Value.getStringValue(message));
-      } else if (SpiConstants.PROPNAME_ACTION.equals(name)) {
-        return new SimpleProperty(Value.getStringValue(
-            SpiConstants.ActionType.SKIPPED.toString()));
-      } else {
-        return document.findProperty(name);
-      }
-    }
-
-    /* @Override */
-    public Set<String> getPropertyNames() throws RepositoryException {
-      return new ImmutableSet.Builder<String>()
-             .add(SpiConstants.PROPNAME_ACTION)
-             .add(SpiConstants.PROPNAME_MESSAGE)
-             .addAll(document.getPropertyNames())
-             .build();
     }
   }
 }

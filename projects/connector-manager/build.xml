@@ -316,19 +316,6 @@
     <fail if="${ant.project.name}.failure" message="Test failure"/>
   </target>
 
-  <target name="doc_store_bench" depends="jar-tests">
-    <java fork="true" maxmemory="1024m"
-          classname="com.google.enterprise.connector.util.database.DocStoreBench">
-      <!-- Specify the command line args to DocStoreBench with -Dargs
-           For example: -Dargs="-b 500 -t 5"
-      -->
-      <arg line="${args}" />
-      <jvmarg value="-Xshare:off"/>
-      <jvmarg value="-Djava.util.logging.config.file=${junit.logging.properties}"/>
-      <classpath refid="tests.classpath"/>
-    </java>
-  </target>
-
   <!-- ====================== Cobertura Tasks ====================== -->
 
   <!-- Where Cobertura can find itself and its dependencies. -->

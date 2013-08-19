@@ -17,7 +17,6 @@ package com.google.enterprise.connector.database;
 import com.google.enterprise.connector.database.FakeDataSource;
 import com.google.enterprise.connector.spi.ConnectorPersistentStore;
 import com.google.enterprise.connector.spi.LocalDatabase;
-import com.google.enterprise.connector.spi.LocalDocumentStore;
 import com.google.enterprise.connector.util.database.JdbcDatabase;
 import com.google.enterprise.connector.util.database.testing.TestJdbcDatabase;
 
@@ -50,10 +49,7 @@ public class ConnectorPersistentStoreFactoryTest extends TestCase {
     assertSame(database.getDataSource(), localDb.getDataSource());
     assertEquals(database.getDatabaseType(), localDb.getDatabaseType());
 
-    LocalDocumentStore localDs = cpStore.getLocalDocumentStore();
-    if (localDs != null) {
-      assertEquals("google_documents_test", localDs.getDocTableName());
-    }
+    assertNull(cpStore.getLocalDocumentStore());
   }
 
   /**

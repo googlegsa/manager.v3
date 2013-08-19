@@ -17,7 +17,6 @@ package com.google.enterprise.connector.pusher;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.RepositoryDocumentException;
 import com.google.enterprise.connector.spi.RepositoryException;
-import com.google.enterprise.connector.database.DocumentStore;
 
 /**
  * Interface for a Pusher - something that takes spi Documents
@@ -36,20 +35,18 @@ public interface Pusher {
    * Takes an spi Document and pushes it along, presumably to the GSA Feed.
    *
    * @param document A Document
-   * @param documentStore {@link DocumentStore} for recording document
-   *        status.  Optional - may be {@code null}.
    * @return PusherStatus. If OK, Pusher may accept more documents.
    * @throws RepositoryException if transient error accessing the Repository
    * @throws RepositoryDocumentException if fatal error accessing the Document
    * @throws FeedException if a transient Feed error occurs in the Pusher
    * @throws PushException if a transient error occurs in the Pusher
    */
-  public PusherStatus take(Document document, DocumentStore documentStore)
+  public PusherStatus take(Document document)
       throws PushException, FeedException, RepositoryException;
 
   /**
    * Finishes processing a document feed.  If the caller anticipates no
-   * further calls to {@link #take(Document, DocumentStore)} will be
+   * further calls to {@link #take(Document)} will be
    * made, this method should be called, so that the Pusher may send a cached,
    * accumulated Feed to the feed processor.
    *
