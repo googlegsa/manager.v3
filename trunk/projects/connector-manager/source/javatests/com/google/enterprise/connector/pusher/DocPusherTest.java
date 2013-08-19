@@ -1412,15 +1412,17 @@ public class DocPusherTest extends TestCase {
   }
 
   /**
-   * Roles are not supported by all GSAs. Make sure they get stripped out.
+   * Roles are not supported in principal elements. Make sure they get
+   * stripped out.
    */
   public void testUserGroupRoleAclSmartGsa() throws Exception {
     String userGroupRoleAcl = "{\"timestamp\":\"60\""
         + ",\"docid\":\"user_group_role_acl\""
         + ",\"content\":\"this document has scoped user and group role ACL\""
         + ",\"acl\":{type:string, value:[\"user:joe=reader\""
-        + ",\"user:mary=reader,writer,owner\",\"user:mike=peeker\""
-        + ",\"group:eng=reader\",\"group:sales=peeker\"]}"
+        + ",\"user:mary=writer,owner\",\"user:mike=peeker\""
+        + ",\"group:eng=reader\",\"group:sales=peeker\""
+        + ",\"group:support=writer\"]}"
         + ",\"google:ispublic\":\"false\"}";
     String resultXML = feedJsonEvent(userGroupRoleAcl, true);
 
@@ -1431,6 +1433,8 @@ public class DocPusherTest extends TestCase {
                          + "mary</principal>", resultXML);
     assertStringContains("<principal scope=\"group\" access=\"permit\">"
                          + "eng</principal>", resultXML);
+    assertStringContains("<principal scope=\"group\" access=\"permit\">"
+                         + "support</principal>", resultXML);
     assertStringContains("</acl>", resultXML);
     assertStringContains("<record url="
                          + googleConnectorUrl("user_group_role_acl"),
@@ -1438,6 +1442,7 @@ public class DocPusherTest extends TestCase {
     assertStringContains("authmethod=\"httpbasic\"", resultXML);
     assertStringNotContains("<meta name=\"google:aclusers\"", resultXML);
     assertStringNotContains("<meta name=\"google:aclgroups\"", resultXML);
+    assertStringNotContains("access=\"deny\"", resultXML);
 
     // Roles should be stripped out, and peekers eliminated.
     assertStringNotContains("=owner", resultXML);
@@ -1446,6 +1451,48 @@ public class DocPusherTest extends TestCase {
     assertStringNotContains("=peeker", resultXML);
     assertStringNotContains("mike", resultXML);
     assertStringNotContains("sales", resultXML);
+  }
+
+  /**
+   * Roles are not supported in principal elements. Make sure they get
+   * stripped out.
+   */
+  public void testDenyUserGroupRoleAclSmartGsa() throws Exception {
+    String userGroupRoleAcl = "{\"timestamp\":\"60\""
+        + ",\"docid\":\"user_group_role_acl\""
+        + ",\"content\":\"this document has scoped user and group role ACL\""
+        + ",\"acldeny\":{type:string, value:[\"user:joe=reader\""
+        + ",\"user:mary=writer,owner\",\"user:mike=peeker\""
+        + ",\"group:eng=reader\",\"group:sales=peeker\""
+        + ",\"group:support=writer\"]}"
+        + ",\"google:ispublic\":\"false\"}";
+    String resultXML = feedJsonEvent(userGroupRoleAcl, true);
+
+    assertStringContains("<acl", resultXML);
+    assertStringContains("<principal scope=\"user\" access=\"deny\">"
+                         + "joe</principal>", resultXML);
+    assertStringContains("<principal scope=\"user\" access=\"deny\">"
+                         + "mike</principal>", resultXML);
+    assertStringContains("<principal scope=\"group\" access=\"deny\">"
+                         + "eng</principal>", resultXML);
+    assertStringContains("<principal scope=\"group\" access=\"deny\">"
+                         + "sales</principal>", resultXML);
+    assertStringContains("</acl>", resultXML);
+    assertStringContains("<record url="
+                         + googleConnectorUrl("user_group_role_acl"),
+                         resultXML);
+    assertStringContains("authmethod=\"httpbasic\"", resultXML);
+    assertStringNotContains("<meta name=\"google:acldenyusers\"", resultXML);
+    assertStringNotContains("<meta name=\"google:acldenygroups\"", resultXML);
+    assertStringNotContains("access=\"permit\"", resultXML);
+
+    // Roles should be stripped out, and writers and owners eliminated.
+    assertStringNotContains("=owner", resultXML);
+    assertStringNotContains("=reader", resultXML);
+    assertStringNotContains("=writer", resultXML);
+    assertStringNotContains("=peeker", resultXML);
+    assertStringNotContains("mary", resultXML);
+    assertStringNotContains("support", resultXML);
   }
 
   public void testUserReaderAcl() throws Exception {
