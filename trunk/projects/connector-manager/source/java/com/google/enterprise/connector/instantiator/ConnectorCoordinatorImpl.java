@@ -22,7 +22,6 @@ import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.common.SecurityUtils;
 import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.database.ConnectorPersistentStoreFactory;
-import com.google.enterprise.connector.database.DocumentStore;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
@@ -132,11 +131,6 @@ class ConnectorCoordinatorImpl implements
   Object currentBatchKey;
 
   /**
-   * DocumentStore for the Pusher.
-   */
-  private DocumentStore documentStore;
-
-  /**
    * The cached TraversalManager.
    */
   private TraversalManager traversalManager;
@@ -185,7 +179,6 @@ class ConnectorCoordinatorImpl implements
     this.pusherFactory = pusherFactory;
     this.loadManager = loadManagerFactory.newLoadManager(name);
     this.connectorPersistentStoreFactory = connectorPersistentStoreFactory;
-    this.documentStore = null;
     this.traversalEnabled = true;
   }
 
@@ -238,11 +231,6 @@ class ConnectorCoordinatorImpl implements
         File connectorDir = instanceInfo.getConnectorDir();
         shutdownConnector(true);
         removeConnectorDirectory(connectorDir);
-      }
-
-      // Discard all content from the LocalDocumentStore for this connector.
-      if (documentStore != null) {
-        documentStore.delete();
       }
     } finally {
       instanceInfo = null;
@@ -350,7 +338,7 @@ class ConnectorCoordinatorImpl implements
         if (lister != null) {
           LOGGER.fine("Starting Lister for connector " + name);
           lister.setDocumentAcceptor(new DocumentAcceptorImpl(
-              name, pusherFactory, documentStore));
+              name, pusherFactory));
           listerHandle = threadPool.submit(new CancelableLister(name, lister));
         }
       } catch (ConnectorNotFoundException e) {
@@ -586,11 +574,6 @@ class ConnectorCoordinatorImpl implements
         // Shut down any Lister.
         stopLister();
 
-        // Discard all content from the LocalDocumentStore for this connector.
-        if (documentStore != null) {
-          documentStore.delete();
-        }
-
         try {
           // Restart Lister.
           startLister();
@@ -825,7 +808,7 @@ class ConnectorCoordinatorImpl implements
       BatchCoordinator batchCoordinator = new BatchCoordinator(this);
       Traverser traverser = new QueryTraverser(pusherFactory,
           traversalManager, batchCoordinator, name,
-          Context.getInstance().getTraversalContext(), clock, documentStore);
+          Context.getInstance().getTraversalContext(), clock);
       TimedCancelable batch =  new CancelableBatch(traverser, name,
           batchCoordinator, batchCoordinator, batchSize);
       taskHandle = threadPool.submit(batch);
@@ -1210,7 +1193,6 @@ class ConnectorCoordinatorImpl implements
                  instanceInfo.getName(),
                  instanceInfo.getTypeInfo().getConnectorTypeName(),
                  instanceInfo.getTypeInfo().getConnectorType());
-          documentStore = (DocumentStore) pstore.getLocalDocumentStore();
           LOGGER.config("Setting DatabasePersistentStore for connector " + name);
           ((ConnectorPersistentStoreAware) connector).setDatabaseAccess(pstore);
         }

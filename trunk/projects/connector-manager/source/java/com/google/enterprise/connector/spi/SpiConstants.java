@@ -128,12 +128,14 @@ public class SpiConstants {
    * used to identify the feed file that contains a fed document. All feed
    * records in a single feed file will share a common google:feedid value.
    * <p/>
-   * Reserved for internal use.
+   * Not used.
    * <p/>
    * Value: google:feedid
    *
    * @since 2.6
+   * @deprecated This property is unused.
    */
+  @Deprecated
   public static final String PROPNAME_FEEDID = "google:feedid";
 
   /**
@@ -726,7 +728,10 @@ public class SpiConstants {
    * <li>{@link #PROPNAME_PERSISTED_CUSTOMDATA_1}</li>
    * <li>{@link #PROPNAME_PERSISTED_CUSTOMDATA_2}</li>
    * </ul>
+   *
+   * @deprecated The per-document store has never been publicly implemented
    */
+  @Deprecated
   public static final Map<String, String> PERSISTABLE_ATTRIBUTES;
 
   /**
@@ -735,7 +740,10 @@ public class SpiConstants {
    * If not present, this is assumed to be {@code false}. If {@code true},
    * then the Connector Manager will persist all attributes that are keys in
    * the {@link #PERSISTABLE_ATTRIBUTES} map.
+   *
+   * @deprecated The per-document store has never been publicly implemented
    */
+  @Deprecated
   public static final String PROPNAME_MANAGER_SHOULD_PERSIST = "google:persist";
 
   /**
@@ -745,7 +753,10 @@ public class SpiConstants {
    * <p/>
    * This property is persistable (it is one of the keys in the
    * {@link #PERSISTABLE_ATTRIBUTES} map.
+   *
+   * @deprecated The per-document store has never been publicly implemented
    */
+  @Deprecated
   public static final String PROPNAME_CONNECTOR_INSTANCE = "google:connector_instance";
 
   /**
@@ -755,7 +766,10 @@ public class SpiConstants {
    * <p/>
    * This property is persistable (it is one of the keys in the
    * {@link #PERSISTABLE_ATTRIBUTES} map.
+   *
+   * @deprecated The per-document store has never been publicly implemented
    */
+  @Deprecated
   public static final String PROPNAME_CONNECTOR_TYPE = "google:connector_type";
 
   /**
@@ -768,7 +782,10 @@ public class SpiConstants {
    * <p/>
    * This property is persistable (it is one of the keys in the
    * {@link #PERSISTABLE_ATTRIBUTES} map.
+   *
+   * @deprecated The per-document store has never been publicly implemented
    */
+  @Deprecated
   public static final String PROPNAME_PRIMARY_FOLDER = "google:primary_folder";
 
   /**
@@ -778,7 +795,10 @@ public class SpiConstants {
    * <p/>
    * This property is persistable (it is one of the keys in the
    * {@link #PERSISTABLE_ATTRIBUTES} map.
+   *
+   * @deprecated The per-document store has never been publicly implemented
    */
+  @Deprecated
   public static final String PROPNAME_TIMESTAMP = "google:timestamp";
 
   /**
@@ -787,7 +807,10 @@ public class SpiConstants {
    * <p/>
    * This property is persistable (it is one of the keys in the
    * {@link #PERSISTABLE_ATTRIBUTES} map.
+   *
+   * @deprecated The per-document store has never been publicly implemented
    */
+  @Deprecated
   public static final String PROPNAME_MESSAGE = "google:message";
 
   /**
@@ -800,7 +823,10 @@ public class SpiConstants {
    * <p/>
    * This property is persistable (it is one of the keys in the
    * {@link #PERSISTABLE_ATTRIBUTES} map.
+   *
+   * @deprecated The per-document store has never been publicly implemented
    */
+  @Deprecated
   public static final String PROPNAME_SNAPSHOT = "google:snapshot";
 
   /**
@@ -812,7 +838,10 @@ public class SpiConstants {
    * <p/>
    * This property is persistable (it is one of the keys in the
    * {@link #PERSISTABLE_ATTRIBUTES} map.
+   *
+   * @deprecated The per-document store has never been publicly implemented
    */
+  @Deprecated
   public static final String PROPNAME_CONTAINER = "google:container";
 
   /**
@@ -879,14 +908,20 @@ public class SpiConstants {
    * Optional, single-valued property the Connector Manager will persist in its
    * per-document store. This property will not be supplied when sending a
    * document to the GSA for indexing.
+   *
+   * @deprecated The per-document store has never been publicly implemented
    */
+  @Deprecated
   public static final String PROPNAME_PERSISTED_CUSTOMDATA_1 = "google:custom1";
 
   /**
    * Optional, single-valued property the Connector Manager will persist in its
    * per-document store. This property will not be supplied when sending a
    * document to the GSA for indexing.
+   *
+   * @deprecated The per-document store has never been publicly implemented
    */
+  @Deprecated
   public static final String PROPNAME_PERSISTED_CUSTOMDATA_2 = "google:custom2";
 
   static {

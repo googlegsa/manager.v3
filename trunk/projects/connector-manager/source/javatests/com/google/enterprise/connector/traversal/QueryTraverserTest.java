@@ -40,10 +40,7 @@ import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
 import com.google.enterprise.connector.util.database.JdbcDatabase;
 import com.google.enterprise.connector.util.database.testing.TestJdbcDatabase;
-import com.google.enterprise.connector.util.database.testing.TestResourceClassLoader;
 import com.google.enterprise.connector.util.testing.AdjustableClock;
-import com.google.enterprise.connector.database.DocumentStore;
-import com.google.enterprise.connector.database.LocalDocumentStoreImpl;
 
 import junit.framework.TestCase;
 
@@ -64,7 +61,6 @@ public class QueryTraverserTest extends TestCase {
   AdjustableClock clock;
   ThreadPool threadPool;
   MockInstantiator instantiator;
-  DocumentStore documentStore;
   ValidatingPusher pusher;
   TraversalStateStore stateStore;
   ProductionTraversalContext traversalContext;
@@ -80,8 +76,6 @@ public class QueryTraverserTest extends TestCase {
     traversalContext = new ProductionTraversalContext();
     traversalContext.setTraversalTimeLimitSeconds(1);
     stateStore = new RecordingTraversalStateStore();
-    documentStore = new LocalDocumentStoreImpl(new TestJdbcDatabase(),
-        connectorName, new TestResourceClassLoader(RESOURCE_DIR), clock);
   }
 
   /**
@@ -147,7 +141,7 @@ public class QueryTraverserTest extends TestCase {
     QueryManager qm = new MockJcrQueryManager(r.getStore());
     TraversalManager qtm = new JcrTraversalManager(qm);
     Traverser traverser = new QueryTraverser(new MockPusher(System.out), qtm,
-        stateStore, connectorName, traversalContext, clock, documentStore);
+        stateStore, connectorName, traversalContext, clock);
     instantiator.setupTraverser(connectorName, traverser);
     return traverser;
   }
@@ -242,7 +236,7 @@ public class QueryTraverserTest extends TestCase {
     ExceptionalTraversalManager traversalManager =
         new ExceptionalTraversalManager(exception, where);
     QueryTraverser queryTraverser = new QueryTraverser(pusher, traversalManager,
-        stateStore, connectorName, traversalContext, clock, documentStore);
+        stateStore, connectorName, traversalContext, clock);
     BatchResult result = queryTraverser.runBatch(new BatchSize(10));
     assertEquals(documentCount, result.getCountProcessed());
   }
@@ -337,7 +331,6 @@ public class QueryTraverserTest extends TestCase {
   }
 
   public void testRepositoryDocumentException() {
-    documentStore = null;
     checkExceptionHandling(
          new RepositoryDocumentException("RepositoryDocumentException"),
          Where.DOCUMENT_CONTENT, 0);
@@ -622,7 +615,7 @@ public class QueryTraverserTest extends TestCase {
 
   /**
    * A {@link Pusher} that performs validations
-   * @see ValidatingPusher#take(Document, DocumentStore) for details.
+   * @see ValidatingPusher#take(Document) for details.
    */
   private static class ValidatingPusher implements Pusher, PusherFactory {
     private String connectorName = null;
@@ -655,7 +648,7 @@ public class QueryTraverserTest extends TestCase {
      * </OL>
      */
     /* @Override */
-    public synchronized PusherStatus take(Document document, DocumentStore ignored)
+    public synchronized PusherStatus take(Document document)
         throws RepositoryException, PushException {
       String gotId =
           Value.getSingleValueString(document, SpiConstants.PROPNAME_DOCID);

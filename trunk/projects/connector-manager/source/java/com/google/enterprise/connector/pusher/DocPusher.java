@@ -16,7 +16,6 @@ package com.google.enterprise.connector.pusher;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
-import com.google.enterprise.connector.database.DocumentStore;
 import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.spi.Document;
@@ -165,19 +164,33 @@ public class DocPusher implements Pusher {
   }
 
   /**
+   * The {@code DocumentStore} parameter is ignored and may be null.
+   *
+   * @param document Document corresponding to the document.
+   * @param documentStore {@code DocumentStore} for recording document
+   *        status.  Ignored - may be {@code null}.
+   * @deprecated Use the overload without the {@code DocumentStore} parameter
+   */
+  @SuppressWarnings("deprecation")
+  @Deprecated
+  public PusherStatus take(Document document,
+      com.google.enterprise.connector.database.DocumentStore documentStore)
+      throws PushException, FeedException, RepositoryException {
+    return take(document);
+  }
+
+  /**
    * Takes a Document and sends a the feed to the GSA.
    *
    * @param document Document corresponding to the document.
-   * @param documentStore {@link DocumentStore} for recording document
-   *        status.  Optional - may be {@code null}.
    * @return true if Pusher should accept more documents, false otherwise.
    * @throws PushException if Pusher problem
    * @throws FeedException if transient Feed problem
    * @throws RepositoryDocumentException if fatal Document problem
    * @throws RepositoryException if transient Repository problem
    */
-  /* @Override */
-  public PusherStatus take(Document document, DocumentStore documentStore)
+  @Override
+  public PusherStatus take(Document document)
       throws PushException, FeedException, RepositoryException {
     if (feedSender.isShutdown()) {
       return PusherStatus.DISABLED;
@@ -236,9 +249,6 @@ public class DocPusher implements Pusher {
 
       // Add this document to the feed.
       xmlFeed.addRecord(document);
-      if (documentStore != null) {
-        documentStore.storeDocument(document);
-      }
 
       // If the feed is full, send it off to the GSA.
       if (xmlFeed.isFull() || lowMemory()) {
