@@ -175,11 +175,10 @@ public class QueryTraverser implements Traverser {
           break;
         }
 
-        Document nextDocument = null;
         String docid = null;
         try {
           LOGGER.finer("Pulling next document from connector " + connectorName);
-          nextDocument = resultSet.nextDocument();
+          Document nextDocument = resultSet.nextDocument();
           if (nextDocument == null) {
             LOGGER.finer("Traversal batch for connector " + connectorName
                 + " at end after processing " + counter + " documents.");
@@ -214,19 +213,18 @@ public class QueryTraverser implements Traverser {
                 + " after processing " + counter + " documents.");
             break;
           }
-
         } catch (SkippedDocumentException e) {
           /* TODO (bmj): This is a temporary solution and should be replaced.
            * It uses Exceptions for non-exceptional cases.
            */
           // Skip this document.  Proceed on to the next one.
-          skipDocument(docid, nextDocument, e);
+          logSkippedDocument(docid, e);
         } catch (RepositoryDocumentException e) {
           // Skip individual documents that fail.  Proceed on to the next one.
-          skipDocument(docid, nextDocument, e);
+          logSkippedDocument(docid, e);
         } catch (RuntimeException e) {
           // Skip individual documents that fail.  Proceed on to the next one.
-          skipDocument(docid, nextDocument, e);
+          logSkippedDocument(docid, e);
         }
       }
       // No more documents. Wrap up any accumulated feed data and send it off.
@@ -329,7 +327,7 @@ public class QueryTraverser implements Traverser {
     return null;
   }
 
-  private void skipDocument(String docid, Document document, Exception e) {
+  private void logSkippedDocument(String docid, Exception e) {
     if (LOGGER.isLoggable(Level.FINER)) {
       LOGGER.log(Level.FINER, "Skipping document (" + docid
           + ") from connector " + connectorName + ": " + e.getMessage());
