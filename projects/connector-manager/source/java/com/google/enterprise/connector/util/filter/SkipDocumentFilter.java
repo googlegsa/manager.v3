@@ -152,7 +152,8 @@ public class SkipDocumentFilter extends AbstractDocumentFilter {
   @Override
   public String toString() {
     return super.toString() + ": (" + propertyName + " , \""
-           + pattern.pattern() + "\" , " + skipOnMatch + ")";
+           + ((pattern == null) ? "null" : pattern.pattern())
+           + "\" , " + skipOnMatch + ")";
   }
 
   /**
