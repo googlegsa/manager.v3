@@ -40,7 +40,7 @@ This wiki is maintained by the development team itself.
 
 == Documentation Links ==
 
-  * [http://code.google.com/apis/searchappliance/documentation/50/connector_dev/cdg_intro.html Google Connector Developer's Guide - Introduction]
+  * [http://google-enterprise-connector-manager.googlecode.com/svn/docs/devguide/index.html Google Connector Developer's Guide - Introduction]
   * [DeveloperEnvironmentSetup]  Some hints on getting started as a developer
   * [EclipseTomcatDebug] Tips on how to attach Eclipse to a running Tomcat instance
 
