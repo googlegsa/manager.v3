@@ -645,6 +645,7 @@
         <value>application/x-excel</value>
         <value>application/x-msexcel</value>
         <value>application/vnd.openxmlformats-officedocument.spreadsheetml.sheet</value>
+        <value>application/vnd.ms-excel.macroEnabled.12</value>
         <value>application/vnd.ms-excel.sheet.macroEnabled.12</value>
         <value>application/vnd.ms-excel.sheet.12</value>
         <value>application/vnd.ms-excel.12</value>
@@ -654,6 +655,7 @@
         <value>application/powerpoint</value>
         <value>application/vnd.ms-powerpoint</value>
         <value>application/vnd.openxmlformats-officedocument.presentationml.presentation</value>
+        <value>application/vnd.ms-powerpoint.macroEnabled.12</value>
         <value>application/vnd.ms-powerpoint.presentation.macroEnabled.12</value>
         <value>application/vnd.ms-powerpoint.presentation.12</value>
         <value>application/vnd.ms-powerpoint.12</value>
@@ -665,6 +667,7 @@
         <value>application/vnd.openxmlformats-officedocument.wordprocessingml.document</value>
         <value>application/vnd.ms-word.document.macroEnabled.12</value>
         <value>application/vnd.ms-word.document.12</value>
+        <value>application/vnd.ms-word.macroEnabled.12</value>
         <value>application/vnd.ms-word.12</value>
         <value>application/vnd.ms-works</value>
         <value>application/mswrite</value>
