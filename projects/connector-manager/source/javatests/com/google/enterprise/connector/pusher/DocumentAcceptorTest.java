@@ -14,7 +14,6 @@
 
 package com.google.enterprise.connector.pusher;
 
-import com.google.enterprise.connector.database.DocumentStore;
 import com.google.enterprise.connector.pusher.ExceptionalPusher;
 import com.google.enterprise.connector.pusher.ExceptionalPusher.Where;
 import com.google.enterprise.connector.pusher.Pusher.PusherStatus;
@@ -45,7 +44,7 @@ public class DocumentAcceptorTest extends TestCase {
     String connectorName = getName();
     MockPusher pusher = new MockPusher();
     DocumentAcceptorImpl documentAcceptor =
-        new DocumentAcceptorImpl(connectorName, pusher, null);
+        new DocumentAcceptorImpl(connectorName, pusher);
     MockLister lister = new MockLister(10, 0);
     lister.setDocumentAcceptor(documentAcceptor);
 
@@ -60,7 +59,7 @@ public class DocumentAcceptorTest extends TestCase {
     String connectorName = getName();
     MockPusher pusher = new MockPusher();
     DocumentAcceptorImpl documentAcceptor =
-        new DocumentAcceptorImpl(connectorName, pusher, null);
+        new DocumentAcceptorImpl(connectorName, pusher);
 
     // Feed a couple of documents.
     assertEquals(0, pusher.getTotalDocs());
@@ -120,7 +119,7 @@ public class DocumentAcceptorTest extends TestCase {
     Document document = ConnectorTestUtils.createSimpleDocument("foo");
     MockPusher pusher = new MockPusher();
     DocumentAcceptorImpl documentAcceptor =
-        new DocumentAcceptorImpl(connectorName, pusher, null);
+        new DocumentAcceptorImpl(connectorName, pusher);
     documentAcceptor.setSleepIntervals(shortSleep, longSleep, retries);
 
     // Initial document feed should go unimpeded.
@@ -224,7 +223,7 @@ public class DocumentAcceptorTest extends TestCase {
     ExceptionalPusher pusher = new ExceptionalPusher(exception, where);
     String connectorName = getName();
     DocumentAcceptorImpl documentAcceptor =
-        new DocumentAcceptorImpl(connectorName, pusher, null);
+        new DocumentAcceptorImpl(connectorName, pusher);
 
     // Test take().
     try {

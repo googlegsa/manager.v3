@@ -40,11 +40,9 @@ import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
 import com.google.enterprise.connector.util.database.JdbcDatabase;
 import com.google.enterprise.connector.util.database.testing.TestJdbcDatabase;
-import com.google.enterprise.connector.util.database.testing.TestResourceClassLoader;
 import com.google.enterprise.connector.util.testing.AdjustableClock;
-import com.google.enterprise.connector.database.DocumentStore;
-import com.google.enterprise.connector.database.LocalDocumentStoreImpl;
 
+import junit.framework.ComparisonFailure;
 import junit.framework.TestCase;
 
 import java.io.File;
@@ -64,7 +62,6 @@ public class QueryTraverserTest extends TestCase {
   AdjustableClock clock;
   ThreadPool threadPool;
   MockInstantiator instantiator;
-  DocumentStore documentStore;
   ValidatingPusher pusher;
   TraversalStateStore stateStore;
   ProductionTraversalContext traversalContext;
@@ -80,8 +77,6 @@ public class QueryTraverserTest extends TestCase {
     traversalContext = new ProductionTraversalContext();
     traversalContext.setTraversalTimeLimitSeconds(1);
     stateStore = new RecordingTraversalStateStore();
-    documentStore = new LocalDocumentStoreImpl(new TestJdbcDatabase(),
-        connectorName, new TestResourceClassLoader(RESOURCE_DIR), clock);
   }
 
   /**
@@ -147,7 +142,7 @@ public class QueryTraverserTest extends TestCase {
     QueryManager qm = new MockJcrQueryManager(r.getStore());
     TraversalManager qtm = new JcrTraversalManager(qm);
     Traverser traverser = new QueryTraverser(new MockPusher(System.out), qtm,
-        stateStore, connectorName, traversalContext, clock, documentStore);
+        stateStore, connectorName, traversalContext, clock);
     instantiator.setupTraverser(connectorName, traverser);
     return traverser;
   }
@@ -239,12 +234,19 @@ public class QueryTraverserTest extends TestCase {
 
   private void checkExceptionHandling(Exception exception, Where where,
                                       long documentCount) {
+    checkExceptionHandling(exception, where, documentCount, documentCount);
+  }
+
+  private void checkExceptionHandling(Exception exception, Where where,
+      long documentCount, long pushCount) {
     ExceptionalTraversalManager traversalManager =
         new ExceptionalTraversalManager(exception, where);
     QueryTraverser queryTraverser = new QueryTraverser(pusher, traversalManager,
-        stateStore, connectorName, traversalContext, clock, documentStore);
+        stateStore, connectorName, traversalContext, clock);
     BatchResult result = queryTraverser.runBatch(new BatchSize(10));
     assertEquals(documentCount, result.getCountProcessed());
+    assertEquals(pushCount, pusher.getPushCount());
+    pusher.throwAssertionError();
   }
 
   public void testBatchSizeException() {
@@ -289,7 +291,7 @@ public class QueryTraverserTest extends TestCase {
 
   public void testFirstDocumentRuntimeException() {
     checkExceptionHandling(new RuntimeException("FirstDocumentException"),
-         Where.FIRST_DOCUMENT, 0);
+        Where.FIRST_DOCUMENT, 1);
   }
 
   public void testNextDocumentRepositoryException() {
@@ -327,7 +329,7 @@ public class QueryTraverserTest extends TestCase {
   public void testDocidRuntimeException() {
     checkExceptionHandling(
          new IllegalArgumentException("DocidRuntimeException"),
-         Where.DOCUMENT_DOCID, 0);
+         Where.DOCUMENT_DOCID, 2, 1);
   }
 
   public void testDocumentRepositoryException() {
@@ -337,16 +339,15 @@ public class QueryTraverserTest extends TestCase {
   }
 
   public void testRepositoryDocumentException() {
-    documentStore = null;
     checkExceptionHandling(
          new RepositoryDocumentException("RepositoryDocumentException"),
-         Where.DOCUMENT_CONTENT, 0);
+         Where.DOCUMENT_CONTENT, 2, 1);
   }
 
   public void testSkipDocumentException() {
     checkExceptionHandling(
          new SkippedDocumentException("SkippedDocumentException"),
-         Where.DOCUMENT_CONTENT, 0);
+         Where.DOCUMENT_CONTENT, 2, 1);
   }
 
   public void testDocumentRuntimeException() {
@@ -482,11 +483,10 @@ public class QueryTraverserTest extends TestCase {
       DOCUMENT_DOCID, DOCUMENT_CONTENT // Document
   }
 
-  /** Throws either a RuntimeException or a RepostioryException. */
+  /** Throws either a RuntimeException or a RepositoryException. */
   private  void throwException(Exception exception)
       throws RepositoryException {
     if (exception instanceof RepositoryDocumentException) {
-      pusher.skipDocument();
       throw (RepositoryDocumentException) exception;
     } else if (exception instanceof RepositoryException) {
       throw (RepositoryException) exception;
@@ -508,14 +508,14 @@ public class QueryTraverserTest extends TestCase {
       this.where = where;
     }
 
-    /* @Override */
+    @Override
     public void setBatchHint(int batchHint) throws RepositoryException {
       if (where == Where.SET_BATCH_HINT) {
         throwException(exception);
       }
     }
 
-    /* @Override */
+    @Override
     public DocumentList startTraversal() throws RepositoryException {
       if (where == Where.START_TRAVERSAL) {
         throwException(exception);
@@ -523,7 +523,7 @@ public class QueryTraverserTest extends TestCase {
       return new ExceptionalDocumentList(0, exception, where);
     }
 
-    /* @Override */
+    @Override
     public DocumentList resumeTraversal(String checkpoint)
         throws RepositoryException {
       if (where == Where.RESUME_TRAVERSAL) {
@@ -554,7 +554,7 @@ public class QueryTraverserTest extends TestCase {
       this.where = where;
     }
 
-    /* @Override */
+    @Override
     public Document nextDocument() throws RepositoryException {
       // Return no more than two documents per batch.
       if (docNum > startNum + 1) {
@@ -566,16 +566,22 @@ public class QueryTraverserTest extends TestCase {
       // in the batch, and odd numbered docs are the next.
       switch (where) {
         case FIRST_DOCUMENT:
-          if ((doc & 1) == 0) throwException(exception);
+          if ((doc & 1) == 0) {
+            pusher.skipDocument();
+            throwException(exception);
+          }
           break;
         case NEXT_DOCUMENT:
-          if ((doc & 1) == 1) throwException(exception);
+          if ((doc & 1) == 1) {
+            pusher.skipDocument();
+            throwException(exception);
+          }
           break;
       }
       return new ExceptionalDocument(doc, exception, where);
     }
 
-    /* @Override */
+    @Override
     public String checkpoint() throws RepositoryException {
       if (where == Where.CHECKPOINT) {
         throwException(exception);
@@ -602,18 +608,19 @@ public class QueryTraverserTest extends TestCase {
           ConnectorTestUtils.createSimpleDocument(String.valueOf(docNum));
     }
 
-    /* @Override */
+    @Override
     public Set<String> getPropertyNames() throws RepositoryException {
       return doc.getPropertyNames();
     }
 
-    /* @Override */
+    @Override
     public Property findProperty(String name) throws RepositoryException {
-      if (SpiConstants.PROPNAME_CONTENT.equals(name) &&
-          where == Where.DOCUMENT_CONTENT && (docNum & 1 ) == 0) {
+      if (SpiConstants.PROPNAME_CONTENT.equals(name)
+          && where == Where.DOCUMENT_CONTENT && (docNum & 1) == 0) {
         throwException(exception);
-      } if (SpiConstants.PROPNAME_DOCID.equals(name) &&
-            where == Where.DOCUMENT_DOCID && (docNum & 1) == 1) {
+      }
+      if (SpiConstants.PROPNAME_DOCID.equals(name)
+          && where == Where.DOCUMENT_DOCID && (docNum & 1) == 1) {
         throwException(exception);
       }
       return doc.findProperty(name);
@@ -622,12 +629,13 @@ public class QueryTraverserTest extends TestCase {
 
   /**
    * A {@link Pusher} that performs validations
-   * @see ValidatingPusher#take(Document, DocumentStore) for details.
+   * @see ValidatingPusher#take(Document) for details.
    */
   private static class ValidatingPusher implements Pusher, PusherFactory {
     private String connectorName = null;
     private volatile long pushCount = 0;
     private volatile long expectedId = 0;
+    private volatile ComparisonFailure assertionError = null;
 
     /**
      * Performs the following validations:
@@ -636,12 +644,12 @@ public class QueryTraverserTest extends TestCase {
      * {@link ValidatingPusher#ValidatingPusher(String)}.
      * </OL>
      */
-    /* @Override */
+    @Override
     public Pusher newPusher(String connectorName) {
       if (this.connectorName == null) {
         this.connectorName = connectorName;
       } else {
-        assertEquals(this.connectorName, connectorName);
+        assertEqualsAndStore(this.connectorName, connectorName);
       }
       return this;
     }
@@ -654,16 +662,20 @@ public class QueryTraverserTest extends TestCase {
      * matches the number of documents pushed (formatted as a {@link String}).
      * </OL>
      */
-    /* @Override */
-    public synchronized PusherStatus take(Document document, DocumentStore ignored)
+    @Override
+    public synchronized PusherStatus take(Document document)
         throws RepositoryException, PushException {
       String gotId =
           Value.getSingleValueString(document, SpiConstants.PROPNAME_DOCID);
-      assertEquals(Long.toString(expectedId), gotId);
+      assertEqualsAndStore(Long.toString(expectedId), gotId);
       try {
         Value.getSingleValue(document, SpiConstants.PROPNAME_CONTENT);
         expectedId++;
         pushCount++;
+      } catch (RuntimeException re) {
+        // Mimicking DocPusher's behavior for RuntimeExceptions.
+        expectedId++;
+        throw new RepositoryDocumentException(re);
       } catch (RepositoryDocumentException rde) {
         expectedId++;
         throw rde;
@@ -677,17 +689,17 @@ public class QueryTraverserTest extends TestCase {
       expectedId++;
     }
 
-    /* @Override */
+    @Override
     public void flush() {
     }
 
-    /* @Override */
+    @Override
     public synchronized void cancel() {
       pushCount = 0;
       expectedId = 0;
     }
 
-    /* @Override */
+    @Override
     public PusherStatus getPusherStatus() {
       return PusherStatus.OK;
     }
@@ -697,6 +709,24 @@ public class QueryTraverserTest extends TestCase {
      */
     synchronized long getPushCount() {
       return pushCount;
+    }
+
+    /** Checks an assertion and stores it if one occurs. */
+    void assertEqualsAndStore(String expected, String value) {
+      try {
+        assertEquals(expected, value);
+      } catch (ComparisonFailure e) {
+        assertionError = e;
+      }
+    }
+
+    /** Throws and clears an assertion failure if one occurred. */
+    synchronized void throwAssertionError() {
+      if (assertionError != null) {
+        ComparisonFailure e = assertionError;
+        assertionError = null;
+        throw e;
+      }
     }
   }
 

@@ -88,7 +88,7 @@ public class GsaFeedConnection implements FeedConnection {
   private URL backlogUrl = null;
 
   // BacklogCount Ceiling. Throttle back feed if backlog exceeds the ceiling.
-  private int backlogCeiling = 10000;
+  private int backlogCeiling = 4000;
 
   // BacklogCount Floor. Stop throttling feed if backlog drops below floor.
   private int backlogFloor = 1000;

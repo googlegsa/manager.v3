@@ -259,7 +259,7 @@ public class Context {
       + " Once the backlog count drops down below the floor value, feeding\n"
       + " resumes.\n  For example:\n"
       + " Stop feeding the GSA if its backlog exceeds this value.\n"
-      + "   feed.backlog.ceiling=10000\n"
+      + "   feed.backlog.ceiling=4000\n"
       + " Resume feeding the GSA if its backlog falls below this value.\n"
       + "   feed.backlog.floor=1000\n"
       + " How often to check for feed backlog (in seconds).\n"

@@ -17,6 +17,7 @@ package com.google.enterprise.connector.pusher;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.enterprise.connector.common.AlternateContentFilterInputStream;
@@ -67,16 +68,25 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
   private static final Logger LOGGER =
       Logger.getLogger(XmlFeed.class.getName());
 
-  /** Roles are deprecated, so we will strip them out of Principals. */
   @SuppressWarnings("deprecation")
-  private static final String PEEKER_ROLE_SUFFIX =
-      "=" + RoleType.PEEKER.toString();
+  private static class RoleSuffixes {
+    private static final String PEEKER_SUFFIX = "=" + RoleType.PEEKER;
+    private static final String READER_SUFFIX = "=" + RoleType.READER;
+    private static final String WRITER_SUFFIX = "=" + RoleType.WRITER;
+    private static final String OWNER_SUFFIX = "=" + RoleType.OWNER;
 
-  @SuppressWarnings("deprecation")
-  private static final String[] OTHER_ROLES_SUFFIXES = {
-      "=" + RoleType.READER.toString(),
-      "=" + RoleType.WRITER.toString(),
-      "=" + RoleType.OWNER.toString() };
+    private static final List<String> BELOW_READER =
+        ImmutableList.of(PEEKER_SUFFIX);
+
+    private static final List<String> READER_OR_BELOW =
+        ImmutableList.of(PEEKER_SUFFIX, READER_SUFFIX);
+
+    private static final List<String> READER_OR_ABOVE =
+        ImmutableList.of(READER_SUFFIX, WRITER_SUFFIX, OWNER_SUFFIX);
+
+    private static final List<String> ABOVE_READER =
+        ImmutableList.of(WRITER_SUFFIX, OWNER_SUFFIX);
+  }
 
   private final String dataSource;
   private final FeedType feedType;
@@ -661,7 +671,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
       Principal principal = (value instanceof PrincipalValue)
           ? ((PrincipalValue) value).getPrincipal()
           : new Principal(value.toString().trim());
-      String name = stripRoles(principal.getName());
+      String name = stripRoles(principal.getName(), access);
       if (!Strings.isNullOrEmpty(name)) {
         buff.append("<").append(XML_PRINCIPAL);
         if (principal.getPrincipalType() ==
@@ -696,15 +706,23 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
    * Strip any Roles from the supplied Principal name.
    * Peeker users are discarded entirely, whereas other roles are simply
    * removed from the end of the name.
+   *
+   * @param name the principal name
+   * @param the principal access, one of {@code PERMIT} or {@code DENY}
    */
-  private static String stripRoles(String name) {
+  private static String stripRoles(String name, AclAccess access) {
     if (!Strings.isNullOrEmpty(name) && name.indexOf('=') >= 0) {
-      // Drop peekers on the floor.
-      if (name.endsWith(PEEKER_ROLE_SUFFIX)) {
-        return null;
+      List<String> skip = (access == AclAccess.PERMIT)
+          ? RoleSuffixes.BELOW_READER : RoleSuffixes.ABOVE_READER;
+      List<String> strip = (access == AclAccess.PERMIT)
+          ? RoleSuffixes.READER_OR_ABOVE : RoleSuffixes.READER_OR_BELOW;
+
+      for (String role : skip) {
+        if (name.endsWith(role)) {
+          return null;
+        }
       }
-      // For all others, just strip them off.
-      for (String role : OTHER_ROLES_SUFFIXES) {
+      for (String role : strip) {
         if (name.endsWith(role)) {
           return name.substring(0, name.length() - role.length());
         }
