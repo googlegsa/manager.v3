@@ -71,6 +71,7 @@ public class MockJcrNode implements Node {
   static {
     propertySkipSet = new HashSet<String>();
     propertySkipSet.add("acl");
+    propertySkipSet.add("acldeny");
   }
 
   private MockRepositoryDocument doc;
@@ -116,6 +117,15 @@ public class MockJcrNode implements Node {
           SpiConstants.PROPNAME_ACLGROUPS,
           SpiConstants.GROUP_ROLES_PROPNAME_PREFIX);
     }
+    // acldeny
+    MockRepositoryProperty aclDenyProp =
+        doc.getProplist().getProperty("acldeny");
+    if (aclDenyProp != null) {
+      addAclProperty(MockRepositoryProperty.USER_SCOPE, aclDenyProp, propList,
+          SpiConstants.PROPNAME_ACLDENYUSERS, null);
+      addAclProperty(MockRepositoryProperty.GROUP_SCOPE, aclDenyProp, propList,
+          SpiConstants.PROPNAME_ACLDENYGROUPS, null);
+    }
     // Now push all the other properties onto the list.
     for (MockRepositoryProperty prop : doc.getProplist()) {
       // Don't pass on the some of the special MockRepoDocument properties so
@@ -142,7 +152,7 @@ public class MockJcrNode implements Node {
    * @param propName the key or property named to be used to store the ACL
    *     Entries in the given <code>propList</code>.
    * @param rolesPrefix the prefix to use to add a property to define specific
-   *     roles for a ACL Entry.
+   *     roles for a ACL Entry, or {@code null} to append roles to the scope ID
    */
   private void addAclProperty(String scopeType,
       MockRepositoryProperty repoAclProp, List<MockJcrProperty> propList,
@@ -171,26 +181,40 @@ public class MockJcrNode implements Node {
       // Separate the scope identity from the role list if present.
       int roleTokPos = aclEntry.indexOf(MockRepositoryProperty.SCOPE_ROLE_SEP);
       String scopeId;
-      String rolesStr = null;
+      String rolesStr;
       if (roleTokPos != -1) {
         scopeId = aclEntry.substring(0, roleTokPos);
         rolesStr = aclEntry.substring(roleTokPos + 1);
       } else {
         scopeId = aclEntry;
+        rolesStr = null;
       }
 
       // At this point we have the scope and list of roles that make up an ACL
-      // Entry.  Add the scope to the list and, if there are roles specified,
-      // create an associated "<rolesPrefix><scopeId>" property and add it to
-      // the propList.
-      newAclScopes.add("\"" + scopeId + "\"");
-      if (rolesStr != null) {
-        // Create a multi-value property for the scope's roles.
-        List<String> rolesList = Arrays.asList(rolesStr.split(",", 0));
-        MockRepositoryProperty newRolesProp = new MockRepositoryProperty(
-            rolesPrefix + scopeId,
-            "{type:string, value:" + rolesList.toString() + "}");
-        propList.add(new MockJcrProperty(newRolesProp));
+      // Entry.
+      if (rolesPrefix == null) {
+        // Append the roles to the scope IDs.
+        if (rolesStr == null) {
+          newAclScopes.add("\"" + scopeId + "\"");
+        } else {
+          String[] roles = rolesStr.split(",", 0);
+          for (String role : roles) {
+            newAclScopes.add("\"" + scopeId + "=" + role + "\"");
+          }
+        }
+      } else {
+        // Add the scope to the list and, if there are roles specified,
+        // create an associated "<rolesPrefix><scopeId>" property and add it to
+        // the propList.
+        newAclScopes.add("\"" + scopeId + "\"");
+        if (rolesStr != null) {
+          // Create a multi-value property for the scope's roles.
+          List<String> rolesList = Arrays.asList(rolesStr.split(",", 0));
+          MockRepositoryProperty newRolesProp = new MockRepositoryProperty(
+              rolesPrefix + scopeId,
+              "{type:string, value:" + rolesList.toString() + "}");
+          propList.add(new MockJcrProperty(newRolesProp));
+        }
       }
     }
 

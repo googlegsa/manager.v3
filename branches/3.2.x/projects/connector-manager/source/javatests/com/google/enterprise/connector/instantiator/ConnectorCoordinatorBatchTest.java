@@ -14,7 +14,6 @@
 
 package com.google.enterprise.connector.instantiator;
 
-import com.google.enterprise.connector.database.DocumentStore;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.pusher.Pusher;
@@ -472,7 +471,7 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
     }
 
     /* @Override */
-    public PusherStatus take(Document document, DocumentStore ignored) {
+    public PusherStatus take(Document document) {
       pushedDocuments.add(new PushedDocument(document, connectorName));
       return PusherStatus.OK;
     }

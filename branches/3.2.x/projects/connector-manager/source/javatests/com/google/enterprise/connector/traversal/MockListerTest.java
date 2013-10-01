@@ -44,7 +44,7 @@ public class MockListerTest extends TestCase {
   protected void setUp() throws Exception {
     connectorName = getName();
     pusher = new MockPusher();
-    documentAcceptor = new DocumentAcceptorImpl(connectorName, pusher, null);
+    documentAcceptor = new DocumentAcceptorImpl(connectorName, pusher);
   }
 
   private MockLister getLister(long maxDocs, long delayMillis)

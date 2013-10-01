@@ -22,7 +22,6 @@ import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.spiimpl.BinaryValue;
 import com.google.enterprise.connector.util.Base64FilterInputStream;
-import com.google.enterprise.connector.database.DocumentStore;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -52,7 +51,7 @@ public class MockPusher implements Pusher, PusherFactory {
   }
 
   /* @Override */
-  public PusherStatus take(Document document, DocumentStore ignored)
+  public PusherStatus take(Document document)
       throws PushException, FeedException, RepositoryException {
     // Mirror behaviour of DocPusher.
     if (status == PusherStatus.DISABLED) {

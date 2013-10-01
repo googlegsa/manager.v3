@@ -32,7 +32,7 @@
              GSA has fallen behind processing outstanding feed items.
         -->
         <!-- Stop feeding if the backlog exceeds this value. -->
-        <prop key="feed.backlog.ceiling">10000</prop>
+        <prop key="feed.backlog.ceiling">4000</prop>
         <!-- Resume feeding if the backlog falls below this value. -->
         <prop key="feed.backlog.floor">1000</prop>
         <!-- How often to check for feed backlog (in seconds). -->
@@ -644,6 +644,7 @@
         <value>application/x-excel</value>
         <value>application/x-msexcel</value>
         <value>application/vnd.openxmlformats-officedocument.spreadsheetml.sheet</value>
+        <value>application/vnd.ms-excel.macroEnabled.12</value>
         <value>application/vnd.ms-excel.sheet.macroEnabled.12</value>
         <value>application/vnd.ms-excel.sheet.12</value>
         <value>application/vnd.ms-excel.12</value>
@@ -653,6 +654,7 @@
         <value>application/powerpoint</value>
         <value>application/vnd.ms-powerpoint</value>
         <value>application/vnd.openxmlformats-officedocument.presentationml.presentation</value>
+        <value>application/vnd.ms-powerpoint.macroEnabled.12</value>
         <value>application/vnd.ms-powerpoint.presentation.macroEnabled.12</value>
         <value>application/vnd.ms-powerpoint.presentation.12</value>
         <value>application/vnd.ms-powerpoint.12</value>
@@ -664,6 +666,7 @@
         <value>application/vnd.openxmlformats-officedocument.wordprocessingml.document</value>
         <value>application/vnd.ms-word.document.macroEnabled.12</value>
         <value>application/vnd.ms-word.document.12</value>
+        <value>application/vnd.ms-word.macroEnabled.12</value>
         <value>application/vnd.ms-word.12</value>
         <value>application/vnd.ms-works</value>
         <value>application/mswrite</value>

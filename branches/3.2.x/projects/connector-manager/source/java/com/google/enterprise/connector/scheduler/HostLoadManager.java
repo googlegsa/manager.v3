@@ -127,9 +127,13 @@ public class HostLoadManager implements LoadManager {
    */
   /* @Override */
   public void setLoad(int load) {
-    LOGGER.fine("Setting host load to " + load);
-    this.load = load;
-    seedLoad();
+    if (load >= 0) {
+      LOGGER.fine("Setting host load to " + load);
+      this.load = load;
+      seedLoad();
+    } else {
+      LOGGER.warning("Invalid host load: " + load);
+    }
   }
 
   /**
@@ -139,10 +143,14 @@ public class HostLoadManager implements LoadManager {
    */
   /* @Override */
   public void setPeriod(int periodInSeconds) {
-    LOGGER.fine("Setting load measurement period to " + periodInSeconds
-                + " seconds");
-    periodInMillis = periodInSeconds * 1000L;
-    seedLoad();
+    if (periodInSeconds > 0) {
+      LOGGER.fine("Setting load measurement period to " + periodInSeconds
+                  + " seconds");
+      periodInMillis = periodInSeconds * 1000L;
+      seedLoad();
+    } else {
+      LOGGER.warning("Invalid load measurement period: " + periodInSeconds);
+    }
   }
 
   /**
@@ -150,9 +158,13 @@ public class HostLoadManager implements LoadManager {
    */
   /* @Override */
   public void setBatchSize(int batchSize) {
-    this.batchSize = batchSize;
-    LOGGER.fine("Setting the maximum batch size to " + batchSize);
-    seedLoad();
+    if (batchSize >= 0) {
+      this.batchSize = batchSize;
+      LOGGER.fine("Setting the maximum batch size to " + batchSize);
+      seedLoad();
+    } else {
+      LOGGER.warning("Invalid batch size: " + batchSize);
+    }
   }
 
   /**
