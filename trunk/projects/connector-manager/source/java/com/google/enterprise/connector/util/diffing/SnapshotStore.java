@@ -16,6 +16,7 @@ package com.google.enterprise.connector.util.diffing;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Ordering;
 
 import java.io.BufferedReader;
@@ -23,7 +24,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -32,7 +32,6 @@ import java.io.Reader;
 import java.io.Writer;
 import java.nio.charset.Charset;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.logging.Level;
@@ -95,7 +94,8 @@ public class SnapshotStore {
     if (aWriterIsActive) {
       throw new IllegalStateException("There is already an active writer.");
     }
-    long nextIndex = getExistingSnapshots().isEmpty() ? 1 : getExistingSnapshots().first() + 1;
+    SortedSet<Long> snapshots = getExistingSnapshots();
+    long nextIndex = (snapshots.isEmpty()) ? 1 : snapshots.first() + 1;
     File out = getSnapshotFile(snapshotDir, nextIndex);
     try {
       FileOutputStream os = new FileOutputStream(out);
@@ -167,11 +167,10 @@ public class SnapshotStore {
 
   @VisibleForTesting
   public void deleteOldSnapshots() {
-    Iterator<Long> it = getExistingSnapshots().iterator();
-    while (it.hasNext()) {
-      long k = it.next();
+    // Leave at least two snapshot files, even if oldestSnapshotToKeep
+    // is too high.
+    for (long k : Iterables.skip(getExistingSnapshots(), 2)) {
       if (k < oldestSnapshotToKeep) {
-        it.remove();
         File x = getSnapshotFile(snapshotDir, k);
         if (x.delete()) {
           LOG.fine("deleting snapshot file " + x.getAbsolutePath());
@@ -182,7 +181,12 @@ public class SnapshotStore {
     }
   }
 
-  @VisibleForTesting
+  /**
+   * Internal method.
+   *
+   * @deprecated This method will be removed in a future release
+   */
+  @Deprecated
   public long getOldestSnapsotToKeep() {
     return oldestSnapshotToKeep;
   }
