@@ -11,7 +11,7 @@ issues and work-arounds.
 Web Site: http://code.google.com/p/google-enterprise-connector-manager/
 
 
-Release 3.2.2, 01 October 2013
+Release 3.2.2, 24 October 2013
 ==============================
 
 Introduction
@@ -47,9 +47,26 @@ Fix issue 10404326: A NullPointerException would be thrown out of the
                     SkipDocumentFilter if the source document supplied
                     a null value for the property being checked.
 
+Fix issue 10845203: Remove URL-encoding from document IDs for delete URLs
+                    in the diffing package. The DeleteDocumentHandle class
+                    was violating the contract for the DocumentHandle
+                    interface, where the value returned by getDocumentId()
+                    "must match the value returned by calling
+                    getDocument().findProperty(PROPNAME_DOCID)."
+
+Fix issue 11341445: A diffing connector could get into a loop deleting all
+                    of the snapshot files on each pass, and therefore
+                    feeding everything to the GSA for indexing on each
+                    pass. At least the two most recent snapshot files are
+                    now saved.
+
 Version Compatibility
 ---------------------
 This version of the Connector Manager requires Java 6 JRE or newer.
+
+Diffing connectors that use non-URL safe docids and expect the
+DeleteDocumentHandle class to URL encode the docids will have to modified
+to use consistent URL-encoding in the connector or to use URL safe docids.
 
 Deprecated Features
 -------------------
@@ -75,6 +92,11 @@ or functional in any version of the Connector Manager or GSA.
   * SpiConstants.PROPNAME_PERSISTED_CUSTOMDATA_1
   * SpiConstants.PROPNAME_PERSISTED_CUSTOMDATA_2
   * SpiConstants.PROPNAME_FEEDID
+
+The following diffing package feature has been deprecated and is
+targeted for removal in a future release.
+
+  * SnapshotStore.getOldestSnapsotToKeep [the method name is misspelled]
 
 
 Release 3.2.0, 13 August 2013
