@@ -68,7 +68,7 @@ public class SpiConstants {
    * <p/>
    * Value: google:fragment
    *
-   * @since TODO(bmj)
+   * @since 3.2
    */
   public static final String PROPNAME_FRAGMENT = "google:fragment";
 
@@ -310,7 +310,6 @@ public class SpiConstants {
    *
    * @since 3.0
    */
-  // TODO: clarify the behavior of and support for roles in DENY ACEs
   public static final String PROPNAME_ACLDENYUSERS = "google:acldenyusers";
 
   /**
@@ -388,7 +387,7 @@ public class SpiConstants {
    * <p/>
    * Value: google:aclinheritfrom:fragment
    *
-   * @since TODO(bmj)
+   * @since 3.2
    */
   public static final String PROPNAME_ACLINHERITFROM_FRAGMENT =
       "google:aclinheritfrom:fragment";
