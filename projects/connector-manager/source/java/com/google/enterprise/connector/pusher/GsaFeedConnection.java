@@ -112,7 +112,7 @@ public class GsaFeedConnection implements FeedConnection {
       int securePort) throws MalformedURLException {
     if (Strings.isNullOrEmpty(protocol)) {
       protocol = (securePort < 0) ? "http" : "https";
-  }
+    }
     this.setFeedHostAndPort(protocol, host, port, securePort);
   }
 
