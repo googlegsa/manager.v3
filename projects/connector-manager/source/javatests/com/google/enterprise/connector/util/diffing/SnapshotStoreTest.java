@@ -14,20 +14,15 @@
 
 package com.google.enterprise.connector.util.diffing;
 
-import com.google.enterprise.connector.util.diffing.DocumentSnapshot;
-import com.google.enterprise.connector.util.diffing.MonitorCheckpoint;
-import com.google.enterprise.connector.util.diffing.SnapshotReader;
-import com.google.enterprise.connector.util.diffing.SnapshotReaderException;
-import com.google.enterprise.connector.util.diffing.SnapshotStore;
-import com.google.enterprise.connector.util.diffing.SnapshotStoreException;
-import com.google.enterprise.connector.util.diffing.SnapshotWriter;
-import com.google.enterprise.connector.util.diffing.SnapshotWriterException;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import com.google.enterprise.connector.util.diffing.testing.TestDirectoryManager;
 
 import junit.framework.TestCase;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Set;
 
 public class SnapshotStoreTest extends TestCase {
   private File snapshotDir;
@@ -45,8 +40,6 @@ public class SnapshotStoreTest extends TestCase {
   /**
    * Make sure that if the store contains no snapshots, an initial empty
    * snapshot is returned.
-   *
-   * @throws SnapshotReaderException
    */
   public void testEmptyDir() throws SnapshotStoreException {
     SnapshotReader in = store.openMostRecentSnapshot();
@@ -56,8 +49,6 @@ public class SnapshotStoreTest extends TestCase {
   /**
    * Make sure that if we write a snapshot and immediately read it, the contents
    * are correct.
-   *
-   * @throws SnapshotStoreException
    */
   public void testWriteRead() throws Exception {
     SnapshotWriter out = store.openNewSnapshotWriter();
@@ -75,9 +66,6 @@ public class SnapshotStoreTest extends TestCase {
   /**
    * Make sure that openMostRecentSnapshot always opens the most recent
    * snapshot.
-   *
-   * @throws SnapshotWriterException
-   * @throws SnapshotReaderException
    */
   public void testSnapshotSorting() throws Exception {
     for (int k = 0; k < 10; ++k) {
@@ -97,8 +85,6 @@ public class SnapshotStoreTest extends TestCase {
   /**
    * Make sure that after a bunch of snapshots are created, only the last three
    * remain.
-   *
-   * @throws SnapshotWriterException
    */
   public void testGarbageCollection() throws Exception {
     for (int k = 0; k < 10; ++k) {
@@ -109,22 +95,36 @@ public class SnapshotStoreTest extends TestCase {
       store.close(null, out);
       store.deleteOldSnapshots();
     }
-    File[] contents = snapshotDir.listFiles();
-    for (File f : contents) {
-      if (f.isHidden()) {
-        // Special ".isTestDir" marker file; ignore
-        continue;
-      }
-      assertTrue(f.getName(), f.getName().matches("snap\\.(8|9|10)"));
+    assertSnapshotDirContains(ImmutableSet.of("snap.8", "snap.9", "snap.10"));
+  }
+
+  /**
+   * Make sure that even if the only snapshots are old, we still keep
+   * two of them.
+   */
+  public void testMissingSnapshotFiles() throws Exception {
+    for (int k = 0; k < 3; ++k) {
+      SnapshotWriter out = store.openNewSnapshotWriter();
+      store.close(null, out);
     }
+    assertSnapshotDirContains(ImmutableSet.of("snap.1", "snap.2", "snap.3"));
+
+    MonitorCheckpoint cp = new MonitorCheckpoint("foo", 10, 2, 1);
+    store.acceptGuarantee(cp);
+    store.deleteOldSnapshots();
+    assertSnapshotDirContains(ImmutableSet.of("snap.2", "snap.3"));
+  }
+
+  private void assertSnapshotDirContains(Set<String> expected) {
+    Set<String> filenames = Sets.newHashSet();
+    for (File f : snapshotDir.listFiles()) {
+      filenames.add(f.getName());
+    }
+    assertEquals(expected, filenames);
   }
 
   /**
    * Make sure that a new SnapshotStore recovers correctly from checkpoints.
-   *
-   * @throws IOException
-   * @throws SnapshotWriterException
-   * @throws SnapshotReaderException
    */
   // TODO: add more recovery tests.
   public void testRecoveryBasics() throws IOException, SnapshotStoreException,
@@ -201,10 +201,6 @@ public class SnapshotStoreTest extends TestCase {
   /**
    * Write 100 records to {@code writer} with the specified {@code lastModified}
    * time.
-   *
-   * @param writer
-   * @param suffix
-   * @throws SnapshotWriterException
    */
   private void writeRecords(SnapshotWriter writer, String suffix)
       throws SnapshotWriterException {
