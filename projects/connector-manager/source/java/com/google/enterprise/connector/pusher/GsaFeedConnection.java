@@ -103,7 +103,7 @@ public class GsaFeedConnection implements FeedConnection {
   private long lastBacklogCheck;
 
   // How often to check for backlog (in milliseconds).
-  private long backlogCheckInterval = 15 * 60 * 1000L;
+  private long backlogCheckInterval = 2 * 60 * 1000L;
 
   /** Whether HTTPS connections validate the server certificate. */
   private boolean validateCertificate = true;

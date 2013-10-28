@@ -263,7 +263,7 @@ public class Context {
       + " Resume feeding the GSA if its backlog falls below this value.\n"
       + "   feed.backlog.floor=1000\n"
       + " How often to check for feed backlog (in seconds).\n"
-      + "   feed.backlog.interval=900\n"
+      + "   feed.backlog.interval=120\n"
       + "\n"
       + " The 'traversal.batch.size' property defines the optimal number\n"
       + " of items to return in each repository traversal batch.  The batch\n"
