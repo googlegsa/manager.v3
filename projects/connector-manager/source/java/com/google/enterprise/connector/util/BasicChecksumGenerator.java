@@ -14,6 +14,8 @@
 
 package com.google.enterprise.connector.util;
 
+import com.google.common.base.Charsets;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -66,18 +68,6 @@ public class BasicChecksumGenerator implements ChecksumGenerator {
 
   private static final int BUF_SIZE = 32768;
   private final String algorithm;
-  private static final char[] HEX_DIGITS =
-      new char[] {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-                  'a', 'b', 'c', 'd', 'e', 'f'};
-  private static char[][] byteToHex = new char[256][2];
-
-  {
-    // Create a table to convert from bytes to hex characters.
-    for (int k = 0; k < 256; ++k) {
-      byteToHex[k][0] = HEX_DIGITS[k & 0xF];
-      byteToHex[k][1] = HEX_DIGITS[k >>> 4 & 0xF];
-    }
-  }
 
   /**
    * Constructs a {@code BasicChecksumGenerator} that uses the specified
@@ -133,14 +123,9 @@ public class BasicChecksumGenerator implements ChecksumGenerator {
    * @return a checksum for the bytes of {@code in}
    * @throws IOException
    */
-  /* @Override */
+  @Override
   public String getChecksum(InputStream in) throws IOException {
-    byte[] digestBytes = getDigest(in);
-    StringBuilder result = new StringBuilder();
-    for (int k = 0; k < digestBytes.length; ++k) {
-      result.append(byteToHex[digestBytes[k] & 0xFF]);
-    }
-    return result.toString();
+    return Base16.lowerCase().encode(getDigest(in));
   }
 
   /**
@@ -150,13 +135,13 @@ public class BasicChecksumGenerator implements ChecksumGenerator {
    * @param input a String to create a checksum for
    * @return a checksum for the bytes of {@code input}
    */
-  /* @Override */
+  @Override
   public String getChecksum(String input) {
     try {
       return getChecksum(
-          new ByteArrayInputStream(input.getBytes("UTF-8")));
+          new ByteArrayInputStream(input.getBytes(Charsets.UTF_8)));
     } catch (IOException e) {
-      throw new RuntimeException("IO exception reading a string!?");
+      throw new RuntimeException("IO exception reading a string!?", e);
     }
   }
 }

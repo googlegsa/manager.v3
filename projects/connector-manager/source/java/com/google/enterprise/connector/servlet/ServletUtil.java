@@ -14,12 +14,13 @@
 
 package com.google.enterprise.connector.servlet;
 
+import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-
 import com.google.enterprise.connector.common.JarUtils;
 import com.google.enterprise.connector.common.SecurityUtils;
+import com.google.enterprise.connector.util.Base16;
 import com.google.enterprise.connector.util.SAXParseErrorHandler;
 import com.google.enterprise.connector.util.XmlParseUtil;
 import com.google.enterprise.connector.util.XmlParseUtil.LocalEntityResolver;
@@ -468,7 +469,6 @@ public class ServletUtil {
     percentEncode(sb, value);    
   }
 
-  private static final String HEX = "0123456789ABCDEF";
   private static final String PERCENT = "-.%0123456789%%%%%%"
       + "%ABCDEFGHIJKLMNOPQRSTUVWXYZ%%%%_"
       + "%abcdefghijklmnopqrstuvwxyz%%%~";
@@ -484,20 +484,13 @@ public class ServletUtil {
    * @param text some plain text
    */
   public static void percentEncode(StringBuilder sb, String text) {
-    byte[] bytes;
-    try {
-      bytes = text.getBytes("UTF-8");
-    } catch (java.io.UnsupportedEncodingException e) {
-      // Not going to happen with built-in encoding.
-      throw new AssertionError(e);
-    }
+    byte[] bytes = text.getBytes(Charsets.UTF_8);
     for (byte b : bytes) {
       if (b >= '-' && b <= '~' && PERCENT.charAt(b - '-') != '%') {
         sb.append((char) b);
       } else {
         sb.append('%');
-        sb.append(HEX.charAt((b >>> 4) & 0xF));
-        sb.append(HEX.charAt(b & 0xF));
+        Base16.upperCase().encode(b, sb);
       }
     }
   }

@@ -14,7 +14,9 @@
 
 package com.google.enterprise.connector.common;
 
+import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
+import com.google.enterprise.connector.util.Base16;
 
 import java.text.MessageFormat;
 
@@ -71,29 +73,19 @@ public class PdfUtil {
     return buf.toString();
   }
 
-  static final String HEX = "0123456789ABCDEF";
-
   /**
    * PDF literal strings are limited to 8-bit characters.
    * Unicode characters need to be encoded as UTF-16BE in
-   * a stream of hexidecimal characters.
+   * a stream of hexadecimal characters.
    *
    * @param text some plain text
-   * @return a PDF hexidecimal string encoding the text
+   * @return a PDF hexadecimal string encoding the text
    */
   public static String toBinaryString(String text) {
     // Leading FEFF indicates big-endian 16-bit Unicode text.
     StringBuilder buf = new StringBuilder("<FEFF");
-    try {
-      byte[] bytes = text.getBytes("UTF-16BE");
-      for (byte c : bytes) {
-        buf.append(HEX.charAt((c >> 4) & 0xF));
-        buf.append(HEX.charAt(c & 0xF));
-      }
-    } catch (java.io.UnsupportedEncodingException e) {
-      // Not going to happen with built-in encoding.
-      throw new AssertionError(e);
-    }
+    byte[] bytes = text.getBytes(Charsets.UTF_16BE);
+    Base16.upperCase().encode(bytes, buf);
     buf.append('>');
     return buf.toString();
   }
