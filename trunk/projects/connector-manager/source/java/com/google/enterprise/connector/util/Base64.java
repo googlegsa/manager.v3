@@ -35,6 +35,10 @@ package com.google.enterprise.connector.util;
  *
  * @since 2.8
  */
+/*
+ * TODO(jlacey): Replace with Guava's BaseEncoding when we upgrade to r14?
+ * Need to be careful about the performance of Base64FilterInputStream.
+ */
 public class Base64 {
   /** The equals sign (=) as a byte. */
   private final static byte EQUALS_SIGN = (byte) '=';
