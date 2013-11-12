@@ -2066,6 +2066,226 @@ public class DocPusherTest extends TestCase {
         resultXML);
   }
 
+  /**
+   * Test Doc with crawl-immediately unspecified.
+   */
+  public void testCrawlImmediatelyUnspecified() throws Exception {
+    String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
+        + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
+        + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
+        + "}\r\n" + "";
+
+    String resultXML = feedJsonEvent(json1);
+
+    assertStringNotContains("crawl-immediately=\"true\"",
+        resultXML);
+    // The GSA treats attribute as false if not present in the feed.
+    // We prefer to not specify it if the value is false (explicitly or
+    // implicitly) to minimize risk in a patch
+    // TODO(Max): change this to explicit in the trunk
+    assertStringNotContains("crawl-immediately=\"false\"",
+        resultXML);
+    assertStringNotContains("crawl-immediately=",
+        resultXML);
+    assertStringNotContains("meta name=\""
+        + SpiConstants.PROPNAME_CRAWL_IMMEDIATELY + "\"", resultXML);
+    assertStringNotContains(SpiConstants.PROPNAME_CRAWL_IMMEDIATELY, resultXML);
+  }
+
+  /**
+   * Test Doc with crawl-immediately specified false.
+   */
+  public void testCrawlImmediatelyExplicitFalse() throws Exception {
+    String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
+        + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
+        + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
+        + ",\"google:crawl-immediately\":\"false\""
+        + "}\r\n" + "";
+    String resultXML = feedJsonEvent(json1);
+
+    assertStringNotContains("crawl-immediately=\"true\"",
+        resultXML);
+    assertStringNotContains("crawl-immediately=\"false\"",
+        resultXML);
+    assertStringNotContains("crawl-immediately=",
+        resultXML);
+    assertStringNotContains("meta name=\""
+        + SpiConstants.PROPNAME_CRAWL_IMMEDIATELY + "\"", resultXML);
+    assertStringNotContains(SpiConstants.PROPNAME_CRAWL_IMMEDIATELY, resultXML);
+  }
+
+  /**
+   * Test Doc with crawl-immediately specified true.
+   */
+  public void tesCrawlImmediatelyExplicitTrue() throws Exception {
+    String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
+        + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
+        + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
+        + ",\"google:crawl-immediately\":\"true\""
+        + "}\r\n" + "";
+    String resultXML = feedJsonEvent(json1);
+
+    assertStringContains("crawl-immediately=\"true\"",
+        resultXML);
+    assertStringNotContains("crawl-immediately=\"false\"",
+        resultXML);
+    assertStringNotContains("meta name=\""
+        + SpiConstants.PROPNAME_CRAWL_IMMEDIATELY + "\"", resultXML);
+    assertStringNotContains(SpiConstants.PROPNAME_CRAWL_IMMEDIATELY, resultXML);
+  }
+
+  /**
+   * Test Doc with crawl-immediately specified with illegal value.
+   */
+  public void testCrawlImmediatelyIllegalValue() throws Exception {
+    String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
+        + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
+        + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
+        + ",\"google:crawl-immediately\":\"xyzzy\""
+        + "}\r\n" + "";
+    String resultXML = feedJsonEvent(json1);
+
+    // should be silently treated as true
+    assertStringContains("crawl-immediately=\"true\"",
+        resultXML);
+    assertStringNotContains("crawl-immediately=\"false\"",
+        resultXML);
+    assertStringNotContains("meta name=\""
+        + SpiConstants.PROPNAME_CRAWL_IMMEDIATELY + "\"", resultXML);
+    assertStringNotContains(SpiConstants.PROPNAME_CRAWL_IMMEDIATELY, resultXML);
+  }
+
+  /**
+   * Test Doc with crawl-immediately specified with empty value.
+   */
+  public void testCrawlImmediatelyEmptyValue() throws Exception {
+    String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
+        + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
+        + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
+        + ",\"google:crawl-immediately\":\"\""
+        + "}\r\n" + "";
+    String resultXML = feedJsonEvent(json1);
+
+    // should be silently treated as true
+    assertStringContains("crawl-immediately=\"true\"",
+        resultXML);
+    assertStringNotContains("crawl-immediately=\"false\"",
+        resultXML);
+    assertStringNotContains("meta name=\""
+        + SpiConstants.PROPNAME_CRAWL_IMMEDIATELY + "\"", resultXML);
+    assertStringNotContains(SpiConstants.PROPNAME_CRAWL_IMMEDIATELY, resultXML);
+  }
+  
+  /**
+   * Test Doc with crawl-once unspecified.
+   */
+  public void testCrawlOnceUnspecified() throws Exception {
+    String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
+        + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
+        + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
+        + "}\r\n" + "";
+
+    String resultXML = feedJsonEvent(json1);
+
+    assertStringNotContains("crawl-once=\"true\"",
+        resultXML);
+    // The GSA treats attribute as false if not present in the feed.
+    // We prefer to not specify it if the value is false (explicitly or
+    // implicitly) to minimize risk in a patch
+    // TODO(Max): change this to explicit in the trunk
+    assertStringNotContains("crawl-once=\"false\"",
+        resultXML);
+    assertStringNotContains("crawl-once=",
+        resultXML);
+    assertStringNotContains("meta name=\""
+        + SpiConstants.PROPNAME_CRAWL_ONCE + "\"", resultXML);
+    assertStringNotContains(SpiConstants.PROPNAME_CRAWL_ONCE, resultXML);
+  }
+
+  /**
+   * Test Doc with crawl-once specified false.
+   */
+  public void testCrawlOnceExplicitFalse() throws Exception {
+    String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
+        + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
+        + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
+        + ",\"google:crawl-once\":\"false\""
+        + "}\r\n" + "";
+    String resultXML = feedJsonEvent(json1);
+
+    assertStringNotContains("crawl-once=\"true\"",
+        resultXML);
+    assertStringNotContains("crawl-once=\"false\"",
+        resultXML);
+    assertStringNotContains("crawl-once=",
+        resultXML);
+    assertStringNotContains("meta name=\""
+        + SpiConstants.PROPNAME_CRAWL_ONCE + "\"", resultXML);
+    assertStringNotContains(SpiConstants.PROPNAME_CRAWL_ONCE, resultXML);
+  }
+
+  /**
+   * Test Doc with crawl-once specified true.
+   */
+  public void tesCrawlOnceExplicitTrue() throws Exception {
+    String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
+        + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
+        + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
+        + ",\"google:crawl-once\":\"true\""
+        + "}\r\n" + "";
+    String resultXML = feedJsonEvent(json1);
+
+    assertStringContains("crawl-once=\"true\"",
+        resultXML);
+    assertStringNotContains("crawl-once=\"false\"",
+        resultXML);
+    assertStringNotContains("meta name=\""
+        + SpiConstants.PROPNAME_CRAWL_ONCE+ "\"", resultXML);
+    assertStringNotContains(SpiConstants.PROPNAME_CRAWL_ONCE, resultXML);
+  }
+
+  /**
+   * Test Doc with crawl-once specified with illegal value.
+   */
+  public void testCrawlOnceIllegalValue() throws Exception {
+    String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
+        + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
+        + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
+        + ",\"google:crawl-once\":\"xyzzy\""
+        + "}\r\n" + "";
+    String resultXML = feedJsonEvent(json1);
+
+    // should be silently treated as true
+    assertStringContains("crawl-once=\"true\"",
+        resultXML);
+    assertStringNotContains("crawl-once=\"false\"",
+        resultXML);
+    assertStringNotContains("meta name=\""
+        + SpiConstants.PROPNAME_CRAWL_ONCE + "\"", resultXML);
+    assertStringNotContains(SpiConstants.PROPNAME_CRAWL_ONCE, resultXML);
+  }
+
+  /**
+   * Test Doc with crawl-once specified with empty value.
+   */
+  public void testCrawlOnceEmptyValue() throws Exception {
+    String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
+        + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
+        + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
+        + ",\"google:crawl-once\":\"\""
+        + "}\r\n" + "";
+    String resultXML = feedJsonEvent(json1);
+
+    // should be silently treated as true
+    assertStringContains("crawl-once=\"true\"",
+        resultXML);
+    assertStringNotContains("crawl-once=\"false\"",
+        resultXML);
+    assertStringNotContains("meta name=\""
+        + SpiConstants.PROPNAME_CRAWL_ONCE + "\"", resultXML);
+    assertStringNotContains(SpiConstants.PROPNAME_CRAWL_ONCE, resultXML);
+  }
+
   /** Test Add filter can override the default httpbasic. */
   public void testAuthmethodWithDocfilter() throws Exception {
     String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""

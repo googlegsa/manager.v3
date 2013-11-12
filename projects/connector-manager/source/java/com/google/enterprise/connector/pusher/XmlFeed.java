@@ -129,6 +129,8 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
       SpiConstants.PROPNAME_CONTENTURL,
       SpiConstants.PROPNAME_CONTENT_ENCODING,
       SpiConstants.PROPNAME_CONTENT_LENGTH,
+      SpiConstants.PROPNAME_CRAWL_IMMEDIATELY,
+      SpiConstants.PROPNAME_CRAWL_ONCE,
       SpiConstants.PROPNAME_DOCID,
       SpiConstants.PROPNAME_DOCUMENTTYPE,
       SpiConstants.PROPNAME_FEEDTYPE,
@@ -156,6 +158,8 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
   private static final String XML_DISPLAY_URL = "displayurl";
   private static final String XML_MIMETYPE = "mimetype";
   private static final String XML_LAST_MODIFIED = "last-modified";
+  private static final String XML_CRAWL_IMMEDIATELY = "crawl-immediately";
+  private static final String XML_CRAWL_ONCE = "crawl-once";
   private static final String XML_LOCK = "lock";
   private static final String XML_AUTHMETHOD = "authmethod";
   private static final String XML_PAGERANK = "pagerank";
@@ -460,6 +464,20 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
     boolean lock = DocUtils.getOptionalBoolean(document, SpiConstants.PROPNAME_LOCK, false);
     if (lock) {
       XmlUtils.xmlAppendAttr(XML_LOCK, Value.getBooleanValue(true).toString(), prefix);
+    }
+
+    boolean crawlImmediately = DocUtils.getOptionalBoolean(
+        document, SpiConstants.PROPNAME_CRAWL_IMMEDIATELY, false);
+    if (crawlImmediately) {
+      XmlUtils.xmlAppendAttr(XML_CRAWL_IMMEDIATELY,
+          Value.getBooleanValue(true).toString(), prefix);
+    }
+
+    boolean crawlOnce = DocUtils.getOptionalBoolean(
+        document, SpiConstants.PROPNAME_CRAWL_ONCE, false);
+    if (crawlOnce) {
+      XmlUtils.xmlAppendAttr(
+          XML_CRAWL_ONCE, Value.getBooleanValue(true).toString(), prefix);
     }
 
     // Do not validate the values, just send them in the feed.
