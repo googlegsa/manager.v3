@@ -17,6 +17,7 @@ package com.google.enterprise.connector.spi;
 import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.spiimpl.BinaryValue;
+import com.google.enterprise.connector.spiimpl.BooleanValue;
 import com.google.enterprise.connector.util.InputStreamFactory;
 
 import junit.framework.Assert;
@@ -303,5 +304,48 @@ public class ValueTest extends TestCase {
     InputStream is = ((BinaryValue) value).getInputStream();
     assertNotNull(is);
     assertEquals(CONTENTS, StringUtils.streamToStringAndThrow(is));
+  }
+
+  /** Asserts that the Value represents a boolean of the expected value. */
+  private void assertValueEquals(boolean expected, Value value) {
+    assertEquals(value.toString(), BooleanValue.class, value.getClass());
+    assertEquals(value.toString(),
+        expected, ((BooleanValue) value).toBoolean());
+  }
+
+  public void testBooleanValue_f() {
+    assertValueEquals(false, Value.getBooleanValue("f"));
+  }
+
+  public void testBooleanValue_false() {
+    assertValueEquals(false, Value.getBooleanValue("false"));
+  }
+
+  public void testBooleanValue_FaLsE() {
+    assertValueEquals(false, Value.getBooleanValue("FaLsE"));
+  }
+
+  public void testBooleanValue_t() {
+    assertValueEquals(true, Value.getBooleanValue("t"));
+  }
+
+  public void testBooleanValue_true() {
+    assertValueEquals(true, Value.getBooleanValue("true"));
+  }
+
+  public void testBooleanValue_TRUE() {
+    assertValueEquals(true, Value.getBooleanValue("TRUE"));
+  }
+
+  public void testBooleanValue_helloworld() {
+    assertValueEquals(true, Value.getBooleanValue("hello, world"));
+  }
+
+  public void testBooleanValue_empty() {
+    assertValueEquals(true, Value.getBooleanValue(""));
+  }
+
+  public void testBooleanValue_null() {
+    assertValueEquals(true, Value.getBooleanValue(null));
   }
 }
