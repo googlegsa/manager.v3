@@ -86,7 +86,7 @@ public class DiffingConnectorTraversalManager implements TraversalManager,
     }
   }
 
-  /* @Override */
+  @Override
   public synchronized void setBatchHint(int batchHint) {
     if (isActive()) {
       snapshotRepositoryMonitorManager.getCheckpointAndChangeQueue()
@@ -95,7 +95,7 @@ public class DiffingConnectorTraversalManager implements TraversalManager,
   }
 
   /** Start document crawling and piping as if from beginning. */
-  /* @Override */
+  @Override
   public synchronized DocumentList startTraversal() throws RepositoryException {
     if (isActive()) {
       // Entirely reset connector's state.
@@ -109,7 +109,7 @@ public class DiffingConnectorTraversalManager implements TraversalManager,
     }
   }
 
-  /* @Override */
+  @Override
   public synchronized DocumentList resumeTraversal(String checkpoint)
       throws RepositoryException {
     /* Exhaustive list of method's use:
@@ -134,7 +134,7 @@ public class DiffingConnectorTraversalManager implements TraversalManager,
     }
   }
 
-  /* @Override */
+  @Override
   public synchronized void setTraversalContext(
       TraversalContext traversalContext) {
     if (isActive()) {
@@ -142,7 +142,7 @@ public class DiffingConnectorTraversalManager implements TraversalManager,
     }
   }
 
-  /* @Override */
+  @Override
   public synchronized void setTraversalSchedule(TraversalSchedule
       traversalSchedule) {
     snapshotRepositoryMonitorManager.setTraversalSchedule(traversalSchedule);
@@ -176,7 +176,7 @@ public class DiffingConnectorTraversalManager implements TraversalManager,
      * @throws RepositoryException if {@link DiffingConnectorTraversalManager#isActive()}
      *         returns false.
      */
-    /* @Override */
+    @Override
     public String checkpoint() throws RepositoryException {
       synchronized (DiffingConnectorTraversalManager.this) {
         if (isActive()) {
@@ -192,7 +192,7 @@ public class DiffingConnectorTraversalManager implements TraversalManager,
      * @throws RepositoryException if {@link DiffingConnectorTraversalManager#isActive()}
      *         returns false.
      */
-    /* @Override */
+    @Override
     public Document nextDocument() throws RepositoryException {
       synchronized (DiffingConnectorTraversalManager.this) {
         if (isActive()) {

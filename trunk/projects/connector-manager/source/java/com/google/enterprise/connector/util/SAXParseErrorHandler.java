@@ -32,17 +32,17 @@ public class SAXParseErrorHandler implements ErrorHandler {
   public SAXParseErrorHandler() {
   }
 
-  /* @Override */
+  @Override
   public void error(SAXParseException exception) {
     LOG.log(Level.INFO, "Error", exception);
   }
 
-  /* @Override */
+  @Override
   public void fatalError(SAXParseException exception) {
     LOG.log(Level.INFO, "FatalError", exception);
   }
 
-  /* @Override */
+  @Override
   public void warning(SAXParseException exception) {
     LOG.log(Level.INFO, "Warning", exception);
   }

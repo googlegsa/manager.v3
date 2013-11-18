@@ -86,7 +86,7 @@ class ConnectorInstanceFactory implements ConnectorFactory {
    *
    * @see com.google.enterprise.connector.spi.ConnectorFactory#makeConnector(Map)
    */
-  /* @Override */
+  @Override
   public Connector makeConnector(Map<String, String> config)
       throws RepositoryException {
     try {

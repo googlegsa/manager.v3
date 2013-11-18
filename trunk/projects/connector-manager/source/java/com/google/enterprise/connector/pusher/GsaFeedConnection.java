@@ -196,7 +196,7 @@ public class GsaFeedConnection implements FeedConnection {
     builder.append(CRLF);
   }
 
-  /* @Override */
+  @Override
   public String sendData(FeedData feedData)
       throws FeedException {
     try {
@@ -321,7 +321,7 @@ public class GsaFeedConnection implements FeedConnection {
     return buf.toString();
   }
 
-  /* @Override */
+  @Override
   public synchronized String getContentEncodings() {
     if (contentEncodings == null) {
       String dtd = getFeedDtd();
@@ -341,13 +341,13 @@ public class GsaFeedConnection implements FeedConnection {
     return contentEncodings;
   }
 
-  /* @Override */
+  @Override
   public synchronized boolean supportsInheritedAcls() {
     String dtd = getFeedDtd();
     return (dtd == null) ? false : dtd.contains("<!ELEMENT acl ");
   }
 
-  /* @Override */
+  @Override
   public synchronized boolean isBacklogged() {
     if (lastBacklogCheck != Long.MAX_VALUE) {
       long now = clock.getTimeMillis();

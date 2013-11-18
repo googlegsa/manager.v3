@@ -100,7 +100,7 @@ public class ProductionManager implements Manager {
     this.feedConnection = feedConnection;
   }
 
-  /* @Override */
+  @Override
   public AuthenticationResponse authenticate(String connectorName,
       AuthenticationIdentity identity) {
     try {
@@ -135,7 +135,7 @@ public class ProductionManager implements Manager {
     return new AuthenticationResponse(false, null);
   }
 
-  /* @Override */
+  @Override
   public Collection<AuthorizationResponse> authorizeDocids(String connectorName,
       List<String> docidList, AuthenticationIdentity identity) {
     try {
@@ -179,7 +179,7 @@ public class ProductionManager implements Manager {
     return null;
   }
 
-  /* @Override */
+  @Override
   public InputStream getDocumentContent(String connectorName, String docid)
       throws ConnectorNotFoundException, InstantiatorException,
              RepositoryException {
@@ -210,7 +210,7 @@ public class ProductionManager implements Manager {
             null);
   }
 
-  /* @Override */
+  @Override
   public Document getDocumentMetaData(String connectorName, String docid)
       throws ConnectorNotFoundException, InstantiatorException,
              RepositoryException {
@@ -259,7 +259,7 @@ public class ProductionManager implements Manager {
     return metaDoc;
   }
 
-  /* @Override */
+  @Override
   public ConfigureResponse getConfigForm(String connectorTypeName,
       String language)
       throws ConnectorTypeNotFoundException, InstantiatorException {
@@ -285,7 +285,7 @@ public class ProductionManager implements Manager {
     return response;
   }
 
-  /* @Override */
+  @Override
   public ConfigureResponse getConfigFormForConnector(String connectorName,
       String language)
       throws ConnectorNotFoundException, InstantiatorException {
@@ -300,7 +300,7 @@ public class ProductionManager implements Manager {
     return response;
   }
 
-  /* @Override */
+  @Override
   public ConnectorStatus getConnectorStatus(String connectorName)
       throws ConnectorNotFoundException {
     String connectorTypeName = instantiator.getConnectorTypeName(connectorName);
@@ -320,7 +320,7 @@ public class ProductionManager implements Manager {
         Schedule.toString(schedule), globalNamespace, localNamespace);
   }
 
-  /* @Override */
+  @Override
   public List<ConnectorStatus> getConnectorStatuses() {
     List<ConnectorStatus> result = new ArrayList<ConnectorStatus>();
     for (String connectorName : instantiator.getConnectorNames()) {
@@ -334,18 +334,18 @@ public class ProductionManager implements Manager {
     return result;
   }
 
-  /* @Override */
+  @Override
   public Set<String> getConnectorTypeNames() {
     return instantiator.getConnectorTypeNames();
   }
 
-  /* @Override */
+  @Override
   public ConnectorType getConnectorType(String typeName)
       throws ConnectorTypeNotFoundException {
     return instantiator.getConnectorType(typeName);
   }
 
-  /* @Override */
+  @Override
   public ConfigureResponse setConnectorConfiguration(String connectorName,
       Configuration configuration, String language, boolean update)
       throws ConnectorNotFoundException, PersistentStoreException,
@@ -354,12 +354,12 @@ public class ProductionManager implements Manager {
         I18NUtil.getLocaleFromStandardLocaleString(language), update);
   }
 
-  /* @Override */
+  @Override
   public Properties getConnectorManagerConfig() {
     return Context.getInstance().getConnectorManagerConfig();
   }
 
-  /* @Override */
+  @Override
   public void setConnectorManagerConfig(String feederGateProtocol,
       String feederGateHost, int feederGatePort, int feederGateSecurePort,
       String connectorManagerUrl) throws PersistentStoreException {
@@ -372,31 +372,31 @@ public class ProductionManager implements Manager {
     }
   }
 
-  /* @Override */
+  @Override
   public void setSchedule(String connectorName, String schedule)
       throws ConnectorNotFoundException, PersistentStoreException {
     instantiator.setConnectorSchedule(connectorName, Schedule.of(schedule));
   }
 
-  /* @Override */
+  @Override
   public void removeConnector(String connectorName)
       throws InstantiatorException {
     instantiator.removeConnector(connectorName);
   }
 
-  /* @Override */
+  @Override
   public void restartConnectorTraversal(String connectorName)
       throws ConnectorNotFoundException, InstantiatorException {
     instantiator.restartConnectorTraversal(connectorName);
   }
 
-  /* @Override */
+  @Override
   public Configuration getConnectorConfiguration(String connectorName)
       throws ConnectorNotFoundException {
     return instantiator.getConnectorConfiguration(connectorName);
   }
 
-  /* @Override */
+  @Override
   public boolean isLocked() {
     return Context.getInstance().getIsManagerLocked();
   }

@@ -127,12 +127,12 @@ public class MockPersistentStore implements PersistentStore {
     storeMap.remove(new StoreKey(context, property));
   }
 
-  /* @Override */
+  @Override
   public boolean isDisabled() {
     return false;
   }
 
-  /* @Override */
+  @Override
   public ImmutableMap<StoreContext, ConnectorStamps> getInventory() {
     ImmutableMap.Builder<StoreContext, ConnectorStamps> builder;
     if (sortInventory) {
@@ -153,49 +153,49 @@ public class MockPersistentStore implements PersistentStore {
     return builder.build();
   }
 
-  /* @Override */
+  @Override
   public String getConnectorState(StoreContext context) {
     return (String) getObject(context, CHECKPOINT);
   }
 
-  /* @Override */
+  @Override
   public void storeConnectorState(StoreContext context,
       String connectorState) {
     storeObject(context, CHECKPOINT, connectorState);
   }
 
-  /* @Override */
+  @Override
   public void removeConnectorState(StoreContext context) {
     removeObject(context, CHECKPOINT);
   }
 
-  /* @Override */
+  @Override
   public Configuration getConnectorConfiguration(StoreContext context) {
     return (Configuration) getObject(context, CONFIGURATION);
   }
 
-  /* @Override */
+  @Override
   public void storeConnectorConfiguration(StoreContext context,
       Configuration config) {
     storeObject(context, CONFIGURATION, config);
   }
 
-  /* @Override */
+  @Override
   public void removeConnectorConfiguration(StoreContext context) {
     removeObject(context, CONFIGURATION);
   }
 
-  /* @Override */
+  @Override
   public Schedule getConnectorSchedule(StoreContext context) {
     return (Schedule) getObject(context, SCHEDULE);
   }
 
-  /* @Override */
+  @Override
   public void storeConnectorSchedule(StoreContext context, Schedule schedule) {
     storeObject(context, SCHEDULE, schedule);
   }
 
-  /* @Override */
+  @Override
   public void removeConnectorSchedule(StoreContext context) {
     removeObject(context, SCHEDULE);
   }

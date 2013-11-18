@@ -401,7 +401,7 @@ public class SetConnectorConfigHandlerTest extends TestCase {
       configurations = new HashMap<String, Configuration>();
     }
 
-    /* @Override */
+    @Override
     public ConfigureResponse setConnectorConfiguration(String connectorName,
         Configuration configuration, String language, boolean update)
         throws ConnectorNotFoundException, ConnectorExistsException,
@@ -418,7 +418,7 @@ public class SetConnectorConfigHandlerTest extends TestCase {
       return response;
     }
 
-    /* @Override */
+    @Override
     public Configuration getConnectorConfiguration(String connectorName)
         throws ConnectorNotFoundException {
       Configuration config = configurations.get(connectorName);

@@ -690,12 +690,12 @@ public class GetConnectorLogs extends HttpServlet {
           (formatter == null || (formatter.toUpperCase().indexOf("XML") >= 0));
     }
 
-    //@Override
+    @Override
     public File[] listLogs() {
       return getLogDirectory().listFiles(new JavaUtilLogFilenameFilter(pattern));
     }
 
-    //@Override
+    @Override
     public File getLogDirectory() {
       if (logDirectory != null) {
         return logDirectory;
@@ -740,7 +740,7 @@ public class GetConnectorLogs extends HttpServlet {
       return logDirectory;
     }
 
-    //@Override
+    @Override
     public File getLogFile(String logName) {
       // The caller may specify simply the log generation number
       // (the value of %g for the specific file).  If so, build
@@ -768,7 +768,7 @@ public class GetConnectorLogs extends HttpServlet {
       return new File(getLogDirectory(), logName);
     }
 
-    //@Override
+    @Override
     public String getArchiveName() {
       // Only take the filename part of the path.
       String fhPattern = baseName(pattern);
@@ -808,7 +808,7 @@ public class GetConnectorLogs extends HttpServlet {
       return buf.toString();
     }
 
-    //@Override
+    @Override
     public boolean isXmlFormat() {
       return this.isXMLFormat;
     }
@@ -909,17 +909,17 @@ public class GetConnectorLogs extends HttpServlet {
           (formatter == null || (formatter.toUpperCase().indexOf("XML") >= 0));
     }
 
-    //@Override
+    @Override
     public File[] listLogs() {
       return getLogDirectory().listFiles(new JuliLogFilenameFilter());
     }
 
-    //@Override
+    @Override
     public File getLogDirectory() {
       return logDirectory;
     }
 
-    //@Override
+    @Override
     public File getLogFile(String logName) {
       // The caller may specify simply the log date id.
       // If so, build a logName from that.
@@ -942,7 +942,7 @@ public class GetConnectorLogs extends HttpServlet {
       return new File(getLogDirectory(), logName);
     }
 
-    //@Override
+    @Override
     public String getArchiveName() {
       StringBuilder buf = new StringBuilder(logPrefix);
 
@@ -963,7 +963,7 @@ public class GetConnectorLogs extends HttpServlet {
       return buf.toString();
     }
 
-    //@Override
+    @Override
     public boolean isXmlFormat() {
       return this.isXMLFormat;
     }
@@ -1054,12 +1054,12 @@ public class GetConnectorLogs extends HttpServlet {
       }
     }
 
-    //@Override
+    @Override
     public File[] listLogs() {
       return new File[] { new File(teedFeedFile) };
     }
 
-    //@Override
+    @Override
     public File getLogDirectory() {
       File parent = (new File(teedFeedFile)).getParentFile();
       if (parent != null) {
@@ -1070,17 +1070,17 @@ public class GetConnectorLogs extends HttpServlet {
       }
     }
 
-    //@Override
+    @Override
     public File getLogFile(String logName) {
       return new File(teedFeedFile);
     }
 
-    //@Override
+    @Override
     public String getArchiveName() {
       return new File(teedFeedFile).getName() + ".zip";
     }
 
-    //@Override
+    @Override
     public boolean isXmlFormat() {
       // Even though the teedFeedFile is XML format, it is malformed -
       // especially when byte-served.

@@ -32,7 +32,7 @@ public class HybridPersistentStore implements PersistentStore {
    this.stateStore = stateStore;
  }
 
-  /* @Override */
+  @Override
   public boolean isDisabled() {
     return (configurationStore.isDisabled() &&
             scheduleStore.isDisabled() &&
@@ -40,7 +40,7 @@ public class HybridPersistentStore implements PersistentStore {
   }
 
 
-  /* @Override */
+  @Override
   public ImmutableMap<StoreContext, ConnectorStamps> getInventory() {
     ImmutableMap<StoreContext, ConnectorStamps> scheduleInventory =
         scheduleStore.getInventory();
@@ -82,49 +82,49 @@ public class HybridPersistentStore implements PersistentStore {
     return builder.build();
   }
 
-  /* @Override */
+  @Override
   public String getConnectorState(StoreContext context) {
     return stateStore.getConnectorState(context);
   }
 
-  /* @Override */
+  @Override
   public void storeConnectorState(StoreContext context,
       String connectorState) {
     stateStore.storeConnectorState(context, connectorState);
   }
 
-  /* @Override */
+  @Override
   public void removeConnectorState(StoreContext context) {
     stateStore.removeConnectorState(context);
   }
 
-  /* @Override */
+  @Override
   public Configuration getConnectorConfiguration(StoreContext context) {
     return configurationStore.getConnectorConfiguration(context);
   }
 
-  /* @Override */
+  @Override
   public void storeConnectorConfiguration(StoreContext context,
       Configuration config) {
     configurationStore.storeConnectorConfiguration(context, config);
   }
 
-  /* @Override */
+  @Override
   public void removeConnectorConfiguration(StoreContext context) {
     configurationStore.removeConnectorConfiguration(context);
   }
 
-  /* @Override */
+  @Override
   public Schedule getConnectorSchedule(StoreContext context) {
     return scheduleStore.getConnectorSchedule(context);
   }
 
-  /* @Override */
+  @Override
   public void storeConnectorSchedule(StoreContext context, Schedule schedule) {
     scheduleStore.storeConnectorSchedule(context, schedule);
   }
 
-  /* @Override */
+  @Override
   public void removeConnectorSchedule(StoreContext context) {
     scheduleStore.removeConnectorSchedule(context);
   }

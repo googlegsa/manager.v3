@@ -272,17 +272,17 @@ public class LogLevel extends HttpServlet {
     private final String LOGGER_NAME = ""; // root logger
     Context context = Context.getInstance();
 
-    /* @Override */
+    @Override
     public String getName() {
       return "Connector";
     }
 
-    /* @Override */
+    @Override
     public Logger getLogger() {
       return Logger.getLogger(LOGGER_NAME);
     }
 
-    /* @Override */
+    @Override
     public void persistLevel(Level level) throws ConnectorManagerException {
       File confFile = new File(new File(context.getCommonDirPath(), "classes"),
                                "logging.properties");
@@ -339,18 +339,18 @@ public class LogLevel extends HttpServlet {
   private static class FeedLogLevelHandler implements LogLevelHandler {
     Context context = Context.getInstance();
 
-    /* @Override */
+    @Override
     public String getName() {
       return "Feed";
     }
 
-    /* @Override */
+    @Override
     public Logger getLogger() {
       return (Logger) context.getApplicationContext()
           .getBean("FeedWrapperLogger", Logger.class);
     }
 
-    /* @Override */
+    @Override
     public void persistLevel(Level level) {
       try {
         Properties props = context.getConnectorManagerProperties();
