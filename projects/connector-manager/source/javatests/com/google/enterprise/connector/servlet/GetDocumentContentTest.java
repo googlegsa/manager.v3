@@ -57,6 +57,14 @@ public class GetDocumentContentTest extends TestCase {
   private static final Logger LOGGER =
       Logger.getLogger(GetDocumentContentTest.class.getName());
 
+  protected void setUp() {
+    // A non-null contentUrlPrefix.
+    Context.getInstance().setContentUrlPrefix("http://goo/");
+
+    // We're comparing date strings here, so we need a fixed time zone.
+    Value.setFeedTimeZone("GMT-08:00");
+  }
+
   /** Test basic servlet function against a MockManager. */
   public void testGetDocumentContentMockManager() throws Exception {
     Manager manager = MockManager.getInstance();
@@ -180,16 +188,29 @@ public class GetDocumentContentTest extends TestCase {
   private String connectorName = MockInstantiator.TRAVERSER_NAME1;
   private String docid = "docid";
 
-  private Manager getProductionManager() throws Exception {
+  private MockInstantiator getMockInstantiator() throws Exception {
     MockInstantiator instantiator =
         new MockInstantiator(new ThreadPool(5, new SystemClock()));
     instantiator.setupTestTraversers();
     instantiator.addConnector(connectorName,
         new MockConnector(null, null, null, new MockRetriever(), null));
+    return instantiator;
+  }
+
+  private Manager getProductionManager() throws Exception {
+    MockInstantiator instantiator = getMockInstantiator();
     ProductionManager manager = new ProductionManager();
     manager.setInstantiator(instantiator);
     manager.setFeedConnection(new MockFeedConnection());
     return manager;
+  }
+
+  private void patchRealProductionManager() throws Exception {
+    MockInstantiator instantiator = getMockInstantiator();
+    assertTrue(Context.getInstance().getManager() instanceof ProductionManager);
+    ProductionManager manager =
+        (ProductionManager) (Context.getInstance().getManager());
+    manager.setInstantiator(instantiator);
   }
 
   /** Test ProductionManager getDocumentContent. */
@@ -373,18 +394,6 @@ public class GetDocumentContentTest extends TestCase {
     assertNotNull(metaData);
     contentType = GetDocumentContent.handleGetContentType(metaData);
     assertEquals(SpiConstants.DEFAULT_MIMETYPE, contentType);
-  }
-
-  private void patchRealProductionManager() throws Exception {
-    MockInstantiator instantiator =
-        new MockInstantiator(new ThreadPool(5, new SystemClock()));
-    instantiator.setupTestTraversers();
-    instantiator.addConnector(connectorName,
-        new MockConnector(null, null, null, new MockRetriever(), null));
-    assertTrue(Context.getInstance().getManager() instanceof ProductionManager);
-    ProductionManager manager =
-        (ProductionManager) (Context.getInstance().getManager());
-    manager.setInstantiator(instantiator);
   }
 
   /** Test ProductionManager getDocumentContent should deny SecMgr. */
@@ -621,11 +630,14 @@ public class GetDocumentContentTest extends TestCase {
     patchRealProductionManager();
     MockHttpServletRequest req = createMockRequest(connectorName, docid);
     MockHttpServletResponse res = getDocumentContent(req, docid);
-    String expected = "google%3Adisplayurl=http%3A%2F%2Fwww.comtesturl.com%2F"
-        + "test%3Fdocid,google%3Alastmodified=1969-12-31,google%3Amimetype=text"
-        + "%2Fplain";
+    String expected = "google%3Aaclinheritfrom"
+        + "=http%3A%2F%2Fgoo%2F%3FConnectorName%3Dfoo%26docid%3Ddocid%26ExtrACL"
+        + ",google%3Adisplayurl"
+        + "=http%3A%2F%2Fwww.comtesturl.com%2Ftest%3Fdocid"
+        + ",google%3Alastmodified=1969-12-31"
+        + ",google%3Amimetype=text%2Fplain";
     String extMetadata = (String) res.getHeader("X-Gsa-External-Metadata");
     assertNotNull(extMetadata);
-    assertEquals(expected, extMetadata);
+    assertEquals(extMetadata.replace(",", ", "), expected, extMetadata);
   }
 }

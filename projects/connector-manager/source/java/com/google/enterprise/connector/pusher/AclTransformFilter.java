@@ -43,7 +43,7 @@ public class AclTransformFilter implements DocumentFilterFactory {
    */
   /* TODO(jlacey): This probably needs to change if we support DENY on 6.14. */
   private final FeedConnection feedConnection;
-  
+
   private final UrlConstructor urlConstructor;
   private final AclInheritFromDocidFilter aclInheritFromDocidFilter;
   private final AclDocumentFilter aclDocumentFilter;
@@ -77,7 +77,8 @@ public class AclTransformFilter implements DocumentFilterFactory {
     if (feedConnection.supportsInheritedAcls()) {
       // If connector supplies ACLINHERITFROM_DOCID instead of ACLINHERITFROM
       // property, add a filter that builds an ACLINHERTITFROM property from
-      // ACLINHERITFROM_DOCID and ACLINHERITFROM_FEEDTYPE.
+      // ACLINHERITFROM_DOCID, ACLINHERITFROM_FEEDTYPE and
+      // ACLINHERITFROM_FRAGMENT.
       if (Strings.isNullOrEmpty(DocUtils.getOptionalString(source,
           SpiConstants.PROPNAME_ACLINHERITFROM))
           && !Strings.isNullOrEmpty(DocUtils.getOptionalString(source,
