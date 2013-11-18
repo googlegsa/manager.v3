@@ -115,18 +115,18 @@ public class LocalDatabaseTest extends TestCase {
 
   // Fake ConnectorType.
   private class LocalDatabaseConnectorType implements ConnectorType {
-    /* @Override */
+    @Override
     public ConfigureResponse getConfigForm(Locale locale) {
       throw new UnsupportedOperationException("Fake ConnectorType");
     }
 
-    /* @Override */
+    @Override
     public ConfigureResponse getPopulatedConfigForm(
         Map<String, String> configMap, Locale locale) {
       throw new UnsupportedOperationException("Fake ConnectorType");
     }
 
-    /* @Override */
+    @Override
     public ConfigureResponse validateConfig(Map<String, String> configData,
         Locale locale, ConnectorFactory connectorFactory) {
       throw new UnsupportedOperationException("Fake ConnectorType");

@@ -52,7 +52,7 @@ public class FileStore implements PersistentStore {
     this.typeMap = typeMap;
   }
 
-  /* @Override */
+  @Override
   public boolean isDisabled() {
     return (typeMap == null);
   }
@@ -63,7 +63,7 @@ public class FileStore implements PersistentStore {
    * @return an immutable map containing the version stamps; may be
    * empty but not {@code null}
    */
-  /* @Override */
+  @Override
   public ImmutableMap<StoreContext, ConnectorStamps> getInventory() {
     Preconditions.checkNotNull(typeMap, "FileStore requires a TypeMap");
     ImmutableMap.Builder<StoreContext, ConnectorStamps> mapBuilder =
@@ -138,7 +138,7 @@ public class FileStore implements PersistentStore {
     }
 
     /** {@inheritDoc} */
-    /* @Override */
+    @Override
     public int compareTo(Stamp other) {
       return (int) (version - ((FileStamp) other).version);
     }
@@ -155,7 +155,7 @@ public class FileStore implements PersistentStore {
    * @param context a StoreContext
    * @return connectorSchedule schedule of the corresponding connector.
    */
-  /* @Override */
+  @Override
   public Schedule getConnectorSchedule(StoreContext context) {
     testStoreContext(context);
     return Schedule.of(
@@ -168,7 +168,7 @@ public class FileStore implements PersistentStore {
    * @param context a StoreContext
    * @param connectorSchedule schedule of the corresponding connector.
    */
-  /* @Override */
+  @Override
   public void storeConnectorSchedule(StoreContext context,
                                      Schedule connectorSchedule) {
     if (connectorSchedule == null) {
@@ -186,7 +186,7 @@ public class FileStore implements PersistentStore {
    *
    * @param context a StoreContext
    */
-  /* @Override */
+  @Override
   public void removeConnectorSchedule(StoreContext context) {
     testStoreContext(context);
     deleteStoreFile(context, getStoreFileName(context, schedName));
@@ -198,7 +198,7 @@ public class FileStore implements PersistentStore {
    * @param context a StoreContext
    * @return the state, or null if no state has been stored for this connector.
    */
-  /* @Override */
+  @Override
   public String getConnectorState(StoreContext context) {
     testStoreContext(context);
     return readStoreFile(context, getStoreFileName(context, stateName));
@@ -210,7 +210,7 @@ public class FileStore implements PersistentStore {
    * @param context a StoreContext
    * @param connectorState state of the corresponding connector
    */
-  /* @Override */
+  @Override
   public void storeConnectorState(StoreContext context, String connectorState) {
     if (connectorState == null) {
       // We can't write null state to file, so just remove it.
@@ -227,7 +227,7 @@ public class FileStore implements PersistentStore {
    *
    * @param context a StoreContext
    */
-  /* @Override */
+  @Override
   public void removeConnectorState(StoreContext context) {
     testStoreContext(context);
     deleteStoreFile(context, getStoreFileName(context, stateName));
@@ -241,7 +241,7 @@ public class FileStore implements PersistentStore {
    * @return the configuration Properties, or null if no configuration
    *         has been stored for this connector.
    */
-  /* @Override */
+  @Override
   public Configuration getConnectorConfiguration(StoreContext context) {
     testStoreContext(context);
     File propFile = getStoreFile(context, getStoreFileName(context, configName));
@@ -269,7 +269,7 @@ public class FileStore implements PersistentStore {
    * @param context a StoreContext
    * @param configuration Properties to store
    */
-  /* @Override */
+  @Override
   public void storeConnectorConfiguration(StoreContext context,
       Configuration configuration) {
     if (configuration == null) {
@@ -306,7 +306,7 @@ public class FileStore implements PersistentStore {
    *
    * @param context a StoreContext
    */
-  /* @Override */
+  @Override
   public void removeConnectorConfiguration(StoreContext context) {
     testStoreContext(context);
     deleteStoreFile(context, getStoreFileName(context, configName));

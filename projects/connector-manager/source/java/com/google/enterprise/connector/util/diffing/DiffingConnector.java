@@ -57,7 +57,7 @@ public class DiffingConnector implements Connector,
    * Shut down this connector: interrupt the background threads and wait for
    * them to terminate.
    */
-  /* @Override */
+  @Override
   public void shutdown() {
     LOG.info("Shutting down connector");
     deactivate();
@@ -68,7 +68,7 @@ public class DiffingConnector implements Connector,
    * Delete the snapshot and persistent storage for this connector.
    * Invokes shutdown() first.
    */
-  /* @Override */
+  @Override
   public void delete() {
     LOG.info("Deleting connector");
     shutdown();
@@ -76,17 +76,17 @@ public class DiffingConnector implements Connector,
     LOG.info("Connector deletion complete");
   }
 
-  /* @Override */
+  @Override
   public Session login() {
     return this;
   }
 
-  /* @Override */
+  @Override
   public AuthenticationManager getAuthenticationManager() {
     return null;
   }
 
-  /* @Override */
+  @Override
   public AuthorizationManager getAuthorizationManager() {
     return authorizationManager;
   }
@@ -108,7 +108,7 @@ public class DiffingConnector implements Connector,
    *
    * @return a Diffing Connector {@link TraversalManager}
    */
-  /* @Override */
+  @Override
   public synchronized TraversalManager getTraversalManager() {
     if (traversalManager != null) {
       deactivate();

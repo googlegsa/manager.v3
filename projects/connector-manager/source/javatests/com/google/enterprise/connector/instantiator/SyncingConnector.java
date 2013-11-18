@@ -101,7 +101,7 @@ public class SyncingConnector implements Connector, ConnectorShutdownAware {
   public SyncingConnector() {
   }
 
-  /* @Override */
+  @Override
   public Session login() {
     tracker.incrementLoginCount();
     return new SyncingConnectorSession();

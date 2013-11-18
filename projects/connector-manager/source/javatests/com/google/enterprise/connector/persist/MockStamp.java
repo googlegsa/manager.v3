@@ -26,7 +26,7 @@ class MockStamp implements Stamp {
   }
 
   /** {@inheritDoc} */
-  /* @Override */
+  @Override
   public int compareTo(Stamp other) {
     return (int) (version - ((MockStamp) other).version);
   }

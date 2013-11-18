@@ -102,7 +102,7 @@ public class LocalDatabaseImpl implements LocalDatabase {
    *
    * @return a {@link DataSource}
    */
-  /* @Override */
+  @Override
   public DataSource getDataSource() {
     DataSource dataSource = database.getDataSource();
     LOGGER.finest("Got DataSource: " + dataSource);
@@ -119,7 +119,7 @@ public class LocalDatabaseImpl implements LocalDatabase {
    *
    * @return a {@link DatabaseResourceBundle}
    */
-  /* @Override */
+  @Override
   public DatabaseResourceBundle getDatabaseResourceBundle() {
     LOGGER.finest("Fetching DatabaseResourceBundle: baseName = "
                   + resourceBundleBaseName + ", extension = "
@@ -135,7 +135,7 @@ public class LocalDatabaseImpl implements LocalDatabase {
    * @return a non-null {@link DatabaseType} enum identifying the database
    *         implementation.
    */
-  /* @Override */
+  @Override
   public DatabaseType getDatabaseType() {
     LOGGER.finest("Fetching DatabaseType: " + database.getDatabaseType());
     return database.getDatabaseType();
@@ -159,7 +159,7 @@ public class LocalDatabaseImpl implements LocalDatabase {
    *
    * @return a non-{@code null} String description of the database
    */
-  /* @Override */
+  @Override
   public String getDescription() {
     LOGGER.finest("Fetching Database description: " + database.getProductName()
                   + " (" + database.getDescription() + ")");

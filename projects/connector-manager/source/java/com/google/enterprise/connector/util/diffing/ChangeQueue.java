@@ -92,7 +92,7 @@ public class ChangeQueue implements ChangeSource {
     private static final Logger LOG = Logger.getLogger(
         DefaultCrawlActivityLogger.class.getName());
 
-    /* @Override */
+    @Override
     public void scanBeginAt(Timestamp time) {
       logCrawlStatistics();
       resetLogStatistics();
@@ -100,7 +100,7 @@ public class ChangeQueue implements ChangeSource {
       LOG.info("Scan started at : " + time);
     }
 
-    /* @Override */
+    @Override
     public void scanEndAt(Timestamp time) {
       endTime = time;
       LOG.info("Scan completed at : " + endTime);
@@ -139,19 +139,19 @@ public class ChangeQueue implements ChangeSource {
       }
     }
 
-    /* @Override */
+    @Override
     public void gotChangedDocument(String documentId) {
       ++changedDocumentCount;
       LOG.fine("Changed document found during the crawl; document id is : " + documentId);
     }
 
-    /* @Override */
+    @Override
     public void gotDeletedDocument(String documentId) {
       ++deletedDocumentCount;
       LOG.fine("Deleted document found during the crawl; document id is : " + documentId);
     }
 
-    /* @Override */
+    @Override
     public void gotNewDocument(String documentId) {
       ++newDocumentCount;
       LOG.fine("New document found during the crawl; document id is : " + documentId);
@@ -170,7 +170,7 @@ public class ChangeQueue implements ChangeSource {
       activityLogger.scanBeginAt(new Timestamp(System.currentTimeMillis()));
     }
 
-    /* @Override */
+    @Override
     public void changedDocument(DocumentHandle dh, MonitorCheckpoint mcp)
         throws InterruptedException {
       ++changeCount;
@@ -178,7 +178,7 @@ public class ChangeQueue implements ChangeSource {
       activityLogger.gotChangedDocument(dh.getDocumentId());
     }
 
-     /* @Override */
+     @Override
     public void deletedDocument(DocumentHandle dh, MonitorCheckpoint mcp)
         throws InterruptedException {
       ++changeCount;
@@ -186,7 +186,7 @@ public class ChangeQueue implements ChangeSource {
       activityLogger.gotDeletedDocument(dh.getDocumentId());
     }
 
-    /* @Override */
+    @Override
     public void newDocument(DocumentHandle dh, MonitorCheckpoint mcp)
         throws InterruptedException {
       ++changeCount;
@@ -194,7 +194,7 @@ public class ChangeQueue implements ChangeSource {
       activityLogger.gotNewDocument(dh.getDocumentId());
     }
 
-    /* @Override */
+    @Override
     public void passComplete(MonitorCheckpoint mcp) throws InterruptedException {
       activityLogger.scanEndAt(new Timestamp(System.currentTimeMillis()));
       if (introduceDelayAfterEveryScan || changeCount == 0) {
@@ -206,7 +206,7 @@ public class ChangeQueue implements ChangeSource {
       return changeCount > 0;
     }
 
-    /* @Override */
+    @Override
     public void passPausing(int sleepms) throws InterruptedException {
       Thread.sleep(sleepms);
     }

@@ -90,7 +90,7 @@ public class AclDocumentFilter implements DocumentFilterFactory {
       this.source = source;
     }
 
-    /* @Override */
+    @Override
     public Property findProperty(String name) throws RepositoryException {
       if (SpiConstants.PROPNAME_DOCID.equals(name)) {
         return source.findProperty(name);
@@ -99,7 +99,7 @@ public class AclDocumentFilter implements DocumentFilterFactory {
           + "is unsupported on this GSA");
     }
 
-    /* @Override */
+    @Override
     public Set<String> getPropertyNames() throws RepositoryException {
       throw new SkippedDocumentException("Document was an ACL document, which "
           + "is unsupported on this GSA");

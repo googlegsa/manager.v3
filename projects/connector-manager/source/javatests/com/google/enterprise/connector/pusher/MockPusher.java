@@ -41,7 +41,7 @@ public class MockPusher implements Pusher, PusherFactory {
     printStream = ps;
   }
 
-  /* @Override */
+  @Override
   public Pusher newPusher(String connectorName) {
     totalDocs = 0;
     if (status == PusherStatus.DISABLED) {
@@ -50,7 +50,7 @@ public class MockPusher implements Pusher, PusherFactory {
     return this;
   }
 
-  /* @Override */
+  @Override
   public PusherStatus take(Document document)
       throws PushException, FeedException, RepositoryException {
     // Mirror behaviour of DocPusher.
@@ -85,13 +85,13 @@ public class MockPusher implements Pusher, PusherFactory {
     return status;
   }
 
-  /* @Override */
+  @Override
   public void flush() throws PushException, FeedException, RepositoryException {
     printStream.flush();
     status = PusherStatus.DISABLED;
   }
 
-  /* @Override */
+  @Override
   public void cancel() {
     totalDocs = 0;
     status = PusherStatus.DISABLED;
@@ -100,7 +100,7 @@ public class MockPusher implements Pusher, PusherFactory {
   /**
    * @return the current PusherStatus
    */
-  /* @Override */
+  @Override
   public PusherStatus getPusherStatus()
       throws PushException, FeedException, RepositoryException {
     return status;

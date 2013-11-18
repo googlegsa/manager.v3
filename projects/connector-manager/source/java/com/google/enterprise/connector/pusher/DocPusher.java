@@ -302,7 +302,7 @@ public class DocPusher implements Pusher {
    * @throws FeedException if transient Feed problem
    * @throws RepositoryException
    */
-  /* @Override */
+  @Override
   public void flush() throws PushException, FeedException, RepositoryException {
     checkSubmissions();
     if (!feedSender.isShutdown()) {
@@ -327,7 +327,7 @@ public class DocPusher implements Pusher {
   /**
    * Cancels any feed being constructed.  Any accumulated feed data is lost.
    */
-  /* @Override */
+  @Override
   public void cancel() {
     // Discard any feed under construction.
     if (xmlFeed != null) {
@@ -341,7 +341,7 @@ public class DocPusher implements Pusher {
     feedSender.shutdownNow();
   }
 
-  /* @Override */
+  @Override
   public PusherStatus getPusherStatus()
       throws PushException, FeedException, RepositoryException {
     // Is Pusher shutdown?

@@ -95,7 +95,7 @@ public class XmlParseUtil {
    * entities using a selection of locally stored DTDs.
    */
   public static class LocalEntityResolver implements EntityResolver {
-    /* @Override */
+    @Override
     public InputSource resolveEntity(String publicId, String systemId) {
       String filename = LOCAL_DTDS.get(systemId);
       if (filename == null) {
@@ -124,17 +124,17 @@ public class XmlParseUtil {
    * throws the {@link SAXParseException}.
    */
   public static class ThrowingErrorHandler implements ErrorHandler {
-    /* @Override */
+    @Override
     public void error(SAXParseException exception) throws SAXException {
       throw exception;
     }
 
-    /* @Override */
+    @Override
     public void fatalError(SAXParseException exception) throws SAXException {
       throw exception;
     }
 
-    /* @Override */
+    @Override
     public void warning(SAXParseException exception) throws SAXException {
       throw exception;
     }

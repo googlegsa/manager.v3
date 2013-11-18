@@ -258,7 +258,7 @@ public class Schedule implements TraversalSchedule {
     this.connectorName = connectorName;
   }
 
-  /* @Override */
+  @Override
   public int getTraversalRate() {
     return getLoad();
   }
@@ -275,7 +275,7 @@ public class Schedule implements TraversalSchedule {
     return retryDelayMillis;
   }
 
-  /* @Override */
+  @Override
   public int getRetryDelay() {
     return retryDelayMillis / 1000;
   }
@@ -284,7 +284,7 @@ public class Schedule implements TraversalSchedule {
     this.retryDelayMillis = retryDelayMillis;
   }
 
-  /* @Override */
+  @Override
   public boolean isDisabled() {
     return disabled;
   }
@@ -310,7 +310,7 @@ public class Schedule implements TraversalSchedule {
    * Return {@code true} if the current time is within a scheduled traversal
    * interval; {@code false} otherwise.
    */
-  /* @Override */
+  @Override
   public boolean inScheduledInterval() {
     return nextScheduledInterval(Calendar.getInstance()) == 0;
   }
@@ -321,7 +321,7 @@ public class Schedule implements TraversalSchedule {
    * traversal interval.  A returned value of -1 indicates there is no next
    * traversal interval.
    */
-  /* @Override */
+  @Override
   public int nextScheduledInterval() {
     return nextScheduledInterval(Calendar.getInstance());
   }
@@ -344,7 +344,7 @@ public class Schedule implements TraversalSchedule {
    * Return {@code true} if this Schedule would allow traversals to run
    * at this time; {@code false} otherwise.
    */
-  /* @Override */
+  @Override
   public boolean shouldRun() {
     return !isDisabled() && inScheduledInterval();
   }
@@ -393,7 +393,7 @@ public class Schedule implements TraversalSchedule {
       this.endTime = endTime;
     }
 
-    /* @Override */
+    @Override
     public int compareTo(ScheduleTimeInterval o) {
       if (o == null) {
         return 1;

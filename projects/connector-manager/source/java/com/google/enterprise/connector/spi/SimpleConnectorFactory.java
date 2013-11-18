@@ -42,7 +42,7 @@ public class SimpleConnectorFactory implements ConnectorFactory {
    * @throws RepositoryException if a subclass overrides this method and throws
    *         RepositoryException.
    */
-  /* @Override */
+  @Override
   public Connector makeConnector(Map<String, String> config)
       throws RepositoryException {
     return instance;

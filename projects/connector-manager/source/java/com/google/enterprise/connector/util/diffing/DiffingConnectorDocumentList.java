@@ -47,12 +47,12 @@ public class DiffingConnectorDocumentList implements DocumentList {
     this.checkpoint = checkpoint;
   }
 
-  /* @Override */
+  @Override
   public String checkpoint() {
     return checkpoint;
   }
 
-  /* @Override */
+  @Override
   public Document nextDocument() throws RepositoryException {
     if (checkpointAndChangeIterator.hasNext()) {
       CheckpointAndChange checkpointAndChange =

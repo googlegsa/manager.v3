@@ -87,17 +87,17 @@ public class ConnectorFields {
     }
 
     /* Fulfills Field interface except for getSnippet which requires value. */
-    /* @Override */
+    @Override
     public String getName() {
       return name;
     }
 
-    /* @Override */
+    @Override
     public boolean isMandatory() {
       return mandatory;
     }
 
-    /* @Override */
+    @Override
     public String getLabel(ResourceBundle bundle) {
       return bundle.getString(getName());
     }

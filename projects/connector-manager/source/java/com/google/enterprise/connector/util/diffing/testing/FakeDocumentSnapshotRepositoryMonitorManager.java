@@ -68,23 +68,23 @@ public class FakeDocumentSnapshotRepositoryMonitorManager
     }
   }
 
-  /* @Override */
+  @Override
   public void clean() {
     cleanCount.incrementAndGet();
   }
 
-  /* @Override */
+  @Override
   public int getThreadCount() {
     return 0;
   }
 
-  /* @Override */
+  @Override
   public void start(String checkpoint) {
     startCount.incrementAndGet();
     isRunning = true;
   }
 
-  /* @Override */
+  @Override
   public synchronized void stop() {
     stopCount.incrementAndGet();
     isRunning = false;
@@ -119,24 +119,24 @@ public class FakeDocumentSnapshotRepositoryMonitorManager
     return guaranteeCount.get();
   }
 
-  /* @Override */
+  @Override
   public CheckpointAndChangeQueue getCheckpointAndChangeQueue() {
     Preconditions.checkState((checkpointAndChangeQueue != null),
         "getCheckpointAndChangeQueue not supported with null ChangeSource");
     return checkpointAndChangeQueue;
   }
 
-  /* @Override */
+  @Override
   public synchronized boolean isRunning() {
     return isRunning;
   }
 
-  /* @Override */
+  @Override
   public void acceptGuarantees(Map<String, MonitorCheckpoint> guarantees) {
     guaranteeCount.incrementAndGet();
   }
 
-  /* @Override */
+  @Override
   public void setTraversalSchedule(TraversalSchedule traversalSchedule) {
   }
 }

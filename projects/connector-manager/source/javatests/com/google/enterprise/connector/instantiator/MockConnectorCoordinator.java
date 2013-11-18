@@ -102,7 +102,7 @@ class MockConnectorCoordinator implements ConnectorCoordinator {
     return interfaces.getAuthorizationManager();
   }
 
-  /* @Override */
+  @Override
   public Retriever getRetriever() throws InstantiatorException {
     return interfaces.getRetriever();
   }

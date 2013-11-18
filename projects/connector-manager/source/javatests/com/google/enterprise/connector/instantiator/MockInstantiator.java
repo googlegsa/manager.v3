@@ -111,7 +111,7 @@ public class MockInstantiator implements Instantiator {
     this.traversalContext = new SimpleTraversalContext();
   }
 
-  /* @Override */
+  @Override
   public synchronized void shutdown(boolean interrupt, long timeoutMillis) {
     for (Map.Entry<String, ConnectorCoordinator> e : connectorMap.entrySet()) {
       e.getValue().shutdown();
@@ -195,7 +195,7 @@ public class MockInstantiator implements Instantiator {
     connectorMap.put(connectorName, cc);
   }
 
-  /* @Override */
+  @Override
   public ConnectorType getConnectorType(String connectorTypeName) {
     return new MockConnectorType(connectorTypeName);
   }
@@ -210,24 +210,24 @@ public class MockInstantiator implements Instantiator {
                                        getStoreContext(connectorName));
   }
 
-  /* @Override */
+  @Override
   public void restartConnectorTraversal(String connectorName)
       throws ConnectorNotFoundException {
     ConnectorCoordinator cc = connectorMap.get(connectorName);
     cc.restartConnectorTraversal();
   }
 
-  /* @Override */
+  @Override
   public String getConnectorInstancePrototype(String connectorTypeName) {
     return "";
   }
 
-  /* @Override */
+  @Override
   public Set<String> getConnectorTypeNames() {
     return connectorMap.keySet();
   }
 
-  /* @Override */
+  @Override
   public void removeConnector(String connectorName) {
     ConnectorCoordinator cc = connectorMap.remove(connectorName);
     if (cc != null) {
@@ -238,7 +238,7 @@ public class MockInstantiator implements Instantiator {
   /**
    * Returns an {@Link AuthenticationManager}.
    */
-  /* @Override */
+  @Override
   public AuthenticationManager getAuthenticationManager(String connectorName)
       throws ConnectorNotFoundException, InstantiatorException {
     return getConnectorCoordinator(connectorName).getAuthenticationManager();
@@ -247,26 +247,26 @@ public class MockInstantiator implements Instantiator {
   /**
    * Returns an {@Link AuthorizationManager}.
    */
-  /* @Override */
+  @Override
   public AuthorizationManager getAuthorizationManager(String connectorName)
       throws ConnectorNotFoundException, InstantiatorException {
     return getConnectorCoordinator(connectorName).getAuthorizationManager();
   }
 
   /** Returns a {@Link Retreiver}. */
-  /* @Override */
+  @Override
   public Retriever getRetriever(String connectorName)
       throws ConnectorNotFoundException, InstantiatorException {
     return getConnectorCoordinator(connectorName).getRetriever();
   }
 
-  /* @Override */
+  @Override
   public void startBatch(String connectorName)
       throws ConnectorNotFoundException {
     getConnectorCoordinator(connectorName).startBatch();
   }
 
-  /* @Override */
+  @Override
   public ConfigureResponse getConfigFormForConnector(String connectorName,
       String connectorTypeName, Locale locale) throws ConnectorNotFoundException
   {
@@ -276,18 +276,18 @@ public class MockInstantiator implements Instantiator {
                                 locale);
   }
 
-  /* @Override */
+  @Override
   public Set<String> getConnectorNames() {
     return connectorMap.keySet();
   }
 
-  /* @Override */
+  @Override
   public String getConnectorTypeName(String connectorName)
       throws ConnectorNotFoundException {
     return getConnectorCoordinator(connectorName).getConnectorTypeName();
   }
 
-  /* @Override */
+  @Override
   public ConfigureResponse setConnectorConfiguration(String connectorName,
       Configuration configuration, Locale locale, boolean update)
       throws ConnectorNotFoundException, ConnectorExistsException,
@@ -302,19 +302,19 @@ public class MockInstantiator implements Instantiator {
     return cc.setConnectorConfiguration(null, configuration, locale, update);
   }
 
-  /* @Override */
+  @Override
   public Configuration getConnectorConfiguration(String connectorName)
       throws ConnectorNotFoundException {
     return getConnectorCoordinator(connectorName).getConnectorConfiguration();
   }
 
-  /* @Override */
+  @Override
   public void setConnectorSchedule(String connectorName,
       Schedule schedule) throws ConnectorNotFoundException {
     getConnectorCoordinator(connectorName).setConnectorSchedule(schedule);
   }
 
-  /* @Override */
+  @Override
   public Schedule getConnectorSchedule(String connectorName)
       throws ConnectorNotFoundException {
     return getConnectorCoordinator(connectorName).getConnectorSchedule();

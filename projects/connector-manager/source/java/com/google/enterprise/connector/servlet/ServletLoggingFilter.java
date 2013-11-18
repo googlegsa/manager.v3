@@ -35,7 +35,7 @@ public class ServletLoggingFilter implements Filter {
   private static final Logger LOGGER =
       Logger.getLogger(ServletLoggingFilter.class.getName());
 
-  /* @Override */
+  @Override
   public void init(FilterConfig filterConfig) {
     NDC.push("Init");
     try {
@@ -45,7 +45,7 @@ public class ServletLoggingFilter implements Filter {
     }
   }
 
-  /* @Override */
+  @Override
   public void destroy() {
     NDC.push("Shutdown");
     try {
@@ -56,7 +56,7 @@ public class ServletLoggingFilter implements Filter {
   }
 
   /** Log the ServletRequest path, pathInfo, and query info. */
-  /* @Override */
+  @Override
   public void doFilter(ServletRequest request, ServletResponse response,
       FilterChain chain) throws IOException, ServletException {
     NDC.push("Servlet");
