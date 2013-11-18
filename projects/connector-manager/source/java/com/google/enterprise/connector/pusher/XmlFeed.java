@@ -37,7 +37,6 @@ import com.google.enterprise.connector.spi.SpiConstants.AclScope;
 import com.google.enterprise.connector.spi.SpiConstants.ContentEncoding;
 import com.google.enterprise.connector.spi.SpiConstants.DocumentType;
 import com.google.enterprise.connector.spi.SpiConstants.FeedType;
-import com.google.enterprise.connector.spi.SpiConstants.RoleType;
 import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.spi.XmlUtils;
 import com.google.enterprise.connector.spi.SpiConstants.ActionType;
@@ -70,22 +69,21 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
 
   @SuppressWarnings("deprecation")
   private static class RoleSuffixes {
-    private static final String PEEKER_SUFFIX = "=" + RoleType.PEEKER;
-    private static final String READER_SUFFIX = "=" + RoleType.READER;
-    private static final String WRITER_SUFFIX = "=" + RoleType.WRITER;
-    private static final String OWNER_SUFFIX = "=" + RoleType.OWNER;
+    private static final List<String> BELOW_READER = ImmutableList.of(
+        "=" + SpiConstants.RoleType.PEEKER);
 
-    private static final List<String> BELOW_READER =
-        ImmutableList.of(PEEKER_SUFFIX);
+    private static final List<String> READER_OR_BELOW = ImmutableList.of(
+        "=" + SpiConstants.RoleType.PEEKER,
+        "=" + SpiConstants.RoleType.READER);
 
-    private static final List<String> READER_OR_BELOW =
-        ImmutableList.of(PEEKER_SUFFIX, READER_SUFFIX);
+    private static final List<String> READER_OR_ABOVE = ImmutableList.of(
+        "=" + SpiConstants.RoleType.READER,
+        "=" + SpiConstants.RoleType.WRITER,
+        "=" + SpiConstants.RoleType.OWNER);
 
-    private static final List<String> READER_OR_ABOVE =
-        ImmutableList.of(READER_SUFFIX, WRITER_SUFFIX, OWNER_SUFFIX);
-
-    private static final List<String> ABOVE_READER =
-        ImmutableList.of(WRITER_SUFFIX, OWNER_SUFFIX);
+    private static final List<String> ABOVE_READER = ImmutableList.of(
+        "=" + SpiConstants.RoleType.WRITER,
+        "=" + SpiConstants.RoleType.OWNER);
   }
 
   private final String dataSource;
