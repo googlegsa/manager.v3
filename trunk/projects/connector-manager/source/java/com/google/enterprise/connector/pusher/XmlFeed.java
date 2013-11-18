@@ -47,7 +47,7 @@ import com.google.enterprise.connector.traversal.FileSizeLimitInfo;
 import com.google.enterprise.connector.util.UniqueIdGenerator;
 import com.google.enterprise.connector.util.UuidGenerator;
 import com.google.enterprise.connector.util.Base64FilterInputStream;
-import com.google.enterprise.connector.util.filter.AbstractDocumentFilter;
+import com.google.enterprise.connector.util.filter.DocumentFilterFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -105,12 +105,11 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
 
   private static UniqueIdGenerator uniqueIdGenerator = new UuidGenerator();
 
-  private static StripAclDocumentFilter stripAclDocumentFilter =
+  private static DocumentFilterFactory stripAclDocumentFilter =
       new StripAclDocumentFilter();
-  private static ExtractedAclDocumentFilter extractedAclDocumentFilter =
+  private static DocumentFilterFactory extractedAclDocumentFilter =
       new ExtractedAclDocumentFilter();
-  private static InheritFromExtractedAclDocumentFilter
-      inheritFromExtractedAclDocumentFilter =
+  private static DocumentFilterFactory inheritFromExtractedAclDocumentFilter =
       new InheritFromExtractedAclDocumentFilter();
 
   private boolean isClosed;
@@ -123,6 +122,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
       // opt-out list?
       SpiConstants.PROPNAME_ACLINHERITFROM_DOCID,
       SpiConstants.PROPNAME_ACLINHERITFROM_FEEDTYPE,
+      SpiConstants.PROPNAME_ACLINHERITFROM_FRAGMENT,
       SpiConstants.PROPNAME_ACTION,
       SpiConstants.PROPNAME_AUTHMETHOD,
       SpiConstants.PROPNAME_CONTENT,

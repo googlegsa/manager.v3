@@ -161,6 +161,9 @@ public class DocPusherTest extends TestCase {
     String record = "<record url=\"http://www.sometesturl.com/searchurl\""
         + " mimetype=\"text/plain\""
         + " last-modified=\"Thu, 01 Jan 1970 01:00:00 GMT\">\n"
+        + "<acl>\n"
+        + "<principal scope=\"group\" access=\"permit\">Everyone</principal>\n"
+        + "</acl>\n"
         + "<metadata>\n"
         + "<meta name=\"google:lastmodified\" content=\"1970-01-01\"/>\n"
         + "<meta name=\"google:mimetype\" content=\"text/plain\"/>\n"
@@ -3546,12 +3549,14 @@ public class DocPusherTest extends TestCase {
   public void testAclDumbDown() throws Exception {
     String parentUrl = "http://foo/parent-doc";
     Map<String, Object> props = getTestAclDocumentConfig();
-    props.put(SpiConstants.PROPNAME_ACLINHERITFROM, parentUrl);
+    props.put(SpiConstants.PROPNAME_ACLINHERITFROM_DOCID, "parent-doc");
+    props.put(SpiConstants.PROPNAME_ACLINHERITFROM_FRAGMENT, "elephant");
     props.put(SpiConstants.PROPNAME_FEEDTYPE,
         SpiConstants.FeedType.CONTENT.toString());
     Document document = ConnectorTestUtils.createSimpleDocument(props);
     String resultXML = feedDocument(document, false);
     assertStringNotContains("parent-doc", resultXML);
+    assertStringNotContains(SpiConstants.ACL_PROPNAME_PREFIX, resultXML);
     assertStringContains("httpbasic", resultXML);
   }
 
@@ -3608,6 +3613,7 @@ public class DocPusherTest extends TestCase {
          ExtractedAclDocumentFilter.EXTRACTED_ACL_FRAGMENT) + "\">",
          records[1]);
     assertStringNotContains("<principal ", records[1]);
+    assertStringNotContains("<metadata ", records[1]);
   }
 
   private static class MockIdGenerator implements UniqueIdGenerator {

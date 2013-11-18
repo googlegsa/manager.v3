@@ -27,22 +27,24 @@ import com.google.enterprise.connector.util.filter.AbstractDocumentFilter;
 import java.util.Set;
 
 /**
- * A {@link DocumentFilter} that converts 
- * {@link SpiConstants.PROPNAME_ACLINHERITFROM_FEEDTYPE} and/or
- * {@link SpiConstants.PROPNAME_ACLINHERITFROM_DOCID} properties into a
- * {@link SpiConstants.PROPNAME_ACLINHERITFROM} property by constructing a
- * URL that identifies an inherit-from named resource.
+ * A {@link DocumentFilter} that uses the
+ * {@link SpiConstants.PROPNAME_ACLINHERITFROM_DOCID},
+ * {@link SpiConstants.PROPNAME_ACLINHERITFROM_FEEDTYPE}, and
+ * {@link SpiConstants.PROPNAME_ACLINHERITFROM_FRAGMENT} properties to
+ * construct an {@link SpiConstants.PROPNAME_ACLINHERITFROM} property
+ * value, if one does not already exist.
  */
 public class AclInheritFromDocidFilter extends AbstractDocumentFilter {
   private static Predicate<String> propsPredicate = new Predicate<String>() {
     public boolean apply(String input) {
-      return !(input.equals(SpiConstants.PROPNAME_ACLINHERITFROM_DOCID) ||
-               input.equals(SpiConstants.PROPNAME_ACLINHERITFROM_FEEDTYPE));
+      return !(input.equals(SpiConstants.PROPNAME_ACLINHERITFROM_DOCID)
+          || input.equals(SpiConstants.PROPNAME_ACLINHERITFROM_FEEDTYPE)
+          || input.equals(SpiConstants.PROPNAME_ACLINHERITFROM_FRAGMENT));
     }
   };
 
   private final UrlConstructor urlConstructor;
-  
+
   public AclInheritFromDocidFilter(UrlConstructor urlConstructor) {
     this.urlConstructor = urlConstructor;
   }
