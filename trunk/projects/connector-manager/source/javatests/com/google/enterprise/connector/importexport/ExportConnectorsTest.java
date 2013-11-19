@@ -28,7 +28,6 @@ import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
 
-
 /** Tests for {@link ExportConnectors} */
 public class ExportConnectorsTest extends TestCase {
 

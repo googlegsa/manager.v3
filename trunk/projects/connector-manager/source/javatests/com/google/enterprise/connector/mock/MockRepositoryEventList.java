@@ -15,6 +15,7 @@
 package com.google.enterprise.connector.mock;
 
 import com.google.enterprise.connector.manager.Context;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 

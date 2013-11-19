@@ -20,7 +20,6 @@ import com.google.common.collect.Sets;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.RepositoryException;
-import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.util.filter.AbstractDocumentFilter;
 
 import java.util.Set;

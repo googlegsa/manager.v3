@@ -15,7 +15,6 @@
 package com.google.enterprise.connector.util.diffing;
 
 import com.google.enterprise.connector.spi.TraversalSchedule;
-import com.google.enterprise.connector.util.diffing.DiffingConnectorCheckpoint;
 import com.google.enterprise.connector.util.diffing.DocumentSnapshotRepositoryMonitor;
 
 import junit.framework.TestCase;

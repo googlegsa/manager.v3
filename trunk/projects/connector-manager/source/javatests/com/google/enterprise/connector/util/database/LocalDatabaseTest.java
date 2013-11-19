@@ -19,17 +19,17 @@ import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.ConnectorFactory;
 import com.google.enterprise.connector.spi.ConnectorType;
-import com.google.enterprise.connector.spi.DatabaseResourceBundle;
 import com.google.enterprise.connector.spi.LocalDatabase;
 import com.google.enterprise.connector.spi.SpiConstants.DatabaseType;
+
+import junit.framework.TestCase;
 
 import org.h2.jdbcx.JdbcDataSource;
 
 import java.util.Locale;
 import java.util.Map;
-import javax.sql.DataSource;
 
-import junit.framework.TestCase;
+import javax.sql.DataSource;
 
 public class LocalDatabaseTest extends TestCase {
 

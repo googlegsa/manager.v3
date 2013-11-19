@@ -21,8 +21,6 @@ import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.util.database.JdbcDatabase;
 import com.google.enterprise.connector.util.database.testing.TestJdbcDatabase;
 
-import junit.framework.TestCase;
-
 import java.sql.SQLException;
 import java.util.HashMap;
 

@@ -26,7 +26,6 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.logging.Logger;
 
-
 /**
  * Tests the GetConnectorStatus servlet class
  *

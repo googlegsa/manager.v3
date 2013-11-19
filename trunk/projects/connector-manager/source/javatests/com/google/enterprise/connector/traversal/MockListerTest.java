@@ -17,15 +17,9 @@ package com.google.enterprise.connector.traversal;
 import com.google.enterprise.connector.pusher.DocumentAcceptorImpl;
 import com.google.enterprise.connector.pusher.MockPusher;
 import com.google.enterprise.connector.spi.DocumentAcceptor;
-import com.google.enterprise.connector.spi.DocumentAcceptorException;
-import com.google.enterprise.connector.spi.Lister;
-import com.google.enterprise.connector.spi.RepositoryException;
-import com.google.enterprise.connector.spi.TraversalContext;
-import com.google.enterprise.connector.test.ConnectorTestUtils;
 
 import junit.framework.TestCase;
 
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**

@@ -47,8 +47,8 @@ import com.google.enterprise.connector.traversal.NoopQueryTraverser;
 import com.google.enterprise.connector.traversal.QueryTraverser;
 import com.google.enterprise.connector.traversal.TraversalStateStore;
 import com.google.enterprise.connector.traversal.Traverser;
-import com.google.enterprise.connector.util.filter.DocumentFilterFactory;
 import com.google.enterprise.connector.util.SystemClock;
+import com.google.enterprise.connector.util.filter.DocumentFilterFactory;
 
 import java.util.Collection;
 import java.util.HashMap;

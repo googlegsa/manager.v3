@@ -14,7 +14,6 @@
 
 package com.google.enterprise.connector.spi;
 
-import java.util.Locale;
 import java.util.Map;
 
 /**

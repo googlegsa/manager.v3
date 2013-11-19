@@ -22,7 +22,6 @@ import javax.jcr.NodeIterator;
 import javax.jcr.query.QueryResult;
 import javax.jcr.query.RowIterator;
 
-
 /**
  * MockJcrQueryResult implements the corresponding JCR interface, with these
  * limitations:

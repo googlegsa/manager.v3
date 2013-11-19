@@ -14,11 +14,7 @@
 
 package com.google.enterprise.connector.servlet;
 
-import com.google.common.base.Strings;
-import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.manager.Manager;
-import com.google.enterprise.connector.spi.ConfigureResponse;
-import com.google.enterprise.connector.test.ConnectorTestUtils;
 
 import junit.framework.TestCase;
 
@@ -26,7 +22,6 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
 import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.logging.Logger;
 
 /**

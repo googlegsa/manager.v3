@@ -22,10 +22,10 @@ import com.google.enterprise.connector.instantiator.InstanceInfo.PropertyProcess
 import com.google.enterprise.connector.instantiator.TypeInfo.TypeInfoException;
 import com.google.enterprise.connector.spi.Connector;
 
+import junit.framework.TestCase;
+
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
-
-import junit.framework.TestCase;
 
 import java.io.File;
 import java.io.FileInputStream;

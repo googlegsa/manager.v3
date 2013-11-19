@@ -14,8 +14,6 @@
 
 package com.google.enterprise.connector.util;
 
-import com.google.common.base.Charsets;
-
 import junit.framework.TestCase;
 
 public class Base16Test extends TestCase {
