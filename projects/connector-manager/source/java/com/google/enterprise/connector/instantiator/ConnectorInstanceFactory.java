@@ -16,7 +16,6 @@ package com.google.enterprise.connector.instantiator;
 
 import com.google.common.base.Preconditions;
 import com.google.enterprise.connector.database.ConnectorPersistentStoreFactory;
-import com.google.enterprise.connector.database.FakeDataSource;
 import com.google.enterprise.connector.spi.Connector;
 import com.google.enterprise.connector.spi.ConnectorFactory;
 import com.google.enterprise.connector.spi.ConnectorPersistentStoreAware;

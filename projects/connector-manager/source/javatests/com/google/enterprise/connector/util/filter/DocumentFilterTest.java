@@ -14,8 +14,6 @@
 
 package com.google.enterprise.connector.util.filter;
 
-import junit.framework.TestCase;
-
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
@@ -26,6 +24,8 @@ import com.google.enterprise.connector.spi.SimpleDocument;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.spiimpl.BinaryValue;
+
+import junit.framework.TestCase;
 
 import java.io.InputStream;
 import java.util.HashMap;

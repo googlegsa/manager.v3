@@ -24,9 +24,8 @@ import junit.framework.Assert;
 import junit.framework.TestCase;
 
 import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.io.InputStream;
 import java.text.ParseException;
 import java.util.Calendar;
 import java.util.Date;

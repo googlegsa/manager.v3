@@ -16,9 +16,9 @@ package com.google.enterprise.connector.util.diffing;
 
 import com.google.enterprise.connector.spi.TraversalSchedule;
 
-import java.util.ArrayList;
-
 import junit.framework.TestCase;
+
+import java.util.ArrayList;
 
 /**
  * Tests for {@link DocumentSnapshotRepositoryMonitorManagerImpl}.

@@ -16,15 +16,14 @@ package com.google.enterprise.connector.common;
 
 import com.google.enterprise.connector.test.ConnectorTestUtils;
 
-import junit.framework.Assert;
 import junit.framework.TestCase;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.InputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Map;
 import java.util.Properties;

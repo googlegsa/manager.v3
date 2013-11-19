@@ -14,9 +14,9 @@
 
 package com.google.enterprise.connector.util;
 
-import org.w3c.dom.Element;
-
 import junit.framework.TestCase;
+
+import org.w3c.dom.Element;
 
 /**
  * Unit Test for XmlParseUtil.

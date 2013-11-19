@@ -14,17 +14,12 @@
 
 package com.google.enterprise.connector.util.database;
 
-import com.google.common.collect.ImmutableList;
-
 import junit.framework.TestCase;
 
 import org.h2.jdbcx.JdbcDataSource;
 
 import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.List;
 
 import javax.sql.DataSource;
 

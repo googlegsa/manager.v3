@@ -19,9 +19,9 @@ import com.google.enterprise.connector.spi.DocumentList;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.TraversalContext;
 import com.google.enterprise.connector.spi.TraversalContextAware;
+import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.spi.TraversalSchedule;
 import com.google.enterprise.connector.spi.TraversalScheduleAware;
-import com.google.enterprise.connector.spi.TraversalManager;
 
 import java.io.IOException;
 import java.util.Map;

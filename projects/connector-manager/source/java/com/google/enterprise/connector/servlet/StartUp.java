@@ -20,8 +20,9 @@ import com.google.enterprise.connector.instantiator.EncryptedPropertyPlaceholder
 import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.manager.Context;
 
+import org.springframework.web.context.support.XmlWebApplicationContext;
+
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -29,10 +30,6 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-
-import org.springframework.web.context.support.XmlWebApplicationContext;
 
 /**
  * The main purpose of this servlet is to have its "init" method called when the

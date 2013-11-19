@@ -14,14 +14,9 @@
 
 package com.google.enterprise.connector.util.filter;
 
-import junit.framework.TestCase;
-
 import com.google.enterprise.connector.spi.Document;
-import com.google.enterprise.connector.spi.Property;
-import com.google.enterprise.connector.spi.SimpleDocument;
 import com.google.enterprise.connector.spi.Value;
 
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;

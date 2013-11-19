@@ -16,12 +16,12 @@ package com.google.enterprise.connector.util;
 
 import com.google.enterprise.connector.util.EofFilterInputStream;
 
+import junit.framework.TestCase;
+
 import java.io.ByteArrayInputStream;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-
-import junit.framework.TestCase;
 
 /**
  * Test that EofFilterInputStream protects against the

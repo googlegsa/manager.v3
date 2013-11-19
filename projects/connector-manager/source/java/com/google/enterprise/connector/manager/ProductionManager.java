@@ -14,7 +14,6 @@
 
 package com.google.enterprise.connector.manager;
 
-import com.google.common.collect.Maps;
 import com.google.enterprise.connector.common.AlternateContentFilterInputStream;
 import com.google.enterprise.connector.common.BigEmptyDocumentFilterInputStream;
 import com.google.enterprise.connector.common.I18NUtil;
@@ -51,8 +50,6 @@ import com.google.enterprise.connector.util.filter.DocumentFilterFactory;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;

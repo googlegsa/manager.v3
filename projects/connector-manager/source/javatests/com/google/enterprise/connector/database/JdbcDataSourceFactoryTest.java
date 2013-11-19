@@ -14,14 +14,14 @@
 
 package com.google.enterprise.connector.database;
 
+import junit.framework.TestCase;
+
 import org.h2.jdbcx.JdbcDataSource;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import javax.sql.DataSource;
 
-import junit.framework.Assert;
-import junit.framework.TestCase;
+import javax.sql.DataSource;
 
 /**
  * Tests JdbcDataSourceFactory.

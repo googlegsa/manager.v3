@@ -14,7 +14,6 @@
 
 package com.google.enterprise.connector.pusher;
 
-import com.google.common.base.Preconditions;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.RepositoryException;

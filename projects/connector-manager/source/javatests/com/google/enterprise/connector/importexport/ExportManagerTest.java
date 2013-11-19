@@ -35,7 +35,6 @@ import java.io.StringWriter;
 import java.util.Map;
 import java.util.Properties;
 
-
 /** Tests for {@link ExportManager} */
 public class ExportManagerTest extends TestCase {
 

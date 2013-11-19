@@ -19,9 +19,10 @@ import com.google.common.collect.Sets;
 import com.google.common.io.Files;
 import com.google.enterprise.connector.traversal.MimeTypeMap;
 import com.google.enterprise.connector.traversal.ProductionTraversalContext;
-import com.google.enterprise.connector.util.diffing.testing.FakeTraversalContext;
 
 import eu.medsea.util.EncodingGuesser;
+
+import junit.framework.TestCase;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -29,8 +30,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.Collection;
-
-import junit.framework.TestCase;
 
 /** Tests for MimeTypeDetector.  */
 public class MimeTypeDetectorTest extends TestCase {

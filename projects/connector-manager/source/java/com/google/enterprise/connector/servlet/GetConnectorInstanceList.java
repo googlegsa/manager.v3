@@ -19,8 +19,8 @@ import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.manager.ConnectorStatus;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.manager.Manager;
-import com.google.enterprise.connector.scheduler.Schedule;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
+import com.google.enterprise.connector.scheduler.Schedule;
 import com.google.enterprise.connector.spi.ConnectorType;
 
 import java.io.IOException;

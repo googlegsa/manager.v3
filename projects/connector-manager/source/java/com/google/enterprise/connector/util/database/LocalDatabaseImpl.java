@@ -21,6 +21,7 @@ import com.google.enterprise.connector.spi.LocalDatabase;
 import com.google.enterprise.connector.spi.SpiConstants.DatabaseType;
 
 import java.util.logging.Logger;
+
 import javax.sql.DataSource;
 
 /**

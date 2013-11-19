@@ -14,8 +14,8 @@
 
 package com.google.enterprise.connector.logging;
 
-import java.util.Stack;
 import java.util.EmptyStackException;
+import java.util.Stack;
 
 /**
  * Traditional Nested Diagnostic Context.  The interface is similar

@@ -14,12 +14,10 @@
 
 package com.google.enterprise.connector.pusher;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.RepositoryException;
-import com.google.enterprise.connector.spi.SimpleDocument;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.SpiConstants.FeedType;
 import com.google.enterprise.connector.spi.Value;
@@ -28,9 +26,7 @@ import com.google.enterprise.connector.util.filter.DocumentFilterFactory;
 
 import junit.framework.TestCase;
 
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class AclInheritFromDocidFilterTest extends TestCase {
   private final DocumentFilterFactory objectUnderTest =

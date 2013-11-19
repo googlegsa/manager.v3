@@ -40,7 +40,6 @@ import com.google.enterprise.connector.spi.ConnectorPersistentStoreAware;
 import com.google.enterprise.connector.spi.ConnectorShutdownAware;
 import com.google.enterprise.connector.spi.ConnectorType;
 import com.google.enterprise.connector.spi.Lister;
-import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.Retriever;
 import com.google.enterprise.connector.spi.TraversalContext;
 import com.google.enterprise.connector.spi.TraversalContextAware;

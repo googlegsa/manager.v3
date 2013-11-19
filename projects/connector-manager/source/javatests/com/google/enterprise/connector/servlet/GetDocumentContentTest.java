@@ -16,8 +16,6 @@ package com.google.enterprise.connector.servlet;
 
 import com.google.common.base.Strings;
 import com.google.enterprise.connector.common.StringUtils;
-import com.google.enterprise.connector.instantiator.Instantiator;
-import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.instantiator.MockInstantiator;
 import com.google.enterprise.connector.instantiator.ThreadPool;
 import com.google.enterprise.connector.manager.Context;
@@ -26,7 +24,6 @@ import com.google.enterprise.connector.manager.MockManager;
 import com.google.enterprise.connector.manager.ProductionManager;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.pusher.MockFeedConnection;
-import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.DocumentAccessException;
 import com.google.enterprise.connector.spi.DocumentNotFoundException;
@@ -37,10 +34,10 @@ import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
 import com.google.enterprise.connector.util.SystemClock;
 
+import junit.framework.TestCase;
+
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
-
-import junit.framework.TestCase;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

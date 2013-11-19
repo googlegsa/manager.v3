@@ -17,8 +17,8 @@ package com.google.enterprise.connector.logging;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.logging.LogRecord;
 import java.util.logging.Formatter;
+import java.util.logging.LogRecord;
 
 /**
  * Log message layout pattern for text (non-XML) format messages. It is

@@ -23,7 +23,6 @@ import java.io.PrintWriter;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-
 /**
  * Admin servlet to get the config form to edit with pre-filled data
  * for a given existing connector name and language.

@@ -22,18 +22,13 @@ import com.google.gdata.util.ServiceException;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.security.GeneralSecurityException;
-import java.security.cert.X509Certificate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 
 /**
  * SocialCollectionHandler initializes a social collection, which is a container
