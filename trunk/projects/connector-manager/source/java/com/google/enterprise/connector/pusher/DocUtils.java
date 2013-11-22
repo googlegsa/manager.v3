@@ -28,7 +28,6 @@ import com.google.enterprise.connector.spiimpl.ValueImpl;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -126,12 +125,7 @@ public class DocUtils {
       result = ((BinaryValue) v).getInputStream();
     } else {
       String s = v.toString();
-      byte[] bytes;
-      try {
-        bytes = s.getBytes(XmlFeed.XML_DEFAULT_ENCODING);
-      } catch (UnsupportedEncodingException e) {
-        throw new RepositoryDocumentException("Encoding error." , e);
-      }
+      byte[] bytes = s.getBytes(XmlFeed.XML_DEFAULT_CHARSET);
       result = new ByteArrayInputStream(bytes);
     }
     return result;

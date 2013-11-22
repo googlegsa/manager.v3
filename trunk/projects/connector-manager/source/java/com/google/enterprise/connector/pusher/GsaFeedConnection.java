@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.pusher;
 
+import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
 import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.util.Clock;
@@ -226,12 +227,12 @@ public class GsaFeedConnection implements FeedConnection {
       controlHeader(buf, "feedtype", ServletUtil.MIMETYPE_TEXT_PLAIN);
       buf.append(feedType).append(CRLF);
       controlHeader(buf, "data", ServletUtil.MIMETYPE_XML);
-      prefix = buf.toString().getBytes("UTF-8");
+      prefix = buf.toString().getBytes(Charsets.UTF_8);
 
       // Build suffix.
       buf.setLength(0);
       buf.append(CRLF).append("--").append(BOUNDARY).append("--").append(CRLF);
-      suffix = buf.toString().getBytes("UTF-8");
+      suffix = buf.toString().getBytes(Charsets.UTF_8);
 
       LOGGER.finest("Opening feed connection to " + feedUrl);
       synchronized (this) {

@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.spi;
 
+import com.google.common.base.Charsets;
 import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.spiimpl.BinaryValue;
@@ -257,7 +258,8 @@ public class ValueTest extends TestCase {
   }
 
   private static final String CONTENTS = "Test Content";
-  private static final byte[] CONTENTS_BYTES = StringUtils.getBytes(CONTENTS);
+  private static final byte[] CONTENTS_BYTES =
+      CONTENTS.getBytes(Charsets.UTF_8);
 
   /** Tests BinaryValue constructors - byte array. */
   public void testBinaryValueByteArray() throws Exception {

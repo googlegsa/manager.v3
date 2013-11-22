@@ -15,13 +15,13 @@
 package com.google.enterprise.connector.common;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Charsets;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.io.UnsupportedEncodingException;
 
 public class StringUtils {
 
@@ -97,9 +97,6 @@ public class StringUtils {
   public static String streamToString(InputStream is) {
     try {
       return streamToStringAndThrow(is);
-    } catch (UnsupportedEncodingException e) {
-      // TODO: this is ungraceful - need to plan for recovery
-      throw new RuntimeException("Unsupported Encoding.");
     } catch (IOException e) {
       // TODO: this is ungraceful - need to plan for recovery
       throw new RuntimeException("I/O Problem.");
@@ -138,7 +135,7 @@ public class StringUtils {
       is.close();
     }
 
-    return new String(bytes, 0, offset, "UTF-8");
+    return new String(bytes, 0, offset, Charsets.UTF_8);
   }
 
   /**
@@ -170,18 +167,5 @@ public class StringUtils {
    */
   public static String normalizeNewlines(String input) {
     return input.replaceAll("\r\n", "\n");
-  }
-
-  /**
-   * Performs a String.getBytes("UTF-8") without throwing
-   * UnsupportedEncodingException.
-   */
-  public static byte[] getBytes(String s) {
-    try {
-      return s.getBytes("UTF-8");
-    } catch (UnsupportedEncodingException e) {
-      // Not going to happen with UTF-8.
-      throw new AssertionError(e);
-    }
   }
 }

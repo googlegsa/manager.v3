@@ -25,7 +25,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 
 /**
  * Mock document object for unit tests.
@@ -72,17 +71,11 @@ public class MockRepositoryDocument {
   public InputStream getContentStream() throws FileNotFoundException {
     if (null == inputStream) {
       if (null == contentFile || 0 == contentFile.length()) {
-        try {
-          if (null == content) {
-            return null;
-          }
-          inputStream =
-            new ByteArrayInputStream(
-              content.getBytes(XmlFeed.XML_DEFAULT_ENCODING));
-        } catch (UnsupportedEncodingException e) {
-          // TODO Auto-generated catch block
-          e.printStackTrace();
+        if (null == content) {
+          return null;
         }
+        inputStream = new ByteArrayInputStream(
+            content.getBytes(XmlFeed.XML_DEFAULT_CHARSET));
       } else {
         inputStream = new FileInputStream(contentFile);
       }
