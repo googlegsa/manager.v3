@@ -15,6 +15,7 @@
 package com.google.enterprise.connector.pusher;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -48,6 +49,7 @@ import com.google.enterprise.connector.util.filter.DocumentFilterFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -133,9 +135,9 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
       SpiConstants.PROPNAME_SECURITYTOKEN);
 
   // Strings for XML tags.
-  public static final String XML_DEFAULT_ENCODING = "UTF-8";
+  public static final Charset XML_DEFAULT_CHARSET = Charsets.UTF_8;
   private static final String XML_START = "<?xml version='1.0' encoding='"
-      + XML_DEFAULT_ENCODING + "'?><!DOCTYPE gsafeed PUBLIC"
+      + XML_DEFAULT_CHARSET.name() + "'?><!DOCTYPE gsafeed PUBLIC"
       + " \"-//Google//DTD GSA Feeds//EN\" \"gsafeed.dtd\">";
   private static final String XML_GSAFEED = "gsafeed";
   private static final String XML_HEADER = "header";
@@ -197,7 +199,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
         >= 0) ? ContentEncoding.BASE64COMPRESSED : ContentEncoding.BASE64BINARY;
 
     String prefix = xmlFeedPrefix(dataSource, feedType);
-    write(prefix.getBytes(XML_DEFAULT_ENCODING));
+    write(prefix.getBytes(XML_DEFAULT_CHARSET));
   }
 
   @VisibleForTesting
@@ -332,7 +334,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
     if (!isClosed) {
       isClosed = true;
       String suffix = xmlFeedSuffix();
-      write(suffix.getBytes(XML_DEFAULT_ENCODING));
+      write(suffix.getBytes(XML_DEFAULT_CHARSET));
     }
   }
 
@@ -562,7 +564,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
       XmlUtils.xmlAppendEndTag(XML_CONTENT, suffix);
     }
 
-    write(prefix.toString().getBytes(XML_DEFAULT_ENCODING));
+    write(prefix.toString().getBytes(XML_DEFAULT_CHARSET));
 
     if (contentAllowed) {
       InputStream contentStream = getContentStream(
@@ -575,7 +577,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
     }
 
     XmlUtils.xmlAppendEndTag(XML_RECORD, suffix);
-    write(suffix.toString().getBytes(XML_DEFAULT_ENCODING));
+    write(suffix.toString().getBytes(XML_DEFAULT_CHARSET));
 
     if (feedLogBuilder != null) {
       try {
@@ -631,7 +633,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
     StringBuilder aclBuff = new StringBuilder();
     xmlWrapAclRecord(aclBuff, acl);
 
-    write(aclBuff.toString().getBytes(XML_DEFAULT_ENCODING));
+    write(aclBuff.toString().getBytes(XML_DEFAULT_CHARSET));
 
     if (feedLogBuilder != null) {
       try {

@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.util;
 
+import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 
 import org.w3c.dom.CharacterData;
@@ -156,7 +157,7 @@ public class XmlParseUtil {
 
     System.out.println(formSnippet);
     String html = STRICT_HTML_PREFIX + formSnippet + HTML_SUFFIX;
-    builder.parse(new ByteArrayInputStream(html.getBytes("UTF-8")));
+    builder.parse(new ByteArrayInputStream(html.getBytes(Charsets.UTF_8)));
   }
 
   private static DocumentBuilderFactory factory =
@@ -191,12 +192,7 @@ public class XmlParseUtil {
   }
 
   private static InputStream stringToInputStream(String fileContent) {
-    try {
-      return new ByteArrayInputStream(fileContent.getBytes("UTF-8"));
-    } catch (java.io.UnsupportedEncodingException uee) {
-      LOGGER.log(Level.SEVERE, "Really Unexpected", uee);
-      return null;
-    }
+    return new ByteArrayInputStream(fileContent.getBytes(Charsets.UTF_8));
   }
 
   /**
