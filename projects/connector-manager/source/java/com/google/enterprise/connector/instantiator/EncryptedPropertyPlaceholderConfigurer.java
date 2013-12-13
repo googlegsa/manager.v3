@@ -390,11 +390,6 @@ public class EncryptedPropertyPlaceholderConfigurer extends
   private static RuntimeException logAndThrow(String prefix, String name,
                                               String suffix, Exception e) {
     String msg = prefix + name + ((suffix == null) ? "" : ( ": " + suffix));
-    if (LOGGER.isLoggable(Level.FINEST)) {
-      LOGGER.log(Level.SEVERE, msg, e);
-    } else {
-      LOGGER.severe(msg);
-    }LOGGER.severe(msg);
-    return new RuntimeException(msg);
+    return new RuntimeException(msg, e);
   }
 }
