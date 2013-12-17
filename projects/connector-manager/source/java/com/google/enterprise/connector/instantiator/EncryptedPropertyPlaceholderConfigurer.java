@@ -317,27 +317,27 @@ public class EncryptedPropertyPlaceholderConfigurer extends
       // Encode bytes to base64 to get a string
       return Base64.encode(enc);
     } catch (NoSuchAlgorithmException e) {
-      throw logAndThrow(ENCRYPT_MSG, name,
-                        "provider does not have algorithm", e);
+      throw newRuntimeException(ENCRYPT_MSG, name,
+          "provider does not have algorithm", e);
     } catch (IOException e) {
-      throw logAndThrow(ENCRYPT_MSG, name, "I/O error", e);
+      throw newRuntimeException(ENCRYPT_MSG, name, "I/O error", e);
     } catch (NoSuchPaddingException e) {
-      throw logAndThrow(ENCRYPT_MSG, name, null, e);
+      throw newRuntimeException(ENCRYPT_MSG, name, null, e);
     } catch (InvalidKeyException e) {
-      throw logAndThrow(ENCRYPT_MSG, name, null, e);
+      throw newRuntimeException(ENCRYPT_MSG, name, null, e);
     } catch (UnrecoverableKeyException e) {
-      throw logAndThrow(ENCRYPT_MSG, name,
-                        "key cannot be recovered from keystore", e);
+      throw newRuntimeException(ENCRYPT_MSG, name,
+          "key cannot be recovered from keystore", e);
     } catch (KeyStoreException e) {
-      throw logAndThrow(ENCRYPT_MSG, name, null, e);
+      throw newRuntimeException(ENCRYPT_MSG, name, null, e);
     } catch (CertificateException e) {
-      throw logAndThrow(ENCRYPT_MSG, name, null, e);
+      throw newRuntimeException(ENCRYPT_MSG, name, null, e);
     } catch (IllegalStateException e) {
-      throw logAndThrow(ENCRYPT_MSG, name, null, e);
+      throw newRuntimeException(ENCRYPT_MSG, name, null, e);
     } catch (IllegalBlockSizeException e) {
-      throw logAndThrow(ENCRYPT_MSG, name, null, e);
+      throw newRuntimeException(ENCRYPT_MSG, name, null, e);
     } catch (BadPaddingException e) {
-      throw logAndThrow(ENCRYPT_MSG, name, null, e);
+      throw newRuntimeException(ENCRYPT_MSG, name, null, e);
     }
   }
 
@@ -358,37 +358,37 @@ public class EncryptedPropertyPlaceholderConfigurer extends
       // Decode using utf-8
       return new String(utf8, "UTF8");
     } catch (NoSuchAlgorithmException e) {
-      throw logAndThrow(DECRYPT_MSG, name,
-                        "provider does not have algorithm", e);
+      throw newRuntimeException(DECRYPT_MSG, name,
+          "provider does not have algorithm", e);
     } catch (IOException e) {
-      throw logAndThrow(DECRYPT_MSG, name, "I/O error", e);
+      throw newRuntimeException(DECRYPT_MSG, name, "I/O error", e);
     } catch (KeyStoreException e) {
-      throw logAndThrow(DECRYPT_MSG, name, null, e);
+      throw newRuntimeException(DECRYPT_MSG, name, null, e);
     } catch (CertificateException e) {
-      throw logAndThrow(DECRYPT_MSG, name, null, e);
+      throw newRuntimeException(DECRYPT_MSG, name, null, e);
     } catch (NoSuchPaddingException e) {
-      throw logAndThrow(DECRYPT_MSG, name, null, e);
+      throw newRuntimeException(DECRYPT_MSG, name, null, e);
     } catch (InvalidKeyException e) {
-      throw logAndThrow(DECRYPT_MSG, name, null, e);
+      throw newRuntimeException(DECRYPT_MSG, name, null, e);
     } catch (UnrecoverableKeyException e) {
-      throw logAndThrow(DECRYPT_MSG, name,
-                        "key cannot be recovered from keystore", e);
+      throw newRuntimeException(DECRYPT_MSG, name,
+          "key cannot be recovered from keystore", e);
     } catch (IllegalStateException e) {
-      throw logAndThrow(DECRYPT_MSG, name, null, e);
+      throw newRuntimeException(DECRYPT_MSG, name, null, e);
     } catch (BadPaddingException e) {
-      throw logAndThrow(DECRYPT_MSG, name,
+      throw newRuntimeException(DECRYPT_MSG, name,
           "it might be unencrypted or encrypted with a different algorithm", e);
     } catch (IllegalBlockSizeException e) {
-      throw logAndThrow(DECRYPT_MSG, name,
+      throw newRuntimeException(DECRYPT_MSG, name,
           "it might be unencrypted or encrypted with a different algorithm", e);
     } catch (Base64DecoderException e) {
-      throw logAndThrow(DECRYPT_MSG, name,
-                        "it might not be encrypted at all", e);
+      throw newRuntimeException(DECRYPT_MSG, name,
+          "it might not be encrypted at all", e);
     }
   }
 
-  private static RuntimeException logAndThrow(String prefix, String name,
-                                              String suffix, Exception e) {
+  private static RuntimeException newRuntimeException(String prefix,
+      String name, String suffix, Exception e) {
     String msg = prefix + name + ((suffix == null) ? "" : ( ": " + suffix));
     return new RuntimeException(msg, e);
   }
