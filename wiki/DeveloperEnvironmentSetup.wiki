@@ -15,7 +15,7 @@ Install a subversion (svn) client.  See the [http://code.google.com/p/google-ent
 
 For building tests, download the JSR-170 api: jcr-1.0.jar.  See the [http://jcp.org/en/jsr/detail?id=170 JSR-170] Site.
 
-Note on the JDK version: the connector manager is designed so that it can be built and run using JDK 1.6.0 (Java 6), but it can also be built an run using Java 7.
+Note on the JDK version: the connector manager is designed so that it can be built and run using JDK 1.6.0 (Java 6), but it can also be built and run using Java 7.
 
 == Checking out the Connector Manager Code ==
 
