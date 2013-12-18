@@ -34,7 +34,6 @@ import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.channels.FileLock;
 import java.security.InvalidKeyException;
-import java.security.Key;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -346,17 +345,22 @@ public class EncryptedPropertyPlaceholderConfigurer extends
   }
 
   public static String decryptString(String name, String cipherText) {
+    // Not all providers support decrypting an empty byte array.
+    if (cipherText.isEmpty()) {
+      return "";
+    }
+
     try {
-      Key secretKey = getSecretKey();
+      SecretKey key = getSecretKey();
       Cipher decryptor = Cipher.getInstance(keyStoreCryptoAlgo);
-      decryptor.init(Cipher.DECRYPT_MODE, secretKey);
+      decryptor.init(Cipher.DECRYPT_MODE, key);
 
       // Decode base64 to get bytes
       byte[] dec = Base64.decode(cipherText);
       // Decrypt
       byte[] utf8 = decryptor.doFinal(dec);
       // Decode using utf-8
-      return new String(utf8, "UTF8");
+      return new String(utf8, Charsets.UTF_8);
     } catch (NoSuchAlgorithmException e) {
       throw newRuntimeException(DECRYPT_MSG, name,
           "provider does not have algorithm", e);
