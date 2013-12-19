@@ -37,7 +37,7 @@ public class MockConnectorType implements ConnectorType {
     this.typeName = Strings.nullToEmpty(typeName);
   }
 
-  @Override
+  /* @Override */
   public ConfigureResponse getConfigForm(Locale locale) {
     String message = "Sample form for " + typeName + " locale " + locale;
     String formSnippet =
@@ -52,7 +52,7 @@ public class MockConnectorType implements ConnectorType {
     return new ConfigureResponse(message, formSnippet);
   }
 
-  @Override
+  /* @Override */
   public ConfigureResponse getPopulatedConfigForm(
       Map<String, String> configMap, Locale locale) {
     String message =
@@ -70,7 +70,7 @@ public class MockConnectorType implements ConnectorType {
     return new ConfigureResponse(message, formSnippet);
   }
 
-  @Override
+  /* @Override */
   public ConfigureResponse validateConfig(Map<String, String> configData,
       Locale locale, ConnectorFactory connectorFactory) {
     String message = "Validate config for " + typeName + " locale " + locale;

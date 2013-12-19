@@ -16,6 +16,7 @@ package com.google.enterprise.connector.servlet;
 
 import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.manager.Manager;
+import com.google.enterprise.connector.spi.ConfigureResponse;
 
 import java.io.PrintWriter;
 

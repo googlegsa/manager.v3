@@ -491,23 +491,6 @@ public class SpiConstants {
   public static final String PROPNAME_LOCK = "google:lock";
 
   /**
-   * Optional, single-valued property to specify the crawl immediately property
-   * of the record element.
-   *
-   * //TODO: add since version number 
-   */
-  public static final String PROPNAME_CRAWL_IMMEDIATELY =
-      "google:crawl-immediately";
-
-  /**
-   * Optional, single-valued property to specify the crawl once property
-   * of the record element.
-   *
-   * //TODO: add since version number
-   */
-  public static final String PROPNAME_CRAWL_ONCE = "google:crawl-once";
-
-  /**
    * Identifies an optional, single-valued integer property that specifies
    * the PageRank of the document. Default: {@code 96}.
    * <p/>

@@ -20,11 +20,15 @@ import com.google.enterprise.connector.spi.DatabaseResourceBundle;
 import com.google.enterprise.connector.spi.SpiConstants.DatabaseType;
 import com.google.enterprise.connector.util.BasicChecksumGenerator;
 
+import com.google.common.base.Strings;
+
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 

@@ -19,10 +19,10 @@ import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.manager.MockManager;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
 
-import junit.framework.TestCase;
-
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+
+import junit.framework.TestCase;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;

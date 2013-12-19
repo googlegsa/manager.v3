@@ -14,14 +14,14 @@
 
 package com.google.enterprise.connector.spi;
 
+import junit.framework.TestCase;
+
 import com.google.enterprise.connector.spi.SimpleProperty;
 import com.google.enterprise.connector.spi.Value;
 
-import junit.framework.TestCase;
-
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
+import java.util.LinkedList;
 
 public class SimplePropertyTest extends TestCase {
 

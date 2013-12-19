@@ -148,7 +148,7 @@ public class DatabasePropertyResourceBundle implements DatabaseResourceBundle {
    *         resource was found for this key
    * @throws NullPointerException if {@code key} is {@code null}
    */
-  @Override
+  /* @Override */
   public String getString(String key) {
     Preconditions.checkNotNull(key);
     String value = properties.findProperty(key);
@@ -166,7 +166,7 @@ public class DatabasePropertyResourceBundle implements DatabaseResourceBundle {
    *         resource was found for this key
    * @throws NullPointerException if {@code key} is {@code null}
    */
-  @Override
+  /* @Override */
   @SuppressWarnings("unchecked")
   public String[] getStringArray(String key) {
     Preconditions.checkNotNull(key);

@@ -17,14 +17,9 @@ package com.google.enterprise.connector.instantiator;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
 
 import junit.framework.TestCase;
-
 import java.io.File;
 import java.io.FileWriter;
-import java.security.Provider;
-import java.security.Security;
 import java.util.Random;
-
-import java.security.NoSuchAlgorithmException;
 
 public class CryptoTest extends TestCase {
 
@@ -86,14 +81,14 @@ public class CryptoTest extends TestCase {
    * Tests encryption and decryption when no keystore password file
    * is specified.
    */
-  public final void testEncryptDecryptWithoutKeyStorePasswd() {
+  public final void testEncryptDecrytWithoutKeyStorePasswd() {
     encryptAndDecrypt();
   }
 
   /*
    * Tests encryption and decryption when given a keystore passwd in a file.
    */
-  public final void testEncryptDecryptWithKeyStorePasswd() {
+  public final void testEncryptDecrytWithKeyStorePasswd() {
     EncryptedPropertyPlaceholderConfigurer.setKeyStorePasswdPath(
         keyStorePasswdPath);
     encryptAndDecrypt();
@@ -103,7 +98,7 @@ public class CryptoTest extends TestCase {
    * Tests encryption and decryption when given a keystore passwd file that
    * does not exist.
    */
-  public final void testEncryptDecryptWithBadKeyStorePasswd() {
+  public final void testEncryptDecrytWithBadKeyStorePasswd() {
     EncryptedPropertyPlaceholderConfigurer.setKeyStorePasswdPath("bogusfile");
     encryptAndDecrypt();
   }
@@ -127,43 +122,6 @@ public class CryptoTest extends TestCase {
   public void testChars() {
     for (int i = 1; i < 100; i++) {
       encryptAndDecrypt("Length " + i, randomChars(i));
-    }
-  }
-
-  public void testDecryptEmptyString() {
-    assertEquals("", decryptWithoutCipher(""));
-  }
-
-  public void testDecryptException() {
-    try {
-      decryptWithoutCipher("hello, world");
-      fail("expected a NoSuchAlgorithmException wrapped in a RuntimeException");
-    } catch (RuntimeException expected) {
-      if (expected.getCause() == null
-          || !(expected.getCause() instanceof NoSuchAlgorithmException)) {
-        throw expected;
-      }
-    }
-  }
-
-  /**
-   * Tests decrypting the given string without access to ciphers.
-   * Ciphers and Providers are hard to mock, because they must be
-   * loaded from a signed JAR file. So we just remove all the
-   * providers to make sure that no Cipher is used when decrypting the
-   * empty string.
-   */
-  private String decryptWithoutCipher(String cipherText) {
-    Provider[] providers = Security.getProviders();
-    for (Provider p : providers) {
-      Security.removeProvider(p.getName());
-    }
-    try {
-      return EncryptedPropertyPlaceholderConfigurer.decryptString(cipherText);
-    } finally {
-      for (Provider p : providers) {
-        Security.addProvider(p);
-      }
     }
   }
 }

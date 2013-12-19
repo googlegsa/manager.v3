@@ -17,7 +17,6 @@ package com.google.enterprise.connector.database;
 import com.google.common.base.Strings;
 
 import java.util.logging.Logger;
-
 import javax.sql.DataSource;
 
 /**

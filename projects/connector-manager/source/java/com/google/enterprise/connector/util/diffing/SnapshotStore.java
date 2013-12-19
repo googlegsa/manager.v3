@@ -15,7 +15,6 @@
 package com.google.enterprise.connector.util.diffing;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Ordering;
@@ -31,6 +30,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -47,17 +47,11 @@ import java.util.regex.Pattern;
 public class SnapshotStore {
   private static final Logger LOG =
       Logger.getLogger(SnapshotStore.class.getName());
+  private static final Charset UTF_8 = Charset.forName("UTF-8");
 
-  private static File getSnapshotFile(File snapshotDir, long snapshotNumber) {
+  static private File getSnapshotFile(File snapshotDir, long snapshotNumber) {
     String name = String.format("snap.%d", snapshotNumber);
     return new File(snapshotDir, name);
-  }
-
-  private static SnapshotWriter getSnapshotWriter(File snapshotFile)
-      throws IOException, SnapshotWriterException {
-    FileOutputStream os = new FileOutputStream(snapshotFile);
-    Writer w = new OutputStreamWriter(os, Charsets.UTF_8);
-    return new SnapshotWriter(w, os.getFD(), snapshotFile.getAbsolutePath());
   }
 
   private static final Pattern SNAPSHOT_PATTERN =
@@ -94,7 +88,7 @@ public class SnapshotStore {
 
   /**
    * @return a writer for the next snapshot
-   * @throws SnapshotStoreException
+   * @throws SnapshotWriterException
    */
   public SnapshotWriter openNewSnapshotWriter() throws SnapshotStoreException {
     if (aWriterIsActive) {
@@ -104,7 +98,9 @@ public class SnapshotStore {
     long nextIndex = (snapshots.isEmpty()) ? 1 : snapshots.first() + 1;
     File out = getSnapshotFile(snapshotDir, nextIndex);
     try {
-      SnapshotWriter writer = getSnapshotWriter(out);
+      FileOutputStream os = new FileOutputStream(out);
+      Writer w = new OutputStreamWriter(os, UTF_8);
+      SnapshotWriter writer = new SnapshotWriter(w, os.getFD(), out.getAbsolutePath());
       aWriterIsActive = true;
       return writer;
     } catch (IOException e) {
@@ -136,7 +132,9 @@ public class SnapshotStore {
     LOG.info("starting with empty snapshot");
     File out = getSnapshotFile(snapshotDir, 0);
     try {
-      SnapshotWriter writer = getSnapshotWriter(out);
+      FileOutputStream os = new FileOutputStream(out);
+      Writer w = new OutputStreamWriter(os, UTF_8);
+      SnapshotWriter writer = new SnapshotWriter(w, os.getFD(), out.getAbsolutePath());
       writer.close();
     } catch (IOException e) {
       throw new SnapshotStoreException("failed to open snapshot: " + out.getAbsolutePath(), e);
@@ -148,7 +146,7 @@ public class SnapshotStore {
   /**
    * @return sorted set of all available snapshots
    */
-  private static SortedSet<Long> getExistingSnapshots(File snapshotDirectory) {
+  static private SortedSet<Long> getExistingSnapshots(File snapshotDirectory) {
     TreeSet<Long> result =
         new TreeSet<Long>(Ordering.<Long>natural().reverse());
     File[] files = snapshotDirectory.listFiles();
@@ -216,13 +214,13 @@ public class SnapshotStore {
    * @return a snapshot reader for snapshot {@code number}
    * @throws SnapshotStoreException
    */
-  private static SnapshotReader openSnapshot(File snapshotDir, long number,
+  static private SnapshotReader openSnapshot(File snapshotDir, long number,
       DocumentSnapshotFactory documentSnapshotFactory)
       throws SnapshotStoreException {
     File input = getSnapshotFile(snapshotDir, number);
     try {
       InputStream is = new FileInputStream(input);
-      Reader r = new InputStreamReader(is, Charsets.UTF_8);
+      Reader r = new InputStreamReader(is, UTF_8);
       return new SnapshotReader(new BufferedReader(r), input.getAbsolutePath(),
           number, documentSnapshotFactory);
     } catch (FileNotFoundException e) {
@@ -278,9 +276,11 @@ public class SnapshotStore {
     
     long recoveryFileIndex = checkpoint.getSnapshotNumber() + 2;
     File out = getSnapshotFile(snapshotDir, recoveryFileIndex);
+    FileOutputStream os = new FileOutputStream(out);
     boolean iMadeIt = false;
-    SnapshotWriter writer = getSnapshotWriter(out);
-      try {
+    SnapshotWriter writer =
+        new SnapshotWriter(new OutputStreamWriter(os, UTF_8), os.getFD(), out.getAbsolutePath());
+    try {
       SnapshotReader part1 = openSnapshot(snapshotDir,
           checkpoint.getSnapshotNumber() + 1, documentSnapshotFactory);
       try {

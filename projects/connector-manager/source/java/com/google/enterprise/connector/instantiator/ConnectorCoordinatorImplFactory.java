@@ -114,7 +114,7 @@ public class ConnectorCoordinatorImplFactory
    * @param connectorName the Connector instance name.
    * @return a new ConnectorCoordinator.
    */
-  @Override
+  /* @Override */
   public ConnectorCoordinator newConnectorCoordinator(String connectorName) {
     return new ConnectorCoordinatorImpl(connectorName,
         pusherFactory, loadManagerFactory, connectorPersistentStoreFactory,

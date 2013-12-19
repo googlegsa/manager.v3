@@ -14,7 +14,6 @@
 
 package com.google.enterprise.connector.util;
 
-import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 
 import org.w3c.dom.CharacterData;
@@ -96,7 +95,7 @@ public class XmlParseUtil {
    * entities using a selection of locally stored DTDs.
    */
   public static class LocalEntityResolver implements EntityResolver {
-    @Override
+    /* @Override */
     public InputSource resolveEntity(String publicId, String systemId) {
       String filename = LOCAL_DTDS.get(systemId);
       if (filename == null) {
@@ -125,17 +124,17 @@ public class XmlParseUtil {
    * throws the {@link SAXParseException}.
    */
   public static class ThrowingErrorHandler implements ErrorHandler {
-    @Override
+    /* @Override */
     public void error(SAXParseException exception) throws SAXException {
       throw exception;
     }
 
-    @Override
+    /* @Override */
     public void fatalError(SAXParseException exception) throws SAXException {
       throw exception;
     }
 
-    @Override
+    /* @Override */
     public void warning(SAXParseException exception) throws SAXException {
       throw exception;
     }
@@ -157,7 +156,7 @@ public class XmlParseUtil {
 
     System.out.println(formSnippet);
     String html = STRICT_HTML_PREFIX + formSnippet + HTML_SUFFIX;
-    builder.parse(new ByteArrayInputStream(html.getBytes(Charsets.UTF_8)));
+    builder.parse(new ByteArrayInputStream(html.getBytes("UTF-8")));
   }
 
   private static DocumentBuilderFactory factory =
@@ -192,7 +191,12 @@ public class XmlParseUtil {
   }
 
   private static InputStream stringToInputStream(String fileContent) {
-    return new ByteArrayInputStream(fileContent.getBytes(Charsets.UTF_8));
+    try {
+      return new ByteArrayInputStream(fileContent.getBytes("UTF-8"));
+    } catch (java.io.UnsupportedEncodingException uee) {
+      LOGGER.log(Level.SEVERE, "Really Unexpected", uee);
+      return null;
+    }
   }
 
   /**

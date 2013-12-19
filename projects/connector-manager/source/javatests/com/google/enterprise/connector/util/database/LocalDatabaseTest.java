@@ -19,17 +19,17 @@ import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.ConnectorFactory;
 import com.google.enterprise.connector.spi.ConnectorType;
+import com.google.enterprise.connector.spi.DatabaseResourceBundle;
 import com.google.enterprise.connector.spi.LocalDatabase;
 import com.google.enterprise.connector.spi.SpiConstants.DatabaseType;
-
-import junit.framework.TestCase;
 
 import org.h2.jdbcx.JdbcDataSource;
 
 import java.util.Locale;
 import java.util.Map;
-
 import javax.sql.DataSource;
+
+import junit.framework.TestCase;
 
 public class LocalDatabaseTest extends TestCase {
 
@@ -115,18 +115,18 @@ public class LocalDatabaseTest extends TestCase {
 
   // Fake ConnectorType.
   private class LocalDatabaseConnectorType implements ConnectorType {
-    @Override
+    /* @Override */
     public ConfigureResponse getConfigForm(Locale locale) {
       throw new UnsupportedOperationException("Fake ConnectorType");
     }
 
-    @Override
+    /* @Override */
     public ConfigureResponse getPopulatedConfigForm(
         Map<String, String> configMap, Locale locale) {
       throw new UnsupportedOperationException("Fake ConnectorType");
     }
 
-    @Override
+    /* @Override */
     public ConfigureResponse validateConfig(Map<String, String> configData,
         Locale locale, ConnectorFactory connectorFactory) {
       throw new UnsupportedOperationException("Fake ConnectorType");

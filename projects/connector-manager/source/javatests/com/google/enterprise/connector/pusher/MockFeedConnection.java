@@ -37,7 +37,7 @@ public class MockFeedConnection implements FeedConnection {
   public MockFeedConnection() {
   }
 
-  @Override
+  /* @Override */
   public String sendData(FeedData feedData)
       throws FeedException, RepositoryException {
     try {
@@ -51,17 +51,17 @@ public class MockFeedConnection implements FeedConnection {
     return GsaFeedConnection.SUCCESS_RESPONSE;
   }
 
-  @Override
+  /* @Override */
   public boolean isBacklogged() {
     return false;
   }
 
-  @Override
+  /* @Override */
   public String getContentEncodings() {
     return "base64binary";
   }
 
-  @Override
+  /* @Override */
   public boolean supportsInheritedAcls() {
     return true;
   }

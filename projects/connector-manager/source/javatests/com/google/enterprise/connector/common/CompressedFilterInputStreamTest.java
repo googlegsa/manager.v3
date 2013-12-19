@@ -108,6 +108,7 @@ public class CompressedFilterInputStreamTest extends TestCase {
   }
 
   /* These are extremely useful when debugging these tests.
+  static final String hex = "0123456789ABCDEF";
   private static String toHex(byte[] input) {
     return toHex(input, 0, input.length);
   }
@@ -116,7 +117,8 @@ public class CompressedFilterInputStreamTest extends TestCase {
     StringBuilder buf = new StringBuilder();
     for (int i = 0; i < len ; i++) {
       byte c = input[off + i];
-      Base16.upperCase().encode(c, buf);
+      buf.append(hex.charAt((c >> 4) & 0xF));
+      buf.append(hex.charAt(c & 0xF));
       buf.append(' ');
     }
     return(buf.toString().trim());

@@ -14,7 +14,6 @@
 
 package com.google.enterprise.connector.pusher;
 
-import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
 import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.util.Clock;
@@ -26,13 +25,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.HttpURLConnection;
 import java.security.GeneralSecurityException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import javax.net.ssl.HttpsURLConnection;
 
 /**
@@ -198,7 +196,7 @@ public class GsaFeedConnection implements FeedConnection {
     builder.append(CRLF);
   }
 
-  @Override
+  /* @Override */
   public String sendData(FeedData feedData)
       throws FeedException {
     try {
@@ -227,12 +225,12 @@ public class GsaFeedConnection implements FeedConnection {
       controlHeader(buf, "feedtype", ServletUtil.MIMETYPE_TEXT_PLAIN);
       buf.append(feedType).append(CRLF);
       controlHeader(buf, "data", ServletUtil.MIMETYPE_XML);
-      prefix = buf.toString().getBytes(Charsets.UTF_8);
+      prefix = buf.toString().getBytes("UTF-8");
 
       // Build suffix.
       buf.setLength(0);
       buf.append(CRLF).append("--").append(BOUNDARY).append("--").append(CRLF);
-      suffix = buf.toString().getBytes(Charsets.UTF_8);
+      suffix = buf.toString().getBytes("UTF-8");
 
       LOGGER.finest("Opening feed connection to " + feedUrl);
       synchronized (this) {
@@ -323,7 +321,7 @@ public class GsaFeedConnection implements FeedConnection {
     return buf.toString();
   }
 
-  @Override
+  /* @Override */
   public synchronized String getContentEncodings() {
     if (contentEncodings == null) {
       String dtd = getFeedDtd();
@@ -343,13 +341,13 @@ public class GsaFeedConnection implements FeedConnection {
     return contentEncodings;
   }
 
-  @Override
+  /* @Override */
   public synchronized boolean supportsInheritedAcls() {
     String dtd = getFeedDtd();
     return (dtd == null) ? false : dtd.contains("<!ELEMENT acl ");
   }
 
-  @Override
+  /* @Override */
   public synchronized boolean isBacklogged() {
     if (lastBacklogCheck != Long.MAX_VALUE) {
       long now = clock.getTimeMillis();

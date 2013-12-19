@@ -24,6 +24,7 @@ import com.google.enterprise.connector.spi.SimpleProperty;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.SpiConstants.AclInheritanceType;
 import com.google.enterprise.connector.spi.Value;
+import com.google.enterprise.connector.util.filter.AbstractDocumentFilter;
 
 import java.util.Set;
 

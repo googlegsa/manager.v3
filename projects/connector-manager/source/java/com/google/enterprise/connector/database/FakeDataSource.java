@@ -18,7 +18,6 @@ import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.logging.Logger;
-
 import javax.sql.DataSource;
 
 /**
@@ -56,48 +55,49 @@ public class FakeDataSource implements DataSource {
     // Do nothing.
   }
 
-  @Override
+  /* @Override */
   public Connection getConnection() throws SQLException {
     throw new SQLException(message());
   }
 
-  @Override
+  /* @Override */
   public Connection getConnection(String username, String password)
       throws SQLException {
     throw new SQLException(message());
   }
 
-  @Override
+  /* @Override */
   public void setLoginTimeout(int seconds) throws SQLException {
     throw new SQLException(message());
   }
 
-  @Override
+  /* @Override */
   public int getLoginTimeout() throws SQLException {
     throw new SQLException(message());
   }
 
-  @Override
+  /* @Override */
   public void setLogWriter(PrintWriter out) throws SQLException {
     throw new SQLException(message());
   }
 
-  @Override
+  /* @Override */
   public PrintWriter getLogWriter() throws SQLException {
     throw new SQLException(message());
   }
 
-  /* @Override TODO(jlacey): This @Override requires Java 7. */
+  // Do not uncomment @Override as long as we support bootclasspath < Java 7.
+  /* @Override */
   public Logger getParentLogger() {
     return Logger.getLogger("com.google.enterprise.connector");
   }
 
-  @Override
+  /* @Override */
   public boolean isWrapperFor(Class<?> iface) {
     return false;
   }
 
-  @Override
+  /* @Override */
   public <T> T unwrap(Class<T> iface) throws SQLException {
     throw new SQLException(message());
   }

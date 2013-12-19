@@ -32,8 +32,8 @@ import com.google.enterprise.connector.traversal.BatchSize;
 import com.google.enterprise.connector.traversal.BatchTimeout;
 import com.google.enterprise.connector.traversal.TraversalStateStore;
 import com.google.enterprise.connector.traversal.Traverser;
-import com.google.enterprise.connector.util.SystemClock;
 import com.google.enterprise.connector.util.filter.DocumentFilterFactory;
+import com.google.enterprise.connector.util.SystemClock;
 
 import java.util.Locale;
 import java.util.logging.Level;
@@ -102,7 +102,7 @@ class MockConnectorCoordinator implements ConnectorCoordinator {
     return interfaces.getAuthorizationManager();
   }
 
-  @Override
+  /* @Override */
   public Retriever getRetriever() throws InstantiatorException {
     return interfaces.getRetriever();
   }

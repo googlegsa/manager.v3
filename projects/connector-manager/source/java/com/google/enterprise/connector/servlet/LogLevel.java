@@ -20,18 +20,22 @@ import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.manager.ConnectorManagerException;
 import com.google.enterprise.connector.manager.Context;
 
+import java.io.IOException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.Properties;
 
+import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.beans.BeansException;
 
 /**
  * <p>Admin servlet to set and fetch the logging {@link Level} for the
@@ -268,17 +272,17 @@ public class LogLevel extends HttpServlet {
     private final String LOGGER_NAME = ""; // root logger
     Context context = Context.getInstance();
 
-    @Override
+    /* @Override */
     public String getName() {
       return "Connector";
     }
 
-    @Override
+    /* @Override */
     public Logger getLogger() {
       return Logger.getLogger(LOGGER_NAME);
     }
 
-    @Override
+    /* @Override */
     public void persistLevel(Level level) throws ConnectorManagerException {
       File confFile = new File(new File(context.getCommonDirPath(), "classes"),
                                "logging.properties");
@@ -335,18 +339,18 @@ public class LogLevel extends HttpServlet {
   private static class FeedLogLevelHandler implements LogLevelHandler {
     Context context = Context.getInstance();
 
-    @Override
+    /* @Override */
     public String getName() {
       return "Feed";
     }
 
-    @Override
+    /* @Override */
     public Logger getLogger() {
       return (Logger) context.getApplicationContext()
           .getBean("FeedWrapperLogger", Logger.class);
     }
 
-    @Override
+    /* @Override */
     public void persistLevel(Level level) {
       try {
         Properties props = context.getConnectorManagerProperties();

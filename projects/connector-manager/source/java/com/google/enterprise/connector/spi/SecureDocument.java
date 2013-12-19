@@ -49,12 +49,12 @@ public class SecureDocument implements Document {
 
   /** An empty, immutable document with no properties. */
   protected static class EmptyDocument implements Document {
-    @Override
+    /* @Override */
     public Property findProperty(String name) {
       return null;
     }
 
-    @Override
+    /* @Override */
     public Set<String> getPropertyNames() {
       return Collections.emptySet();
     }
@@ -156,7 +156,7 @@ public class SecureDocument implements Document {
    * @throws RepositoryException if an error occurs accessing the
    *     underlying document
    */
-  @Override
+  /* @Override */
   public Property findProperty(String name) throws RepositoryException {
     List<Value> list = properties.get(name);
     return (list == null)
@@ -169,7 +169,7 @@ public class SecureDocument implements Document {
    * @throws RepositoryException if an error occurs accessing the
    *     underlying document
    */
-  @Override
+  /* @Override */
   public Set<String> getPropertyNames() throws RepositoryException {
     Set<String> combined = new HashSet<String>();
     combined.addAll(properties.keySet());

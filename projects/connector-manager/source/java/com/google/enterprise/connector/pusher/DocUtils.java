@@ -17,17 +17,19 @@ package com.google.enterprise.connector.pusher;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.enterprise.connector.spi.Document;
+import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.RepositoryDocumentException;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.SpiConstants;
-import com.google.enterprise.connector.spi.SpiConstants.FeedType;
 import com.google.enterprise.connector.spi.Value;
+import com.google.enterprise.connector.spi.SpiConstants.FeedType;
 import com.google.enterprise.connector.spiimpl.BinaryValue;
 import com.google.enterprise.connector.spiimpl.DateValue;
 import com.google.enterprise.connector.spiimpl.ValueImpl;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -125,7 +127,12 @@ public class DocUtils {
       result = ((BinaryValue) v).getInputStream();
     } else {
       String s = v.toString();
-      byte[] bytes = s.getBytes(XmlFeed.XML_DEFAULT_CHARSET);
+      byte[] bytes;
+      try {
+        bytes = s.getBytes(XmlFeed.XML_DEFAULT_ENCODING);
+      } catch (UnsupportedEncodingException e) {
+        throw new RepositoryDocumentException("Encoding error." , e);
+      }
       result = new ByteArrayInputStream(bytes);
     }
     return result;

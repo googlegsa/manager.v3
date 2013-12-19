@@ -43,7 +43,7 @@ public class CancelableLister implements Cancelable {
   }
 
   /** Start up the {@link Lister}. */
-  @Override
+  /* @Override */
   public void run() {
     NDC.push("Lister " + connectorName);
     try {
@@ -58,7 +58,7 @@ public class CancelableLister implements Cancelable {
   }
 
   /** Shut down the {@link Lister}. */
-  @Override
+  /* @Override */
   public void cancel() {
     try {
       LOGGER.fine("Stop Lister " + connectorName);

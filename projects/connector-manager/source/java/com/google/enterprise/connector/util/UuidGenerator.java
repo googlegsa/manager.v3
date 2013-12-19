@@ -20,7 +20,7 @@ package com.google.enterprise.connector.util;
  * @since 2.8
  */
 public class UuidGenerator implements UniqueIdGenerator {
-  @Override
+  /* @Override */
   public String uniqueId() {
     return java.util.UUID.randomUUID().toString().replace("-", "");
   }

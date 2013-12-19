@@ -65,7 +65,7 @@ public class AdjustableClock implements Clock {
   /**
    * Return the current time, in milliseconds.
    */
-  @Override
+  /* @Override */
   public synchronized long getTimeMillis() {
     return (System.currentTimeMillis() + adjustment);
   }

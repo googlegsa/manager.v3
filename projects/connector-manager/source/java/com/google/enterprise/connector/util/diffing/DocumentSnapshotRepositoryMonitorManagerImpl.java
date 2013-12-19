@@ -117,7 +117,7 @@ public class DocumentSnapshotRepositoryMonitorManagerImpl
     }
   }
 
-  @Override
+  /* @Override */
   public synchronized void stop() {
     for (Thread thread : threads) {
       thread.interrupt();
@@ -207,7 +207,7 @@ public class DocumentSnapshotRepositoryMonitorManagerImpl
     isRunning = true;
   }
 
-  @Override
+  /* @Override */
   public synchronized void clean() {
     LOG.info("Cleaning snapshot directory: " + snapshotDir.getAbsolutePath());
     if (!delete(snapshotDir)) {
@@ -217,7 +217,7 @@ public class DocumentSnapshotRepositoryMonitorManagerImpl
     checkpointAndChangeQueue.clean();
   }
 
-  @Override
+  /* @Override */
   public int getThreadCount() {
     int result = 0;
     for (Thread t : threads) {
@@ -228,7 +228,7 @@ public class DocumentSnapshotRepositoryMonitorManagerImpl
     return result;
   }
 
-  @Override
+  /* @Override */
   public synchronized CheckpointAndChangeQueue getCheckpointAndChangeQueue() {
     return checkpointAndChangeQueue;
   }
@@ -296,12 +296,12 @@ public class DocumentSnapshotRepositoryMonitorManagerImpl
     }
   }
 
-  @Override
+  /* @Override */
   public synchronized boolean isRunning() {
     return isRunning;
   }
 
-  @Override
+  /* @Override */
   public void acceptGuarantees(Map<String, MonitorCheckpoint> guarantees) {
     for (Map.Entry<String, MonitorCheckpoint> entry : guarantees.entrySet()) {
       String monitorName = entry.getKey();
@@ -314,7 +314,7 @@ public class DocumentSnapshotRepositoryMonitorManagerImpl
     }
   }
 
-  @Override
+  /* @Override */
   public synchronized void setTraversalSchedule(TraversalSchedule
       traversalSchedule) {
     this.traversalSchedule = traversalSchedule;

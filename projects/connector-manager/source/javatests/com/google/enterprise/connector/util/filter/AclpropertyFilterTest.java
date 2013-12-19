@@ -14,6 +14,9 @@
 
 package com.google.enterprise.connector.util.filter;
 
+import java.util.ArrayList;
+import java.util.Map;
+
 import com.google.common.base.Strings;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.Principal;
@@ -23,9 +26,6 @@ import com.google.enterprise.connector.spi.SpiConstants.CaseSensitivityType;
 import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.spiimpl.PrincipalValue;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
-
-import java.util.ArrayList;
-import java.util.Map;
 
 public class AclpropertyFilterTest extends DocumentFilterTest {
 

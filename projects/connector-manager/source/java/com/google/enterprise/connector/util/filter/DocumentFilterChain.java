@@ -15,10 +15,14 @@
 package com.google.enterprise.connector.util.filter;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import com.google.enterprise.connector.spi.Document;
+import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.RepositoryException;
+import com.google.enterprise.connector.spi.SkippedDocumentException;
 
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 
 /**

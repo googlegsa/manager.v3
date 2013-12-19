@@ -18,14 +18,19 @@ import com.google.common.collect.ImmutableMap;
 import com.google.enterprise.connector.common.PropertiesException;
 import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.common.StringUtils;
+import com.google.enterprise.connector.instantiator.InstanceInfo.FactoryCreationFailureException;
 import com.google.enterprise.connector.instantiator.InstanceInfo.InstanceInfoException;
+import com.google.enterprise.connector.instantiator.InstanceInfo.NoBeansFoundException;
 import com.google.enterprise.connector.instantiator.InstanceInfo.NullConfigurationException;
 import com.google.enterprise.connector.instantiator.InstanceInfo.NullConnectorNameException;
 import com.google.enterprise.connector.instantiator.InstanceInfo.NullDirectoryException;
 import com.google.enterprise.connector.instantiator.InstanceInfo.NullTypeInfoException;
+import com.google.enterprise.connector.instantiator.InstanceInfo.PropertyProcessingFailureException;
 import com.google.enterprise.connector.persist.FileStore;
 import com.google.enterprise.connector.spi.Connector;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
+
+import junit.framework.TestCase;
 
 import org.springframework.core.io.ByteArrayResource;
 
@@ -33,6 +38,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.util.Properties;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class InstanceInfoTest extends AbstractTestInstanceInfo {
 

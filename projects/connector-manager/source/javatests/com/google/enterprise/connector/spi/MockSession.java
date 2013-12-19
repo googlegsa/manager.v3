@@ -35,29 +35,29 @@ public class MockSession implements Session, RetrieverAware, ListerAware {
     this.lister = lister;
   }
 
-  @Override
+  /* @Override */
   public TraversalManager getTraversalManager() throws RepositoryException {
     return traversalManager;
   }
 
-  @Override
+  /* @Override */
   public AuthenticationManager getAuthenticationManager()
       throws RepositoryException {
     return authenticationManager;
   }
 
-  @Override
+  /* @Override */
   public AuthorizationManager getAuthorizationManager()
     throws RepositoryException {
     return authorizationManager;
   }
 
-  @Override
+  /* @Override */
   public Retriever getRetriever() throws RepositoryException {
     return retriever;
   }
 
-  @Override
+  /* @Override */
   public Lister getLister() throws RepositoryException {
     return lister;
   }

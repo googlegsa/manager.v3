@@ -16,7 +16,6 @@ package com.google.enterprise.connector.util;
 
 import java.security.GeneralSecurityException;
 import java.security.cert.X509Certificate;
-
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
