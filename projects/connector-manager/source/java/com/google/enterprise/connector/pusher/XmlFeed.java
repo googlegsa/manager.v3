@@ -15,10 +15,10 @@
 package com.google.enterprise.connector.pusher;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Charsets;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import com.google.enterprise.connector.common.AlternateContentFilterInputStream;
 import com.google.enterprise.connector.common.BigEmptyDocumentFilterInputStream;
 import com.google.enterprise.connector.common.CompressedFilterInputStream;
@@ -29,27 +29,30 @@ import com.google.enterprise.connector.spi.Principal;
 import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.RepositoryDocumentException;
 import com.google.enterprise.connector.spi.RepositoryException;
+import com.google.enterprise.connector.spi.SimpleProperty;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.SpiConstants.AclAccess;
 import com.google.enterprise.connector.spi.SpiConstants.AclScope;
-import com.google.enterprise.connector.spi.SpiConstants.ActionType;
 import com.google.enterprise.connector.spi.SpiConstants.ContentEncoding;
 import com.google.enterprise.connector.spi.SpiConstants.DocumentType;
 import com.google.enterprise.connector.spi.SpiConstants.FeedType;
+import com.google.enterprise.connector.spi.SpiConstants.RoleType;
 import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.spi.XmlUtils;
+import com.google.enterprise.connector.spi.SpiConstants.ActionType;
 import com.google.enterprise.connector.spiimpl.PrincipalValue;
 import com.google.enterprise.connector.spiimpl.ValueImpl;
 import com.google.enterprise.connector.traversal.FileSizeLimitInfo;
-import com.google.enterprise.connector.util.Base64FilterInputStream;
 import com.google.enterprise.connector.util.UniqueIdGenerator;
 import com.google.enterprise.connector.util.UuidGenerator;
-import com.google.enterprise.connector.util.filter.DocumentFilterFactory;
+import com.google.enterprise.connector.util.Base64FilterInputStream;
+import com.google.enterprise.connector.util.filter.AbstractDocumentFilter;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.Charset;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -64,24 +67,16 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
   private static final Logger LOGGER =
       Logger.getLogger(XmlFeed.class.getName());
 
+  /** Roles are deprecated, so we will strip them out of Principals. */
   @SuppressWarnings("deprecation")
-  private static class RoleSuffixes {
-    private static final List<String> BELOW_READER = ImmutableList.of(
-        "=" + SpiConstants.RoleType.PEEKER);
+  private static final String PEEKER_ROLE_SUFFIX =
+      "=" + RoleType.PEEKER.toString();
 
-    private static final List<String> READER_OR_BELOW = ImmutableList.of(
-        "=" + SpiConstants.RoleType.PEEKER,
-        "=" + SpiConstants.RoleType.READER);
-
-    private static final List<String> READER_OR_ABOVE = ImmutableList.of(
-        "=" + SpiConstants.RoleType.READER,
-        "=" + SpiConstants.RoleType.WRITER,
-        "=" + SpiConstants.RoleType.OWNER);
-
-    private static final List<String> ABOVE_READER = ImmutableList.of(
-        "=" + SpiConstants.RoleType.WRITER,
-        "=" + SpiConstants.RoleType.OWNER);
-  }
+  @SuppressWarnings("deprecation")
+  private static final String[] OTHER_ROLES_SUFFIXES = {
+      "=" + RoleType.READER.toString(),
+      "=" + RoleType.WRITER.toString(),
+      "=" + RoleType.OWNER.toString() };
 
   private final String dataSource;
   private final FeedType feedType;
@@ -100,11 +95,12 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
 
   private static UniqueIdGenerator uniqueIdGenerator = new UuidGenerator();
 
-  private static DocumentFilterFactory stripAclDocumentFilter =
+  private static StripAclDocumentFilter stripAclDocumentFilter =
       new StripAclDocumentFilter();
-  private static DocumentFilterFactory extractedAclDocumentFilter =
+  private static ExtractedAclDocumentFilter extractedAclDocumentFilter =
       new ExtractedAclDocumentFilter();
-  private static DocumentFilterFactory inheritFromExtractedAclDocumentFilter =
+  private static InheritFromExtractedAclDocumentFilter
+      inheritFromExtractedAclDocumentFilter =
       new InheritFromExtractedAclDocumentFilter();
 
   private boolean isClosed;
@@ -117,15 +113,12 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
       // opt-out list?
       SpiConstants.PROPNAME_ACLINHERITFROM_DOCID,
       SpiConstants.PROPNAME_ACLINHERITFROM_FEEDTYPE,
-      SpiConstants.PROPNAME_ACLINHERITFROM_FRAGMENT,
       SpiConstants.PROPNAME_ACTION,
       SpiConstants.PROPNAME_AUTHMETHOD,
       SpiConstants.PROPNAME_CONTENT,
       SpiConstants.PROPNAME_CONTENTURL,
       SpiConstants.PROPNAME_CONTENT_ENCODING,
       SpiConstants.PROPNAME_CONTENT_LENGTH,
-      SpiConstants.PROPNAME_CRAWL_IMMEDIATELY,
-      SpiConstants.PROPNAME_CRAWL_ONCE,
       SpiConstants.PROPNAME_DOCID,
       SpiConstants.PROPNAME_DOCUMENTTYPE,
       SpiConstants.PROPNAME_FEEDTYPE,
@@ -135,9 +128,9 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
       SpiConstants.PROPNAME_SECURITYTOKEN);
 
   // Strings for XML tags.
-  public static final Charset XML_DEFAULT_CHARSET = Charsets.UTF_8;
+  public static final String XML_DEFAULT_ENCODING = "UTF-8";
   private static final String XML_START = "<?xml version='1.0' encoding='"
-      + XML_DEFAULT_CHARSET.name() + "'?><!DOCTYPE gsafeed PUBLIC"
+      + XML_DEFAULT_ENCODING + "'?><!DOCTYPE gsafeed PUBLIC"
       + " \"-//Google//DTD GSA Feeds//EN\" \"gsafeed.dtd\">";
   private static final String XML_GSAFEED = "gsafeed";
   private static final String XML_HEADER = "header";
@@ -153,8 +146,6 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
   private static final String XML_DISPLAY_URL = "displayurl";
   private static final String XML_MIMETYPE = "mimetype";
   private static final String XML_LAST_MODIFIED = "last-modified";
-  private static final String XML_CRAWL_IMMEDIATELY = "crawl-immediately";
-  private static final String XML_CRAWL_ONCE = "crawl-once";
   private static final String XML_LOCK = "lock";
   private static final String XML_AUTHMETHOD = "authmethod";
   private static final String XML_PAGERANK = "pagerank";
@@ -199,7 +190,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
         >= 0) ? ContentEncoding.BASE64COMPRESSED : ContentEncoding.BASE64BINARY;
 
     String prefix = xmlFeedPrefix(dataSource, feedType);
-    write(prefix.getBytes(XML_DEFAULT_CHARSET));
+    write(prefix.getBytes(XML_DEFAULT_ENCODING));
   }
 
   @VisibleForTesting
@@ -334,7 +325,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
     if (!isClosed) {
       isClosed = true;
       String suffix = xmlFeedSuffix();
-      write(suffix.getBytes(XML_DEFAULT_CHARSET));
+      write(suffix.getBytes(XML_DEFAULT_ENCODING));
     }
   }
 
@@ -461,20 +452,6 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
       XmlUtils.xmlAppendAttr(XML_LOCK, Value.getBooleanValue(true).toString(), prefix);
     }
 
-    boolean crawlImmediately = DocUtils.getOptionalBoolean(
-        document, SpiConstants.PROPNAME_CRAWL_IMMEDIATELY, false);
-    if (crawlImmediately) {
-      XmlUtils.xmlAppendAttr(XML_CRAWL_IMMEDIATELY,
-          Value.getBooleanValue(true).toString(), prefix);
-    }
-
-    boolean crawlOnce = DocUtils.getOptionalBoolean(
-        document, SpiConstants.PROPNAME_CRAWL_ONCE, false);
-    if (crawlOnce) {
-      XmlUtils.xmlAppendAttr(
-          XML_CRAWL_ONCE, Value.getBooleanValue(true).toString(), prefix);
-    }
-
     // Do not validate the values, just send them in the feed.
     String pagerank =
         DocUtils.getOptionalString(document, SpiConstants.PROPNAME_PAGERANK);
@@ -564,7 +541,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
       XmlUtils.xmlAppendEndTag(XML_CONTENT, suffix);
     }
 
-    write(prefix.toString().getBytes(XML_DEFAULT_CHARSET));
+    write(prefix.toString().getBytes(XML_DEFAULT_ENCODING));
 
     if (contentAllowed) {
       InputStream contentStream = getContentStream(
@@ -577,7 +554,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
     }
 
     XmlUtils.xmlAppendEndTag(XML_RECORD, suffix);
-    write(suffix.toString().getBytes(XML_DEFAULT_CHARSET));
+    write(suffix.toString().getBytes(XML_DEFAULT_ENCODING));
 
     if (feedLogBuilder != null) {
       try {
@@ -633,7 +610,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
     StringBuilder aclBuff = new StringBuilder();
     xmlWrapAclRecord(aclBuff, acl);
 
-    write(aclBuff.toString().getBytes(XML_DEFAULT_CHARSET));
+    write(aclBuff.toString().getBytes(XML_DEFAULT_ENCODING));
 
     if (feedLogBuilder != null) {
       try {
@@ -684,7 +661,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
       Principal principal = (value instanceof PrincipalValue)
           ? ((PrincipalValue) value).getPrincipal()
           : new Principal(value.toString().trim());
-      String name = stripRoles(principal.getName(), access);
+      String name = stripRoles(principal.getName());
       if (!Strings.isNullOrEmpty(name)) {
         buff.append("<").append(XML_PRINCIPAL);
         if (principal.getPrincipalType() ==
@@ -719,23 +696,15 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
    * Strip any Roles from the supplied Principal name.
    * Peeker users are discarded entirely, whereas other roles are simply
    * removed from the end of the name.
-   *
-   * @param name the principal name
-   * @param the principal access, one of {@code PERMIT} or {@code DENY}
    */
-  private static String stripRoles(String name, AclAccess access) {
+  private static String stripRoles(String name) {
     if (!Strings.isNullOrEmpty(name) && name.indexOf('=') >= 0) {
-      List<String> skip = (access == AclAccess.PERMIT)
-          ? RoleSuffixes.BELOW_READER : RoleSuffixes.ABOVE_READER;
-      List<String> strip = (access == AclAccess.PERMIT)
-          ? RoleSuffixes.READER_OR_ABOVE : RoleSuffixes.READER_OR_BELOW;
-
-      for (String role : skip) {
-        if (name.endsWith(role)) {
-          return null;
-        }
+      // Drop peekers on the floor.
+      if (name.endsWith(PEEKER_ROLE_SUFFIX)) {
+        return null;
       }
-      for (String role : strip) {
+      // For all others, just strip them off.
+      for (String role : OTHER_ROLES_SUFFIXES) {
         if (name.endsWith(role)) {
           return name.substring(0, name.length() - role.length());
         }

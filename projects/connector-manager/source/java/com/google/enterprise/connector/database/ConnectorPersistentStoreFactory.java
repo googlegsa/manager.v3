@@ -15,9 +15,10 @@
 package com.google.enterprise.connector.database;
 
 import com.google.common.base.Preconditions;
-import com.google.enterprise.connector.spi.ConnectorPersistentStore;
 import com.google.enterprise.connector.spi.ConnectorType;
+import com.google.enterprise.connector.spi.ConnectorPersistentStore;
 import com.google.enterprise.connector.spi.LocalDatabase;
+import com.google.enterprise.connector.spi.LocalDocumentStore;
 import com.google.enterprise.connector.util.database.JdbcDatabase;
 import com.google.enterprise.connector.util.database.LocalDatabaseImpl;
 
@@ -50,7 +51,6 @@ public class ConnectorPersistentStoreFactory {
    * @param connectorTypeName the name for {@code connectorType}
    * @param connectorType the Connector's {@link ConnectorType}
    */
-  @SuppressWarnings("deprecation") // TODO(jlacey): Document store is deprecated
   public ConnectorPersistentStore newConnectorPersistentStore(
       String connectorName, String connectorTypeName,
       ConnectorType connectorType) throws SQLException {
@@ -58,18 +58,31 @@ public class ConnectorPersistentStoreFactory {
     // assume the JdbcDatabase is functional.
     jdbcDatabase.getDataSource().getConnection().close();
 
-    final LocalDatabase localDatabase =
-        new LocalDatabaseImpl(jdbcDatabase, connectorTypeName, connectorType);
-    return new ConnectorPersistentStore() {
-      @Override
-      public com.google.enterprise.connector.spi.LocalDocumentStore getLocalDocumentStore() {
-        return null;
-      }
+    return new ConnectorPersistentStoreImpl(
+        new LocalDatabaseImpl(jdbcDatabase, connectorTypeName, connectorType),
+        null /* new LocalDocumentStoreImpl(jdbcDatabase, connectorName) */);
+  }
 
-      @Override
-      public LocalDatabase getLocalDatabase() {
-        return localDatabase;
-      }
-    };
+  private class ConnectorPersistentStoreImpl
+      implements ConnectorPersistentStore {
+
+    private final LocalDatabase localDatabase;
+    private final LocalDocumentStore localDocumentStore;
+
+    ConnectorPersistentStoreImpl(LocalDatabase localDatabase,
+                                 LocalDocumentStore localDocumentStore) {
+      this.localDatabase = localDatabase;
+      this.localDocumentStore = localDocumentStore;
+    }
+
+    /* @Override */
+    public LocalDocumentStore getLocalDocumentStore() {
+      return localDocumentStore;
+    }
+
+    /* @Override */
+    public LocalDatabase getLocalDatabase() {
+      return localDatabase;
+    }
   }
 }

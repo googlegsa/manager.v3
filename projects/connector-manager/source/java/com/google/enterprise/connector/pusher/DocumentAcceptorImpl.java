@@ -14,10 +14,12 @@
 
 package com.google.enterprise.connector.pusher;
 
+import com.google.enterprise.connector.database.DocumentStore;
 import com.google.enterprise.connector.pusher.Pusher.PusherStatus;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.DocumentAcceptor;
 import com.google.enterprise.connector.spi.DocumentAcceptorException;
+import com.google.enterprise.connector.spi.Lister;
 import com.google.enterprise.connector.spi.RepositoryDocumentException;
 import com.google.enterprise.connector.spi.RepositoryException;
 
@@ -35,6 +37,7 @@ public class DocumentAcceptorImpl implements DocumentAcceptor {
 
   private final String connectorName;
   private final PusherFactory pusherFactory;
+  private final DocumentStore documentStore;
 
   private Pusher pusher;
 
@@ -43,10 +46,12 @@ public class DocumentAcceptorImpl implements DocumentAcceptor {
   private long longSleep = 5 * 60 * 1000L;
   private int retryCount = 10;
 
-  public DocumentAcceptorImpl(String connectorName, PusherFactory pusherFactory)
+  public DocumentAcceptorImpl(String connectorName,
+      PusherFactory pusherFactory, DocumentStore documentStore)
       throws DocumentAcceptorException, RepositoryException {
     this.connectorName = connectorName;
     this.pusherFactory = pusherFactory;
+    this.documentStore = documentStore;
   }
 
   /* Used by tests to shorten sleep times. */
@@ -68,7 +73,7 @@ public class DocumentAcceptorImpl implements DocumentAcceptor {
   public synchronized void take(Document document)
       throws DocumentAcceptorException, RepositoryException {
     try {
-      if (pusher.take(document) != PusherStatus.OK) {
+      if (pusher.take(document, documentStore) != PusherStatus.OK) {
         waitForOkStatus();
       }
     } catch (NullPointerException e) {

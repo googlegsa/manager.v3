@@ -89,7 +89,7 @@ public class DiffingConnectorCheckpoint implements
     return getJson().toString();
   }
 
-  @Override
+  /* @Override */
   public int compareTo(DiffingConnectorCheckpoint o) {
     long result = majorNumber - o.majorNumber;
     if (result == 0) {

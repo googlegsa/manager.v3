@@ -38,12 +38,12 @@ public class ProductionTraversalContext extends SimpleTraversalContext {
     this.mimeTypeMap = mimeTypeMap;
   }
 
-  @Override
+  /* @Override */
   public synchronized int mimeTypeSupportLevel(String mimeType) {
     return mimeTypeMap.mimeTypeSupportLevel(mimeType);
   }
 
-  @Override
+  /* @Override */
   public synchronized String preferredMimeType(Set<String> mimeTypes) {
     return mimeTypeMap.preferredMimeType(mimeTypes);
   }

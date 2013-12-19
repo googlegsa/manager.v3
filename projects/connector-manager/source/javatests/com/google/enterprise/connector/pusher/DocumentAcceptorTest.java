@@ -14,19 +14,23 @@
 
 package com.google.enterprise.connector.pusher;
 
+import com.google.enterprise.connector.database.DocumentStore;
 import com.google.enterprise.connector.pusher.ExceptionalPusher;
 import com.google.enterprise.connector.pusher.ExceptionalPusher.Where;
 import com.google.enterprise.connector.pusher.Pusher.PusherStatus;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.DocumentAcceptor;
 import com.google.enterprise.connector.spi.DocumentAcceptorException;
+import com.google.enterprise.connector.spi.Lister;
 import com.google.enterprise.connector.spi.RepositoryException;
+import com.google.enterprise.connector.spi.TraversalContext;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
 import com.google.enterprise.connector.traversal.MockLister;
 import com.google.enterprise.connector.util.SystemClock;
 
 import junit.framework.TestCase;
 
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -41,7 +45,7 @@ public class DocumentAcceptorTest extends TestCase {
     String connectorName = getName();
     MockPusher pusher = new MockPusher();
     DocumentAcceptorImpl documentAcceptor =
-        new DocumentAcceptorImpl(connectorName, pusher);
+        new DocumentAcceptorImpl(connectorName, pusher, null);
     MockLister lister = new MockLister(10, 0);
     lister.setDocumentAcceptor(documentAcceptor);
 
@@ -56,7 +60,7 @@ public class DocumentAcceptorTest extends TestCase {
     String connectorName = getName();
     MockPusher pusher = new MockPusher();
     DocumentAcceptorImpl documentAcceptor =
-        new DocumentAcceptorImpl(connectorName, pusher);
+        new DocumentAcceptorImpl(connectorName, pusher, null);
 
     // Feed a couple of documents.
     assertEquals(0, pusher.getTotalDocs());
@@ -116,7 +120,7 @@ public class DocumentAcceptorTest extends TestCase {
     Document document = ConnectorTestUtils.createSimpleDocument("foo");
     MockPusher pusher = new MockPusher();
     DocumentAcceptorImpl documentAcceptor =
-        new DocumentAcceptorImpl(connectorName, pusher);
+        new DocumentAcceptorImpl(connectorName, pusher, null);
     documentAcceptor.setSleepIntervals(shortSleep, longSleep, retries);
 
     // Initial document feed should go unimpeded.
@@ -220,7 +224,7 @@ public class DocumentAcceptorTest extends TestCase {
     ExceptionalPusher pusher = new ExceptionalPusher(exception, where);
     String connectorName = getName();
     DocumentAcceptorImpl documentAcceptor =
-        new DocumentAcceptorImpl(connectorName, pusher);
+        new DocumentAcceptorImpl(connectorName, pusher, null);
 
     // Test take().
     try {

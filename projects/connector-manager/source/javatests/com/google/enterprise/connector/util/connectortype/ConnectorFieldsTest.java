@@ -25,7 +25,6 @@ import com.google.enterprise.connector.util.connectortype.ConnectorFields.Single
 import junit.framework.TestCase;
 
 import java.util.Enumeration;
-import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.Set;
 
@@ -154,59 +153,20 @@ public class ConnectorFieldsTest extends TestCase {
   }
 
   public void testMultiCheckboxField() throws Exception {
-    String name = "multicheckboxfield";
     ImmutableSet<String> keys = ImmutableSet.of("foo", "bar", "baz");
-    String snippet = getMultiCheckboxFieldSnippet(name, keys, null, null);
-    assertTrue(snippet.contains("checkbox"));
-    assertTrue(snippet.contains(name.toUpperCase()));
-    assertTrue(snippet.contains(name));
+    String message = null;
+    doTestMultiCheckboxField(keys, message);
   }
 
-  public void testMultiCheckboxFieldCallbackAppend() throws Exception {
+  private void doTestMultiCheckboxField(Set<String> keys, String message) throws Exception {
     String name = "multicheckboxfield";
-    ImmutableSet<String> keys = ImmutableSet.of("foo", "bar", "baz");
-    String original = getMultiCheckboxFieldSnippet(name, keys, null, null);
-
-    // The appended value must be valid inside an XHTML input tag.
-    final String text = "disabled";
-    String append = getMultiCheckboxFieldSnippet(name, keys, null,
-        new MultiCheckboxField.Callback() {
-          @Override public Map<String, String> getAttributes(String key) {
-            return ImmutableMap.of(text, text);
-          }
-        });
-    assertFalse(original.equals(append));
-    assertTrue(append.contains(text));
-    // For each key, we appended _text="text", two occurrences of the
-    // text value, three punctuation characters, and a leading space.
-    assertEquals(original.length() + keys.size() * (2 * text.length() + 4),
-        append.length());
-  }
-
-  public void testMultiCheckboxFieldCallbackException() throws Exception {
-    String name = "multicheckboxfield";
-    ImmutableSet<String> keys = ImmutableSet.of("foo", "bar", "baz");
-    try {
-      getMultiCheckboxFieldSnippet(name, keys, null,
-        new MultiCheckboxField.Callback() {
-          @Override public Map<String, String> getAttributes(String key) {
-            throw new IllegalStateException();
-          }
-        });
-      fail("Expected an exception");
-    } catch (IllegalStateException expected) {
-    }
-  }
-
-  /** @throws Exception if the snippet is not valid XHTML */
-  private String getMultiCheckboxFieldSnippet(String name, Set<String> keys,
-      String message, MultiCheckboxField.Callback callback) throws Exception {
     boolean mandatory = false;
-    MultiCheckboxField field = new MultiCheckboxField(name, mandatory, keys,
-        message, callback);
+    MultiCheckboxField field = new MultiCheckboxField(name, mandatory, keys, message);
     boolean highlightError = false;
     String snippet = field.getSnippet(new UpcasingResourceBundle(), highlightError);
     XmlParseUtil.validateXhtml(snippet);
-    return snippet;
+    assertTrue(snippet.contains("checkbox"));
+    assertTrue(snippet.contains(name.toUpperCase()));
+    assertTrue(snippet.contains(name));
   }
 }

@@ -26,7 +26,7 @@ public class LoggingDocumentSink implements DocumentSink {
   private static final Logger LOG =
       Logger.getLogger(LoggingDocumentSink.class.getName());
 
-  @Override
+  /* @Override */
   public void add(String documentId, FilterReason reason) {
     LOG.log(Level.FINER, "Skipping Document {0} with reason {1}",
         new String[]{documentId, reason.toString()});

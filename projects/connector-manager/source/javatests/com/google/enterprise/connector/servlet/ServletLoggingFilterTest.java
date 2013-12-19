@@ -14,18 +14,20 @@
 
 package com.google.enterprise.connector.servlet;
 
-import junit.framework.TestCase;
+import com.google.enterprise.connector.common.StringUtils;
 
 import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
+import junit.framework.TestCase;
+
 import java.io.StringWriter;
 import java.util.logging.Handler;
 import java.util.logging.Level;
-import java.util.logging.LogRecord;
 import java.util.logging.Logger;
-
+import java.util.logging.LogRecord;
+import javax.servlet.FilterChain;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletRequestWrapper;
 import javax.servlet.ServletResponse;

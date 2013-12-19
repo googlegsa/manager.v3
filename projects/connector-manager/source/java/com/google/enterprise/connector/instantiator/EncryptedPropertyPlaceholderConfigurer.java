@@ -30,10 +30,13 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
+import java.nio.charset.Charset;
 import java.nio.channels.FileLock;
 import java.security.InvalidKeyException;
+import java.security.Key;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -316,27 +319,27 @@ public class EncryptedPropertyPlaceholderConfigurer extends
       // Encode bytes to base64 to get a string
       return Base64.encode(enc);
     } catch (NoSuchAlgorithmException e) {
-      throw newRuntimeException(ENCRYPT_MSG, name,
-          "provider does not have algorithm", e);
+      throw logAndThrow(ENCRYPT_MSG, name,
+                        "provider does not have algorithm", e);
     } catch (IOException e) {
-      throw newRuntimeException(ENCRYPT_MSG, name, "I/O error", e);
+      throw logAndThrow(ENCRYPT_MSG, name, "I/O error", e);
     } catch (NoSuchPaddingException e) {
-      throw newRuntimeException(ENCRYPT_MSG, name, null, e);
+      throw logAndThrow(ENCRYPT_MSG, name, null, e);
     } catch (InvalidKeyException e) {
-      throw newRuntimeException(ENCRYPT_MSG, name, null, e);
+      throw logAndThrow(ENCRYPT_MSG, name, null, e);
     } catch (UnrecoverableKeyException e) {
-      throw newRuntimeException(ENCRYPT_MSG, name,
-          "key cannot be recovered from keystore", e);
+      throw logAndThrow(ENCRYPT_MSG, name,
+                        "key cannot be recovered from keystore", e);
     } catch (KeyStoreException e) {
-      throw newRuntimeException(ENCRYPT_MSG, name, null, e);
+      throw logAndThrow(ENCRYPT_MSG, name, null, e);
     } catch (CertificateException e) {
-      throw newRuntimeException(ENCRYPT_MSG, name, null, e);
+      throw logAndThrow(ENCRYPT_MSG, name, null, e);
     } catch (IllegalStateException e) {
-      throw newRuntimeException(ENCRYPT_MSG, name, null, e);
+      throw logAndThrow(ENCRYPT_MSG, name, null, e);
     } catch (IllegalBlockSizeException e) {
-      throw newRuntimeException(ENCRYPT_MSG, name, null, e);
+      throw logAndThrow(ENCRYPT_MSG, name, null, e);
     } catch (BadPaddingException e) {
-      throw newRuntimeException(ENCRYPT_MSG, name, null, e);
+      throw logAndThrow(ENCRYPT_MSG, name, null, e);
     }
   }
 
@@ -345,55 +348,55 @@ public class EncryptedPropertyPlaceholderConfigurer extends
   }
 
   public static String decryptString(String name, String cipherText) {
-    // Not all providers support decrypting an empty byte array.
-    if (cipherText.isEmpty()) {
-      return "";
-    }
-
     try {
-      SecretKey key = getSecretKey();
+      Key secretKey = getSecretKey();
       Cipher decryptor = Cipher.getInstance(keyStoreCryptoAlgo);
-      decryptor.init(Cipher.DECRYPT_MODE, key);
+      decryptor.init(Cipher.DECRYPT_MODE, secretKey);
 
       // Decode base64 to get bytes
       byte[] dec = Base64.decode(cipherText);
       // Decrypt
       byte[] utf8 = decryptor.doFinal(dec);
       // Decode using utf-8
-      return new String(utf8, Charsets.UTF_8);
+      return new String(utf8, "UTF8");
     } catch (NoSuchAlgorithmException e) {
-      throw newRuntimeException(DECRYPT_MSG, name,
-          "provider does not have algorithm", e);
+      throw logAndThrow(DECRYPT_MSG, name,
+                        "provider does not have algorithm", e);
     } catch (IOException e) {
-      throw newRuntimeException(DECRYPT_MSG, name, "I/O error", e);
+      throw logAndThrow(DECRYPT_MSG, name, "I/O error", e);
     } catch (KeyStoreException e) {
-      throw newRuntimeException(DECRYPT_MSG, name, null, e);
+      throw logAndThrow(DECRYPT_MSG, name, null, e);
     } catch (CertificateException e) {
-      throw newRuntimeException(DECRYPT_MSG, name, null, e);
+      throw logAndThrow(DECRYPT_MSG, name, null, e);
     } catch (NoSuchPaddingException e) {
-      throw newRuntimeException(DECRYPT_MSG, name, null, e);
+      throw logAndThrow(DECRYPT_MSG, name, null, e);
     } catch (InvalidKeyException e) {
-      throw newRuntimeException(DECRYPT_MSG, name, null, e);
+      throw logAndThrow(DECRYPT_MSG, name, null, e);
     } catch (UnrecoverableKeyException e) {
-      throw newRuntimeException(DECRYPT_MSG, name,
-          "key cannot be recovered from keystore", e);
+      throw logAndThrow(DECRYPT_MSG, name,
+                        "key cannot be recovered from keystore", e);
     } catch (IllegalStateException e) {
-      throw newRuntimeException(DECRYPT_MSG, name, null, e);
+      throw logAndThrow(DECRYPT_MSG, name, null, e);
     } catch (BadPaddingException e) {
-      throw newRuntimeException(DECRYPT_MSG, name,
+      throw logAndThrow(DECRYPT_MSG, name,
           "it might be unencrypted or encrypted with a different algorithm", e);
     } catch (IllegalBlockSizeException e) {
-      throw newRuntimeException(DECRYPT_MSG, name,
+      throw logAndThrow(DECRYPT_MSG, name,
           "it might be unencrypted or encrypted with a different algorithm", e);
     } catch (Base64DecoderException e) {
-      throw newRuntimeException(DECRYPT_MSG, name,
-          "it might not be encrypted at all", e);
+      throw logAndThrow(DECRYPT_MSG, name,
+                        "it might not be encrypted at all", e);
     }
   }
 
-  private static RuntimeException newRuntimeException(String prefix,
-      String name, String suffix, Exception e) {
+  private static RuntimeException logAndThrow(String prefix, String name,
+                                              String suffix, Exception e) {
     String msg = prefix + name + ((suffix == null) ? "" : ( ": " + suffix));
-    return new RuntimeException(msg, e);
+    if (LOGGER.isLoggable(Level.FINEST)) {
+      LOGGER.log(Level.SEVERE, msg, e);
+    } else {
+      LOGGER.severe(msg);
+    }LOGGER.severe(msg);
+    return new RuntimeException(msg);
   }
 }

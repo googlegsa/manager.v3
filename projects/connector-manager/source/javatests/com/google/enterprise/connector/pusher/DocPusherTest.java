@@ -63,6 +63,7 @@ import java.io.StringReader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -160,9 +161,6 @@ public class DocPusherTest extends TestCase {
     String record = "<record url=\"http://www.sometesturl.com/searchurl\""
         + " mimetype=\"text/plain\""
         + " last-modified=\"Thu, 01 Jan 1970 01:00:00 GMT\">\n"
-        + "<acl>\n"
-        + "<principal scope=\"group\" access=\"permit\">Everyone</principal>\n"
-        + "</acl>\n"
         + "<metadata>\n"
         + "<meta name=\"google:lastmodified\" content=\"1970-01-01\"/>\n"
         + "<meta name=\"google:mimetype\" content=\"text/plain\"/>\n"
@@ -1414,17 +1412,15 @@ public class DocPusherTest extends TestCase {
   }
 
   /**
-   * Roles are not supported in principal elements. Make sure they get
-   * stripped out.
+   * Roles are not supported by all GSAs. Make sure they get stripped out.
    */
   public void testUserGroupRoleAclSmartGsa() throws Exception {
     String userGroupRoleAcl = "{\"timestamp\":\"60\""
         + ",\"docid\":\"user_group_role_acl\""
         + ",\"content\":\"this document has scoped user and group role ACL\""
         + ",\"acl\":{type:string, value:[\"user:joe=reader\""
-        + ",\"user:mary=writer,owner\",\"user:mike=peeker\""
-        + ",\"group:eng=reader\",\"group:sales=peeker\""
-        + ",\"group:support=writer\"]}"
+        + ",\"user:mary=reader,writer,owner\",\"user:mike=peeker\""
+        + ",\"group:eng=reader\",\"group:sales=peeker\"]}"
         + ",\"google:ispublic\":\"false\"}";
     String resultXML = feedJsonEvent(userGroupRoleAcl, true);
 
@@ -1435,8 +1431,6 @@ public class DocPusherTest extends TestCase {
                          + "mary</principal>", resultXML);
     assertStringContains("<principal scope=\"group\" access=\"permit\">"
                          + "eng</principal>", resultXML);
-    assertStringContains("<principal scope=\"group\" access=\"permit\">"
-                         + "support</principal>", resultXML);
     assertStringContains("</acl>", resultXML);
     assertStringContains("<record url="
                          + googleConnectorUrl("user_group_role_acl"),
@@ -1444,7 +1438,6 @@ public class DocPusherTest extends TestCase {
     assertStringContains("authmethod=\"httpbasic\"", resultXML);
     assertStringNotContains("<meta name=\"google:aclusers\"", resultXML);
     assertStringNotContains("<meta name=\"google:aclgroups\"", resultXML);
-    assertStringNotContains("access=\"deny\"", resultXML);
 
     // Roles should be stripped out, and peekers eliminated.
     assertStringNotContains("=owner", resultXML);
@@ -1453,48 +1446,6 @@ public class DocPusherTest extends TestCase {
     assertStringNotContains("=peeker", resultXML);
     assertStringNotContains("mike", resultXML);
     assertStringNotContains("sales", resultXML);
-  }
-
-  /**
-   * Roles are not supported in principal elements. Make sure they get
-   * stripped out.
-   */
-  public void testDenyUserGroupRoleAclSmartGsa() throws Exception {
-    String userGroupRoleAcl = "{\"timestamp\":\"60\""
-        + ",\"docid\":\"user_group_role_acl\""
-        + ",\"content\":\"this document has scoped user and group role ACL\""
-        + ",\"acldeny\":{type:string, value:[\"user:joe=reader\""
-        + ",\"user:mary=writer,owner\",\"user:mike=peeker\""
-        + ",\"group:eng=reader\",\"group:sales=peeker\""
-        + ",\"group:support=writer\"]}"
-        + ",\"google:ispublic\":\"false\"}";
-    String resultXML = feedJsonEvent(userGroupRoleAcl, true);
-
-    assertStringContains("<acl", resultXML);
-    assertStringContains("<principal scope=\"user\" access=\"deny\">"
-                         + "joe</principal>", resultXML);
-    assertStringContains("<principal scope=\"user\" access=\"deny\">"
-                         + "mike</principal>", resultXML);
-    assertStringContains("<principal scope=\"group\" access=\"deny\">"
-                         + "eng</principal>", resultXML);
-    assertStringContains("<principal scope=\"group\" access=\"deny\">"
-                         + "sales</principal>", resultXML);
-    assertStringContains("</acl>", resultXML);
-    assertStringContains("<record url="
-                         + googleConnectorUrl("user_group_role_acl"),
-                         resultXML);
-    assertStringContains("authmethod=\"httpbasic\"", resultXML);
-    assertStringNotContains("<meta name=\"google:acldenyusers\"", resultXML);
-    assertStringNotContains("<meta name=\"google:acldenygroups\"", resultXML);
-    assertStringNotContains("access=\"permit\"", resultXML);
-
-    // Roles should be stripped out, and writers and owners eliminated.
-    assertStringNotContains("=owner", resultXML);
-    assertStringNotContains("=reader", resultXML);
-    assertStringNotContains("=writer", resultXML);
-    assertStringNotContains("=peeker", resultXML);
-    assertStringNotContains("mary", resultXML);
-    assertStringNotContains("support", resultXML);
   }
 
   public void testUserReaderAcl() throws Exception {
@@ -2066,226 +2017,6 @@ public class DocPusherTest extends TestCase {
         resultXML);
     assertStringNotContains(SpiConstants.PROPNAME_LOCK,
         resultXML);
-  }
-
-  /**
-   * Test Doc with crawl-immediately unspecified.
-   */
-  public void testCrawlImmediatelyUnspecified() throws Exception {
-    String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
-        + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
-        + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
-        + "}\r\n" + "";
-
-    String resultXML = feedJsonEvent(json1);
-
-    assertStringNotContains("crawl-immediately=\"true\"",
-        resultXML);
-    // The GSA treats attribute as false if not present in the feed.
-    // We prefer to not specify it if the value is false (explicitly or
-    // implicitly) to minimize risk in a patch
-    // TODO(Max): change this to explicit in the trunk
-    assertStringNotContains("crawl-immediately=\"false\"",
-        resultXML);
-    assertStringNotContains("crawl-immediately=",
-        resultXML);
-    assertStringNotContains("meta name=\""
-        + SpiConstants.PROPNAME_CRAWL_IMMEDIATELY + "\"", resultXML);
-    assertStringNotContains(SpiConstants.PROPNAME_CRAWL_IMMEDIATELY, resultXML);
-  }
-
-  /**
-   * Test Doc with crawl-immediately specified false.
-   */
-  public void testCrawlImmediatelyExplicitFalse() throws Exception {
-    String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
-        + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
-        + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
-        + ",\"google:crawl-immediately\":\"false\""
-        + "}\r\n" + "";
-    String resultXML = feedJsonEvent(json1);
-
-    assertStringNotContains("crawl-immediately=\"true\"",
-        resultXML);
-    assertStringNotContains("crawl-immediately=\"false\"",
-        resultXML);
-    assertStringNotContains("crawl-immediately=",
-        resultXML);
-    assertStringNotContains("meta name=\""
-        + SpiConstants.PROPNAME_CRAWL_IMMEDIATELY + "\"", resultXML);
-    assertStringNotContains(SpiConstants.PROPNAME_CRAWL_IMMEDIATELY, resultXML);
-  }
-
-  /**
-   * Test Doc with crawl-immediately specified true.
-   */
-  public void tesCrawlImmediatelyExplicitTrue() throws Exception {
-    String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
-        + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
-        + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
-        + ",\"google:crawl-immediately\":\"true\""
-        + "}\r\n" + "";
-    String resultXML = feedJsonEvent(json1);
-
-    assertStringContains("crawl-immediately=\"true\"",
-        resultXML);
-    assertStringNotContains("crawl-immediately=\"false\"",
-        resultXML);
-    assertStringNotContains("meta name=\""
-        + SpiConstants.PROPNAME_CRAWL_IMMEDIATELY + "\"", resultXML);
-    assertStringNotContains(SpiConstants.PROPNAME_CRAWL_IMMEDIATELY, resultXML);
-  }
-
-  /**
-   * Test Doc with crawl-immediately specified with illegal value.
-   */
-  public void testCrawlImmediatelyIllegalValue() throws Exception {
-    String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
-        + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
-        + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
-        + ",\"google:crawl-immediately\":\"xyzzy\""
-        + "}\r\n" + "";
-    String resultXML = feedJsonEvent(json1);
-
-    // should be silently treated as true
-    assertStringContains("crawl-immediately=\"true\"",
-        resultXML);
-    assertStringNotContains("crawl-immediately=\"false\"",
-        resultXML);
-    assertStringNotContains("meta name=\""
-        + SpiConstants.PROPNAME_CRAWL_IMMEDIATELY + "\"", resultXML);
-    assertStringNotContains(SpiConstants.PROPNAME_CRAWL_IMMEDIATELY, resultXML);
-  }
-
-  /**
-   * Test Doc with crawl-immediately specified with empty value.
-   */
-  public void testCrawlImmediatelyEmptyValue() throws Exception {
-    String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
-        + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
-        + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
-        + ",\"google:crawl-immediately\":\"\""
-        + "}\r\n" + "";
-    String resultXML = feedJsonEvent(json1);
-
-    // should be silently treated as true
-    assertStringContains("crawl-immediately=\"true\"",
-        resultXML);
-    assertStringNotContains("crawl-immediately=\"false\"",
-        resultXML);
-    assertStringNotContains("meta name=\""
-        + SpiConstants.PROPNAME_CRAWL_IMMEDIATELY + "\"", resultXML);
-    assertStringNotContains(SpiConstants.PROPNAME_CRAWL_IMMEDIATELY, resultXML);
-  }
-  
-  /**
-   * Test Doc with crawl-once unspecified.
-   */
-  public void testCrawlOnceUnspecified() throws Exception {
-    String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
-        + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
-        + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
-        + "}\r\n" + "";
-
-    String resultXML = feedJsonEvent(json1);
-
-    assertStringNotContains("crawl-once=\"true\"",
-        resultXML);
-    // The GSA treats attribute as false if not present in the feed.
-    // We prefer to not specify it if the value is false (explicitly or
-    // implicitly) to minimize risk in a patch
-    // TODO(Max): change this to explicit in the trunk
-    assertStringNotContains("crawl-once=\"false\"",
-        resultXML);
-    assertStringNotContains("crawl-once=",
-        resultXML);
-    assertStringNotContains("meta name=\""
-        + SpiConstants.PROPNAME_CRAWL_ONCE + "\"", resultXML);
-    assertStringNotContains(SpiConstants.PROPNAME_CRAWL_ONCE, resultXML);
-  }
-
-  /**
-   * Test Doc with crawl-once specified false.
-   */
-  public void testCrawlOnceExplicitFalse() throws Exception {
-    String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
-        + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
-        + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
-        + ",\"google:crawl-once\":\"false\""
-        + "}\r\n" + "";
-    String resultXML = feedJsonEvent(json1);
-
-    assertStringNotContains("crawl-once=\"true\"",
-        resultXML);
-    assertStringNotContains("crawl-once=\"false\"",
-        resultXML);
-    assertStringNotContains("crawl-once=",
-        resultXML);
-    assertStringNotContains("meta name=\""
-        + SpiConstants.PROPNAME_CRAWL_ONCE + "\"", resultXML);
-    assertStringNotContains(SpiConstants.PROPNAME_CRAWL_ONCE, resultXML);
-  }
-
-  /**
-   * Test Doc with crawl-once specified true.
-   */
-  public void tesCrawlOnceExplicitTrue() throws Exception {
-    String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
-        + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
-        + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
-        + ",\"google:crawl-once\":\"true\""
-        + "}\r\n" + "";
-    String resultXML = feedJsonEvent(json1);
-
-    assertStringContains("crawl-once=\"true\"",
-        resultXML);
-    assertStringNotContains("crawl-once=\"false\"",
-        resultXML);
-    assertStringNotContains("meta name=\""
-        + SpiConstants.PROPNAME_CRAWL_ONCE+ "\"", resultXML);
-    assertStringNotContains(SpiConstants.PROPNAME_CRAWL_ONCE, resultXML);
-  }
-
-  /**
-   * Test Doc with crawl-once specified with illegal value.
-   */
-  public void testCrawlOnceIllegalValue() throws Exception {
-    String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
-        + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
-        + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
-        + ",\"google:crawl-once\":\"xyzzy\""
-        + "}\r\n" + "";
-    String resultXML = feedJsonEvent(json1);
-
-    // should be silently treated as true
-    assertStringContains("crawl-once=\"true\"",
-        resultXML);
-    assertStringNotContains("crawl-once=\"false\"",
-        resultXML);
-    assertStringNotContains("meta name=\""
-        + SpiConstants.PROPNAME_CRAWL_ONCE + "\"", resultXML);
-    assertStringNotContains(SpiConstants.PROPNAME_CRAWL_ONCE, resultXML);
-  }
-
-  /**
-   * Test Doc with crawl-once specified with empty value.
-   */
-  public void testCrawlOnceEmptyValue() throws Exception {
-    String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
-        + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
-        + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
-        + ",\"google:crawl-once\":\"\""
-        + "}\r\n" + "";
-    String resultXML = feedJsonEvent(json1);
-
-    // should be silently treated as true
-    assertStringContains("crawl-once=\"true\"",
-        resultXML);
-    assertStringNotContains("crawl-once=\"false\"",
-        resultXML);
-    assertStringNotContains("meta name=\""
-        + SpiConstants.PROPNAME_CRAWL_ONCE + "\"", resultXML);
-    assertStringNotContains(SpiConstants.PROPNAME_CRAWL_ONCE, resultXML);
   }
 
   /** Test Add filter can override the default httpbasic. */
@@ -3548,14 +3279,12 @@ public class DocPusherTest extends TestCase {
   public void testAclDumbDown() throws Exception {
     String parentUrl = "http://foo/parent-doc";
     Map<String, Object> props = getTestAclDocumentConfig();
-    props.put(SpiConstants.PROPNAME_ACLINHERITFROM_DOCID, "parent-doc");
-    props.put(SpiConstants.PROPNAME_ACLINHERITFROM_FRAGMENT, "elephant");
+    props.put(SpiConstants.PROPNAME_ACLINHERITFROM, parentUrl);
     props.put(SpiConstants.PROPNAME_FEEDTYPE,
         SpiConstants.FeedType.CONTENT.toString());
     Document document = ConnectorTestUtils.createSimpleDocument(props);
     String resultXML = feedDocument(document, false);
     assertStringNotContains("parent-doc", resultXML);
-    assertStringNotContains(SpiConstants.ACL_PROPNAME_PREFIX, resultXML);
     assertStringContains("httpbasic", resultXML);
   }
 
@@ -3612,7 +3341,6 @@ public class DocPusherTest extends TestCase {
          ExtractedAclDocumentFilter.EXTRACTED_ACL_FRAGMENT) + "\">",
          records[1]);
     assertStringNotContains("<principal ", records[1]);
-    assertStringNotContains("<metadata ", records[1]);
   }
 
   private static class MockIdGenerator implements UniqueIdGenerator {

@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.util.Enumeration;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -36,7 +35,7 @@ public class ServletLoggingFilter implements Filter {
   private static final Logger LOGGER =
       Logger.getLogger(ServletLoggingFilter.class.getName());
 
-  @Override
+  /* @Override */
   public void init(FilterConfig filterConfig) {
     NDC.push("Init");
     try {
@@ -46,7 +45,7 @@ public class ServletLoggingFilter implements Filter {
     }
   }
 
-  @Override
+  /* @Override */
   public void destroy() {
     NDC.push("Shutdown");
     try {
@@ -57,7 +56,7 @@ public class ServletLoggingFilter implements Filter {
   }
 
   /** Log the ServletRequest path, pathInfo, and query info. */
-  @Override
+  /* @Override */
   public void doFilter(ServletRequest request, ServletResponse response,
       FilterChain chain) throws IOException, ServletException {
     NDC.push("Servlet");

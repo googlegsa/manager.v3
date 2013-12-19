@@ -14,14 +14,15 @@
 
 package com.google.enterprise.connector.manager;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.enterprise.connector.common.PropertiesException;
 import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.instantiator.Instantiator;
 import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.instantiator.SpringInstantiator;
 import com.google.enterprise.connector.instantiator.ThreadPool;
+import com.google.enterprise.connector.pusher.DocPusherFactory;
 import com.google.enterprise.connector.pusher.GsaFeedConnection;
 import com.google.enterprise.connector.scheduler.TraversalScheduler;
 import com.google.enterprise.connector.spi.SimpleTraversalContext;
@@ -258,11 +259,11 @@ public class Context {
       + " Once the backlog count drops down below the floor value, feeding\n"
       + " resumes.\n  For example:\n"
       + " Stop feeding the GSA if its backlog exceeds this value.\n"
-      + "   feed.backlog.ceiling=4000\n"
+      + "   feed.backlog.ceiling=10000\n"
       + " Resume feeding the GSA if its backlog falls below this value.\n"
       + "   feed.backlog.floor=1000\n"
       + " How often to check for feed backlog (in seconds).\n"
-      + "   feed.backlog.interval=120\n"
+      + "   feed.backlog.interval=900\n"
       + "\n"
       + " The 'traversal.batch.size' property defines the optimal number\n"
       + " of items to return in each repository traversal batch.  The batch\n"

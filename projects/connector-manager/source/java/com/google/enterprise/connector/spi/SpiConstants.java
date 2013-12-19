@@ -68,7 +68,7 @@ public class SpiConstants {
    * <p/>
    * Value: google:fragment
    *
-   * @since 3.2
+   * @since TODO(bmj)
    */
   public static final String PROPNAME_FRAGMENT = "google:fragment";
 
@@ -128,14 +128,12 @@ public class SpiConstants {
    * used to identify the feed file that contains a fed document. All feed
    * records in a single feed file will share a common google:feedid value.
    * <p/>
-   * Not used.
+   * Reserved for internal use.
    * <p/>
    * Value: google:feedid
    *
    * @since 2.6
-   * @deprecated This property is unused.
    */
-  @Deprecated
   public static final String PROPNAME_FEEDID = "google:feedid";
 
   /**
@@ -310,6 +308,7 @@ public class SpiConstants {
    *
    * @since 3.0
    */
+  // TODO: clarify the behavior of and support for roles in DENY ACEs
   public static final String PROPNAME_ACLDENYUSERS = "google:acldenyusers";
 
   /**
@@ -387,7 +386,7 @@ public class SpiConstants {
    * <p/>
    * Value: google:aclinheritfrom:fragment
    *
-   * @since 3.2
+   * @since TODO(bmj)
    */
   public static final String PROPNAME_ACLINHERITFROM_FRAGMENT =
       "google:aclinheritfrom:fragment";
@@ -489,23 +488,6 @@ public class SpiConstants {
    * @since 2.6.4
    */
   public static final String PROPNAME_LOCK = "google:lock";
-
-  /**
-   * Optional, single-valued property to specify the crawl immediately property
-   * of the record element.
-   *
-   * //TODO: add since version number 
-   */
-  public static final String PROPNAME_CRAWL_IMMEDIATELY =
-      "google:crawl-immediately";
-
-  /**
-   * Optional, single-valued property to specify the crawl once property
-   * of the record element.
-   *
-   * //TODO: add since version number
-   */
-  public static final String PROPNAME_CRAWL_ONCE = "google:crawl-once";
 
   /**
    * Identifies an optional, single-valued integer property that specifies
@@ -744,10 +726,7 @@ public class SpiConstants {
    * <li>{@link #PROPNAME_PERSISTED_CUSTOMDATA_1}</li>
    * <li>{@link #PROPNAME_PERSISTED_CUSTOMDATA_2}</li>
    * </ul>
-   *
-   * @deprecated The per-document store has never been publicly implemented
    */
-  @Deprecated
   public static final Map<String, String> PERSISTABLE_ATTRIBUTES;
 
   /**
@@ -756,10 +735,7 @@ public class SpiConstants {
    * If not present, this is assumed to be {@code false}. If {@code true},
    * then the Connector Manager will persist all attributes that are keys in
    * the {@link #PERSISTABLE_ATTRIBUTES} map.
-   *
-   * @deprecated The per-document store has never been publicly implemented
    */
-  @Deprecated
   public static final String PROPNAME_MANAGER_SHOULD_PERSIST = "google:persist";
 
   /**
@@ -769,10 +745,7 @@ public class SpiConstants {
    * <p/>
    * This property is persistable (it is one of the keys in the
    * {@link #PERSISTABLE_ATTRIBUTES} map.
-   *
-   * @deprecated The per-document store has never been publicly implemented
    */
-  @Deprecated
   public static final String PROPNAME_CONNECTOR_INSTANCE = "google:connector_instance";
 
   /**
@@ -782,10 +755,7 @@ public class SpiConstants {
    * <p/>
    * This property is persistable (it is one of the keys in the
    * {@link #PERSISTABLE_ATTRIBUTES} map.
-   *
-   * @deprecated The per-document store has never been publicly implemented
    */
-  @Deprecated
   public static final String PROPNAME_CONNECTOR_TYPE = "google:connector_type";
 
   /**
@@ -798,10 +768,7 @@ public class SpiConstants {
    * <p/>
    * This property is persistable (it is one of the keys in the
    * {@link #PERSISTABLE_ATTRIBUTES} map.
-   *
-   * @deprecated The per-document store has never been publicly implemented
    */
-  @Deprecated
   public static final String PROPNAME_PRIMARY_FOLDER = "google:primary_folder";
 
   /**
@@ -811,10 +778,7 @@ public class SpiConstants {
    * <p/>
    * This property is persistable (it is one of the keys in the
    * {@link #PERSISTABLE_ATTRIBUTES} map.
-   *
-   * @deprecated The per-document store has never been publicly implemented
    */
-  @Deprecated
   public static final String PROPNAME_TIMESTAMP = "google:timestamp";
 
   /**
@@ -823,10 +787,7 @@ public class SpiConstants {
    * <p/>
    * This property is persistable (it is one of the keys in the
    * {@link #PERSISTABLE_ATTRIBUTES} map.
-   *
-   * @deprecated The per-document store has never been publicly implemented
    */
-  @Deprecated
   public static final String PROPNAME_MESSAGE = "google:message";
 
   /**
@@ -839,10 +800,7 @@ public class SpiConstants {
    * <p/>
    * This property is persistable (it is one of the keys in the
    * {@link #PERSISTABLE_ATTRIBUTES} map.
-   *
-   * @deprecated The per-document store has never been publicly implemented
    */
-  @Deprecated
   public static final String PROPNAME_SNAPSHOT = "google:snapshot";
 
   /**
@@ -854,10 +812,7 @@ public class SpiConstants {
    * <p/>
    * This property is persistable (it is one of the keys in the
    * {@link #PERSISTABLE_ATTRIBUTES} map.
-   *
-   * @deprecated The per-document store has never been publicly implemented
    */
-  @Deprecated
   public static final String PROPNAME_CONTAINER = "google:container";
 
   /**
@@ -924,20 +879,14 @@ public class SpiConstants {
    * Optional, single-valued property the Connector Manager will persist in its
    * per-document store. This property will not be supplied when sending a
    * document to the GSA for indexing.
-   *
-   * @deprecated The per-document store has never been publicly implemented
    */
-  @Deprecated
   public static final String PROPNAME_PERSISTED_CUSTOMDATA_1 = "google:custom1";
 
   /**
    * Optional, single-valued property the Connector Manager will persist in its
    * per-document store. This property will not be supplied when sending a
    * document to the GSA for indexing.
-   *
-   * @deprecated The per-document store has never been publicly implemented
    */
-  @Deprecated
   public static final String PROPNAME_PERSISTED_CUSTOMDATA_2 = "google:custom2";
 
   static {

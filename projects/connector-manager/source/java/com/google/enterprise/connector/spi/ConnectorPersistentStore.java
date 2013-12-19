@@ -23,12 +23,11 @@ package com.google.enterprise.connector.spi;
 public interface ConnectorPersistentStore {
 
   /**
-   * Not implemented.
+   * Gets a {@link LocalDocumentStore} through which the connector can access
+   * the Connector Manager's persisted store of document metadata.
    *
    * @return {@code null}
-   * @deprecated This method has always returned {@code null}
    */
-  @Deprecated
   public LocalDocumentStore getLocalDocumentStore();
 
   /**

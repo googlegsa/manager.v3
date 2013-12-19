@@ -148,7 +148,7 @@ public class DiffingConnectorTraversalManagerTest extends TestCase {
         assertNotNull(doc);
         String docId = Value.getSingleValueString(doc, SpiConstants.PROPNAME_DOCID);
         assertEquals(String.format("/foo/bar/file.%d", batch * BATCH_SIZE + k),
-            docId);
+            DocIdUtil.idToPath(docId));
       }
       assertNull(docs.nextDocument());
     }

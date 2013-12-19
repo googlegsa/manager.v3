@@ -14,7 +14,6 @@
 
 package com.google.enterprise.connector.common;
 
-import com.google.common.base.Charsets;
 import com.google.enterprise.connector.pusher.XmlFeed;
 import com.google.enterprise.connector.spi.XmlUtils;
 
@@ -22,6 +21,8 @@ import java.io.ByteArrayInputStream;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -76,7 +77,12 @@ public class AlternateContentFilterInputStream extends FilterInputStream {
       content = SPACE;
     }
 
-    return new ByteArrayInputStream(content.getBytes(Charsets.UTF_8));
+    try {
+      return new ByteArrayInputStream(content.getBytes("UTF-8"));
+    } catch (UnsupportedEncodingException uee) {
+      // Will not happen with UTF-8.
+      throw new AssertionError(uee);
+    }
   }
 
   /** Builds an HTML5 document with just a title, no body. */

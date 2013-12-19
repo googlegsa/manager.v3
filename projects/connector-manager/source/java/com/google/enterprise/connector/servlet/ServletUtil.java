@@ -14,13 +14,12 @@
 
 package com.google.enterprise.connector.servlet;
 
-import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+
 import com.google.enterprise.connector.common.JarUtils;
 import com.google.enterprise.connector.common.SecurityUtils;
-import com.google.enterprise.connector.util.Base16;
 import com.google.enterprise.connector.util.SAXParseErrorHandler;
 import com.google.enterprise.connector.util.XmlParseUtil;
 import com.google.enterprise.connector.util.XmlParseUtil.LocalEntityResolver;
@@ -34,10 +33,10 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -469,6 +468,7 @@ public class ServletUtil {
     percentEncode(sb, value);    
   }
 
+  private static final String HEX = "0123456789ABCDEF";
   private static final String PERCENT = "-.%0123456789%%%%%%"
       + "%ABCDEFGHIJKLMNOPQRSTUVWXYZ%%%%_"
       + "%abcdefghijklmnopqrstuvwxyz%%%~";
@@ -484,13 +484,20 @@ public class ServletUtil {
    * @param text some plain text
    */
   public static void percentEncode(StringBuilder sb, String text) {
-    byte[] bytes = text.getBytes(Charsets.UTF_8);
+    byte[] bytes;
+    try {
+      bytes = text.getBytes("UTF-8");
+    } catch (java.io.UnsupportedEncodingException e) {
+      // Not going to happen with built-in encoding.
+      throw new AssertionError(e);
+    }
     for (byte b : bytes) {
       if (b >= '-' && b <= '~' && PERCENT.charAt(b - '-') != '%') {
         sb.append((char) b);
       } else {
         sb.append('%');
-        Base16.upperCase().encode(b, sb);
+        sb.append(HEX.charAt((b >>> 4) & 0xF));
+        sb.append(HEX.charAt(b & 0xF));
       }
     }
   }

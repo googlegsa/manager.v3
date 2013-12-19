@@ -20,10 +20,9 @@ import java.net.URLEncoder;
 /**
  * Static methods to convert paths to doc-ids and vice-versa.
  * <p/>
- * The Connector Manager embeds docids into URLs without encoding them.
- * URL encoding is not order-preserving and must be used with caution.
+ * The Connector Manager embeds docids into URLs without encoding them and
+ * FileConnector URLs have "special" characters.
  *
- * @see DocumentHandle#getDocumentId
  * @since 2.8
  */
 /* see http://code.google.com/p/google-enterprise-connector-manager/issues/detail?id=214 */

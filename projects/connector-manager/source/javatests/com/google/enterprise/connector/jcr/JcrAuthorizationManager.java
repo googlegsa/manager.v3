@@ -19,8 +19,8 @@ import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.AuthorizationResponse;
 import com.google.enterprise.connector.spi.RepositoryException;
 
-import java.util.Collection;
 import java.util.LinkedList;
+import java.util.Collection;
 
 import javax.jcr.Credentials;
 import javax.jcr.ItemNotFoundException;

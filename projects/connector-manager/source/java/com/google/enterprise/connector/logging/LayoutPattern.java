@@ -17,8 +17,8 @@ package com.google.enterprise.connector.logging;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.logging.Formatter;
 import java.util.logging.LogRecord;
+import java.util.logging.Formatter;
 
 /**
  * Log message layout pattern for text (non-XML) format messages. It is
@@ -402,7 +402,7 @@ public class LayoutPattern {
       }
     }
 
-    @Override
+    // @Override
     public void format(StringBuilder builder, LogRecord record) {
       StringBuilder baseBuilder = new StringBuilder();
       base.format(baseBuilder, record);
@@ -434,7 +434,7 @@ public class LayoutPattern {
     public StringElement(String string) {
       this.string = string;
     }
-    @Override
+    // @Override
     public void format(StringBuilder builder, LogRecord ignored) {
       builder.append(string);
     }
@@ -448,7 +448,7 @@ public class LayoutPattern {
     public ClassNameElement(int numSegments) {
       this.segments = numSegments;
     }
-    @Override
+    // @Override
     public void format(StringBuilder builder, LogRecord logRecord) {
       String name = logRecord.getSourceClassName();
       if (segments > 0) {
@@ -477,7 +477,7 @@ public class LayoutPattern {
     public DateElement(String dateFormat) {
       this.dateFormat = new SimpleDateFormat(dateFormat);
     }
-    @Override
+    // @Override
     public void format(StringBuilder builder, LogRecord logRecord) {
       builder.append(dateFormat.format(new Date(logRecord.getMillis())));
     }
@@ -491,7 +491,7 @@ public class LayoutPattern {
   // "[%T %t %X{connectorName}] %f" would prepend a formatted log message
   // with the ThreadID, ThreadName, and ConnectorName.
   private class FormattedRecordElement implements FormatElement {
-    @Override
+    // @Override
     public void format(StringBuilder builder, LogRecord logRecord) {
       if (baseFormatter != null) {
         builder.append(baseFormatter.format(logRecord));
@@ -501,7 +501,7 @@ public class LayoutPattern {
 
   // %M - Method Name.
   private class MethodNameElement implements FormatElement {
-    @Override
+    // @Override
     public void format(StringBuilder builder, LogRecord logRecord) {
       builder.append(logRecord.getSourceMethodName());
     }
@@ -509,7 +509,7 @@ public class LayoutPattern {
 
   // %m - Message.
   private class MessageElement implements FormatElement {
-    @Override
+    // @Override
     public void format(StringBuilder builder, LogRecord logRecord) {
       if (baseFormatter == null) {
         builder.append(logRecord.getMessage());
@@ -521,7 +521,7 @@ public class LayoutPattern {
 
   // %N - Sequence Number.
   private class SequenceNumberElement implements FormatElement {
-    @Override
+    // @Override
     public void format(StringBuilder builder, LogRecord logRecord) {
       builder.append(logRecord.getSequenceNumber());
     }
@@ -529,7 +529,7 @@ public class LayoutPattern {
 
   // %p - Priority/Level.
   private class LevelElement implements FormatElement {
-    @Override
+    // @Override
     public void format(StringBuilder builder, LogRecord logRecord) {
       builder.append(logRecord.getLevel().getName());
     }
@@ -537,7 +537,7 @@ public class LayoutPattern {
 
   // %T - Thread ID.
   private class ThreadIdElement implements FormatElement {
-    @Override
+    // @Override
     public void format(StringBuilder builder, LogRecord logRecord) {
       builder.append(Thread.currentThread().getId());
     }
@@ -545,7 +545,7 @@ public class LayoutPattern {
 
   // %t - Thread Name.
   private class ThreadNameElement implements FormatElement {
-    @Override
+    // @Override
     public void format(StringBuilder builder, LogRecord logRecord) {
       builder.append(Thread.currentThread().getName());
     }
@@ -557,7 +557,7 @@ public class LayoutPattern {
     public MDCElement(String key) {
       this.key = key;
     }
-    @Override
+    // @Override
     public void format(StringBuilder builder, LogRecord ignored) {
       builder.append(MDC.get(key));
     }
@@ -565,7 +565,7 @@ public class LayoutPattern {
 
   // %x - NDC value for thread.
   private class NDCElement implements FormatElement {
-    @Override
+    // @Override
     public void format(StringBuilder builder, LogRecord ignored) {
       builder.append(NDC.peek());
     }

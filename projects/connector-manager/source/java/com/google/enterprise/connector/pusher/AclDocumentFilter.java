@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.pusher;
 
+import com.google.common.base.Preconditions;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.RepositoryException;
@@ -36,12 +37,24 @@ import java.util.Set;
  */
 public class AclDocumentFilter implements DocumentFilterFactory {
   private static final Set<String> PROPERTIES_UNSUPPORTED;
+  private static final Set<String> PROPERTIES_TO_REMOVE;
 
   static {
     Set<String> properties = new HashSet<String>();
     properties.add(SpiConstants.PROPNAME_ACLINHERITFROM);
     properties.add(SpiConstants.PROPNAME_ACLINHERITFROM_DOCID);
     PROPERTIES_UNSUPPORTED = Collections.unmodifiableSet(properties);
+
+    properties = new HashSet<String>();
+    properties.add(SpiConstants.PROPNAME_ACLGROUPS);
+    properties.add(SpiConstants.PROPNAME_ACLUSERS);
+    properties.add(SpiConstants.PROPNAME_ACLDENYGROUPS);
+    properties.add(SpiConstants.PROPNAME_ACLDENYUSERS);
+    properties.add(SpiConstants.PROPNAME_ACLINHERITANCETYPE);
+    properties.add(SpiConstants.PROPNAME_ACLINHERITFROM);
+    properties.add(SpiConstants.PROPNAME_ACLINHERITFROM_DOCID);
+    properties.add(SpiConstants.PROPNAME_ACLINHERITFROM_FEEDTYPE);
+    PROPERTIES_TO_REMOVE = Collections.unmodifiableSet(properties);
   }
 
   @Override
@@ -55,7 +68,7 @@ public class AclDocumentFilter implements DocumentFilterFactory {
       // information here.
       return new SkipDocument(source);
     } else if (requiresDumbingDown(source)) {
-      return new NoAclsDocumentFilter().newDocumentFilter(source);
+      return new NoAclsDocument(source);
     } else {
       return source;
     }
@@ -89,7 +102,7 @@ public class AclDocumentFilter implements DocumentFilterFactory {
       this.source = source;
     }
 
-    @Override
+    /* @Override */
     public Property findProperty(String name) throws RepositoryException {
       if (SpiConstants.PROPNAME_DOCID.equals(name)) {
         return source.findProperty(name);
@@ -98,7 +111,7 @@ public class AclDocumentFilter implements DocumentFilterFactory {
           + "is unsupported on this GSA");
     }
 
-    @Override
+    /* @Override */
     public Set<String> getPropertyNames() throws RepositoryException {
       throw new SkippedDocumentException("Document was an ACL document, which "
           + "is unsupported on this GSA");
@@ -108,21 +121,31 @@ public class AclDocumentFilter implements DocumentFilterFactory {
   /**
    * A document filter that removes ACLs and marks the document as private.
    */
-  private static class NoAclsDocumentFilter extends StripAclDocumentFilter {
-    @Override
-    public Property findProperty(Document source, String name)
+  private static class NoAclsDocument implements Document {
+    private final Document source;
+
+    public NoAclsDocument(Document source) {
+      this.source = source;
+    }
+
+    /* @Override */
+    public Property findProperty(String name)
         throws RepositoryException {
       if (name == SpiConstants.PROPNAME_ISPUBLIC) {
         return new SimpleProperty(Value.getBooleanValue(false));
+      } else if (PROPERTIES_TO_REMOVE.contains(name)) {
+        return null;
       } else {
-        return super.findProperty(source, name);
+        return source.findProperty(name);
       }
     }
 
-    @Override
-    public Set<String> getPropertyNames(Document source)
+    /* @Override */
+    public Set<String> getPropertyNames()
         throws RepositoryException {
-      Set<String> names = new HashSet<String>(super.getPropertyNames(source));
+      Set<String> names = source.getPropertyNames();
+      names = new HashSet<String>(names);
+      names.removeAll(PROPERTIES_TO_REMOVE);
       names.add(SpiConstants.PROPNAME_ISPUBLIC);
       return names;
     }

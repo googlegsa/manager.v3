@@ -16,6 +16,7 @@ package com.google.enterprise.connector.mock;
 
 import junit.framework.TestCase;
 
+
 /**
  * Unit tests for Mock Repository
  */

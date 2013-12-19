@@ -21,9 +21,12 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 
-import java.io.Console;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -135,18 +138,21 @@ public class EncryptPassword extends AbstractCommandLineApp {
     // Since we will be prompting, might as well display the version.
     printVersion();
 
-    Console console = System.console();
-    if (console == null) {
-      System.err.println("Error: No Console");
-      return null;
+    // If we are running under Java 6, use Console.readPassword().
+    // Otherwise, do masking in a background thread.
+    PasswordReader reader;
+    try {
+      reader = new Java6PasswordReader();
+    } catch (UnsupportedOperationException e) {
+      reader = new Java5PasswordReader();
     }
 
     while (true) {
-      char[] pw1 = console.readPassword("  Type Password: ");
+      char[] pw1 = reader.readPassword("  Type Password: ");
       if ((pw1 == null) || (pw1.length == 0)) {
         System.exit(0);
       }
-      char[] pw2 = console.readPassword("Retype Password: ");
+      char[] pw2 = reader.readPassword("Retype Password: ");
       if (Arrays.equals(pw1, pw2)) {
         System.out.println("\nThe encrypted password is:");
         Arrays.fill(pw2, '\0');
@@ -168,6 +174,126 @@ public class EncryptPassword extends AbstractCommandLineApp {
       return EncryptedPropertyPlaceholderConfigurer.encryptChars(password);
     } finally {
       Arrays.fill(password, '\0');
+    }
+  }
+
+  private static interface PasswordReader {
+    /**
+     * Read a password from input, masking it as it is typed.
+     *
+     *@param prompt The prompt to display to the user
+     *@return The password as entered by the user
+     */
+    public char[] readPassword(String prompt);
+  }
+
+  /**
+   * PasswordReader implementation for Java6.
+   */
+  private static class Java6PasswordReader implements PasswordReader {
+    private Object console;
+    private Method readPassword;
+
+    /**
+     * Use Reflection to detect Java 6 and invoke Console.readPassword().
+     *
+     * @throws UnsupportedOperationException if unable to use Java 6
+     *         Console.readPassword().
+     */
+    Java6PasswordReader() {
+      try {
+        Method getConsole = System.class.getMethod("console");
+        console = getConsole.invoke(System.class);
+        if (console == null) {
+          throw new UnsupportedOperationException("No Console");
+        }
+        Class<?>[] paramTypes = new Class<?>[] { String.class, Object[].class };
+        readPassword = console.getClass().getMethod("readPassword", paramTypes);
+      } catch (NoSuchMethodException e) {
+        throw new UnsupportedOperationException("Not Java 6");
+      } catch (IllegalAccessException e) {
+        throw new UnsupportedOperationException(e.getMessage());
+      } catch (InvocationTargetException e) {
+        throw new UnsupportedOperationException(e.getMessage());
+      }
+    }
+
+    /**
+     * Read a password from input, masking it as it is typed.
+     *
+     *@param prompt The prompt to display to the user
+     *@return The password as entered by the user
+     */
+    public char[] readPassword(String prompt) {
+      Object[] params = new Object[] { prompt, new Object[0] };
+      try {
+        return (char[])(readPassword.invoke(console, params));
+      } catch (IllegalAccessException e) {
+        System.err.println("Failed to read password: " + e.getMessage());
+      } catch (InvocationTargetException e) {
+        System.err.println("Failed to read password: " + e.getMessage());
+      }
+      return null;
+    }
+  }
+
+  /**
+   * PasswordReader implementation for Java5, which lacks Console.readPassword().
+   */
+  private static class Java5PasswordReader implements PasswordReader {
+    /**
+     * Read a password from input, masking it as it is typed.
+     *
+     *@param prompt The prompt to display to the user
+     *@return The password as entered by the user
+     */
+    public char[] readPassword(String prompt) {
+      BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+      char[] password;
+
+      // Display prompt.
+      System.out.print(prompt);
+
+      // Start up Password Masking Thread.
+      MaskingThread masker = new MaskingThread();
+      (new Thread(masker)).start();
+
+      try {
+        return in.readLine().toCharArray();
+      } catch (IOException e) {
+        System.err.println("Failed to read password: " + e.getMessage());
+      } finally {
+        // Shut down the masking thread.
+        masker.stop();
+      }
+      return null;
+    }
+
+    /**
+     * Masking thread overwrites input with spaces.
+     */
+    class MaskingThread implements Runnable {
+      private boolean done = false;
+
+      /**
+       * Begin masking password entry.
+       */
+      public void run () {
+        while (!done) {
+          // Backspace over last char and overwrite with a space.
+          System.out.print("\010 ");
+          try {
+            Thread.sleep(1);
+          } catch(InterruptedException ignored) {}
+        }
+      }
+
+      /**
+       * Instruct the thread to stop masking.
+       */
+      public void stop() {
+        done = true;
+      }
     }
   }
 }

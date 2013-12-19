@@ -41,7 +41,7 @@ public interface  SnapshotRepository<T extends DocumentSnapshot> extends
    * {@link Iterator#hasNext()} or {@link Iterator#next()} fails. The returned
    * {@link Iterator} need not implement {@link Iterator#remove()}.
    */
-  @Override
+  /* @Override */
   Iterator<T> iterator()
       throws SnapshotRepositoryRuntimeException;
 }

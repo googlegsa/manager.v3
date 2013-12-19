@@ -14,17 +14,14 @@
 
 package com.google.enterprise.connector.database;
 
+import com.google.enterprise.connector.spi.LocalDocumentStore;
+
 /**
- * Extends the {@code LocalDocumentStore} interface, adding
+ * Extends the {@link LocalDocumentStore} interface, adding
  * {@link #cancel()} and {@link reset()} methods needed by
  * the Connector Manager.
- *
- * @deprecated The uses of this interface are ignored
  */
-@SuppressWarnings("deprecation")
-@Deprecated
-public interface DocumentStore
-    extends com.google.enterprise.connector.spi.LocalDocumentStore {
+public interface DocumentStore extends LocalDocumentStore {
 
   /**
    * Cancels any pending additions to the Documents table.
@@ -32,6 +29,8 @@ public interface DocumentStore
    * specifically, Documents that would have been written by a
    * call to {@link #flush()}.
    */
+  // TODO: Perhaps we should add checkpoints, then be able to rollback
+  // whole batches, even bits that have been already committed.
   public void cancel();
 
   /**

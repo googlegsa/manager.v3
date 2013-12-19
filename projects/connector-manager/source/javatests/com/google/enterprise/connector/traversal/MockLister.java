@@ -20,6 +20,7 @@ import com.google.enterprise.connector.spi.DocumentAcceptorException;
 import com.google.enterprise.connector.spi.Lister;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.SpiConstants;
+import com.google.enterprise.connector.spi.TraversalContext;
 import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
 
@@ -54,7 +55,7 @@ public class MockLister implements Lister {
     documentCount = 0;
   }
 
-  @Override
+  /* @Override */
   public void setDocumentAcceptor(DocumentAcceptor documentAcceptor)
         throws RepositoryException {
     this.documentAcceptor = documentAcceptor;
@@ -65,7 +66,7 @@ public class MockLister implements Lister {
    * If delayMillis is non-zero, feed documents in a separate thread,
    * otherwise feed them from here.
    */
-  @Override
+  /* @Override */
   public void start() throws RepositoryException {
     isShutdown = false;
     documentCount = 0;
@@ -91,7 +92,7 @@ public class MockLister implements Lister {
    * Shuts down the {@link Lister}.  It should cease sending documents to the
    * {@link DocumentAcceptor}.
    */
-  @Override
+  /* @Override */
   public void shutdown() throws RepositoryException {
     LOGGER.config("Shutdown Lister");
     isShutdown = true;

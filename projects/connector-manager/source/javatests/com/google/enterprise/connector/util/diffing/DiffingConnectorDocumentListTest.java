@@ -38,7 +38,7 @@ public class DiffingConnectorDocumentListTest extends TestCase {
     List<Change> original;
     LinkedList<Change> pending;
 
-    @Override
+    /* @Override */
     public Change getNextChange() {
       return pending.poll();
     }
@@ -101,7 +101,8 @@ public class DiffingConnectorDocumentListTest extends TestCase {
       Document doc = docs.nextDocument();
       String docId =
         Value.getSingleValueString(doc, SpiConstants.PROPNAME_DOCID);
-      assertEquals(change.getDocumentHandle().getDocumentId(), docId);
+      assertEquals(change.getDocumentHandle().getDocumentId(),
+          DocIdUtil.idToPath(docId));
       String expectAction = isEven(ix)
           ? SpiConstants.ActionType.ADD.toString()
           : SpiConstants.ActionType.DELETE.toString();

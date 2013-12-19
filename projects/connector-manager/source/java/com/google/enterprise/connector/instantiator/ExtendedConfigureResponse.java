@@ -17,6 +17,8 @@ package com.google.enterprise.connector.instantiator;
 import com.google.enterprise.connector.instantiator.Configuration;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 
+import java.util.Map;
+
 /**
  * A {@link ConfigureResponse} that also carries a connectorInstance.xml.
  *

@@ -16,9 +16,11 @@ package com.google.enterprise.connector.instantiator;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.common.SecurityUtils;
 
 import java.util.Map;
+import java.util.Properties;
 
 /**
  * Represents the peristent objects needed to instantiate a

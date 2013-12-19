@@ -16,8 +16,8 @@ package com.google.enterprise.connector.common;
 
 import com.google.common.base.Function;
 import com.google.common.base.Strings;
-import com.google.enterprise.connector.common.JarUtils;
 import com.google.enterprise.connector.instantiator.EncryptedPropertyPlaceholderConfigurer;
+import com.google.enterprise.connector.common.JarUtils;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.util.SAXParseErrorHandler;

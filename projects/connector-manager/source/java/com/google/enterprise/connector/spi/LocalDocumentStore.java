@@ -20,8 +20,6 @@ import java.util.Iterator;
 import javax.sql.DataSource;
 
 /**
- * This interface is not implemented.
- *
  * A local persistent store of information about documents that is managed by
  * the Connector Manager for connectors.
  * <p/>
@@ -64,9 +62,7 @@ import javax.sql.DataSource;
  *
  * @see ConnectorPersistentStore
  * @since 2.8
- * @deprecated This interface has never been publicly implemented
  */
-@Deprecated
 public interface LocalDocumentStore {
 
   /**

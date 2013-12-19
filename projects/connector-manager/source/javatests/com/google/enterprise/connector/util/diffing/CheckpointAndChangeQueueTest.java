@@ -92,7 +92,7 @@ public class CheckpointAndChangeQueueTest extends TestCase {
       return newChange(ix, PREFIX);
     }
 
-    @Override
+    /* @Override */
     public Change getNextChange() {
       return pending.poll();
     }

@@ -15,6 +15,7 @@
 package com.google.enterprise.connector.util.diffing;
 
 import static com.google.enterprise.connector.util.diffing.DocumentSnapshotComparator.COMPARATOR;
+
 import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.isA;

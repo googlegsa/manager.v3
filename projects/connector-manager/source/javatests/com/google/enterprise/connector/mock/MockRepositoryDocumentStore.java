@@ -14,8 +14,6 @@
 
 package com.google.enterprise.connector.mock;
 
-import com.google.enterprise.connector.mock.MockRepositoryEvent.EventType;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -27,6 +25,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
+
+import com.google.enterprise.connector.mock.MockRepositoryEvent.EventType;
 
 /**
  * Mock Document Store for Unit tests.

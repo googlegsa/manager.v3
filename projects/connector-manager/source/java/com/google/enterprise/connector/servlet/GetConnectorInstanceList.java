@@ -19,8 +19,8 @@ import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.manager.ConnectorStatus;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.manager.Manager;
-import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.scheduler.Schedule;
+import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.spi.ConnectorType;
 
 import java.io.IOException;
@@ -39,11 +39,6 @@ import javax.servlet.http.HttpServletResponse;
 public class GetConnectorInstanceList extends HttpServlet {
   private static final Logger LOGGER =
     Logger.getLogger(GetConnectorInstanceList.class.getName());
-
-  // TODO: Remove this when pre-6.2 GSA's no longer need to be supported.
-  @SuppressWarnings("deprecation")
-  private static final String DEPRECATED_XMLTAG_CONNECTOR_SCHEDULE =
-      ServletUtil.XMLTAG_CONNECTOR_SCHEDULE;
 
   /**
    * Returns a list of connector types.
@@ -93,6 +88,7 @@ public class GetConnectorInstanceList extends HttpServlet {
    * @param manager a Manager
    * @param out PrintWriter where the response is written
    */
+  @SuppressWarnings("deprecation")
   public static void handleDoPost(Manager manager, PrintWriter out) {
     ServletUtil.writeRootTag(out, false);
     ServletUtil.writeManagerSplash(out);
@@ -138,7 +134,7 @@ public class GetConnectorInstanceList extends HttpServlet {
             ServletUtil.LOG_RESPONSE_NULL_SCHEDULE);
         // TODO: Remove this when pre-6.2 GSA's no longer need to be supported.
         ServletUtil.writeEmptyXMLElement(out, 3,
-            DEPRECATED_XMLTAG_CONNECTOR_SCHEDULE);
+            ServletUtil.XMLTAG_CONNECTOR_SCHEDULE);
         // Add element using proper tag that can be handled by new GSAs.
         ServletUtil.writeEmptyXMLElement(out, 3,
             ServletUtil.XMLTAG_CONNECTOR_SCHEDULES);
@@ -156,12 +152,12 @@ public class GetConnectorInstanceList extends HttpServlet {
         // TODO: Remove this when pre-6.2 GSA's no longer need to be supported.
         buffer.append('\n');
         ServletUtil.writeXMLTagWithAttrs(buffer, 3,
-            DEPRECATED_XMLTAG_CONNECTOR_SCHEDULE,
+            ServletUtil.XMLTAG_CONNECTOR_SCHEDULE,
             ServletUtil.ATTRIBUTE_VERSION + "1" + ServletUtil.QUOTE,
             false);
         buffer.append(Schedule.toLegacyString(schedule));
         ServletUtil.writeXMLTag(buffer, 0,
-            DEPRECATED_XMLTAG_CONNECTOR_SCHEDULE, true);
+            ServletUtil.XMLTAG_CONNECTOR_SCHEDULE, true);
 
         out.println(buffer.toString());
       }

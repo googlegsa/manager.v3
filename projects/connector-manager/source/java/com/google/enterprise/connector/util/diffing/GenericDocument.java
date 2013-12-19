@@ -102,13 +102,13 @@ public class GenericDocument implements Document {
     }
   }
 
-  @Override
+  /* @Override */
   public Property findProperty(String name) {
     List<Value> property = properties.get(name);
     return (property == null) ? null : new SimpleProperty(property);
   }
 
-  @Override
+  /* @Override */
   public Set<String> getPropertyNames() {
     return Collections.unmodifiableSet(properties.keySet());
   }

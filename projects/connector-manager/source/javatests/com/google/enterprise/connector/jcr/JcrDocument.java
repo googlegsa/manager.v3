@@ -22,9 +22,9 @@ import com.google.enterprise.connector.spi.SpiConstants;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.Map.Entry;
 
 import javax.jcr.PropertyIterator;
 

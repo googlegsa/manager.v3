@@ -105,7 +105,7 @@ public class HostLoadManagerFactory implements LoadManagerFactory {
    * @return a {@link HostLoadManager} or {@code null} if no HostLoadManager
    *         is assigned to the connectorInstance.
    */
-  @Override
+  //@Override
   public LoadManager newLoadManager(String connectorName) {
     HostLoadManager hlm = new HostLoadManager(feedConnection, fileSizeLimit, clock);
     hlm.setPeriod(period);

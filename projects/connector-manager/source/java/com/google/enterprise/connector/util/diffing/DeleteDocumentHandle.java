@@ -44,12 +44,13 @@ public class DeleteDocumentHandle implements DocumentHandle {
     this.documentId = documentId;
   }
 
-  @Override
+  /* @Override */
   public Document getDocument() {
     GenericDocument result = new GenericDocument();
     result.setProperty(SpiConstants.PROPNAME_ACTION,
         SpiConstants.ActionType.DELETE.toString());
-    result.setProperty(SpiConstants.PROPNAME_DOCID, documentId);
+    result.setProperty(SpiConstants.PROPNAME_DOCID,
+        DocIdUtil.pathToId(documentId));
     return result;
   }
 
@@ -64,8 +65,11 @@ public class DeleteDocumentHandle implements DocumentHandle {
     }
   }
 
-  @Override
+  /* @Override */
   public String getDocumentId() {
+    // TODO: DocIdUtil.pathToId(path))? Needs to be consistent
+    //       with traversal order. Could modify readonly file
+    //       to sort like this I suppose.
     return documentId;
   }
 

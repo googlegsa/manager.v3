@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.pusher;
 
+import com.google.enterprise.connector.database.DocumentStore;
 import com.google.enterprise.connector.pusher.FeedException;
 import com.google.enterprise.connector.pusher.MockPusher;
 import com.google.enterprise.connector.pusher.PushException;
@@ -56,12 +57,12 @@ public class ExceptionalPusher extends MockPusher {
   }
 
   @Override
-  public PusherStatus take(Document document)
+  public PusherStatus take(Document document, DocumentStore docStore)
       throws PushException, FeedException, RepositoryException {
     if (where == Where.TAKE) {
       throwException(exception);
     }
-    return super.take(document);
+    return super.take(document, docStore);
   }
 
   @Override

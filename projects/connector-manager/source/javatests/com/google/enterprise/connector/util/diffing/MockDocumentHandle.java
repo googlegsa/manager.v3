@@ -101,7 +101,8 @@ public class MockDocumentHandle implements DocumentHandle {
     GenericDocument result = new GenericDocument();
     result.setProperty(SpiConstants.PROPNAME_ACTION,
         SpiConstants.ActionType.ADD.toString());
-    result.setProperty(SpiConstants.PROPNAME_DOCID, getDocumentId());
+    result.setProperty(SpiConstants.PROPNAME_DOCID,
+        DocIdUtil.pathToId(getDocumentId()));
     result.setProperty(SpiConstants.PROPNAME_MIMETYPE, "text/html");
     result.setProperty(SpiConstants.PROPNAME_CONTENT, getExtra());
     return result;

@@ -26,6 +26,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+
 public class SetManagerConfigNoGSA extends HttpServlet {
   private static final Logger LOG =
     Logger.getLogger(SetManagerConfigNoGSA.class.getName());

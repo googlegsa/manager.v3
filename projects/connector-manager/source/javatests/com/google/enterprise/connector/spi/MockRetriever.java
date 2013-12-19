@@ -46,7 +46,7 @@ public class MockRetriever implements Retriever {
   /** A docid that throws RepositoryExeception. */
   public static final String DOCID_REPOSITORY_EXCEPTION = "repositoryError";
 
-  @Override
+  /* @Override */
   public InputStream getContent(String docid) throws RepositoryException {
     if (DOCID_NOT_FOUND.equals(docid)) {
       throw new DocumentNotFoundException("Not Found");
@@ -63,7 +63,7 @@ public class MockRetriever implements Retriever {
     }
   }
 
-  @Override
+  /* @Override */
   public Document getMetaData(String docid) throws RepositoryException {
     if (DOCID_NOT_FOUND.equals(docid)) {
       throw new DocumentNotFoundException("Not Found");

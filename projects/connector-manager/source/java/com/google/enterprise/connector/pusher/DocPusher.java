@@ -15,13 +15,18 @@
 package com.google.enterprise.connector.pusher;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableSet;
+import com.google.enterprise.connector.database.DocumentStore;
 import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.spi.Document;
-import com.google.enterprise.connector.spi.RepositoryDocumentException;
+import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.RepositoryException;
+import com.google.enterprise.connector.spi.RepositoryDocumentException;
+import com.google.enterprise.connector.spi.SimpleProperty;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.SpiConstants.FeedType;
+import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.traversal.FileSizeLimitInfo;
 import com.google.enterprise.connector.util.filter.DocumentFilterFactory;
 
@@ -30,10 +35,11 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.LinkedList;
 import java.util.ListIterator;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -159,33 +165,19 @@ public class DocPusher implements Pusher {
   }
 
   /**
-   * The {@code DocumentStore} parameter is ignored and may be null.
-   *
-   * @param document Document corresponding to the document.
-   * @param documentStore {@code DocumentStore} for recording document
-   *        status.  Ignored - may be {@code null}.
-   * @deprecated Use the overload without the {@code DocumentStore} parameter
-   */
-  @SuppressWarnings("deprecation")
-  @Deprecated
-  public PusherStatus take(Document document,
-      com.google.enterprise.connector.database.DocumentStore documentStore)
-      throws PushException, FeedException, RepositoryException {
-    return take(document);
-  }
-
-  /**
    * Takes a Document and sends a the feed to the GSA.
    *
    * @param document Document corresponding to the document.
+   * @param documentStore {@link DocumentStore} for recording document
+   *        status.  Optional - may be {@code null}.
    * @return true if Pusher should accept more documents, false otherwise.
    * @throws PushException if Pusher problem
    * @throws FeedException if transient Feed problem
    * @throws RepositoryDocumentException if fatal Document problem
    * @throws RepositoryException if transient Repository problem
    */
-  @Override
-  public PusherStatus take(Document document)
+  /* @Override */
+  public PusherStatus take(Document document, DocumentStore documentStore)
       throws PushException, FeedException, RepositoryException {
     if (feedSender.isShutdown()) {
       return PusherStatus.DISABLED;
@@ -244,6 +236,9 @@ public class DocPusher implements Pusher {
 
       // Add this document to the feed.
       xmlFeed.addRecord(document);
+      if (documentStore != null) {
+        documentStore.storeDocument(document);
+      }
 
       // If the feed is full, send it off to the GSA.
       if (xmlFeed.isFull() || lowMemory()) {
@@ -297,7 +292,7 @@ public class DocPusher implements Pusher {
    * @throws FeedException if transient Feed problem
    * @throws RepositoryException
    */
-  @Override
+  /* @Override */
   public void flush() throws PushException, FeedException, RepositoryException {
     checkSubmissions();
     if (!feedSender.isShutdown()) {
@@ -322,7 +317,7 @@ public class DocPusher implements Pusher {
   /**
    * Cancels any feed being constructed.  Any accumulated feed data is lost.
    */
-  @Override
+  /* @Override */
   public void cancel() {
     // Discard any feed under construction.
     if (xmlFeed != null) {
@@ -336,7 +331,7 @@ public class DocPusher implements Pusher {
     feedSender.shutdownNow();
   }
 
-  @Override
+  /* @Override */
   public PusherStatus getPusherStatus()
       throws PushException, FeedException, RepositoryException {
     // Is Pusher shutdown?

@@ -16,8 +16,8 @@ package com.google.enterprise.connector.spi;
 
 import java.sql.PreparedStatement;
 import java.text.MessageFormat;
-import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
+import java.util.PropertyResourceBundle;
 
 /**
  * Supplies SQL language syntax variations for the various database

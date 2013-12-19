@@ -20,10 +20,10 @@ import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
 
-import junit.framework.TestCase;
-
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+
+import junit.framework.TestCase;
 
 import java.io.File;
 import java.util.HashMap;

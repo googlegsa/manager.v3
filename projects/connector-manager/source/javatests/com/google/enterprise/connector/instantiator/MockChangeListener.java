@@ -56,30 +56,30 @@ class MockChangeListener implements ChangeListener {
     LOGGER.info(change);
   }
 
-  @Override
+  /* @Override */
   public void connectorAdded(String connectorName,
       Configuration configuration) throws InstantiatorException {
     addChange(CONNECTOR_ADDED + connectorName);
   }
 
-  @Override
+  /* @Override */
   public void connectorRemoved(String connectorName) {
     addChange(CONNECTOR_REMOVED + connectorName);
   }
 
-  @Override
+  /* @Override */
   public void connectorCheckpointChanged(String connectorName,
       String checkpoint) {
     addChange(CHECKPOINT_CHANGED + connectorName);
   }
 
-  @Override
+  /* @Override */
   public void connectorConfigurationChanged(String connectorName,
       Configuration configuration) throws InstantiatorException {
     addChange(CONFIGURATION_CHANGED + connectorName);
   }
 
-  @Override
+  /* @Override */
   public void connectorScheduleChanged(String connectorName,
       Schedule schedule) {
     addChange(SCHEDULE_CHANGED + connectorName);

@@ -39,7 +39,7 @@ public class MockPusherTest extends TestCase {
     int counter = 0;
     Document document = null;
     while ((document = documentList.nextDocument()) != null) {
-      pusher.take(document);
+      pusher.take(document, null);
       counter++;
     }
     Assert.assertEquals(4, counter);

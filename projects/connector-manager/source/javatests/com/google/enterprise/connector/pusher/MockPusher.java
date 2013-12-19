@@ -16,12 +16,13 @@ package com.google.enterprise.connector.pusher;
 
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.Property;
-import com.google.enterprise.connector.spi.RepositoryDocumentException;
 import com.google.enterprise.connector.spi.RepositoryException;
+import com.google.enterprise.connector.spi.RepositoryDocumentException;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.spiimpl.BinaryValue;
 import com.google.enterprise.connector.util.Base64FilterInputStream;
+import com.google.enterprise.connector.database.DocumentStore;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -41,7 +42,7 @@ public class MockPusher implements Pusher, PusherFactory {
     printStream = ps;
   }
 
-  @Override
+  /* @Override */
   public Pusher newPusher(String connectorName) {
     totalDocs = 0;
     if (status == PusherStatus.DISABLED) {
@@ -50,8 +51,8 @@ public class MockPusher implements Pusher, PusherFactory {
     return this;
   }
 
-  @Override
-  public PusherStatus take(Document document)
+  /* @Override */
+  public PusherStatus take(Document document, DocumentStore ignored)
       throws PushException, FeedException, RepositoryException {
     // Mirror behaviour of DocPusher.
     if (status == PusherStatus.DISABLED) {
@@ -85,13 +86,13 @@ public class MockPusher implements Pusher, PusherFactory {
     return status;
   }
 
-  @Override
+  /* @Override */
   public void flush() throws PushException, FeedException, RepositoryException {
     printStream.flush();
     status = PusherStatus.DISABLED;
   }
 
-  @Override
+  /* @Override */
   public void cancel() {
     totalDocs = 0;
     status = PusherStatus.DISABLED;
@@ -100,7 +101,7 @@ public class MockPusher implements Pusher, PusherFactory {
   /**
    * @return the current PusherStatus
    */
-  @Override
+  /* @Override */
   public PusherStatus getPusherStatus()
       throws PushException, FeedException, RepositoryException {
     return status;
