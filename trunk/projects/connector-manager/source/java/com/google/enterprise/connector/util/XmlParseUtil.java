@@ -155,7 +155,6 @@ public class XmlParseUtil {
     builder.setErrorHandler(new ThrowingErrorHandler());
     builder.setEntityResolver(new LocalEntityResolver());
 
-    System.out.println(formSnippet);
     String html = STRICT_HTML_PREFIX + formSnippet + HTML_SUFFIX;
     builder.parse(new ByteArrayInputStream(html.getBytes(Charsets.UTF_8)));
   }
