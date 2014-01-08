@@ -86,7 +86,6 @@ public class ConnectorFields {
       this.mandatory = mandatory;
     }
 
-    /* Fulfills Field interface except for getSnippet which requires value. */
     @Override
     public String getName() {
       return name;
@@ -120,7 +119,6 @@ public class ConnectorFields {
     protected boolean boldLabel = true;
 
     protected String getLabelHtml(ResourceBundle bundle, boolean highlightError, String message) {
-      // TODO: ensure characters are HTML escaped
       StringBuffer sb = new StringBuffer();
       sb.append("<td valign=\"top\">");
       if (highlightError) {
@@ -134,14 +132,14 @@ public class ConnectorFields {
         sb.append(getName());
         sb.append("\">");
       }
-      sb.append(getLabel(bundle));
+      sb.append(xmlEncodeAttributeValue(getLabel(bundle)));
       if (renderLabelTag) {
         sb.append("</label>");
       }
       if (boldLabel) {
         sb.append("</b>");
       }
-      sb.append(message);
+      sb.append(xmlEncodeAttributeValue(message));
       if (highlightError) {
         sb.append("</font>");
       }
@@ -149,7 +147,9 @@ public class ConnectorFields {
       return sb.toString();
     }
 
-    public abstract String getSnippet(ResourceBundle bundle, boolean hightlighError);
+    @Override
+    public abstract String getSnippet(ResourceBundle bundle,
+        boolean highlightError);
 
     /** @param config immutable Map of configuration parameters */
     public abstract void setValueFrom(Map<String, String> config);
@@ -198,25 +198,33 @@ public class ConnectorFields {
    */
   public static class SingleLineField extends AbstractField {
     private static final String ONE_LINE_INPUT_HTML =
-        "<td><input name=\"%s\" id=\"%s\" type=\"%s\" %s></input></td>";
+        "<td><input name=\"%s\" id=\"%s\" type=\"%s\"%s></input></td>";
     private static final String FORMAT = "<tr> %s " + ONE_LINE_INPUT_HTML + "</tr>";
 
     private final boolean isPassword;
+
+    private String defaultValue;
 
     protected String value; // user's one input line value
 
     public SingleLineField(String name, boolean mandatory, boolean isPassword) {
       super(name, mandatory);
       this.isPassword = isPassword;
-      value = "";
+      this.defaultValue = "";
+      this.value = "";
+    }
+
+    public void setDefaultValue(String defaultValue) {
+      this.defaultValue = defaultValue;
     }
 
     @Override
     public void setValueFrom(Map<String, String> config) {
-      this.value = "";
       String newValue = config.get(getName());
       if (hasContent(newValue)) {
         setValueFromString(newValue);
+      } else {
+        this.value = defaultValue;
       }
     }
 
