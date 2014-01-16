@@ -66,7 +66,7 @@ import java.util.logging.Logger;
 // TODO (jlacey): Context and ConnectorCoordinatorImpl are dangerously close
 // to encountering deadlock issues, calling each other from synchronized 
 // methods.  The most likely scenerio for deadlock would probably be when
-// registering the CM with a new GSA.  Be wary when adding addition
+// registering the CM with a new GSA.  Be wary when adding additional
 // synchronization to these classes.
 public class Context {
   public static final String GSA_FEED_PROTOCOL_PROPERTY_KEY =
@@ -83,11 +83,6 @@ public class Context {
   public static final String GSA_FEED_SECURE_PORT_PROPERTY_KEY =
       "gsa.feed.securePort";
   public static final String GSA_FEED_SECURE_PORT_DEFAULT = "19902";
-
-  public static final String GSA_ADMIN_REQUIRES_PREFIX_KEY =
-      "gsa.admin.requiresPrefix";
-  public static final Boolean GSA_ADMIN_REQUIRES_PREFIX_DEFAULT =
-      Boolean.FALSE;
 
   public static final String TEED_FEED_FILE_PROPERTY_KEY = "teedFeedFile";
   public static final String MANAGER_LOCKED_PROPERTY_KEY = "manager.locked";
@@ -379,8 +374,6 @@ public class Context {
 
   private String standaloneContextLocation;
   private String standaloneContextBaseDir;
-
-  private Boolean gsaAdminRequiresPrefix = null;
 
   private boolean isTeedFeedFileInitialized = false;
   private String teedFeedFile = null;
@@ -1147,26 +1140,6 @@ public class Context {
     if (instantiator != null) {
       instantiator.setGDataConfig();
     }
-  }
-
-  /**
-   * Whether or not the GSA requires the connector manager to prepend a
-   * connector-manager-specific prefix to connector configuration
-   * property names.  Older GSA require the prefix, and newer GSAs do not.
-   * This value is read from the <code>gsa.admin.requiresPrefix</code>
-   * property in the application context properties file.
-   * If the <code>gsa.admin.requiresPrefix</code> property is not defined, the
-   * default value is <code>false</code>.
-   */
-  public synchronized boolean gsaAdminRequiresPrefix() {
-    initApplicationContext();
-    if (gsaAdminRequiresPrefix == null) {
-        String prop = getProperty(
-            GSA_ADMIN_REQUIRES_PREFIX_KEY,
-            GSA_ADMIN_REQUIRES_PREFIX_DEFAULT.toString());
-        gsaAdminRequiresPrefix = Boolean.valueOf(prop);
-    }
-    return gsaAdminRequiresPrefix;
   }
 
   /**
