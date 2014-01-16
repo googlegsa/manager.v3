@@ -9,9 +9,8 @@ to download supported versions of the connector or contact Google Enterprise
 Support.
 
 To download installers for the Google Search Appliance Connectors, see the
-[https://code.google.com/p/googlesearchapplianceconnectors/downloads/list
-Downloads page] on the 
-[https://code.google.com/p/googlesearchapplianceconnectors/ installers code site].
+[https://code.google.com/p/googlesearchapplianceconnectors/downloads/list Downloads page]
+on the [https://code.google.com/p/googlesearchapplianceconnectors/ installers code site].
 
 For unsupported builds, early access, or to download supported patches
 as directed by Google Enterprise Support, see the [http://code.google.com/p/google-enterprise-connector-manager/downloads/list Downloads page] on this code site.
