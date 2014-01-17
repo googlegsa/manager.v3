@@ -15,10 +15,10 @@
 package com.google.enterprise.connector.util.database;
 
 import junit.framework.TestCase;
+
 import net.jmatrix.eproperties.EProperties;
 
 import java.io.ByteArrayInputStream;
-import java.util.List;
 import java.util.Properties;
 
 /**

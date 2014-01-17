@@ -176,6 +176,7 @@ public class ConnectorTestUtils {
     props.put(SpiConstants.PROPNAME_CONTENT, "now is the time");
     props.put(SpiConstants.PROPNAME_DISPLAYURL,
         "http://www.comtesturl.com/test?" + docId);
+    props.put(SpiConstants.PROPNAME_ACLGROUPS, new Principal("Everyone"));
     return props;
   }
 
@@ -183,8 +184,7 @@ public class ConnectorTestUtils {
    * Creates a {@link SimpleDocument} with the properties in the provided
    * {@link Map}.
    */
-  public static SimpleDocument createSimpleDocument(Map<String,
-      Object> props) {
+  public static SimpleDocument createSimpleDocument(Map<String, ?> props) {
     return new SimpleDocument(createSpiProperties(props));
   }
 
@@ -220,9 +220,9 @@ public class ConnectorTestUtils {
    * property names to {@code List<Value>}.
    */
   public static Map<String, List<Value>> createSpiProperties(
-      Map<String, Object> props) {
+      Map<String, ?> props) {
     Map<String, List<Value>> spiValues = new HashMap<String, List<Value>>();
-    for (Map.Entry<String, Object> entry : props.entrySet()) {
+    for (Map.Entry<String, ?> entry : props.entrySet()) {
       Object obj = entry.getValue();
       List<Value> values = new ArrayList<Value>();
       addValueToList(obj, values);

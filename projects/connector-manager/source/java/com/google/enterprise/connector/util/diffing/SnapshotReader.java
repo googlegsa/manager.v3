@@ -53,7 +53,7 @@ public class SnapshotReader {
    * each record.
    */
   private class LengthBasedRecordReader implements RecordReader {
-    /* @Override */
+    @Override
     public String readRecord() throws SnapshotReaderException {
       String stringForm = null;
       try {
@@ -132,7 +132,7 @@ public class SnapshotReader {
    */
   private class LineBasedRecordReader implements RecordReader {
 
-    /* @Override */
+    @Override
     public String readRecord() throws SnapshotReaderException {
       String line = null;
       try {

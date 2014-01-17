@@ -36,7 +36,7 @@ class ChangeListenerImpl implements ChangeListener {
     this.coordinatorMap = coordinatorMap;
   }
 
-  /* @Override */
+  @Override
   public void connectorAdded(String instanceName, Configuration configuration)
       throws InstantiatorException {
     LOGGER.config("Add connector " + instanceName + " of type "
@@ -56,7 +56,7 @@ class ChangeListenerImpl implements ChangeListener {
     }
   }
 
-  /* @Override */
+  @Override
   public void connectorRemoved(String instanceName) {
     LOGGER.config("Remove connector " + instanceName);
     try {
@@ -67,7 +67,7 @@ class ChangeListenerImpl implements ChangeListener {
     }
   }
 
-  /* @Override */
+  @Override
   public void connectorCheckpointChanged(String instanceName,
       String checkpoint) {
     LOGGER.finest("Checkpoint changed for connector " + instanceName);
@@ -80,7 +80,7 @@ class ChangeListenerImpl implements ChangeListener {
     }
   }
 
-  /* @Override */
+  @Override
   public void connectorScheduleChanged(String instanceName, Schedule schedule) {
     LOGGER.config("Schedule changed for connector " + instanceName + ": "
                   + schedule);
@@ -93,7 +93,7 @@ class ChangeListenerImpl implements ChangeListener {
     }
   }
 
-  /* @Override */
+  @Override
   public void connectorConfigurationChanged(String instanceName,
       Configuration configuration) throws InstantiatorException {
     LOGGER.config("Configuration changed for connector " + instanceName);

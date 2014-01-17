@@ -15,10 +15,10 @@
 package com.google.enterprise.connector.pusher;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
-import java.net.InetAddress;
 
 /**
  * SMB protocol URLStreamHandler used to verify SMB URLs

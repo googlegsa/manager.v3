@@ -39,7 +39,7 @@ public class MockConnector implements Connector {
     this.lister = lister;
   }
 
-  /* @Override */
+  @Override
   public Session login() throws RepositoryLoginException, RepositoryException {
     return new MockSession(traversalManager, authenticationManager,
                            authorizationManager, retriever, lister);

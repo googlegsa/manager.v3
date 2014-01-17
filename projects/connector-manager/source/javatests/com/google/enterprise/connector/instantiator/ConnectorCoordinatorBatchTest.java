@@ -17,8 +17,8 @@ package com.google.enterprise.connector.instantiator;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.pusher.Pusher;
-import com.google.enterprise.connector.pusher.PusherFactory;
 import com.google.enterprise.connector.pusher.Pusher.PusherStatus;
+import com.google.enterprise.connector.pusher.PusherFactory;
 import com.google.enterprise.connector.scheduler.LoadManager;
 import com.google.enterprise.connector.scheduler.LoadManagerFactory;
 import com.google.enterprise.connector.scheduler.Schedule;
@@ -449,7 +449,7 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
     private RecordingPusher pusher;
     private String connectorName;
 
-    /* @Override */
+    @Override
     public Pusher newPusher(String connectorName) {
       if (pusher == null) {
         pusher = new RecordingPusher(connectorName);
@@ -470,21 +470,21 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
       this.connectorName = connectorName;
     }
 
-    /* @Override */
+    @Override
     public PusherStatus take(Document document) {
       pushedDocuments.add(new PushedDocument(document, connectorName));
       return PusherStatus.OK;
     }
 
-    /* @Override */
+    @Override
     public void flush() {
     }
 
-    /* @Override */
+    @Override
     public void cancel() {
     }
 
-    /* @Override */
+    @Override
     public PusherStatus getPusherStatus() {
       return PusherStatus.OK;
     }
@@ -506,7 +506,7 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
   public static class RecordingLoadManagerFactory implements LoadManagerFactory {
     private RecordingLoadManager loadManager;
 
-    /* @Override */
+    @Override
     public LoadManager newLoadManager(String ignored) {
       if (loadManager == null) {
         loadManager = new RecordingLoadManager();
@@ -522,7 +522,7 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
     private final BlockingQueue<BatchResult> resultQueue =
         new ArrayBlockingQueue<BatchResult>(10);
 
-    /* @Override */
+    @Override
     public void recordResult(BatchResult batchResult) {
       resultQueue.add(batchResult);
     }
@@ -535,26 +535,26 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
       resultQueue.clear();
     }
 
-    /* @Override */
+    @Override
     public void setLoad(int load) {
       this.load = load;
     }
 
-    /* @Override */
+    @Override
     public void setPeriod(int period) {
     }
 
-    /* @Override */
+    @Override
     public void setBatchSize(int batchSize) {
       this.batchSize = batchSize;
     }
 
-    /* @Override */
+    @Override
     public BatchSize determineBatchSize() {
       return new BatchSize(Math.min(load, batchSize));
     }
 
-    /* @Override */
+    @Override
     public boolean shouldDelay() {
       return false;
     }

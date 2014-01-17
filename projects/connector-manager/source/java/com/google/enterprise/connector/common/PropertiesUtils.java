@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.common;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
 import com.google.enterprise.connector.instantiator.EncryptedPropertyPlaceholderConfigurer;
 
@@ -23,15 +24,15 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.IOException;
-import java.util.logging.Logger;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.Properties;
+import java.util.Set;
+import java.util.logging.Logger;
 
 public class PropertiesUtils {
 
@@ -175,7 +176,8 @@ public class PropertiesUtils {
    * @return Properties as read from inputStream
    * @throws PropertiesException
    */
-  public static Properties loadProperties(InputStream inputStream)
+  @VisibleForTesting
+  static Properties loadProperties(InputStream inputStream)
       throws PropertiesException {
     if (inputStream == null) {
       return null;
@@ -202,7 +204,8 @@ public class PropertiesUtils {
    * @param comment optional comment String
    * @throws PropertiesException if error writing to stream
    */
-  public static void storeProperties(Properties properties,
+  @VisibleForTesting
+  static void storeProperties(Properties properties,
       OutputStream outputStream, String comment) throws PropertiesException {
     if (properties == null) {
       return;

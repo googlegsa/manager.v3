@@ -17,18 +17,9 @@ package com.google.enterprise.connector.pusher;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.enterprise.connector.spi.Document;
-import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.RepositoryException;
-import com.google.enterprise.connector.spi.SimpleProperty;
-import com.google.enterprise.connector.spi.SkippedDocumentException;
 import com.google.enterprise.connector.spi.SpiConstants;
-import com.google.enterprise.connector.spi.SpiConstants.DocumentType;
-import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.util.filter.DocumentFilterFactory;
-
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Dynamically assembles a chain of {@link DocumentFilter}s that transform
@@ -43,7 +34,7 @@ public class AclTransformFilter implements DocumentFilterFactory {
    */
   /* TODO(jlacey): This probably needs to change if we support DENY on 6.14. */
   private final FeedConnection feedConnection;
-  
+
   private final UrlConstructor urlConstructor;
   private final AclInheritFromDocidFilter aclInheritFromDocidFilter;
   private final AclDocumentFilter aclDocumentFilter;
@@ -77,7 +68,8 @@ public class AclTransformFilter implements DocumentFilterFactory {
     if (feedConnection.supportsInheritedAcls()) {
       // If connector supplies ACLINHERITFROM_DOCID instead of ACLINHERITFROM
       // property, add a filter that builds an ACLINHERTITFROM property from
-      // ACLINHERITFROM_DOCID and ACLINHERITFROM_FEEDTYPE.
+      // ACLINHERITFROM_DOCID, ACLINHERITFROM_FEEDTYPE and
+      // ACLINHERITFROM_FRAGMENT.
       if (Strings.isNullOrEmpty(DocUtils.getOptionalString(source,
           SpiConstants.PROPNAME_ACLINHERITFROM))
           && !Strings.isNullOrEmpty(DocUtils.getOptionalString(source,

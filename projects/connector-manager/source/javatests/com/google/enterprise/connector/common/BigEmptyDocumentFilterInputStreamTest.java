@@ -14,11 +14,10 @@
 
 package com.google.enterprise.connector.common;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-
 import junit.framework.TestCase;
+
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 
 /**
  * Tests BigEmptyDocumentFilterInputStream.

@@ -22,17 +22,15 @@ import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.instantiator.Configuration;
 import com.google.enterprise.connector.scheduler.Schedule;
 import com.google.enterprise.connector.spi.DatabaseResourceBundle;
-import com.google.enterprise.connector.util.database.JdbcDatabase;
 import com.google.enterprise.connector.util.database.DatabaseResourceBundleManager;
+import com.google.enterprise.connector.util.database.JdbcDatabase;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.MessageFormat;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
@@ -153,7 +151,7 @@ public class JdbcStore implements PersistentStore {
    * @return {@code true} if this PersistentStore is disabled, {@code false}
    * otherwise.
    */
-  /* @Override */
+  @Override
   public boolean isDisabled() {
     return (database == null) ? true : database.isDisabled();
   }
@@ -166,7 +164,7 @@ public class JdbcStore implements PersistentStore {
    * @return an immutable map containing the version stamps; may be
    * empty but not {@code null}
    */
-  /* @Override */
+  @Override
   public ImmutableMap<StoreContext, ConnectorStamps> getInventory() {
     ImmutableMap.Builder<StoreContext, ConnectorStamps> mapBuilder =
         new ImmutableMap.Builder<StoreContext, ConnectorStamps>();
@@ -258,7 +256,7 @@ public class JdbcStore implements PersistentStore {
     }
 
     /** {@inheritDoc} */
-    /* @Override */
+    @Override
     public int compareTo(Stamp other) {
       return (int) (version - ((JdbcStamp) other).version);
     }
@@ -275,7 +273,7 @@ public class JdbcStore implements PersistentStore {
    * @param context a StoreContext
    * @return connectorSchedule schedule of the corresponding connector.
    */
-  /* @Override */
+  @Override
   public Schedule getConnectorSchedule(StoreContext context) {
     return Schedule.of(getField(context, SCHEDULE));
   }
@@ -286,7 +284,7 @@ public class JdbcStore implements PersistentStore {
    * @param context a StoreContext
    * @param connectorSchedule schedule of the corresponding connector.
    */
-  /* @Override */
+  @Override
   public void storeConnectorSchedule(StoreContext context,
       Schedule connectorSchedule) {
     String schedule = (connectorSchedule == null)
@@ -299,7 +297,7 @@ public class JdbcStore implements PersistentStore {
    *
    * @param context a StoreContext
    */
-  /* @Override */
+  @Override
   public void removeConnectorSchedule(StoreContext context) {
     storeConnectorSchedule(context, null);
   }
@@ -310,7 +308,7 @@ public class JdbcStore implements PersistentStore {
    * @param context a StoreContext
    * @return the state, or null if no state has been stored for this connector.
    */
-  /* @Override */
+  @Override
   public String getConnectorState(StoreContext context) {
     return getField(context, STATE);
   }
@@ -321,7 +319,7 @@ public class JdbcStore implements PersistentStore {
    * @param context a StoreContext
    * @param connectorState state of the corresponding connector
    */
-  /* @Override */
+  @Override
   public void storeConnectorState(StoreContext context, String connectorState) {
     setField(context, STATE, connectorState);
   }
@@ -331,7 +329,7 @@ public class JdbcStore implements PersistentStore {
    *
    * @param context a StoreContext
    */
-  /* @Override */
+  @Override
   public void removeConnectorState(StoreContext context) {
     storeConnectorState(context, null);
   }
@@ -343,7 +341,7 @@ public class JdbcStore implements PersistentStore {
    * @return the configuration map, or null if no configuration
    *         has been stored for this connector.
    */
-  /* @Override */
+  @Override
   public Configuration getConnectorConfiguration(StoreContext context) {
     String config = getField(context, MAP);
     String configXml = getField(context, XML);
@@ -367,7 +365,7 @@ public class JdbcStore implements PersistentStore {
    * @param context a StoreContext
    * @param configuration map to store
    */
-  /* @Override */
+  @Override
   public void storeConnectorConfiguration(StoreContext context,
       Configuration configuration) {
     testStoreContext(context);
@@ -396,7 +394,7 @@ public class JdbcStore implements PersistentStore {
    *
    * @param context a StoreContext
    */
-  /* @Override */
+  @Override
   public void removeConnectorConfiguration(StoreContext context) {
     storeConnectorConfiguration(context, null);
   }

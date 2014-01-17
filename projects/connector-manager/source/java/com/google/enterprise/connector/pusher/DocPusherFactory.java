@@ -14,7 +14,6 @@
 
 package com.google.enterprise.connector.pusher;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.enterprise.connector.instantiator.DocumentFilterFactoryFactory;
 import com.google.enterprise.connector.instantiator.DocumentFilterFactoryFactoryImpl;
 import com.google.enterprise.connector.traversal.FileSizeLimitInfo;

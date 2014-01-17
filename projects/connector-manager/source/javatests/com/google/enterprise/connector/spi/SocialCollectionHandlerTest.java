@@ -16,7 +16,6 @@ package com.google.enterprise.connector.spi;
 
 import com.google.enterprise.apis.client.GsaClient;
 import com.google.enterprise.apis.client.GsaEntry;
-import com.google.gdata.util.AuthenticationException;
 
 import junit.framework.TestCase;
 

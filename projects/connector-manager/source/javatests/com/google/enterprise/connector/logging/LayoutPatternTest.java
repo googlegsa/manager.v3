@@ -17,9 +17,9 @@ package com.google.enterprise.connector.logging;
 import junit.framework.TestCase;
 
 import java.util.GregorianCalendar;
-import java.util.logging.SimpleFormatter;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
+import java.util.logging.SimpleFormatter;
 
 /**
  * Unit Test for logging LayoutPattern.

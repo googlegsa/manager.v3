@@ -14,9 +14,9 @@
 
 package com.google.enterprise.connector.common;
 
-import java.util.Locale;
-
 import junit.framework.TestCase;
+
+import java.util.Locale;
 
 public class I18NUtilTest extends TestCase {
 

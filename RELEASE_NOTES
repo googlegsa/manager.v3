@@ -11,6 +11,36 @@ issues and work-arounds.
 Web Site: http://code.google.com/p/google-enterprise-connector-manager/
 
 
+Release 3.2.4, 16 January 2014
+==============================
+
+Introduction
+------------
+This is a patch release that fixes a few small problems discovered in the
+the previous release. Users of previous releases are encouraged to upgrade.
+
+Issues Fixed Since 3.2.2
+------------------------
+11718150 - GetDocumentContent was returning the google:aclinheritfrom:
+           fragment property as metadata. This property is intended for
+           internal use, and should not have been provided to the GSA.
+
+12176042 - EncryptedPropertyPlaceholderConfigurer should not try to
+           decrypt the empty string.  This could prevent Tomcat startup
+           because the default H2 database password is empty.
+
+12576455 - Add support for crawl-immediately and crawl-once feed record
+           properties.  You can use these properties with a document filter,
+           such as the AddPropertyFilter.
+
+Removed Features
+-----------------
+Support for the gsa.admin.requiresPrefix configuration property has been
+removed.  If the property is specified, it will be ignored.
+Only GSA versions prior to v5.0.4 used this feature, and they were never
+supported by the connectors.
+
+
 Release 3.2.2, 24 October 2013
 ==============================
 

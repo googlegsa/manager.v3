@@ -20,12 +20,11 @@ import com.google.enterprise.connector.spi.LocalDatabase;
 import com.google.enterprise.connector.util.database.JdbcDatabase;
 import com.google.enterprise.connector.util.database.testing.TestJdbcDatabase;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-import javax.sql.DataSource;
-
-import junit.framework.Assert;
 import junit.framework.TestCase;
+
+import java.sql.SQLException;
+
+import javax.sql.DataSource;
 
 /**
  * Tests ConnectorPersistentStoreFactory.
