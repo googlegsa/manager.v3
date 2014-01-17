@@ -21,8 +21,6 @@ import com.google.enterprise.connector.traversal.FileSizeLimitInfo;
 import com.google.enterprise.connector.traversal.TraversalDelayPolicy;
 import com.google.enterprise.connector.util.Clock;
 
-import java.util.LinkedList;
-import java.util.ListIterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -125,7 +123,7 @@ public class HostLoadManager implements LoadManager {
    *
    * @param load target load in documents per period.
    */
-  /* @Override */
+  @Override
   public void setLoad(int load) {
     if (load >= 0) {
       LOGGER.fine("Setting host load to " + load);
@@ -141,7 +139,7 @@ public class HostLoadManager implements LoadManager {
    *
    * @param periodInSeconds measurement period in seconds.
    */
-  /* @Override */
+  @Override
   public void setPeriod(int periodInSeconds) {
     if (periodInSeconds > 0) {
       LOGGER.fine("Setting load measurement period to " + periodInSeconds
@@ -156,7 +154,7 @@ public class HostLoadManager implements LoadManager {
   /**
    * @param batchSize the target batchSize to set.
    */
-  /* @Override */
+  @Override
   public void setBatchSize(int batchSize) {
     if (batchSize >= 0) {
       this.batchSize = batchSize;
@@ -187,7 +185,7 @@ public class HostLoadManager implements LoadManager {
    *
    * @param batchResult a traversal BatchResult
    */
-  /* @Override */
+  @Override
   public void recordResult(BatchResult batchResult) {
     if (batchResult.getCountProcessed() > 0) {
       lastBatchResult = batchResult;
@@ -202,7 +200,7 @@ public class HostLoadManager implements LoadManager {
    * @return BatchSize hint to the number of documents the traverser
    *         should traverse
    */
-  /* @Override */
+  @Override
   public BatchSize determineBatchSize() {
     BatchRequest batchReq = getBatchRequest();
     if (LOGGER.isLoggable(Level.FINEST)) {
@@ -225,7 +223,7 @@ public class HostLoadManager implements LoadManager {
    *
    * @return true if the connector should not run at this time
    */
-  /* @Override */
+  @Override
   public boolean shouldDelay() {
     BatchRequest batchReq = getBatchRequest();
 

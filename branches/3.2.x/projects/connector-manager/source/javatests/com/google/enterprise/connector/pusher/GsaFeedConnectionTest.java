@@ -16,8 +16,8 @@ package com.google.enterprise.connector.pusher;
 
 import junit.framework.TestCase;
 
-import java.net.URL;
 import java.net.MalformedURLException;
+import java.net.URL;
 
 /** Tests for {@link GsaFeedConnection} URLs. */
 public class GsaFeedConnectionTest extends TestCase {

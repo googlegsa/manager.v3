@@ -16,8 +16,8 @@ package com.google.enterprise.connector.instantiator;
 
 import com.google.enterprise.connector.spi.Connector;
 import com.google.enterprise.connector.spi.ConnectorShutdownAware;
-import com.google.enterprise.connector.spi.RepositoryLoginException;
 import com.google.enterprise.connector.spi.RepositoryException;
+import com.google.enterprise.connector.spi.RepositoryLoginException;
 import com.google.enterprise.connector.spi.Session;
 
 /**

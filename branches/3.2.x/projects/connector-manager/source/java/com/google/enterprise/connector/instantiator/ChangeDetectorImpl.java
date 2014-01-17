@@ -57,7 +57,7 @@ class ChangeDetectorImpl implements ChangeDetector {
     this.listener = listener;
   }
 
-  /* @Override */
+  @Override
   public synchronized void detect() {
     NDC.push("Change");
     try {

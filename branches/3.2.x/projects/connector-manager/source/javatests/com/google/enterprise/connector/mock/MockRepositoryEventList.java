@@ -14,7 +14,9 @@
 
 package com.google.enterprise.connector.mock;
 
+import com.google.common.base.Charsets;
 import com.google.enterprise.connector.manager.Context;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -25,7 +27,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -85,17 +86,12 @@ public class MockRepositoryEventList {
 
   private void initFromFile(File inputFile) {
     InputStream s;
-    InputStreamReader isr;
     try {
       s = new FileInputStream(inputFile);
     } catch (FileNotFoundException e) {
       throw new RuntimeException(e);
     }
-    try {
-      isr = new InputStreamReader(s, "UTF-8");
-    } catch (UnsupportedEncodingException e) {
-      throw new RuntimeException(e);
-    }
+    InputStreamReader isr = new InputStreamReader(s, Charsets.UTF_8);
     BufferedReader br = new BufferedReader(isr);
     String line;
     JSONObject jo;

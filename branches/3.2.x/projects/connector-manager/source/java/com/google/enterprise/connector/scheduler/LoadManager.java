@@ -14,9 +14,9 @@
 
 package com.google.enterprise.connector.scheduler;
 
-import com.google.enterprise.connector.traversal.BatchSize;
 import com.google.enterprise.connector.traversal.BatchResult;
 import com.google.enterprise.connector.traversal.BatchResultRecorder;
+import com.google.enterprise.connector.traversal.BatchSize;
 
 /**
  * Interface for a {@link LoadManager} implementations.

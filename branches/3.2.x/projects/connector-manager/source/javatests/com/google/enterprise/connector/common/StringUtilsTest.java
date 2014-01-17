@@ -14,7 +14,6 @@
 
 package com.google.enterprise.connector.common;
 
-import junit.framework.Assert;
 import junit.framework.TestCase;
 
 import java.io.BufferedReader;

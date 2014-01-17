@@ -21,18 +21,16 @@ import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.manager.MockManager;
-import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.spi.ConfigureResponse;
+
+import junit.framework.TestCase;
 
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
-import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.logging.Logger;
-
-import junit.framework.TestCase;
 
 /**
  * Tests {@link GetConfigForm} servlet class.

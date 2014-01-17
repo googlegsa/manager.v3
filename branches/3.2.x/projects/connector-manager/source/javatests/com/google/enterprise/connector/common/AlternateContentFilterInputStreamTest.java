@@ -19,11 +19,11 @@ import com.google.enterprise.connector.pusher.XmlFeed;
 import com.google.enterprise.connector.spi.SpiConstants.FeedType;
 import com.google.enterprise.connector.traversal.FileSizeLimitInfo;
 
+import junit.framework.TestCase;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-
-import junit.framework.TestCase;
 
 /**
  * Tests AlternateContentFilterInputStream.

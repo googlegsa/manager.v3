@@ -40,7 +40,6 @@ import com.google.enterprise.connector.spi.ConnectorPersistentStoreAware;
 import com.google.enterprise.connector.spi.ConnectorShutdownAware;
 import com.google.enterprise.connector.spi.ConnectorType;
 import com.google.enterprise.connector.spi.Lister;
-import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.Retriever;
 import com.google.enterprise.connector.spi.TraversalContext;
 import com.google.enterprise.connector.spi.TraversalContextAware;
@@ -187,7 +186,7 @@ class ConnectorCoordinatorImpl implements
    *
    * @return The name of this Connector.
    */
-  /* @Override */
+  @Override
   public String getConnectorName() {
     return name;
   }
@@ -195,7 +194,7 @@ class ConnectorCoordinatorImpl implements
   /**
    * Returns {@code true} if an instance of this {@link Connector} exists.
    */
-  /* @Override */
+  @Override
   public synchronized boolean exists() {
     return (instanceInfo != null);
   }
@@ -205,7 +204,7 @@ class ConnectorCoordinatorImpl implements
    * removes the Connector instance from the known connectors,
    * and removes the Connector's on-disk representation.
    */
-  /* @Override */
+  @Override
   public void removeConnector() {
     synchronized(this) {
       resetBatch();
@@ -222,7 +221,7 @@ class ConnectorCoordinatorImpl implements
    * removes the Connector instance from the known connectors,
    * and removes the Connector's on-disk representation.
    */
-  /* @Override */
+  @Override
   public synchronized void connectorRemoved() {
     LOGGER.info("Dropping connector: " + name);
     try {
@@ -247,7 +246,7 @@ class ConnectorCoordinatorImpl implements
    * @return an AuthenticationManager
    * @throws InstantiatorException
    */
-  /* @Override */
+  @Override
   public synchronized AuthenticationManager getAuthenticationManager()
       throws ConnectorNotFoundException, InstantiatorException {
     return getConnectorInterfaces().getAuthenticationManager();
@@ -260,7 +259,7 @@ class ConnectorCoordinatorImpl implements
    * @return an AuthorizationManager
    * @throws InstantiatorException
    */
-  /* @Override */
+  @Override
   public synchronized AuthorizationManager getAuthorizationManager()
       throws ConnectorNotFoundException, InstantiatorException {
     return getConnectorInterfaces().getAuthorizationManager();
@@ -273,7 +272,7 @@ class ConnectorCoordinatorImpl implements
    * @return a TraversalManager
    * @throws InstantiatorException
    */
-  /* @Override */
+  @Override
   public synchronized TraversalManager getTraversalManager()
       throws ConnectorNotFoundException, InstantiatorException {
     if (traversalManager == null && traversalEnabled) {
@@ -369,7 +368,7 @@ class ConnectorCoordinatorImpl implements
    * @throws InstantiatorException if unable to instantiate the requested
    *         {@link Retriever}
    */
-  /* @Override */
+  @Override
   public Retriever getRetriever()
       throws ConnectorNotFoundException, InstantiatorException {
     if (retriever == null) {
@@ -389,7 +388,7 @@ class ConnectorCoordinatorImpl implements
    *         supplied data in the map.
    * @see ConnectorType#getPopulatedConfigForm(Map, Locale)
    */
-  /* @Override */
+  @Override
   public synchronized ConfigureResponse getConfigForm(Locale locale)
       throws ConnectorNotFoundException, InstantiatorException {
     Configuration config = getConnectorConfiguration();
@@ -433,7 +432,7 @@ class ConnectorCoordinatorImpl implements
    * Halts any traversal in progress and removes any saved traversal state,
    * forcing the Connector to retraverse the Repository from its start.
    */
-  /* @Override */
+  @Override
   public void restartConnectorTraversal() throws ConnectorNotFoundException {
     // To avoid deadlock, this method calls InstanceInfo's getters and setters,
     // rather than the local ones.
@@ -487,7 +486,7 @@ class ConnectorCoordinatorImpl implements
    *        Schedule.
    * @throws ConnectorNotFoundException if the connector is not found
    */
-  /* @Override */
+  @Override
   public void setConnectorSchedule(Schedule connectorSchedule)
       throws ConnectorNotFoundException {
     synchronized(this) {
@@ -504,7 +503,7 @@ class ConnectorCoordinatorImpl implements
    *
    * @param schedule new Connector Schedule
    */
-  /* @Override */
+  @Override
   public synchronized void connectorScheduleChanged(Schedule schedule) {
     LOGGER.config("Schedule changed for connector " + name + ": " + schedule);
 
@@ -532,7 +531,7 @@ class ConnectorCoordinatorImpl implements
    *         for this connector.
    * @throws ConnectorNotFoundException if the connector is not found
    */
-  /* @Override */
+  @Override
   public synchronized Schedule getConnectorSchedule()
       throws ConnectorNotFoundException {
     // Fetch the Schedule and Update the cache while we're at it.
@@ -548,7 +547,7 @@ class ConnectorCoordinatorImpl implements
    * @throws ConnectorNotFoundException if this {@link ConnectorCoordinator}
    *         does not exist.
    */
-  /* @Override */
+  @Override
   public synchronized void setConnectorState(String state)
       throws ConnectorNotFoundException {
     getInstanceInfo().setConnectorState(state);
@@ -563,7 +562,7 @@ class ConnectorCoordinatorImpl implements
    *
    * @param checkpoint a String representation of the traversal state.
    */
-  /* @Override */
+  @Override
   public void connectorCheckpointChanged(String checkpoint) {
     // If checkpoint has been nulled, then traverse the repository from scratch.
     if (checkpoint == null) {
@@ -597,7 +596,7 @@ class ConnectorCoordinatorImpl implements
    * @throws ConnectorNotFoundException if this {@link ConnectorCoordinator}
    *         does not exist.
    */
-  /* @Override */
+  @Override
   public synchronized String getConnectorState()
       throws ConnectorNotFoundException {
     return getInstanceInfo().getConnectorState();
@@ -607,7 +606,7 @@ class ConnectorCoordinatorImpl implements
    * Returns the name of the {@link ConnectorType} for this {@link Connector}
    * instance.
    */
-  /* @Override */
+  @Override
   public synchronized String getConnectorTypeName()
       throws ConnectorNotFoundException {
     return getInstanceInfo().getTypeInfo().getConnectorTypeName();
@@ -618,7 +617,7 @@ class ConnectorCoordinatorImpl implements
    * If this {@link ConnectorCoordinator} supports persistence this will
    * persist the new Configuration.
    */
-  /* @Override */
+  @Override
   public ConfigureResponse setConnectorConfiguration(TypeInfo newTypeInfo,
       Configuration configuration, Locale locale, boolean update)
       throws ConnectorNotFoundException, ConnectorExistsException,
@@ -671,7 +670,7 @@ class ConnectorCoordinatorImpl implements
     return response;
   }
 
-  /* @Override */
+  @Override
   public synchronized Configuration getConnectorConfiguration()
       throws ConnectorNotFoundException {
     Configuration config = getInstanceInfo().getConnectorConfiguration();
@@ -788,7 +787,7 @@ class ConnectorCoordinatorImpl implements
    *
    * @return true if this call started a batch
    */
-  /* @Override */
+  @Override
   public synchronized boolean startBatch() {
     if (!shouldRun()) {
       return false;
@@ -831,7 +830,7 @@ class ConnectorCoordinatorImpl implements
    *
    * @param result a BatchResult
    */
-  /* @Override */
+  @Override
   public synchronized void recordResult(BatchResult result) {
     loadManager.recordResult(result);
     delayTraversal(result.getDelayPolicy());
@@ -843,7 +842,7 @@ class ConnectorCoordinatorImpl implements
    * and discards the Connector instance.  Any on-disk representation of
    * the connector remains.
    */
-  /* @Override */
+  @Override
   public synchronized void shutdown() {
     resetBatch();
     shutdownConnector(false);
@@ -996,7 +995,7 @@ class ConnectorCoordinatorImpl implements
     }
   }
 
-  /* @Override */
+  @Override
   public void connectorAdded(TypeInfo newTypeInfo, Configuration configuration)
       throws InstantiatorException {
     if (instanceInfo != null) {
@@ -1080,7 +1079,7 @@ class ConnectorCoordinatorImpl implements
    * @param newTypeInfo the {@link TypeInfo} for this this Connector.
    * @param config a new {@link Configuration} for this Connector.
    */
-  /* @Override */
+  @Override
   public void connectorConfigurationChanged(TypeInfo newTypeInfo,
       Configuration config) throws InstantiatorException {
     if (LOGGER.isLoggable(Level.CONFIG)) {

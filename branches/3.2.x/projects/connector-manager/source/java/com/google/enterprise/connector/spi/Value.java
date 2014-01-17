@@ -136,10 +136,10 @@ public abstract class Value {
    * @param stringValue A {@code String} containing the data. The String
    *        is converted as follows:
    *        <ul>
-   *        <li> Any case variant of the strings "t" and "true" return
-   *        {@code true}.</li>
+   *        <li> Any case variant of the strings "f" and "false" return
+   *        {@code false}.</li>
    *        <li> All other strings (including {@code null} and the empty
-   *        string) return {@code false}.</li>
+   *        string) return {@code true}.</li>
    *        </ul>
    * @return a {@link Value} instance carrying this data
    */

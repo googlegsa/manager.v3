@@ -15,13 +15,13 @@
 package com.google.enterprise.connector.scheduler;
 
 import com.google.enterprise.connector.common.I18NUtil;
-import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.instantiator.Configuration;
 import com.google.enterprise.connector.instantiator.Instantiator;
 import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.instantiator.MockInstantiator;
 import com.google.enterprise.connector.instantiator.SpringInstantiator;
 import com.google.enterprise.connector.instantiator.ThreadPool;
+import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;

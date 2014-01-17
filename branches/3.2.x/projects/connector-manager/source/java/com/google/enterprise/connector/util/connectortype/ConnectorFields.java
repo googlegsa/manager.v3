@@ -86,18 +86,17 @@ public class ConnectorFields {
       this.mandatory = mandatory;
     }
 
-    /* Fulfills Field interface except for getSnippet which requires value. */
-    /* @Override */
+    @Override
     public String getName() {
       return name;
     }
 
-    /* @Override */
+    @Override
     public boolean isMandatory() {
       return mandatory;
     }
 
-    /* @Override */
+    @Override
     public String getLabel(ResourceBundle bundle) {
       return bundle.getString(getName());
     }
@@ -120,7 +119,6 @@ public class ConnectorFields {
     protected boolean boldLabel = true;
 
     protected String getLabelHtml(ResourceBundle bundle, boolean highlightError, String message) {
-      // TODO: ensure characters are HTML escaped
       StringBuffer sb = new StringBuffer();
       sb.append("<td valign=\"top\">");
       if (highlightError) {
@@ -134,14 +132,14 @@ public class ConnectorFields {
         sb.append(getName());
         sb.append("\">");
       }
-      sb.append(getLabel(bundle));
+      sb.append(xmlEncodeAttributeValue(getLabel(bundle)));
       if (renderLabelTag) {
         sb.append("</label>");
       }
       if (boldLabel) {
         sb.append("</b>");
       }
-      sb.append(message);
+      sb.append(xmlEncodeAttributeValue(message));
       if (highlightError) {
         sb.append("</font>");
       }
@@ -149,7 +147,9 @@ public class ConnectorFields {
       return sb.toString();
     }
 
-    public abstract String getSnippet(ResourceBundle bundle, boolean hightlighError);
+    @Override
+    public abstract String getSnippet(ResourceBundle bundle,
+        boolean highlightError);
 
     /** @param config immutable Map of configuration parameters */
     public abstract void setValueFrom(Map<String, String> config);
@@ -198,25 +198,33 @@ public class ConnectorFields {
    */
   public static class SingleLineField extends AbstractField {
     private static final String ONE_LINE_INPUT_HTML =
-        "<td><input name=\"%s\" id=\"%s\" type=\"%s\" %s></input></td>";
+        "<td><input name=\"%s\" id=\"%s\" type=\"%s\"%s></input></td>";
     private static final String FORMAT = "<tr> %s " + ONE_LINE_INPUT_HTML + "</tr>";
 
     private final boolean isPassword;
+
+    private String defaultValue;
 
     protected String value; // user's one input line value
 
     public SingleLineField(String name, boolean mandatory, boolean isPassword) {
       super(name, mandatory);
       this.isPassword = isPassword;
-      value = "";
+      this.defaultValue = "";
+      this.value = "";
+    }
+
+    public void setDefaultValue(String defaultValue) {
+      this.defaultValue = defaultValue;
     }
 
     @Override
     public void setValueFrom(Map<String, String> config) {
-      this.value = "";
       String newValue = config.get(getName());
       if (hasContent(newValue)) {
         setValueFromString(newValue);
+      } else {
+        this.value = defaultValue;
       }
     }
 
@@ -366,6 +374,11 @@ public class ConnectorFields {
     private SortedSet<String> selectedKeys;
     private SortedSet<String> keys;
     private final String message;
+    private Callback callback;
+
+    public interface Callback {
+      Map<String, String> getAttributes(String key);
+    }
 
     public MultiCheckboxField(String name, boolean mandatory, Set<String> keys, String message) {
       super(name, mandatory);
@@ -375,17 +388,37 @@ public class ConnectorFields {
       this.renderLabelTag = false;
     }
 
+    public MultiCheckboxField(String name, boolean mandatory, Set<String> keys,
+        String message, Callback callback) {
+      this(name, mandatory, keys, message);
+      this.callback = callback;
+    }
+
     private void makeSingleCheckboxHtml(StringBuffer sb, String boxname, String key,
         boolean selected) {
+      sb.append("<label>");
       sb.append("<input type=\"checkbox\" name=\"");
       sb.append(boxname);
       sb.append("\" value=\"");
       sb.append(key);
+      sb.append("\"");
       if (selected) {
-        sb.append("\" checked=\"checked");
+        sb.append(" checked=\"checked\"");
       }
-      sb.append("\"/> ");
+      if (callback != null) {
+        Map<String, String> attributes = callback.getAttributes(key);
+        try {
+          for (Map.Entry<String, String> attr : attributes.entrySet()) {
+            XmlUtils.xmlAppendAttr(attr.getKey(), attr.getValue(), sb);
+          }
+        } catch (IOException e) {
+          // StringBuffer.append does not throw IOExceptions.
+          throw new AssertionError(e);
+        }
+      }
+      sb.append("/> ");
       sb.append(key);
+      sb.append("</label>");
     }
 
     private String getCheckboxesHtml(String name, ResourceBundle bundle) {

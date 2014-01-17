@@ -24,7 +24,7 @@ public class SystemClock implements Clock {
   public static Clock INSTANCE = new SystemClock();
 
   /** @return the current time in milliseconds */
-  /* @Override */
+  @Override
   public long getTimeMillis() {
     return System.currentTimeMillis();
   }

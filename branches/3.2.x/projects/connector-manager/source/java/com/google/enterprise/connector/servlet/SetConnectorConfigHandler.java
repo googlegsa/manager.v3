@@ -19,7 +19,6 @@ import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.instantiator.Configuration;
 import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.logging.NDC;
-import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
@@ -63,13 +62,6 @@ public class SetConnectorConfigHandler {
     // returned by the connector manager.", rather than the error status.
     configRes = new ConfigureResponse(null, null, null);
 
-    // TODO(ejona): Remove this block as all modern GSAs do not require the
-    // prefix to be added (and thus stripped here), so this code is never
-    // executed. In addition, it wouldn't behave as you would expect due to
-    // xmlBody's format.
-    if (Context.getInstance().gsaAdminRequiresPrefix()) {
-      xmlBody = ServletUtil.stripCmPrefix(xmlBody);
-    }
     Element root = XmlParseUtil.parseAndGetRootElement(
         xmlBody, ServletUtil.XMLTAG_CONNECTOR_CONFIG);
     if (root == null) {

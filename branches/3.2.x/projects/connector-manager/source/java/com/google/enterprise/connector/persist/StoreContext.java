@@ -61,7 +61,7 @@ public class StoreContext implements Comparable<StoreContext> {
     return result;
   }
 
-  /* @Override */
+  @Override
   public int compareTo(StoreContext other) {
     int diff = connectorName.compareTo(other.connectorName);
     if (diff != 0) {

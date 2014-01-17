@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.manager;
 
+import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
 import com.google.enterprise.connector.instantiator.Configuration;
 import com.google.enterprise.connector.instantiator.ExtendedConfigureResponse;
@@ -34,13 +35,11 @@ import com.google.enterprise.connector.test.ConnectorTestUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -88,7 +87,7 @@ public class MockManager implements Manager {
     return INSTANCE;
   }
 
-  /* @Override */
+  @Override
   public AuthenticationResponse authenticate(String connectorName,
       AuthenticationIdentity identity) {
     if (shouldVerifyIdentity) {
@@ -146,7 +145,7 @@ public class MockManager implements Manager {
     return true;
   }
 
-  /* @Override */
+  @Override
   public Collection<AuthorizationResponse> authorizeDocids(String connectorName,
       List<String> docidList, AuthenticationIdentity identity) {
     // Connector4 always returns a null response.
@@ -197,36 +196,31 @@ public class MockManager implements Manager {
     return results;
   }
 
-  /* @Override */
+  @Override
   public InputStream getDocumentContent(String connectorName, String docid)
       throws ConnectorNotFoundException {
-    try {
-      if (CONNECTOR1.equals(connectorName)) {
-        return new ByteArrayInputStream(docid.getBytes("UTF-8"));
+    if (CONNECTOR1.equals(connectorName)) {
+      return new ByteArrayInputStream(docid.getBytes(Charsets.UTF_8));
+    }
+    if (CONNECTOR2.equals(connectorName)) {
+      return null;  // no content
+    }
+    if (CONNECTOR5.equals(connectorName)) {
+      return new ByteArrayInputStream(docid.getBytes(Charsets.UTF_8));
+    }
+    if (CONNECTOR6.equals(connectorName)) {
+      if (CONNECTOR6_SPECIAL_CHAR_DOCID.equals(docid)) {
+        return new ByteArrayInputStream(
+            CONNECTOR6_SUCCESS.getBytes(Charsets.UTF_8));
+      } else {
+        return null;
       }
-      if (CONNECTOR2.equals(connectorName)) {
-        return null;  // no content
-      }
-      if (CONNECTOR5.equals(connectorName)) {
-        return new ByteArrayInputStream(docid.getBytes("UTF-8"));
-      }
-      if (CONNECTOR6.equals(connectorName)) {
-        if (CONNECTOR6_SPECIAL_CHAR_DOCID.equals(docid)) {
-          return new ByteArrayInputStream(
-              CONNECTOR6_SUCCESS.getBytes("UTF-8"));
-        } else {
-          return null;
-        }
-      }
-    } catch (UnsupportedEncodingException e) {
-      // UTF-8 is always supported.
-      throw new AssertionError(e);
     }
     throw new ConnectorNotFoundException("Connector not found: "
                                          + connectorName);
   }
 
-  /* @Override */
+  @Override
   public Document getDocumentMetaData(String connectorName, String docid)
       throws ConnectorNotFoundException {
     if (CONNECTOR1.equals(connectorName) || CONNECTOR6.equals(connectorName)) {
@@ -254,13 +248,13 @@ public class MockManager implements Manager {
                                          + connectorName);
   }
 
-  /* @Override */
+  @Override
   public Set<String> getConnectorTypeNames() {
     return new TreeSet<String>(Arrays.asList(
         new String[] {"Documentum", "Filenet", "Sharepoint"}));
   }
 
-  /* @Override */
+  @Override
   public ConnectorType getConnectorType(String typeName)
       throws ConnectorTypeNotFoundException {
     throw new ConnectorTypeNotFoundException("Unsupported Operation");
@@ -270,7 +264,7 @@ public class MockManager implements Manager {
     return "<?xml?><beans><bean id=\"" + typeName + "Instance\"/></beans>";
   }
 
-  /* @Override */
+  @Override
   public ConfigureResponse getConfigForm(String connectorTypeName,
       String language) throws InstantiatorException {
     String message =
@@ -288,7 +282,7 @@ public class MockManager implements Manager {
         formSnippet), getConnectorInstancePrototype(connectorTypeName));
   }
 
-  /* @Override */
+  @Override
   public ConfigureResponse getConfigFormForConnector(String connectorName,
       String language) throws InstantiatorException {
     String message = "Sample form for " + connectorName + "lang " + language;
@@ -305,7 +299,7 @@ public class MockManager implements Manager {
     return new ConfigureResponse(message, formSnippet);
   }
 
-  /* @Override */
+  @Override
   public ConnectorStatus getConnectorStatus(String connectorName)
       throws ConnectorNotFoundException {
     String name = connectorName;
@@ -315,7 +309,7 @@ public class MockManager implements Manager {
     return new ConnectorStatus(name, type, status, schedule, null, null);
   }
 
-  /* @Override */
+  @Override
   public List<ConnectorStatus> getConnectorStatuses() {
     List<ConnectorStatus> statuses = new ArrayList<ConnectorStatus>();
     try {
@@ -327,7 +321,7 @@ public class MockManager implements Manager {
     return statuses;
   }
 
-  /* @Override */
+  @Override
   public ConfigureResponse setConnectorConfiguration(String connectorName,
       Configuration configuration, String language, boolean update)
       throws ConnectorNotFoundException, ConnectorExistsException,
@@ -348,7 +342,7 @@ public class MockManager implements Manager {
     return null;
   }
 
-  /* @Override */
+  @Override
   public Configuration getConnectorConfiguration(String connectorName)
       throws ConnectorNotFoundException {
     return new Configuration("Mock", new HashMap<String, String>(), null);
@@ -356,12 +350,12 @@ public class MockManager implements Manager {
 
   final Properties managerConfig = new Properties();
 
-  /* @Override */
+  @Override
   public Properties getConnectorManagerConfig() {
     return managerConfig;
   }
 
-  /* @Override */
+  @Override
   public void setConnectorManagerConfig(String feederGateProtocol,
       String feederGateHost, int feederGatePort, int feederGateSecurePort,
       String connectorManagerUrl) {
@@ -386,13 +380,13 @@ public class MockManager implements Manager {
     isLocked = true;
   }
 
-  /* @Override */
+  @Override
   public void setSchedule(String connectorName, String schedule)
       throws ConnectorNotFoundException, PersistentStoreException {
     // do nothing
   }
 
-  /* @Override */
+  @Override
   public void removeConnector(String connectorName)
       throws ConnectorNotFoundException, PersistentStoreException {
     if (CONNECTOR2.equals(connectorName)) {
@@ -401,13 +395,13 @@ public class MockManager implements Manager {
     LOGGER.info("Removing connector: " + connectorName);
   }
 
-  /* @Override */
+  @Override
   public void restartConnectorTraversal(String connectorName)
       throws ConnectorNotFoundException, InstantiatorException {
     // do nothing;
   }
 
-  /* @Override */
+  @Override
   public boolean isLocked() {
     return isLocked;
   }

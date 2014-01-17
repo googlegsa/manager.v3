@@ -19,8 +19,8 @@ import com.google.enterprise.connector.util.EofFilterInputStream;
 import com.google.enterprise.connector.util.InputStreamFactory;
 
 import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 public class BinaryValue extends ValueImpl {
 

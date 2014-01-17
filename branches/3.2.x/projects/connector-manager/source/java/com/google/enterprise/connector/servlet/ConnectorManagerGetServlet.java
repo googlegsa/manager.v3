@@ -149,11 +149,6 @@ public abstract class ConnectorManagerGetServlet extends HttpServlet {
     if (configRes != null && configRes.getFormSnippet() != null &&
         configRes.getFormSnippet().length() > 0) {
       formSnippet = configRes.getFormSnippet();
-      // TODO(ejona): Remove this block as all modern GSAs do not require the
-      // prefix to be added, so this code is never executed.
-      if (Context.getInstance().gsaAdminRequiresPrefix()) {
-        formSnippet = ServletUtil.prependCmPrefix(formSnippet);
-      }
       // formSnippet is required to contain XHTML at this point.
       if (doObfuscate) {
         formSnippet = ServletUtil.filterSensitiveData(formSnippet);

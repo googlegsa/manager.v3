@@ -55,9 +55,7 @@ public class ServletUtilTest extends TestCase {
   }
 
   private void onePrependTest(String original, String expected) {
-    String result = ServletUtil.prependCmPrefix(original);
-    assertEquals(expected, result);
-    assertEquals(original, ServletUtil.stripCmPrefix(result));
+    assertEquals(expected, ServletUtil.prependCmPrefix(original));
   }
 
   public void testPercentEncode() throws Exception {

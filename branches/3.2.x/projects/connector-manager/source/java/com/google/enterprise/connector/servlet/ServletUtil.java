@@ -14,12 +14,13 @@
 
 package com.google.enterprise.connector.servlet;
 
+import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-
 import com.google.enterprise.connector.common.JarUtils;
 import com.google.enterprise.connector.common.SecurityUtils;
+import com.google.enterprise.connector.util.Base16;
 import com.google.enterprise.connector.util.SAXParseErrorHandler;
 import com.google.enterprise.connector.util.XmlParseUtil;
 import com.google.enterprise.connector.util.XmlParseUtil.LocalEntityResolver;
@@ -33,10 +34,10 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -468,7 +469,6 @@ public class ServletUtil {
     percentEncode(sb, value);    
   }
 
-  private static final String HEX = "0123456789ABCDEF";
   private static final String PERCENT = "-.%0123456789%%%%%%"
       + "%ABCDEFGHIJKLMNOPQRSTUVWXYZ%%%%_"
       + "%abcdefghijklmnopqrstuvwxyz%%%~";
@@ -484,20 +484,13 @@ public class ServletUtil {
    * @param text some plain text
    */
   public static void percentEncode(StringBuilder sb, String text) {
-    byte[] bytes;
-    try {
-      bytes = text.getBytes("UTF-8");
-    } catch (java.io.UnsupportedEncodingException e) {
-      // Not going to happen with built-in encoding.
-      throw new AssertionError(e);
-    }
+    byte[] bytes = text.getBytes(Charsets.UTF_8);
     for (byte b : bytes) {
       if (b >= '-' && b <= '~' && PERCENT.charAt(b - '-') != '%') {
         sb.append((char) b);
       } else {
         sb.append('%');
-        sb.append(HEX.charAt((b >>> 4) & 0xF));
-        sb.append(HEX.charAt(b & 0xF));
+        Base16.upperCase().encode(b, sb);
       }
     }
   }
@@ -660,9 +653,6 @@ public class ServletUtil {
   private static final Pattern PREPEND_CM_PATTERN =
       Pattern.compile("<[^>]+\\bname\\s*=\\s*[\"']");
 
-  private static final Pattern STRIP_CM_PATTERN =
-      Pattern.compile("(<[^>]+\\bname\\s*=\\s*[\"'])CM_");
-
   // The matching of '/*' is to remove any comments preceeding the CDATA start
   // and end, as is commonly done in XHTML to remain compatible with old HTML
   // browsers. There is no need to actually remove the comments, but this regex
@@ -683,36 +673,20 @@ public class ServletUtil {
       Pattern.compile(Pattern.quote(TEMPORARY_REPLACEMENT));
 
   /**
+   * Prepends "CM_" to the value of name attributes in an XML fragment.
    * Given a String such as:
-   * <Param name="CM_Color" value="a"/> <Param name="CM_Password" value="a"/>
-   *
-   * Return a String such as:
    * <Param name="Color" value="a"/> <Param name="Password" value="a"/>
    *
-   * @param str String an XML string with PREFIX_CM as above
-   * @return a result XML string without PREFIX_CM as above
-   */
-  // TODO(ejona): Remove this method. It is not executed.
-  public static String stripCmPrefix(String str) {
-    // TODO(ejona): Remove the temporary replacements. This code is only run
-    // after any CDATA sections have been removed.
-    List<String> saved = new ArrayList<String>();
-    str = temporaryReplace(CDATA_PATTERN, str, saved);
-    Matcher matcher = STRIP_CM_PATTERN.matcher(str);
-    String result = matcher.replaceAll("$1");
-    result = undoTemporaryReplace(result, saved);
-    return result;
-  }
-
-  /**
-   * Inverse operation for stripCmPrefix.
+   * Return a String such as:
+   * <Param name="CM_Color" value="a"/> <Param name="CM_Password" value="a"/>
    *
-   * @param str String an XML string without PREFIX_CM as above
-   * @return a result XML string with PREFIX_CM as above
+   * Attributes inside CDATA sections are not modified.
+   *
+   * @param str String an XML string without "CM_" prefix as above
+   * @return a result XML string with "CM_" prefix as above
    */
-  // TODO(ejona): Move this method onboard the GSA and remove it here, since it
-  // is never executed by the connector manager (there is a call to it, but that
-  // call isn't executed).
+ // TODO(ejona): Move this method onboard the GSA and remove it here, since it
+  // is never executed by the connector manager.
   public static String prependCmPrefix(String str) {
     // TODO(ejona): Remove the temporary replacements after moving to GSA. This
     // code is only run after any CDATA sections have been removed, but it is
