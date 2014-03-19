@@ -253,7 +253,7 @@ public class SimpleConnectorType implements ConnectorType {
     return result;
   }
 
-  /* @since 1.0.1 */
+  /** @since 1.0.1 */
   @Override
   public ConfigureResponse validateConfig(Map<String, String> configData,
       Locale locale, ConnectorFactory connectorFactory) {
