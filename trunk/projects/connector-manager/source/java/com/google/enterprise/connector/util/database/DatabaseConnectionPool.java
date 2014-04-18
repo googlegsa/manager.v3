@@ -17,6 +17,8 @@ package com.google.enterprise.connector.util.database;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.LinkedList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.sql.DataSource;
 
@@ -29,6 +31,8 @@ import javax.sql.DataSource;
  * @since 2.8
  */
 public class DatabaseConnectionPool {
+  private static final Logger LOGGER =
+      Logger.getLogger(DatabaseConnectionPool.class.getName());
   private final DataSource dataSource;
   private final LinkedList<Connection> connections = new LinkedList<Connection>();
 
@@ -65,17 +69,17 @@ public class DatabaseConnectionPool {
    * @throws SQLException if a Connection cannot be obtained
    */
   public synchronized Connection getConnection() throws SQLException {
-    Connection conn;
-    try {
+    while (!connections.isEmpty()) {
       // Get a cached connection, but check if it is still functional.
-      do {
-        conn = connections.remove(0);
-      } while (isDead(conn));
-    } catch (IndexOutOfBoundsException e) {
-      // Pool is empty.  Get a new connection from the dataSource.
-      conn = dataSource.getConnection();
+      Connection conn = connections.removeFirst();
+      if (isAlive(conn)) {
+        return conn;
+      }
+      // Close dead connection.
+      close(conn);
     }
-    return conn;
+    // Pool is empty.  Get a new connection from the dataSource.
+    return dataSource.getConnection();
   }
 
   /**
@@ -85,7 +89,7 @@ public class DatabaseConnectionPool {
    * @param connection a Connection to to return to the pool
    */
   public synchronized void releaseConnection(Connection connection) {
-    connections.add(0, connection);
+    connections.addFirst(connection);
   }
 
   /**
@@ -100,16 +104,17 @@ public class DatabaseConnectionPool {
   }
 
   /**
-   * Returns {@code true} if the connection is dead,
-   * {@code false} if it appears to be OK.
+   * Returns {@code true} if the connection is alive,
+   * {@code false} if it appears to be dead.
    */
-  private boolean isDead(Connection conn) {
+  private boolean isAlive(Connection conn) {
     try {
-      conn.getMetaData();
-      return false;
+      // Using timeout as 1 second. If the timeout period expires before 
+      // the operation completes, this method returns false. 
+      return conn.isValid(1);
     } catch (SQLException e) {
-      close(conn);
-      return true;
+      LOGGER.log(Level.INFO, "Connection is dead", e);
+      return false;
     }
   }
 
@@ -117,8 +122,8 @@ public class DatabaseConnectionPool {
   private void close(Connection conn) {
     try {
       conn.close();
-    } catch (SQLException e) {
-      // Ignored.
+    } catch (SQLException ignored) {
+      
     }
   }
 }
