@@ -78,7 +78,7 @@
     </ant>
   </target>
 
-  <target name="init-downloads" depends="prebuild,svn.svn-branch">
+  <target name="init-downloads" depends="prebuild,svn.svn-branch-version">
     <property name="downloads.prefix" value="connector-manager-${svn.branch}"/>
   </target>
 
@@ -120,12 +120,13 @@
 
   <target name="repackage" depends="init-downloads"
           description="Repackage release candidate files for release.">
+    <echo message="Repackaging ${svn.branch} as ${version}." />
     <property name="repackage.prefix" value="connector-manager-${version}"/>
     <repackage-downloads downloads.dir="${downloads.dir}"
                          downloads.prefix="${downloads.prefix}"
                          repackage.prefix="${repackage.prefix}" />
   </target>
-
+  
   <target name="install-test-connectorA" depends="test-connectorA,make-install-dir">
     <mkdir dir="${install.dir}/test-connectorA" />
     <copy todir="${install.dir}/test-connectorA" >

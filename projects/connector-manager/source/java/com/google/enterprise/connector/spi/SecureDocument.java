@@ -181,7 +181,7 @@ public class SecureDocument implements Document {
    * Sets the URL for an inherited ACL.
    * <p/>
    * Only one of {@link #setInheritFrom(String url)} or
-   * {@link #setInheritFrom(String docid, SpiConstants.FeedType feedType)}
+   * {@link #setInheritFrom(String docid, FeedType feedType)}
    * should be called.  If both are called the {@code inherit-from}
    * {@code docid} and {@code feedType} will be ignored in favor
    * of the {@code inherit-from url}.
@@ -201,7 +201,7 @@ public class SecureDocument implements Document {
    * that was fed using FeedType.CONTENT, FeedType.CONTENTURL, or FeedType.ACL.
    * <p/>
    * Only one of {@link #setInheritFrom(String url)} or
-   * {@link #setInheritFrom(String docid, SpiConstants.FeedType feedType)}
+   * {@link #setInheritFrom(String docid, FeedType feedType)}
    * should be called.  If both are called the {@code inherit-from}
    * {@code docid} and {@code feedType} will be ignored in favor
    * of the {@code inherit-from url}.

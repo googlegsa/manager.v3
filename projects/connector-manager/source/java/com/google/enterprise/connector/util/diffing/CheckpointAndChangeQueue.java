@@ -16,6 +16,7 @@ package com.google.enterprise.connector.util.diffing;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
+import com.google.enterprise.connector.util.IOExceptionHelper;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.google.gson.stream.JsonReader;
@@ -353,7 +354,8 @@ public class CheckpointAndChangeQueue {
         JSONObject json = gsonToJson(gson);
         monitorPoints = new MonitorRestartState(json);
       } catch (JSONException e) {
-        throw new IOException("Failed reading persisted JSON queue.", e);
+        throw IOExceptionHelper.newIOException(
+            "Failed reading persisted JSON queue.", e);
       }
     }
 
@@ -364,7 +366,8 @@ public class CheckpointAndChangeQueue {
         checkpointAndChangeList.add(new CheckpointAndChange(json,
             internalDocumentHandleFactory, clientDocumentHandleFactory));
       } catch (JSONException e) {
-        throw new IOException("Failed reading persisted JSON queue.", e);
+        throw IOExceptionHelper.newIOException(
+            "Failed reading persisted JSON queue.", e);
       }
     }
 
@@ -397,7 +400,7 @@ public class CheckpointAndChangeQueue {
       try {
         writeJson(writer);
       } catch (JSONException e) {
-        throw new IOException("Failed writing recovery file.", e);
+        throw IOExceptionHelper.newIOException("Failed writing recovery file.", e);
       }
       writer.flush();
       outStream.getFD().sync();

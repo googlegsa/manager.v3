@@ -148,13 +148,6 @@
     <attribute name="downloads.prefix" description="Original name prefix."/>
     <attribute name="repackage.prefix" description="Repackaged name prefix."/>
     <sequential>
-      <fail>
-        <condition>
-          <equals arg1="@{src}" arg2="@{destfile}" casesensitive="false" />
-        </condition>
-        Unable to repackage ZIP files when the source and destination <!--
-        -->are the same: @{destfile}
-      </fail>
       <zip destfile="@{destfile}">
         <mappedresources>
           <zipfileset src="@{src}" />

@@ -26,7 +26,7 @@ import com.google.common.base.Charsets;
  * order-preserving, because the binary order of UTF-16 is different
  * from UTF-8 in the case of supplementary characters.
  *
- * @since 3.2.4
+ * @since TODO(jlacey)
  * @see <a href="http://tools.ietf.org/html/rfc4648">RFC 4648</a>
  * @see <a href="http://www.unicode.org/L2/L2001/01230-utf8s.htm">UTF8-S</a>
  */

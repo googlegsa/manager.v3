@@ -18,13 +18,11 @@ import java.io.IOException;
 
 /**
  * Compatibility utility for creating an {@link IOException} with a cause.
- * This was needed because in Java 5 {@code IOException} does not provide
+ * This is needed because in Java 5 {@code IOException} does not provide
  * a constructor that takes a {@code cause} parameter.
  *
  * @since 2.8
- * @deprecated Use {@link IOException#IOException(String, Throwable)}
  */
-@Deprecated
 public class IOExceptionHelper {
   // Prevents instantiation.
   private IOExceptionHelper() {
@@ -32,14 +30,14 @@ public class IOExceptionHelper {
 
   /**
    * Makes a new {@code IOException} with the supplied {@code message} and
-   * {@code cause} in a manner that was supported by Java 5.
+   * {@code cause} in a manner that is supported by Java 5.
    *
    * @param message the message
    * @param cause root failure cause
-   * @deprecated Use {@link IOException#IOException(String, Throwable)}
    */
-  @Deprecated
   public static IOException newIOException(String message, Throwable cause) {
-    return new IOException(message, cause);
+    IOException result = new IOException(message);
+    result.initCause(cause);
+    return result;
   }
 }
