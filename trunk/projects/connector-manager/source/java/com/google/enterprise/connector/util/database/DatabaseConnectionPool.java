@@ -27,6 +27,10 @@ import javax.sql.DataSource;
  * JDBC implementations, database Connections may be expensive and
  * time-consuming to open.  This pool maintains a LIFO stack of open
  * Connections in an attempt to re-use existing Connections to the database.
+ * <p>
+ * This class requires a JDBC driver that supports the {@code isValid}
+ * method of {@code java.sql.Connection}, part of the JDBC 4.0
+ * specification in Java 6.
  *
  * @since 2.8
  */
