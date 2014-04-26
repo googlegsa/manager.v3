@@ -48,13 +48,13 @@ public class SimpleTraversalContext implements TraversalContext {
     this.traversalTimeLimitSeconds = limit;
   }
 
-  /* @since 3.0 */
+  /** @since 3.0 */
   public synchronized void setSupportsInheritedAcls(
       boolean supportsInheritedAcls) {
     this.supportsInheritedAcls = supportsInheritedAcls;
   }
 
-  /* @since 3.0.4 */
+  /** @since 3.0.4 */
   public synchronized void setSupportsDenyAcls(boolean supportsDenyAcls) {
     this.supportsDenyAcls = supportsDenyAcls;
   }

@@ -11,6 +11,43 @@ issues and work-arounds.
 Web Site: http://code.google.com/p/google-enterprise-connector-manager/
 
 
+Release 3.2.6, 25 April 2014
+==============================
+
+Introduction
+------------
+This is a patch release that fixes a few small problems discovered in the
+the previous release. Users of previous releases are encouraged to upgrade.
+
+Issues Fixed Since 3.2.2
+------------------------
+14303102 - The DatabaseConnectionPool utility class did not detect
+           dead connections to SQL Server. This class now requires a
+           JDBC driver that supports the isValid method of
+           java.sql.Connection, part of the JDBC 4.0 specification in
+           Java 6. The embedded H2 database has a compliant driver.
+           For Oracle or SQL Server, a compliant driver must be
+           configured. This class is used by the AD Groups connector
+           starting with version 3.2.6, and by the Lotus Notes
+           connector since version 2.8.4.
+
+Version Compatibility
+---------------------
+This version of the Connector Manager requires Java 6 JRE or newer.
+
+The embedded JUnit JAR file was upgraded from version 3 to version 4.8.2.
+The embedded EasyMock JAR files were upgraded from version 3.0 to version
+3.2.
+
+Deprecated Features
+-------------------
+The following util package feature has been deprecated and is
+targeted for removal in a future release.
+
+  * The IOExceptionHelper class. Replaced in Java 6 by the
+    IOException(String, Throwable) constructor.
+
+
 Release 3.2.4, 16 January 2014
 ==============================
 
@@ -32,6 +69,10 @@ Issues Fixed Since 3.2.2
 12576455 - Add support for crawl-immediately and crawl-once feed record
            properties.  You can use these properties with a document filter,
            such as the AddPropertyFilter.
+
+Version Compatibility
+---------------------
+This version of the Connector Manager requires Java 6 JRE or newer.
 
 Removed Features
 -----------------
