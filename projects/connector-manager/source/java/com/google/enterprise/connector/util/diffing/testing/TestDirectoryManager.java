@@ -25,12 +25,6 @@ import java.util.UUID;
 
 /**
  * Utility methods for tests to access temporary directories.
- * <p>
- * This class does not delete the temporary files or directories. The
- * temporary directories are left behind for use after the tests are
- * run. For automatic cleanup, consider using JUnit's TemporaryFolder
- * rule or Guava's Files.createTempDir method together with
- * File.deleteOnExit instead.
  *
  * @since 2.8
  */
@@ -43,7 +37,7 @@ public class TestDirectoryManager  {
     parent = new File(parent, "tmp");
     tmpDir = new File(parent, "d-" + UUID.randomUUID().toString());
     if (this.tmpDir.exists()) {
-      throw new IOException("test dir already exists: " + tmpDir);
+      Files.deleteRecursively(tmpDir);
     }
     if (!tmpDir.mkdirs()) {
       throw new IOException("can't create test dir: " + tmpDir);
