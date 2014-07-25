@@ -14,74 +14,26 @@
 
 package com.google.enterprise.connector.spi;
 
-import com.google.enterprise.apis.client.GsaClient;
-import com.google.enterprise.apis.client.GsaEntry;
-
 import junit.framework.TestCase;
 
-import java.io.FileInputStream;
-import java.util.Properties;
-import java.util.Random;
-
+@SuppressWarnings("deprecation") // SocialCollectionHandler is deprecated
 public class SocialCollectionHandlerTest extends TestCase {
-  String gsaHost;
-  int gsaPort;
-  String gsaAdmin;
-  String gsaAdminPassword;
-
-  protected void setUp() throws Exception {
-    super.setUp();
-    final Properties properties = new Properties();
-    // TODO: refer to google-enterprise-connector-manager.properties
-    properties.load(new FileInputStream(
-        "source/javatests/TestConfig.properties"));
-    gsaHost = properties.getProperty("GsaHost");
-    gsaPort = Integer.parseInt(properties.getProperty("GsaPort"));
-    gsaAdmin = properties.getProperty("GsaAdminUsername");
-    gsaAdminPassword = properties.getProperty("GsaAdminPassword");
+  public void testValidate_valid() throws Exception {
+    assertTrue(SocialCollectionHandler.validateCollectionName(
+            SpiConstants.DEFAULT_USERPROFILE_COLLECTION));
   }
 
-  protected void tearDown() throws Exception {
-    super.tearDown();
+  public void testValidate_invalid() throws Exception {
+    assertFalse(SocialCollectionHandler.validateCollectionName("~!@#$%^&*"));
   }
 
-  private GsaEntry getCollection(String collectionName) throws Exception {
-    GsaClient client = 
-        new GsaClient(gsaHost, gsaPort, gsaAdmin, gsaAdminPassword);
-    return client.getEntry("collection", collectionName);
+  public void testInitialize_valid() throws Exception {
+    assertFalse(SocialCollectionHandler.initializeSocialCollection(
+            "", 0, "", "", SpiConstants.DEFAULT_USERPROFILE_COLLECTION));
   }
 
-  public void testInitialize() throws Exception {
-    SocialCollectionHandler
-        .initializeSocialCollection(gsaHost, gsaPort, gsaAdmin,
-            gsaAdminPassword, SpiConstants.DEFAULT_USERPROFILE_COLLECTION);
-    assertNotNull(getCollection(SpiConstants.DEFAULT_USERPROFILE_COLLECTION));
-  }
-
-  public void testInitializeRandom() throws Exception {
-    Random random = new Random();
-    String collectionName = SpiConstants.DEFAULT_USERPROFILE_COLLECTION
-        + random.nextInt();
-    assertTrue(SocialCollectionHandler.initializeSocialCollection(gsaHost,
-        gsaPort, gsaAdmin, gsaAdminPassword, collectionName));
-    assertNotNull(getCollection(collectionName));
-  }
-
-  public void testInitializeNull() throws Exception {
-    assertTrue(SocialCollectionHandler.initializeSocialCollection(gsaHost,
-        gsaPort, gsaAdmin, gsaAdminPassword, null));
-    assertNotNull(getCollection(SpiConstants.DEFAULT_USERPROFILE_COLLECTION));
-  }
-
-  public void testInitializeEmpty() throws Exception {
-    assertTrue(SocialCollectionHandler.initializeSocialCollection(gsaHost,
-        gsaPort, gsaAdmin, gsaAdminPassword, ""));
-    assertNotNull(getCollection(SpiConstants.DEFAULT_USERPROFILE_COLLECTION));
-  }
-
-  public void testInitializeAuthException() throws Exception {
-    assertFalse(
-      SocialCollectionHandler.initializeSocialCollection(gsaHost, gsaPort,
-          gsaAdmin, gsaAdminPassword + "x", ""));
+  public void testInitialize_invalid() throws Exception {
+    assertFalse(SocialCollectionHandler.initializeSocialCollection(
+            "", 0, "", "", "~!@#$%^&*"));
   }
 }
