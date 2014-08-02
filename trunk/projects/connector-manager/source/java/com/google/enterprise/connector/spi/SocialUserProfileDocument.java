@@ -584,11 +584,11 @@ public class SocialUserProfileDocument implements Document {
   }
 
   /**
-   * Static method to create a docId from a user profile.
+   * Creates a docId from a user profile.
    *
-   * @param userId
    * @return docId for the user profile document
    */
+  @SuppressWarnings("deprecation") // SocialCollectionHandler
   private String makeDocId() {
     try {
       return SocialCollectionHandler.getDocIdPrefix(collectionName)
