@@ -588,7 +588,6 @@ public class SocialUserProfileDocument implements Document {
    *
    * @return docId for the user profile document
    */
-  @SuppressWarnings("deprecation") // SocialCollectionHandler
   private String makeDocId() {
     try {
       return SocialCollectionHandler.getDocIdPrefix(collectionName)

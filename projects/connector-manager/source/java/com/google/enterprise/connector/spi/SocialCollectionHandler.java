@@ -24,9 +24,7 @@ import java.util.logging.Logger;
  * 
  * @author tapasnay
  * @since 3.0
- * @deprecated Use the Admin Console to create the collection for user profiles
  */
-@Deprecated
 public final class SocialCollectionHandler {
   private static final Logger LOGGER = Logger
       .getLogger(SocialCollectionHandler.class.getName());
@@ -48,7 +46,10 @@ public final class SocialCollectionHandler {
    * @param gsaAdminPassword password for making gdata call to GSA
    * @param collectionName name of the collection where user profiles will go.
    * @return {@code true} if social collection has been initialized successfully
+   * @deprecated Use the Admin Console to create the collection for
+   *     user profiles
    */
+  @Deprecated
   public static boolean initializeSocialCollection(String gsaHost, int gsaPort,
       String gsaAdmin, String gsaAdminPassword, String collectionName) {
     collectionName = getCollectionName(collectionName);
