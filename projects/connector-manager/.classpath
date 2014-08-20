@@ -9,10 +9,9 @@
 	<classpathentry kind="lib" path="third-party/tests/jcr-1.0.jar"/>
 	<classpathentry kind="lib" path="/test-connectorA/dist/jar/testconnectorA.jar"/>
 	<classpathentry kind="lib" path="/test-connectorB/dist/jar/testconnectorB.jar"/>
-	<classpathentry kind="lib" path="third-party/prod/xercesImpl-2.8.1.jar"/>
 	<classpathentry kind="lib" path="third-party/prod/commons-cli.jar"/>
 	<classpathentry kind="lib" path="third-party/prod/eproperties.jar"/>
-	<classpathentry kind="lib" path="third-party/prod/guava-r05.jar"/>
+	<classpathentry kind="lib" path="third-party/prod/guava-10.0.1.jar"/>
 	<classpathentry kind="lib" path="third-party/prod/h2.jar"/>
 	<classpathentry kind="lib" path="third-party/prod/json.jar"/>
 	<classpathentry kind="lib" path="third-party/prod/mime-util-slf4j-stub.jar"/>
@@ -20,7 +19,5 @@
 	<classpathentry kind="lib" path="third-party/prod/servlet-api.jar"/>
 	<classpathentry kind="lib" path="third-party/prod/commons-logging.jar"/>
 	<classpathentry kind="lib" path="third-party/prod/spring.jar"/>
-	<classpathentry kind="lib" path="third-party/prod/gdata-core-1.0.jar"/>
-	<classpathentry kind="lib" path="third-party/prod/gdata-gsa-1.0.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
