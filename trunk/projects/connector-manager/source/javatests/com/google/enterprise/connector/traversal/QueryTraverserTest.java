@@ -218,6 +218,64 @@ public class QueryTraverserTest extends TestCase {
     checkResult(traversalManager.getDocumentCount(), result);
   }
 
+  /**
+   * Tests a timeout before nextDocument is called, and ensures that
+   * checkpoint() was called.
+   */
+  public void testTimeoutBeforeNextDocument() {
+    // This implementation waits before returning a DocumentList that
+    // throws an exception if nextDocument is called.
+    final long batchMillis =
+        traversalContext.traversalTimeLimitSeconds() * 1000 * 2;
+    NeverEndingDocumentlistTraversalManager traversalManager =
+        new NeverEndingDocumentlistTraversalManager(100) {
+          @Override public DocumentList startTraversal() {
+            clock.adjustTime(batchMillis);
+            return new DocumentList() {
+              public Document nextDocument() { throw new RuntimeException(); }
+              public String checkpoint() { return "0"; }
+            };
+          }
+        };
+    QueryTraverser queryTraverser = new QueryTraverser(pusher, traversalManager,
+        stateStore, connectorName, traversalContext, clock, null);
+
+    BatchResult result = queryTraverser.runBatch(new BatchSize(100));
+    assertEquals(0, result.getCountProcessed());
+    checkResult(traversalManager.getDocumentCount(), result);
+    assertEquals(TraversalDelayPolicy.IMMEDIATE, result.getDelayPolicy());
+  }
+
+  /**
+   * Tests a cancellation before nextDocument is called, and ensures
+   * that checkpoint() was not called.
+   */
+  public void testCancellationBeforeNextDocument() {
+    // This implementation cancels the batch before returning a
+    // DocumentList that throws an exception if nextDocument is
+    // called.
+    final Traverser[] traverserHolder = new Traverser[1];
+    NeverEndingDocumentlistTraversalManager traversalManager =
+        new NeverEndingDocumentlistTraversalManager(100) {
+          @Override public DocumentList startTraversal() {
+            traverserHolder[0].cancelBatch();
+            return new DocumentList() {
+              public Document nextDocument() { throw new RuntimeException(); }
+              public String checkpoint() { throw new RuntimeException(); }
+            };
+          }
+        };
+    QueryTraverser queryTraverser = new QueryTraverser(pusher, traversalManager,
+        stateStore, connectorName, traversalContext, clock, null);
+    traverserHolder[0] = queryTraverser;
+
+    BatchResult result = queryTraverser.runBatch(new BatchSize(100));
+    assertEquals(0, result.getCountProcessed());
+    assertEquals(0, traversalManager.getDocumentCount());
+    assertEquals(null, stateStore.getTraversalState());
+    assertEquals(TraversalDelayPolicy.ERROR, result.getDelayPolicy());
+  }
+
   public void testBatchSize() {
     LargeDocumentlistTraversalManager traversalManager =
         new LargeDocumentlistTraversalManager(10);
