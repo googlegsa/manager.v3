@@ -38,7 +38,7 @@ import java.util.Set;
    &lt;!-- Remove Department and Section properties. --&gt;
    &lt;bean id="DeleteDeptAndSect"
       class="com.google.enterprise.connector.util.filter.DeletePropertyFilter"&gt;
-     &lt;property name="propertyNames"/&gt;
+     &lt;property name="propertyNames"&gt;
        &lt;set&gt;
          &lt;value&gt;Department&lt;/value&gt;
          &lt;value&gt;Section&lt;/value&gt;
