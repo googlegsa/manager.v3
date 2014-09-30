@@ -4,14 +4,14 @@
 
 For customers who qualify for enterprise-level support, Google
 provides support for the Google Search Appliance Connectors. You can
-go to the [http://www.google.com/enterprise/portal Enterprise Support Portal]
-to download supported versions of the connector or contact Google Enterprise 
+go to the [http://www.google.com/enterprise/portal Google for Work Support Portal]
+to download supported versions of the connector or contact Google for Work 
 Support.
 
 To download installers for the Google Search Appliance Connectors, see the
 [https://drive.google.com/folderview?id=0B8wJWld5GWGYVlpvSTB1RUF5dzg&usp=sharing&tid=0B8wJWld5GWGYcnNUSTlvSTBwekU#list installers folder] on Google Drive.
 
 For unsupported builds, early access, or to download supported patches
-as directed by Google Enterprise Support, see the [https://drive.google.com/folderview?id=0B8wJWld5GWGYcnNUSTlvSTBwekU&usp=sharing#list Google Search Appliance Connectors folder] on Google Drive. For earlier versions, see the [http://code.google.com/p/google-enterprise-connector-manager/downloads/list Downloads] page on this code site.
+as directed by Google for Work Support, see the [https://drive.google.com/folderview?id=0B8wJWld5GWGYcnNUSTlvSTBwekU&usp=sharing#list Google Search Appliance Connectors folder] on Google Drive. For earlier versions, see the [http://code.google.com/p/google-enterprise-connector-manager/downloads/list Downloads] page on this code site.
 
 Google may not provide support for builds downloaded from the `unsupported` folders on Google Drive or from the code sites.
