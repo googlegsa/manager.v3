@@ -3,7 +3,7 @@
 <!-- Simple config for servlet testing using the Mock Manager -->
 <beans>
   <!-- This defines the number of seconds a Traversal will run before
-       gracefully exiting. The default is 30 minutes (1800 seconds).
+       gracefully exiting. The default is 2 hours (7200 seconds).
   -->
   <bean id="TraversalTimeLimitSecondsDefault" class="java.lang.Long">
     <constructor-arg index="0" type="long" value="60"/>

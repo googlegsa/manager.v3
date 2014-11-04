@@ -68,7 +68,7 @@
         <prop key="traversal.batch.size">1000</prop>
 
         <!-- The number of seconds a Traversal may run before risking cancelation. -->
-        <prop key="traversal.time.limit">1800</prop>
+        <prop key="traversal.time.limit">7200</prop>
 
         <!-- This defines the number of seconds to wait after a Traversal
              of the repository finds no new content before looking again.
