@@ -335,7 +335,7 @@ class ConnectorCoordinatorImpl implements
       try {
         Lister lister = getLister();
         if (lister != null) {
-          LOGGER.fine("Starting Lister for connector " + name);
+          LOGGER.log(Level.FINE, "Starting Lister for connector {0}", name);
           lister.setDocumentAcceptor(new DocumentAcceptorImpl(
               name, pusherFactory));
           listerHandle = threadPool.submit(new CancelableLister(name, lister));
@@ -352,8 +352,10 @@ class ConnectorCoordinatorImpl implements
   /** Stop the Lister for the connector. */
   private synchronized void stopLister() {
     if (listerHandle != null && !listerHandle.isDone()) {
-      LOGGER.fine("Stopping Lister for connector " + name);
+      LOGGER.log(Level.FINE, "Stopping Lister for connector {0}", name);
       listerHandle.cancel();
+    } else {
+      LOGGER.log(Level.FINER, "Already stopped Lister for connector {0}", name);
     }
   }
 
