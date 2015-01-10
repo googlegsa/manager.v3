@@ -354,7 +354,9 @@ class ConnectorCoordinatorImpl implements
     if (listerHandle != null && !listerHandle.isDone()) {
       LOGGER.log(Level.FINE, "Stopping Lister for connector {0}", name);
       listerHandle.cancel();
-    } else {
+    } else if (lister != null) {
+      // We check lister here rather than getLister() to also avoid
+      // logging this if the lister exists but has never been started.
       LOGGER.log(Level.FINER, "Already stopped Lister for connector {0}", name);
     }
   }
