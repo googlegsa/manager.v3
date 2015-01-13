@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Context>
+  <!-- This configures the webapp class loader to delegate to the
+       system class loader, so that classes in connector-logging.jar,
+       which are in WEB-INF/lib and on the system class path, will be
+       loaded consistently by the system class loader.
+  -->
+  <Loader delegate="true"/>
+</Context>

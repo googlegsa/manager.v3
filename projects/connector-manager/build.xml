@@ -406,6 +406,7 @@
       <lib dir="${jar.dir}" includes="*.jar" excludes="connector-tests.jar" />
       <lib dir="${thirdparty.prod.jars}" includes="*.jar" excludes="servlet-api.jar" />
       <webinf dir="etc" includes="**" />
+      <metainf dir="${webdocs}" includes="context.xml" />
       <manifest>
         <attribute name="Implementation-Title" value="Connector Manager"/>
         <attribute name="Implementation-Version"
