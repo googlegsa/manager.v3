@@ -18,8 +18,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -40,7 +40,8 @@ public class MockRepositoryPropertyList
   }
 
   private void init(List<MockRepositoryProperty> l) {
-    proplist = new HashMap<String, MockRepositoryProperty>();
+    // Using a LinkedHashMap for predictable iteration order in the tests.
+    proplist = new LinkedHashMap<String, MockRepositoryProperty>();
     if (l == null) {
       return;
     }
