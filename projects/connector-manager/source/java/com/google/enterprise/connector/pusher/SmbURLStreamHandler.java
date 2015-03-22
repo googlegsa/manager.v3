@@ -27,7 +27,7 @@ import java.net.URLStreamHandler;
  * This subclass of {@link java.net.URLStreamHandler} will parse SMB URLs
  * (which should look like normal URLs), additionally applying some
  * constraints documented
- * <a href="http://code.google.com/apis/searchappliance/documentation/50/admin/URL_patterns.html#SMB_patterns">
+ * <a href="http://www.google.com/support/enterprise/static/gsa/docs/admin/72/gsa_doc_set/admin_crawl/url_patterns.html#1076533">
  * here</a>.
  * <p>
  * This "StreamHandler" will not actually allow a caller to open a stream.
@@ -71,7 +71,7 @@ public class SmbURLStreamHandler extends URLStreamHandler {
   /**
    * Parse the SMB URL.  At this point the only thing we care about is
    * if the SMB URL passes the constraints mentioned in the this page:
-   * http://code.google.com/apis/searchappliance/documentation/50/admin/URL_patterns.html#SMB_patterns
+   * http://www.google.com/support/enterprise/static/gsa/docs/admin/72/gsa_doc_set/admin_crawl/url_patterns.html#1076533
    */
   @Override
   protected void parseURL(URL url, String spec, int start, int limit) {

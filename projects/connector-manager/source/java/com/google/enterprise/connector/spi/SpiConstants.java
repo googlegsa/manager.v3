@@ -485,7 +485,7 @@ public class SpiConstants {
    * <p/>
    * Value: google:lock
    *
-   * @see "<a href='http://code.google.com/apis/searchappliance/documentation/62/feedsguide.html#defining_the_xml'>Defining the XML Record for a Document</a>"
+   * @see "<a href='http://www.google.com/support/enterprise/static/gsa/docs/admin/72/gsa_doc_set/feedsguide/feedsguide.html#1073054'>Defining the XML Record for a Document</a>"
    * @since 2.6.4
    */
   public static final String PROPNAME_LOCK = "google:lock";
@@ -494,7 +494,7 @@ public class SpiConstants {
    * Optional, single-valued property to specify the crawl immediately property
    * of the record element.
    *
-   * //TODO: add since version number 
+   * @since 3.2.4
    */
   public static final String PROPNAME_CRAWL_IMMEDIATELY =
       "google:crawl-immediately";
@@ -503,28 +503,27 @@ public class SpiConstants {
    * Optional, single-valued property to specify the crawl once property
    * of the record element.
    *
-   * //TODO: add since version number
+   * @since 3.2.4
    */
   public static final String PROPNAME_CRAWL_ONCE = "google:crawl-once";
 
   /**
    * Identifies an optional, single-valued integer property that specifies
-   * the PageRank of the document. Default: {@code 96}.
+   * the initial PageRank of the document. Default: {@code 96}.
    * <p/>
    * A higher value specifies a higher PageRank. To boost the PageRank
    * of the URL or group of URLs, increase the value to a number
    * between 97 and 100. To lower the PageRank, decrease the value.
    * <p/>
-   * Note: Content feeds only. This property will not be indexed, it
-   * only controls the PageRank for the document.
+   * Note: Content feeds only with GSA 7.2 or earlier. This property
+   * will not be indexed, it only controls the PageRank for the
+   * document.
    * <p/>
    * Value: google:pagerank
    *
-   * @see "<a href='http://code.google.com/apis/searchappliance/documentation/610/feedsguide.html#defining_the_xml'>Defining the XML Record for a Document</a>"
+   * @see "<a href='http://www.google.com/support/enterprise/static/gsa/docs/admin/72/gsa_doc_set/feedsguide/feedsguide.html#1073054'>Defining the XML Record for a Document</a>"
    * @since 2.8
    */
-  /* TODO: With flex authZ, we might say "initial PageRank" above,
-   * since the PageRank will also be influenced by document links. */
   public static final String PROPNAME_PAGERANK = "google:pagerank";
 
   /**
