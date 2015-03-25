@@ -240,7 +240,7 @@ public class Base64 {
    * Encodes a byte array into Base64 notation into a destination byte array.
    * <strong>Warning:</strong> No check is made to make sure the destination
    * is big enough to hold the conversion.
-   * <p/>
+   * <p>
    * This was optimally constructed for use by {@link Base64FilterInputStream}.
    *
    * @param source the data to convert

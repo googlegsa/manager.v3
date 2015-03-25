@@ -37,12 +37,12 @@ import java.util.logging.Logger;
  * A {@link Document} filter that forces the {@link CaseSensitivityType} field
  * for all ACL {@link com.google.enterprise.connector.spi.Principal Principals}
  * supplied by the connector to be set to a specified value.
- * <p/>
+ * <p>
  * This will over-ride any {@link CaseSensitivityType} that may have been set
  * by the connector, and supply one if none was set by the connector.
- * <p/>
+ * <p>
  * <b>Example {@code documentFilters.xml} Configurations:</b>
- * <p/>
+ * <p>
  * The following example forces all ACL Principals for all fed documents to be
  * considered case-insensitive.
  * <pre><code>
@@ -130,7 +130,7 @@ public class AclPropertyFilter extends AbstractDocumentFilter {
    * ACL property, then checks for case sensitivity type and modifies the value
    * if different than specified in filter. Returns ACL property with modified 
    * values.
-   * <p/>
+   * <p>
    */
   @Override
   public Property findProperty(Document source, String name)

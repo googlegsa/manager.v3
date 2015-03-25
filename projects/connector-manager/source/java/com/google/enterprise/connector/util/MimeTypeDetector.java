@@ -101,10 +101,10 @@ public class MimeTypeDetector {
    * using the various encodings until it has found a match.  For performance
    * reasons, the Set of expected encodings should remain as small as possible.
    * The JVM default encoding is automatically supported.
-   * <p/>
+   * <p>
    * The default set of supported encodings is "UTF-8", "ISO-8859-1",
    * "windows-1252", and the current JVM default encoding.
-   * <p/>
+   * <p>
    *
    * @param encodings a Set of canonical encoding names.
    * @see <a href="http://docs.oracle.com/javase/6/docs/technotes/guides/intl/encoding.doc.html">Java Supported Encodings</a>
@@ -118,7 +118,7 @@ public class MimeTypeDetector {
   /**
    * Returns the MIME type for the document with the provided filename and/or
    * content.
-   * <p/>
+   * <p>
    * If {@code filename} is provided, the file will not be accessed; however,
    * the filename extension will be used for MIME type determination.  For
    * this reason, filenames that are extracted from ECMs, remote filesytems,
@@ -126,7 +126,7 @@ public class MimeTypeDetector {
    * <a href="http://docs.oracle.com/javase/6/docs/api/java/net/URL.html#getPath()">
    * URL.getPath()</a>) should work.  If {@code filename} is {@code null},
    * only the supplied {@code content} will be used to determine the MIME type.
-   * <p/>
+   * <p>
    * If {@code content} is provided, {@link MimeTypeDetector} will examine
    * the first few thousand bytes of the content, looking for a match against
    * a set of known character sequences found in common file formats.  The
@@ -162,7 +162,7 @@ public class MimeTypeDetector {
   /**
    * Returns the MIME type for the document with the provided filename or
    * content read from an {@code InputStream}.
-   * <p/>
+   * <p>
    * If {@code filename} is provided, the file will not be accessed; however,
    * the filename extension will be used for MIME type determination.  For
    * this reason, filenames that are extracted from ECMs, remote filesytems,
@@ -170,7 +170,7 @@ public class MimeTypeDetector {
    * <a href="http://docs.oracle.com/javase/6/docs/api/java/net/URL.html#getPath()">
    * URL.getPath()</a>) should work.  If the MIME type can be determined
    * solely by the filename extension, it will be returned.
-   * <p/>
+   * <p>
    * If the MIME type cannot be determined solely from the filename extension
    * and {@code inputStreamFactory} is provided, {@link MimeTypeDetector} will
    * get an {@code InputStream} from the factory and read the

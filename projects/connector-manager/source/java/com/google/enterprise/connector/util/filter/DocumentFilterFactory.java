@@ -27,7 +27,7 @@ import com.google.enterprise.connector.spi.SkippedDocumentException;
  * including the document content.  A document filter might even
  * throw {@link SkippedDocumentException} to prevent a document
  * from being fed to the GSA.
- * <p/>
+ * <p>
  * Multiple document filters may be chained together, forming
  * a transformational document processing pipeline.
  *

@@ -26,14 +26,14 @@ import java.util.Set;
  * A filter that moves {@link Document} {@link Property} values to another
  * property.  The source property names do not appear in the Document's set
  * of property names.
- * <p/>
+ * <p>
  * If the {@code overwrite} flag is {@code true}, the moved
  * property values replace any existing values of the target property.
  * Otherwise, the moved property values supplement any existing values
  * of the target property.
- * <p/>
+ * <p>
  * <b>Example {@code documentFilters.xml} Configurations:</b>
- * <p/>
+ * <p>
  * The following example moves {@code HeadLine} and {@code ByLine} property
  * values to the {@code Title} and {@code Author} properties, respectively.
  * The original {@code HeadLine} and {@code ByLine} properties will not be

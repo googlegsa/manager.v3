@@ -24,11 +24,11 @@ import java.net.URL;
  * A {@code ClassLoader} that looks for resources relative to the
  * specified resources directory, or the current working directory,
  * if none is specified.
- * <p/>
+ * <p>
  * <strong>Note:</strong> This only overrides the one method used to locate
  * {@link DatabaseResourceBundle DatabaseResourceBundles}, so it is not a
  * good candidate to stand on its own.
- * <p/>
+ * <p>
  * Connector developers may want to use this to implement unit tests.
  *
  * @since 2.8

@@ -20,7 +20,7 @@ package com.google.enterprise.connector.spi;
  * that implement this interface. The implementor MUST provide a Spring XML
  * configuration file named {@code connectorInstance.xml} to control this
  * process. See the package documentation for more details.
- * <p/>
+ * <p>
  * A {@code Connector} object is used as something against which to
  * authenticate, via the {@link #login()} method. By authenticating,
  * one gets a {@link Session}, which then gives

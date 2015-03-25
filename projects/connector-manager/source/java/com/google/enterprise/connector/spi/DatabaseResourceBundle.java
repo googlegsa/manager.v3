@@ -24,7 +24,7 @@ import java.util.ResourceBundle;
  * implementations.  This mirrors {@code java.util.ResourceBundle} in form
  * and function, but is designed to supply SQL language translations
  * rather than spoken language translations.
- * <p/>
+ * <p>
  * Like {@code java.util.PropertyResourceBundle}, {@code DatabaseResourceBundle}
  * resources are specified in {@code Properties} files.  Unlike
  * {@link PropertyResourceBundle}, {@code DatabaseResourceBundle} uses the
@@ -43,7 +43,7 @@ import java.util.ResourceBundle;
  * are used, or any of the ancestor {@code DatabaseResourceBundles} (see below).
  * Variable substitution is done at the time of the call to
  * {@link #getString(String)} or {@link #getStringArray(String)}, so the
- * returned string(s) have all known substitutions resolved.<pre> </pre></li>
+ * returned string(s) have all known substitutions resolved.</li>
  * <li>Lists that may be fetched as an array of Strings - great for potentially
  * multi-statement DDL. For instance, this table creation DDL resource
  * definition consists of three distinct SQL statements:
@@ -55,10 +55,10 @@ import java.util.ResourceBundle;
  * String[] ddlStatements = bundle.getStringArray("create.table.ddl");
  * </pre>
  * </li></ul>
- * <p/>
+ * <p>
  * These features allow the connector developer to write very powerful
  * resource property files.
- * <p/>
+ * <p>
  * Connectors must locate the DatabaseResourceBundle property files in their
  * {@code config} package.  The properties files have a base name derived from
  * the ConnectorType name (with any instances of '.' replaced with '_')
@@ -67,7 +67,7 @@ import java.util.ResourceBundle;
  * product name, major and minor versions to the base name.  So resource
  * property file names would look like:
  * <pre>
- * <ConnectorTypeName>_sql[_productName][_majorVersion][_minorVersion].properties
+ * &lt;ConnectorTypeName&gt;_sql[_productName][_majorVersion][_minorVersion].properties
  * </pre>
  * For instance, suppose the ConnectorType name as defined in
  * {@code connectorType.xml} is "File.List", and the configured JDBC
@@ -96,10 +96,10 @@ public interface DatabaseResourceBundle {
    * (typically, SQL) into which parameter substitution may be done using
    * {@link MessageFormat#format(Object)}, JDBC {@link PreparedStatement}
    * and similar techniques.
-   * <p/>
+   * <p>
    * The implementation will assure that the correct resource is returned for
    * this connector type and for the active database implementation.
-   * <p/>
+   * <p>
    * If there is no resource defined for this key, {@code null} is returned
    * (unlike {@link ResourceBundle#getString(String)}, which throws an
    * exception).
@@ -112,7 +112,7 @@ public interface DatabaseResourceBundle {
   /**
    * The same comments apply as {{@link #getString(String)}, only this
    * API corresponds to {@link ResourceBundle#getStringArray(String)}.
-   * <p/>
+   * <p>
    * If there is no resource defined for this key, an array of length zero is
    * returned (unlike {@link ResourceBundle#getString(String)}, which throws an
    * exception).

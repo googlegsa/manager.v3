@@ -29,7 +29,7 @@ public interface InputStreamFactory {
   /**
    * Returns an {@linkplain InputStream}. Each call returns a new fresh one
    * that is set to the beginning of the document.
-   * <p/>
+   * <p>
    * The caller is responsible for closing the returned {@link InputStream}.
    *
    * @throws IOException

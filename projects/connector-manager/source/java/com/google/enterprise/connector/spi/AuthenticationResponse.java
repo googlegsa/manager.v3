@@ -84,7 +84,6 @@ public class AuthenticationResponse {
    * <li>{@code Collection<String>} for a simple collection of group names</li>
    * <li>{@code Collection<Principal>} for groups with namespaces</li>
    * </ul>
-   * </ul>
    *
    * @return {@code Collection} of group names - may be {@code null}
    * @since 2.6.10

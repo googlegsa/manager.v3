@@ -32,14 +32,14 @@ import java.util.logging.Level;
  * A {@link Document} filter that copies a {@link Property Property's}
  * values to another property. The new property name is added to the
  * Document's set of properties, if it is not already in that set.
- * <p/>
+ * <p>
  * If the {@code overwrite} flag is {@code true}, the copied
  * property values replace any existing values of the target property.
  * Otherwise, the copied property values supplement any existing values
  * of the target property.
- * <p/>
+ * <p>
  * <b>Example {@code documentFilters.xml} Configurations:</b>
- * <p/>
+ * <p>
  * The following example copies {@code HeadLine} and {@code ByLine} property
  * values to the {@code Title} and {@code Author} properties, respectively.
  * The original {@code HeadLine} and {@code ByLine} properties will still be
