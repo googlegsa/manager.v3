@@ -44,14 +44,14 @@ import java.util.regex.PatternSyntaxException;
  * If the value (as a string) matches the regular expression {@code pattern},
  * then all matching regions of the value will be replaced with the
  * {@code replacement} string.
- * <p/>
+ * <p>
  * If the {@code overwrite} flag is {@code true}, the modified
  * property values replace any matching values of the target property.
  * Otherwise, the modified property values supplement any existing values
  * of the target property.
- * <p/>
+ * <p>
  * <b>Example {@code documentFilters.xml} Configurations:</b>
- * <p/>
+ * <p>
  * The following example replaces all instances of the word "Foo" with "Bar"
  * in the {@code Category} property.
  * <pre><code>
@@ -137,7 +137,7 @@ public class ModifyPropertyFilter extends AbstractDocumentFilter {
 
   /**
    * Sets the the name of the {@link Property} to filter.
-   * <p/>
+   * <p>
    * A convenience method that is equivalent to calling
    * {@code setPropertyNames(Collections.singleton(propertyName)}.
    *
@@ -244,11 +244,11 @@ public class ModifyPropertyFilter extends AbstractDocumentFilter {
    * Finds a {@link Property} by {@code name}. If the {@code source}
    * {@link Document} has a property of that name, then that property
    * is returned.
-   * <p/>
+   * <p>
    * If any of the Property's values (as a string) match the regular
    * expression {@code pattern}, then all matching regions of the value
    * will be replaced with the {@code replacement} string.
-   * <p/>
+   * <p>
    * The modified value may either augment or overwrite the original value,
    * based upon the {@code overwrite} flag.
    */

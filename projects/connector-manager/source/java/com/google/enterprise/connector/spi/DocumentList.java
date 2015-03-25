@@ -19,13 +19,13 @@ package com.google.enterprise.connector.spi;
  * Documents are accessed through an iterator-like method:
  * {@link #nextDocument()}, which returns the next available
  * {@link Document} or {@code null} if there are no more.
- * <p/>
+ * <p>
  * <strong>Important:</strong> a {@link Document} object obtained
  * by calling {@link #nextDocument()} is invalidated by the next
  * call to {@link #nextDocument()}. Typically, the caller will
  * store the current Document in a loop variable, so that it is 
  * clear that this rule is observed; see the example code below.
- * <p/>
+ * <p>
  * In addition, a this interface has a special method
  * {@link #checkpoint()}, which produces a String that
  * encapsulates the traversal state. The consumer may call
@@ -33,7 +33,7 @@ package com.google.enterprise.connector.spi;
  * return a non-null String that, if supplied to
  * {@link TraversalManager#resumeTraversal(String)}, would cause
  * traversal to resume from the next unprocessed document.
- * </ul>
+ * <p>
  * Boundary cases are important for {@link #checkpoint()}:
  * <ul>
  * <li>If {@link #checkpoint()} is called before any calls to
@@ -100,7 +100,7 @@ public interface DocumentList {
    * after a crash if necessary. When it chooses to restart traversal, it will
    * supply this string in a call to
    * {@link TraversalManager#resumeTraversal(String)}.
-   * <p/>
+   * <p>
    * If {@code null} is returned, then no new checkpoint will be saved,
    * and the existing checkpoint will be supplied to
    * {@link TraversalManager#startTraversal()} or

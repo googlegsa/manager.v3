@@ -144,7 +144,7 @@ public class LocalDatabaseImpl implements LocalDatabase {
 
   /**
    * Returns a String giving a description of the database.
-   * <p/>
+   * <p>
    * For now, the form of this string is intentionally under-specified,
    * for flexibility. The SPI only guarantees that, if this object's database
    * type is not {@link DatabaseType#OTHER}, then this string begins with the
@@ -154,7 +154,7 @@ public class LocalDatabaseImpl implements LocalDatabase {
    * (db.getDatabaseType() == DatabaseType.OTHER)}. If the database type is
    * "other", then the string should start with a simple name of the
    * database (rather than the {@code "unsupported"}).
-   * <p/>
+   * <p>
    * The remainder of the string is reserved to hold additional information,
    * such as version.
    *

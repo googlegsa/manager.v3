@@ -33,9 +33,9 @@ import java.util.regex.PatternSyntaxException;
  * based upon the presence/abscence of a specific {@link Property},
  * or based upon a match on one of the {@link Value Values} of that
  * property.
- * <p/>
+ * <p>
  * <b>Example {@code documentFilters.xml} Configurations:</b>
- * <p/>
+ * <p>
  * The following example skips documents that have a {@code NoIndex Property}.
  * <pre><code>
    &lt;bean id="NoIndex"
@@ -95,7 +95,7 @@ public class SkipDocumentFilter extends AbstractDocumentFilter {
    * {@link java.util.regex.Pattern}.  If one of the property's values
    * matches this regular expression, this is considered a matching
    * document.
-   * <p/>
+   * <p>
    * If no pattern is specified, then the mere presence of the named
    * property would be considered a match.
    *

@@ -42,12 +42,12 @@ public interface TraversalContext {
    * Gets information about whether a mime type is supported.  Positive
    * values indicate possible support for this mime type, with larger
    * values indicating better support or preference.
-   * <p/>
+   * <p>
    * Non-positive numbers mean that there is no support for this mime type.
    * A zero value indicates the content encoding is not supported.
    * The connector may choose to supply meta-data for the document, but the
    * content should not be provided.
-   * <p/>
+   * <p>
    * A negative value indicates the document should be skipped entirely.
    * Neither the content, nor the meta-data should be provided.
    *
@@ -61,7 +61,7 @@ public interface TraversalContext {
    * Mime types with "/vnd.*" subtypes are preferred over others, and
    * mime types registered with IANA are preferred over those with "/x-*"
    * experimental subtypes.
-   * <p/>
+   * <p>
    * If a repository contains multiple renditions of a particular item,
    * it may use this to select the best rendition to supply for indexing.
    *

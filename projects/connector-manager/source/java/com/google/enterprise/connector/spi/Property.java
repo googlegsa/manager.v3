@@ -20,7 +20,7 @@ package com.google.enterprise.connector.spi;
  * {@link #nextValue()}, which returns the next available {@link Value}
  * or {@code null} if there are no more. Note: {@link Value} objects are
  * immutable, unlike {@link DocumentList} and {@link Document} objects.
- * <p/>
+ * <p>
  * The typical pattern for consuming an object that implements this interface
  * is this (disregarding exception handling):
  *

@@ -29,9 +29,9 @@ import java.util.Set;
  * {@link Property Properties} from the document.
  * The deleted properties are not fed to the GSA and do not
  * appear in the set of properties available from the document.
- * <p/>
+ * <p>
  * <b>Example {@code documentFilters.xml} Configuration:</b>
- * <p/>
+ * <p>
  * The following example filters out the {@code Department} and {@code Section}
  * properties from the document.
  * <pre><code>

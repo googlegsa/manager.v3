@@ -30,14 +30,14 @@ import java.util.logging.Logger;
 /**
  * A service that monitors a {@link SnapshotRepository} and makes callbacks
  * when changes occur.
- * <p/>
+ * <p>
  * This implementation works as follows. It repeatedly scans all the
  * {@link DocumentSnapshot} entries returned by
  * {@link SnapshotRepository#iterator()}. On each pass, it compares the current
  * contents of the repository to a record of what it saw on the previous pass.
  * The record is stored as a file in the local repository. Each discrepancy
  * is propagated to the client.
- * <p/>
+ * <p>
  * Using a local snapshot of the repository has some serious flaws for
  * continuous crawl:
  * <ul>
@@ -51,7 +51,7 @@ import java.util.logging.Logger;
  * useful to keep local snapshots and only get an "authoritative" snapshot
  * from the cloud occasionally. E.g., once a week or if the local snapshot
  * is corrupted.)
- * <p/>
+ * <p>
  * When an API to do that is available, this implementation should be fixed
  * to use it.
  *

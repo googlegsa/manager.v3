@@ -21,7 +21,7 @@ import java.util.Set;
 /**
  * Simple implementation of the {@link TraversalContext} interface.
  * Connector developers may want to use this to implement unit tests.
- * <p/>
+ * <p>
  * By default, instances of this class accept all document sizes and
  * content types.
  *

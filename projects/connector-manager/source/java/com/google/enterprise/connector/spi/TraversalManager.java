@@ -16,25 +16,23 @@ package com.google.enterprise.connector.spi;
 
 /**
  * Interface for implementing query-based traversal.
- * <p/>
+ * <p>
  * Query-based traversal is a scheme whereby a repository is traversed according
  * to a query that visits each document in a natural order that is efficiently
  * supported by the underlying repository and can be easily checkpointed and
  * restarted.
- * <p/>
+ * <p>
  * A good use case is a repository that supports access to documents in
  * last-modified-date order. In particular, suppose a repository supports a
  * query analogous to the following SQL query (the repository need not support
  * SQL, SQL is used here only as an example):
- * <p/>
- *
  * <pre>
  *        select documentid, lastmodifydate from documents
  *        where  lastmodifydate &lt; <b><i>date-constant</i></b>
  *        order by lastmodifydate
  * </pre>
  *
- * <p/>
+ * <p>
  * Such a repository can easily be traversed by lastmodifydate, and the state of
  * the traversal is easily encapsulated in a single, small data item: the date
  * of the last document processed. Increasing last-modified-date order is
@@ -42,7 +40,7 @@ package com.google.enterprise.connector.spi;
  * later modified, then it will be picked up again later in the traversal
  * process. Thus, this traversal is appropriate both for initial load and for
  * incremental update.
- * <p/>
+ * <p>
  * For such a repository, the implementor is urged to let the Connector Manager
  * (the caller) maintain the traversal state. This is achieved by implementing
  * the interface methods as follows:
@@ -57,7 +55,7 @@ package com.google.enterprise.connector.spi;
  * </ul>
  * Checkpoints are supplied by the
  * {@link DocumentList#checkpoint()} method.
- * <p/>
+ * <p>
  * Please observe that the Connector Manager (the caller) makes no guarantee
  * to consume the entire {@code DocumentList} returned by either the
  * {@code startTraversal} or {@code resumeTraversal} calls.
@@ -67,13 +65,13 @@ package com.google.enterprise.connector.spi;
  * successfully processed from the {@code DocumentList} it was using.
  * Thus, the implementor is free to use a query that only returns a small
  * number of results, if that gets better performance.
- * <p/>
+ * <p>
  * For example, to continue the SQL analogy, a query like this could be used:
  * <pre>
  *        select TOP 10 documentid, lastmodifydate from documents ...
  * </pre>
  *
- * <p/>
+ * <p>
  * The {@code setBatchHint} method is provided so that the Connector
  * Manager can tell the implementation that it only wants that many results per
  * call. This is a hint - the implementation need not observe it. The
@@ -83,7 +81,7 @@ package com.google.enterprise.connector.spi;
  * may not want to return the full batchHint number of results.  When returning
  * more results than the hint, some or all of the extra documents may be
  * ignored.
- * <p/>
+ * <p>
  * The Connector Manager makes a distinction between the return of a 
  * {@code null} DocumentList and an empty DocumentList (a DocumentList with 
  * zero entries). Returning a {@code null} DocumentList will have an impact on
@@ -93,7 +91,7 @@ package com.google.enterprise.connector.spi;
  * {@code checkpoint} before calling start or resume traversal again. Returning
  * a {@code null} DocumentList is suitable when a traversal is completely up to
  * date, with no new documents available and no new checkpoint state.
- * <p/>
+ * <p>
  * Returning an empty DocumentList will probably not have an impact on
  * scheduling.  The Connector Manager will call {@code checkpoint},
  * and will likely call {@code resumeTraversal} again immediately.
@@ -107,11 +105,11 @@ package com.google.enterprise.connector.spi;
  * Connector to record its progress through the repository.  This mechanism
  * is suitable for cases when the search for suitable content may exceed
  * the Connector Manager's timeout.
- * <p/>
+ * <p>
  * If the Connector returns a non-{@code null} {@code DocumentList}, even
  * one with zero entries, the Connector Manager will nearly always call
  * {@code checkpoint} when it has finished processing the DocumentList.
- * <p/>
+ * <p>
  * An implementation need not let the Connector Manager store the traversal
  * state, it may choose to store the state itself. Implementors are discouraged
  * from using this technique unless necessary, because it makes transactionality
@@ -141,9 +139,9 @@ package com.google.enterprise.connector.spi;
  * assume that the documents returned by {@link DocumentList#nextDocument} have
  * been processed. The implementation should wait until the checkpoint call, and
  * only commit the state up to the last document returned.
- * <p/>
+ * <p>
  * <strong>Note on "Metadata and URL" feeds vs. Content feeds:</strong>
- * <p/>
+ * <p>
  * Some repositories are fully web-enabled but are difficult or impossible for
  * the Search Appliance to crawl, because they make heavy use of ASP or JSP, or
  * they have a metadata model that is not conveniently accessible with the
@@ -151,7 +149,7 @@ package com.google.enterprise.connector.spi;
  * connectors. However, a developer may not choose to implement authentication
  * and authorization through a connector. It may be sufficient to use standard
  * web mechanisms for these tasks.
- * <p/>
+ * <p>
  * The developer can achieve this by following these steps. In the document list
  * returned by the traversal methods, specify the
  * {@link SpiConstants#PROPNAME_SEARCHURL}
@@ -162,9 +160,9 @@ package com.google.enterprise.connector.spi;
  * content from the specified URL. Also, this URL will be used to trigger 
  * normal authentication and authorization for that document. For more details, 
  * see the documentation on Metadata and URL Feeds.
- * <p/>
+ * <p>
  * <strong>Note on Documents returned by traversal calls:</strong>
- * <p/>
+ * <p>
  * The {@code Document} objects returned by the queries defined here
  * must contain special properties according to the following rules:
  * <ul>

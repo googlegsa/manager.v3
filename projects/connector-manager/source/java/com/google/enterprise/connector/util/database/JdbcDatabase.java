@@ -32,7 +32,7 @@ import javax.sql.DataSource;
 
 /**
  * Basic database connectivity, table creation and connection pooling.
- * <p/>
+ * <p>
  * The JdbcDatabase wraps a {@link javax.sql.DataSource} instance,
  * adding additional features specifically beneficial to Connectors
  * and the ConnectorManager, such as:
@@ -154,7 +154,7 @@ public class JdbcDatabase {
    * to a {@code ResourceBundle baseName} to build the name of the resource
    * that is specific to the database implementation identified by this
    * {@code JdbcDatabase} instance.
-   * <p/>
+   * <p>
    * This is will be constructed from the database {@code productName},
    * {@code majorVersion}, and {@code minorVersion} separated by underbars
    * ({@code '_'}), for instance MySQL v5.6 will return "{@code _mysql_5_6}".
@@ -178,13 +178,13 @@ public class JdbcDatabase {
    * ResourceBundleExtension.  Specifically, a sanitized string
    * should consist of nothing other than lowercase alphabetics
    * [a-z], numerics [0-9], underscore '_', and hyphen '-'.
-   * <p/>
+   * <p>
    * The following actions are taken sanitize the input string:
    * <ul><li>Alphabetics are converted to lowercase.</li>
    * <li>Leading and trailing invalid characters are removed.</li>
    * <li>The remaining invalid characters are converted to hyphens.</li>
    * </ul>
-   * <p/>
+   * <p>
    * For example, the string "Hello World!" would sanitize to "hello-world".
    *
    * @param string the {@code String} to be sanitized.

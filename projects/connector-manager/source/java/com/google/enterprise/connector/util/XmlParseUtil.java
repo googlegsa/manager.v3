@@ -288,13 +288,13 @@ public class XmlParseUtil {
 
   /**
    * Get text data of an optional XML {@code org.w3c.dom.Element} of given name.
-   * <p/>
+   * <p>
    * Note that this differs from {@link #getFirstElementByTagName} in how it
    * handles missing elements vs. empty elements. Specifically, if the named
-   * element does not exist, this returns {@code null}.  However, if the named
-   * element does exist, but is empty (<tag></tag> or <tag/>), this returns
-   * the empty string.  In both cases {@code getFirstElementByTagName} would
-   * return {@code null}.
+   * element does not exist, this returns {@code null}. However, if the named
+   * element does exist, but is empty (&lt;tag&gt;&lt;/tag&gt; or
+   * &lt;tag/&gt;), this returns the empty string. In both cases
+   * {@code getFirstElementByTagName} would return {@code null}.
    *
    * @param elem the parent XML Element
    * @param name the name of the child text Element

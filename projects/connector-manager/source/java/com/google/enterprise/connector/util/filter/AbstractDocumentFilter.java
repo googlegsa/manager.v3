@@ -17,6 +17,7 @@ package com.google.enterprise.connector.util.filter;
 import com.google.common.base.Preconditions;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.Property;
+import com.google.enterprise.connector.spi.RepositoryDocumentException;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.Value;
 
@@ -50,7 +51,7 @@ public abstract class AbstractDocumentFilter implements DocumentFilterFactory {
    * Finds a {@link Property} by {@code name}. If the {@code source}
    * {@link Document} has a property of that name, then that property
    * is returned.
-   * <p/>
+   * <p>
    * Filter subclasses are likely to override this method.
    *
    * @param source the source {@link Document} for this filter
@@ -69,7 +70,7 @@ public abstract class AbstractDocumentFilter implements DocumentFilterFactory {
   /**
    * Gets the set of names of all {@link Property Properties} in the
    * {@code source} {@link Document}.
-   * <p/>
+   * <p>
    * Filter subclasses are likely to override this method.
    *
    * @param source the source {@link Document} for this filter

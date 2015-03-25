@@ -133,12 +133,12 @@ public class UrlValidator {
    *   </ol>
    * </li>
    * </ol>
-   * <p/>
+   * <p>
    * The 405 (Method Not Allowed) is related because the Sun Java
    * System Web Server, and possibly Apache, return this code rather
    * than a 404 if you attempt to access a CGI program in an unknown
    * directory.
-   * <p/>
+   * <p>
    * When testing an HTTPS URL, we override server certificate
    * validation to skip trying to verify the server's certificate,
    * and we accept hostname mismatches. In this case, all we care

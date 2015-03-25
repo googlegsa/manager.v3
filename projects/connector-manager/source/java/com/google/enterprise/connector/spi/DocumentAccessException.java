@@ -17,7 +17,7 @@ package com.google.enterprise.connector.spi;
 /**
  * Thrown in cases where the search or traversal user does not have enough
  * privileges to access a document.
- * <p/>
+ * <p>
  * It is the responsibility of the Connector to construct a checkpoint
  * that skips over the offending Document if {@link DocumentList#checkpoint()}
  * is called after this exception is thrown.
