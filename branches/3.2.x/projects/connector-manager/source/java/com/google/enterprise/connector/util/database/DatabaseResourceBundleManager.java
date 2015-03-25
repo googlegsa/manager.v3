@@ -46,13 +46,13 @@ public class DatabaseResourceBundleManager {
    * identifies the specific set of resources to load, while the
    * {@code resourceBundleExtension} is used to locate database-specific
    * localizations of those resources.
-   * <p/>
+   * <p>
    * The passed base name and resource bundle extension are used to
    * create resource bundle names. The first name is created by concatenating
    * the base name with the resource bundle extension (if provided).
    * From this name all parent bundle names are derived. This results in a
    * list of possible bundle names.
-   * <p/>
+   * <p>
    * For example, the {@code baseName "full.package.name.BaseName"}, and the
    * {@code resourceBundleExtension "_mysql_5_1"} (for {@code MySQL 5.1}),
    * the list of resource bundles to load would look like this:
@@ -69,7 +69,7 @@ public class DatabaseResourceBundleManager {
    * The properties files used by {@code DatabasePropertyResourceBundle}
    * may use the enhanced syntax supported by
    * <a href="http://code.google.com/p/eproperties">EProperties</a>
-   * <p/>
+   * <p>
    * This method tries to load a {@code .properties} file with the names
    * by replacing dots in the base name with a slash and by appending
    * "{@code .properties}" to the end of the string. If such a resource can be

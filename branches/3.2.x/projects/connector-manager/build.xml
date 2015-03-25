@@ -145,12 +145,23 @@
   </target>
 
   <target name="spi-javadoc">
+    <!-- Use -Xdoclint:none with Java 8 and higher. The Java 7 and
+         lower value cannot be an empty string, but should be a no-op,
+         hence -J-Dgoogle.ignoreme=true. -->
+    <condition property="javadoc.doclint" value="-J-Dgoogle.ignoreme=true"
+               else="-Xdoclint:none">
+      <or>
+        <equals arg1="${ant.java.version}" arg2="1.6"/>
+        <equals arg1="${ant.java.version}" arg2="1.7"/>
+      </or>
+    </condition>
     <javadoc access="public" author="false" destdir="doc/javadoc/${version}"
              doctitle="Google Search Appliance Connector SPI"
              nodeprecated="false" nodeprecatedlist="true" noindex="false"
              nonavbar="false" notree="false" source="${jvm.version}"
              sourcepath="${src}" overview="${src}/overview.html"
              splitindex="true" use="true" version="true">
+      <arg value="${javadoc.doclint}"/>
       <classpath>
         <fileset dir="${thirdparty.prod.jars}" includes="**/*.jar" />
         <pathelement location="${junit.jarfile}"/>

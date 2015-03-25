@@ -21,7 +21,7 @@ import java.util.Map;
 /**
  * Non-instantiable class that holds constants used by the SPI and
  * documents their meanings.
- * <p/>
+ * <p>
  * All constants whose names begin with PROPNAME are reserved names for
  * properties that may be accessed from a Document returned as a query result.
  * The actual values of these property name constants all begin with "google:".
@@ -49,14 +49,14 @@ public class SpiConstants {
    * document to this connector. The internal structure of this string is
    * opaque to the Search Appliance. Only printable, non-whitespace, ASCII
    * characters are permitted in a DOCID.
-   * <p/>
+   * <p>
    * This property is required on all Documents. The connector implementor is
    * encouraged to implement this by using the natural ID in the foreign
    * repository.
-   * <p/>
+   * <p>
    * This property is persistable (it is one of the keys in the
    * {@link #PERSISTABLE_ATTRIBUTES} map.
-   * <p/>
+   * <p>
    * Value: google:docid
    */
   public static final String PROPNAME_DOCID = "google:docid";
@@ -65,7 +65,7 @@ public class SpiConstants {
    * Identifies a single-valued String property. This value is used to 
    * embellish named resources constructed from {@link #PROPNAME_DOCID},
    * {@link #PROPNAME_FEEDTYPE}, and {@link #PROPNAME_FRAGMENT}.
-   * <p/>
+   * <p>
    * Value: google:fragment
    *
    * @since 3.2
@@ -76,7 +76,7 @@ public class SpiConstants {
    * Identifies a single-valued, date property that gives the last modified
    * date of a document. This property is optional but strongly recommended in
    * order to associate a specific date to the document.
-   * <p/>
+   * <p>
    * Value: google:lastmodify
    */
   public static final String PROPNAME_LASTMODIFIED = "google:lastmodified";
@@ -86,14 +86,14 @@ public class SpiConstants {
    * This value is useful for providing a title for documents that supply no
    * content, or for which a title cannot be automatically extracted from the
    * supplied content.
-   * <p/>
+   * <p>
    * Value: google:title
    */
   public static final String PROPNAME_TITLE = "google:title";
 
   /**
    * Not used.
-   * <p/>
+   * <p>
    * Value: google:contenturl
    *
    * @deprecated This property is unused.
@@ -106,7 +106,7 @@ public class SpiConstants {
    * used to determine the feed type for this document. It is strongly
    * recommended that this property be set to explicitly determine the feed
    * type ('content' or 'web') for the document.
-   * <p/>
+   * <p>
    * If this property is not set, the feed type will be determined as follows:
    * <ol>
    * <li>If there is no {@link #PROPNAME_SEARCHURL} then the feed type will
@@ -116,7 +116,7 @@ public class SpiConstants {
    * default to 'web' feed and use the {@link #PROPNAME_SEARCHURL} as the
    * document URL.
    * </ol>
-   * <p/>
+   * <p>
    * Value: google:feedtype
    *
    * @since 2.4.2
@@ -127,9 +127,9 @@ public class SpiConstants {
    * Identifies a single-valued Feed ID property that, if present, will be
    * used to identify the feed file that contains a fed document. All feed
    * records in a single feed file will share a common google:feedid value.
-   * <p/>
+   * <p>
    * Not used.
-   * <p/>
+   * <p>
    * Value: google:feedid
    *
    * @since 2.6
@@ -144,7 +144,7 @@ public class SpiConstants {
    * - instead of the normal {@code googleconnector://} URI which the Connector
    * Manager fabricates based on the {@link #PROPNAME_DOCID} and the connector
    * name.
-   * <p/>
+   * <p>
    * Value: google:searchurl
    */
   public static final String PROPNAME_SEARCHURL = "google:searchurl";
@@ -152,14 +152,14 @@ public class SpiConstants {
   /**
    * Identifies a single-valued property that may be either string or
    * binary and gives direct access to the primary content to be indexed.
-   * <p/>
+   * <p>
    * Value: google:content
    */
   public static final String PROPNAME_CONTENT = "google:content";
 
   /**
    * Not used.
-   * <p/>
+   * <p>
    * Value: google:securitytoken
    *
    * @deprecated This property is unused.
@@ -171,7 +171,7 @@ public class SpiConstants {
    * Identifies an single-valued String property that gives the mime type
    * for the content of this document. If this is not supplied, then the
    * system will use the value of {@link #DEFAULT_MIMETYPE}.
-   * <p/>
+   * <p>
    * Value: google:mimetype
    */
   public static final String PROPNAME_MIMETYPE = "google:mimetype";
@@ -179,7 +179,7 @@ public class SpiConstants {
   /**
    * The mime type that the connector manager uses as a default, if a
    * document does not specify.
-   * <p/>
+   * <p>
    * Value: text/html
    */
   public static final String DEFAULT_MIMETYPE = "text/html";
@@ -190,7 +190,7 @@ public class SpiConstants {
    * document. This may be different from the contenturl, if present:
    * contenturl should give direct access to the content file, whereas
    * displayurl may point into the CMS's web front-end application.
-   * <p/>
+   * <p>
    * Value: google:displayurl
    */
   public static final String PROPNAME_DISPLAYURL = "google:displayurl";
@@ -198,7 +198,7 @@ public class SpiConstants {
   /**
    * Unless this property is present and is {@code false}, then the document
    * will be marked as public.
-   * <p/>
+   * <p>
    * Value: google:ispublic
    */
   public static final String PROPNAME_ISPUBLIC = "google:ispublic";
@@ -209,7 +209,7 @@ public class SpiConstants {
    * This is to allow a Connector to send the ACLs for a Document as a separate
    * ACL Document. If this property is missing or {@code true}, the default
    * behavior of always specifying an empty ACL if no ACL is provided is used.
-   * <p/>
+   * <p>
    * Value: google:overwriteacls
    *
    * @since 3.0
@@ -218,7 +218,7 @@ public class SpiConstants {
 
   /**
    * The prefix for the ACL property names.
-   * <p/>
+   * <p>
    * Value: "google:acl"
    *
    * @since 3.0
@@ -234,9 +234,9 @@ public class SpiConstants {
    * user on the basis of whether the user's name appears as one of the Scope
    * IDs in the {@link #PROPNAME_ACLUSERS} list or one of the user's groups
    * appears as one of the Scope IDs in the {@link #PROPNAME_ACLGROUPS} list.
-   * <p/>
+   * <p>
    * ACL Scope ID is a group or user name within the scope of the Connector.
-   * <p/>
+   * <p>
    * <strong>Note: Roles are ignored by the Google Search
    * Appliance.</strong> Support for roles should be removed from
    * connectors, as this feature will be removed from a future release
@@ -244,7 +244,7 @@ public class SpiConstants {
    * {@link RoleType#PEEKER RoleType.PEEKER} should not appear in the
    * {@link #PROPNAME_ACLUSERS} or {@link #PROPNAME_ACLGROUPS} lists,
    * since {@link RoleType#READER RoleType.READER} access is implied.
-   * <p/>
+   * <p>
    * To specify more than just {@code RoleType.READER} access to the document,
    * the Connector must add additional multi-value role properties to the
    * document. These entries are of the form:
@@ -265,18 +265,18 @@ public class SpiConstants {
    * </pre>
    *
    * where the &lt;scopeId&gt; will be the user ACL Scope ID.
-   * <p/>
+   * <p>
    * If the {@link #PROPNAME_ISPUBLIC} is missing or is {@code true}, then this
    * property is ignored, since the document is public.
-   * <p/>
+   * <p>
    * If both the {@link #PROPNAME_ACLGROUPS} and {@link #PROPNAME_ACLUSERS}
    * properties are {@code null} or empty, then the GSA will use the
    * authorization SPI to grant or deny access to this document.
-   * <p/>
+   * <p>
    * The GSA may be configured to bypass on-board authorization, in which case
    * these properties will be ignored, and the GSA will use the authorization
    * SPI to grant or deny access to this document.
-   * <p/>
+   * <p>
    * Value: google:aclgroups
    */
   public static final String PROPNAME_ACLGROUPS = "google:aclgroups";
@@ -285,7 +285,7 @@ public class SpiConstants {
    * Identifies a multiple-valued String property that gives the list of
    * users that are permitted access to this document. For details, see
    * the {@link #PROPNAME_ACLGROUPS}.
-   * <p/>
+   * <p>
    * Value: google:aclusers
    */
   public static final String PROPNAME_ACLUSERS = "google:aclusers";
@@ -294,7 +294,7 @@ public class SpiConstants {
    * Identifies a multiple-valued String property that gives the list of
    * groups that are denied access to this document. For details, see
    * the {@link #PROPNAME_ACLGROUPS}.
-   * <p/>
+   * <p>
    * Value: google:acldenygroups
    *
    * @since 3.0
@@ -305,7 +305,7 @@ public class SpiConstants {
    * Identifies a multiple-valued String property that gives the list of
    * users that are denied access to this document. For details, see
    * the {@link #PROPNAME_ACLGROUPS}.
-   * <p/>
+   * <p>
    * Value: google:acldenyusers
    *
    * @since 3.0
@@ -316,7 +316,7 @@ public class SpiConstants {
    * Identifies a single-valued InheritanceType property. This value is
    * used to identify the ACL inheritance when no specific ACL principal is
    * specified.
-   * <p/>
+   * <p>
    * Value: google:aclinheritancetype
    *
    * @since 3.0
@@ -327,12 +327,12 @@ public class SpiConstants {
   /**
    * Identifies a single-valued String property. This value is
    * used to identify the document URL from which the ACL is inherited from.
-   * <p/>
+   * <p>
    * This property takes precedence over values specified by
    * {@link #PROPNAME_ACLINHERITFROM_DOCID},
    * {@link #PROPNAME_ACLINHERITFROM_FEEDTYPE}, and
    * {@link #PROPNAME_ACLINHERITFROM_FRAGMENT}.
-   * <p/>
+   * <p>
    * Value: google:aclinheritfrom
    *
    * @since 3.0
@@ -342,14 +342,14 @@ public class SpiConstants {
   /**
    * Identifies a single-valued String property. This value is used to identify
    * the document ID from which the ACL is inherited from.
-   * <p/>
+   * <p>
    * If the document from which the ACL is inherited from was fed using a
    * different {@link FeedType} than this document, then
    * {@link #PROPNAME_ACLINHERITFROM_FEEDTYPE} should also be specified.
-   * <p/>
+   * <p>
    * This property is ignored if {@link #PROPNAME_ACLINHERITFROM} is also
    * specified.
-   * <p/>
+   * <p>
    * Value: google:aclinheritfrom:docid
    *
    * @since 3.0
@@ -361,11 +361,11 @@ public class SpiConstants {
    * Identifies a single-valued String property. This value is used to identify
    * the {@link FeedType} of document from which the ACL is inherited from.
    * If unspecified, the {@code FeedType} of the inheriting ACL is used.
-   * <p/>
+   * <p>
    * This property should be specified in conjunction with
    * {@link #PROPNAME_ACLINHERITFROM_DOCID}, and will be ignored if
    * {@link #PROPNAME_ACLINHERITFROM} is also specified.
-   * <p/>
+   * <p>
    * Value: google:aclinheritfrom:feedtype
    *
    * @since 3.0
@@ -376,15 +376,15 @@ public class SpiConstants {
   /**
    * Identifies a single-valued String property. This value is used to 
    * embellish the ACL named resource from which the ACL is inherited from.
-   * <p/>
+   * <p>
    * {@link #PROPNAME_ACLINHERITFROM_DOCID},
    * {@link #PROPNAME_ACLINHERITFROM_FEEDTYPE}, and
    * {@link #PROPNAME_ACLINHERITFROM_FRAGMENT} are used to construct an
    * {@link #PROPNAME_ACLINHERITFROM} named resource.
-   * <p/>
+   * <p>
    * This property is ignored if {@link #PROPNAME_ACLINHERITFROM} is also
    * specified.
-   * <p/>
+   * <p>
    * Value: google:aclinheritfrom:fragment
    *
    * @since 3.2
@@ -449,7 +449,7 @@ public class SpiConstants {
    * Identifies an optional, single-valued property that specifies the action
    * associated with the document. If not specified, then the system will
    * not specify the action and the default behavior will be observed.
-   * <p/>
+   * <p>
    * Value: google:action
    */
   public static final String PROPNAME_ACTION = "google:action";
@@ -459,7 +459,7 @@ public class SpiConstants {
    * folder path of the document. The document name should not be
    * included in the path. Multiple values are permitted to support
    * repositories that link documents to multiple parent folders.
-   * <p/>
+   * <p>
    * Examples:
    *
    * <pre>
@@ -467,7 +467,7 @@ public class SpiConstants {
    *     Enterprise:Marketing:Press Releases
    *     https://sp.example.com/sites/mylist
    * </pre>
-   * <p/>
+   * <p>
    * Value: google:folder
    *
    * @see "RFC 3986: Uniform Resource Identifier (URI): Generic Syntax"
@@ -479,10 +479,10 @@ public class SpiConstants {
    * Identifies an optional, single-valued boolean property that specifies
    * whether the document should be locked, to prevent it from being evicted
    * if the GSA reaches its license limit. Default: {@code false}.
-   * <p/>
+   * <p>
    * Note: this property will not be indexed, it only controls whether the GSA
    * will lock the document.
-   * <p/>
+   * <p>
    * Value: google:lock
    *
    * @see "<a href='http://www.google.com/support/enterprise/static/gsa/docs/admin/72/gsa_doc_set/feedsguide/feedsguide.html#1073054'>Defining the XML Record for a Document</a>"
@@ -510,15 +510,15 @@ public class SpiConstants {
   /**
    * Identifies an optional, single-valued integer property that specifies
    * the initial PageRank of the document. Default: {@code 96}.
-   * <p/>
+   * <p>
    * A higher value specifies a higher PageRank. To boost the PageRank
    * of the URL or group of URLs, increase the value to a number
    * between 97 and 100. To lower the PageRank, decrease the value.
-   * <p/>
+   * <p>
    * Note: Content feeds only with GSA 7.2 or earlier. This property
    * will not be indexed, it only controls the PageRank for the
    * document.
-   * <p/>
+   * <p>
    * Value: google:pagerank
    *
    * @see "<a href='http://www.google.com/support/enterprise/static/gsa/docs/admin/72/gsa_doc_set/feedsguide/feedsguide.html#1073054'>Defining the XML Record for a Document</a>"
@@ -529,9 +529,9 @@ public class SpiConstants {
   /**
    * Identifies an optional, single-valued string property that specifies
    * the authmethod of the document. Default: {@code httpbasic}.
-   * <p/>
+   * <p>
    * AddPropertyFilter can be used to override the default value.
-   * <p/>
+   * <p>
    *
    * @since 3.0.8
    */
@@ -541,9 +541,9 @@ public class SpiConstants {
    * Identifies a single-valued {@link DocumentType} property that,
    * if present, will be used to determine the object type for this
    * document.
-   * <p/>
+   * <p>
    * If this property is not set, the document type will be {@code RECORD}.
-   * <p/>
+   * <p>
    * Value: google:documenttype
    *
    * @since 3.0
@@ -727,7 +727,7 @@ public class SpiConstants {
    * the name that a connector implementor should use to read records from the
    * per-document store using JDBC. However, implementors are encouraged to use
    * {@link LocalDocumentStore} methods rather than JDBC if possible.
-   * <p/>
+   * <p>
    * At present, the persistable attributes are:
    * <ul>
    * <li>{@link #PROPNAME_CONNECTOR_INSTANCE}</li>
@@ -765,7 +765,7 @@ public class SpiConstants {
    * Reserved by the Connector Manager to indicate the connector instance
    * that submitted this document. Should not be supplied by the
    * connector developer, and if supplied, it will be ignored.
-   * <p/>
+   * <p>
    * This property is persistable (it is one of the keys in the
    * {@link #PERSISTABLE_ATTRIBUTES} map.
    *
@@ -778,7 +778,7 @@ public class SpiConstants {
    * Reserved by the Connector Manager to indicate type of the connector
    * that submitted this document. Should not be supplied by the
    * connector developer, and if supplied, it will be ignored.
-   * <p/>
+   * <p>
    * This property is persistable (it is one of the keys in the
    * {@link #PERSISTABLE_ATTRIBUTES} map.
    *
@@ -794,7 +794,7 @@ public class SpiConstants {
    * that multi-valued property will be used here. The primary use-case of this
    * attribute is to be stored, so that a connector can later query to find
    * all documents in a folder.
-   * <p/>
+   * <p>
    * This property is persistable (it is one of the keys in the
    * {@link #PERSISTABLE_ATTRIBUTES} map.
    *
@@ -807,7 +807,7 @@ public class SpiConstants {
    * Reserved by the Connector Manager to indicate the time at which the
    * Connector Manager handled this document. Should not be supplied by the
    * connector developer, and if supplied, it will be ignored.
-   * <p/>
+   * <p>
    * This property is persistable (it is one of the keys in the
    * {@link #PERSISTABLE_ATTRIBUTES} map.
    *
@@ -819,7 +819,7 @@ public class SpiConstants {
   /**
    * Optional, single-valued property that gives a message from the connector
    * instance about the state of this document.
-   * <p/>
+   * <p>
    * This property is persistable (it is one of the keys in the
    * {@link #PERSISTABLE_ATTRIBUTES} map.
    *
@@ -835,7 +835,7 @@ public class SpiConstants {
    * attribute might contain a content hash. The primary use-case of this
    * attribute is to be stored in the Connector Manager's per-document store. It
    * will not be supplied when sending a document to the GSA for indexing.
-   * <p/>
+   * <p>
    * This property is persistable (it is one of the keys in the
    * {@link #PERSISTABLE_ATTRIBUTES} map.
    *
@@ -850,7 +850,7 @@ public class SpiConstants {
    * as a cabinet or list. The primary use-case of this attribute is to be
    * stored, so that a connector can later query to find all documents in a
    * container.
-   * <p/>
+   * <p>
    * This property is persistable (it is one of the keys in the
    * {@link #PERSISTABLE_ATTRIBUTES} map.
    *

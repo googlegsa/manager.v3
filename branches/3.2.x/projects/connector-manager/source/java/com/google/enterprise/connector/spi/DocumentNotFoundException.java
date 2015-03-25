@@ -16,7 +16,7 @@ package com.google.enterprise.connector.spi;
 
 /**
  * Thrown for documents that do not exist or are unknown to the connector.
- * <p/>
+ * <p>
  * It is the responsibility of the Connector to construct a checkpoint
  * that skips over the offending Document if {@link DocumentList#checkpoint()}
  * is called after {@code DocumentNotFoundException} is thrown.

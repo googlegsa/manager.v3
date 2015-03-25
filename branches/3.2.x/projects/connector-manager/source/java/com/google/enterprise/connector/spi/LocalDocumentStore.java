@@ -24,7 +24,7 @@ import javax.sql.DataSource;
  *
  * A local persistent store of information about documents that is managed by
  * the Connector Manager for connectors.
- * <p/>
+ * <p>
  * Document metadata is automatically persisted (or deleted) for documents by
  * the Connector Manager:
  * <ul>
@@ -43,13 +43,13 @@ import javax.sql.DataSource;
  * In addition, connector implementors may use the
  * {@link #storeDocument(Document)} method to programmatically store a document
  * in the local store without sending it through the traversal manager.
- * <p/>
+ * <p>
  * The connector may explicitly request stored information to be returned
  * through the {@link #findDocument(String)}, {@link #getDocumentIterator()} and
  * {@link #getDocumentIterator(String)} calls. These calls return
  * {@link Document} objects; again, only those keys in the
  * {@link SpiConstants#PERSISTABLE_ATTRIBUTES} map will be populated.
- * <p/>
+ * <p>
  * If necessary, the connector developer can also get access to the underlying
  * document table in the database implementation of this store by:
  * <ul>
@@ -85,10 +85,10 @@ public interface LocalDocumentStore {
    * connector instance, in sorted order by docid.
    * The result iterator is read-only. It will not support
    * {@link Iterator#remove()}.
-   * <p/>
+   * <p>
    * The documents returned will be non-null and will contain only the
    * persisted attributes. See {@link SpiConstants#PERSISTABLE_ATTRIBUTES}.
-   * <p/>
+   * <p>
    * <strong>Note:</strong> The {@code LocalDocumentStore} implementation
    * buffers information stored via {@link #storeDocument(Document)}, then
    * writes records out in batches.  Consequently unflushed documents will
@@ -109,10 +109,10 @@ public interface LocalDocumentStore {
    * in sorted order by docid.
    * The result iterator is read-only. It will not support
    * {@link Iterator#remove()}.
-   * <p/>
+   * <p>
    * The documents returned will be non-null and will contain only the
    * persisted attributes. See {@link SpiConstants#PERSISTABLE_ATTRIBUTES}.
-   * <p/>
+   * <p>
    * <strong>Note:</strong> The {@code LocalDocumentStore} implementation
    * buffers information stored via {@link #storeDocument(Document)}, then
    * writes records out in batches.  Consequently unflushed documents will
@@ -132,7 +132,7 @@ public interface LocalDocumentStore {
   /**
    * Persists information about a document. Any attributes that are not keys in
    * the {@link SpiConstants#PERSISTABLE_ATTRIBUTES} table will be ignored.
-   * <p/>
+   * <p>
    * <strong>Note:</strong> The {@code LocalDocumentStore} implementation
    * buffers information stored via {@link #storeDocument(Document)}, then
    * writes records out in batches for improved document store performance.

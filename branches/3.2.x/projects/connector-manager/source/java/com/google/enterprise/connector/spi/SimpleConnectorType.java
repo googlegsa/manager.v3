@@ -33,10 +33,10 @@ import java.util.logging.Logger;
  * i.e., the strings in the list are used to name the configuration elements
  * that this instance requires, and are used as display values in the html
  * forms this instance generates.
- * <p/>
+ * <p>
  * This simple implementation considers any parameter to be valid, so long as
  * it is non-{@code null} and non-empty.
- * <p/>
+ * <p>
  * Implementors may want to override the
  * {@link #validateConfigPair(String, String)} method.
  * This is used to validate a particular key-value pair.

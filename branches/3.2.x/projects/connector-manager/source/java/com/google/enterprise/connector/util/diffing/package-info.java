@@ -33,7 +33,7 @@
  * com.google.enterprise.connector.util.diffing.DocumentHandle
  * DocumentHandle} class.
  * </p>
- * <img src="doc-files/lifecycle.png"/>
+ * <img src="doc-files/lifecycle.png" alt="Lifecycle diagram">
  *
  * @since 2.8
  */

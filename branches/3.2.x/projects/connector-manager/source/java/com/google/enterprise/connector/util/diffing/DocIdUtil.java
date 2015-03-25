@@ -19,7 +19,7 @@ import java.net.URLEncoder;
 
 /**
  * Static methods to convert paths to doc-ids and vice-versa.
- * <p/>
+ * <p>
  * The Connector Manager embeds docids into URLs without encoding them.
  * URL encoding is not order-preserving and must be used with caution.
  *

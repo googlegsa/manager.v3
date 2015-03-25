@@ -49,7 +49,7 @@ public interface DocumentSnapshot {
    * Returns a {@link DocumentHandle} for updating the referenced
    * document on the GSA or {@code null} if the document on the GSA
    * does not need updating.
-   * <p/>
+   * <p>
    * The diffing framework will call this before calling
    * {@link #toString()} to persist this {@link DocumentSnapshot}.
    *

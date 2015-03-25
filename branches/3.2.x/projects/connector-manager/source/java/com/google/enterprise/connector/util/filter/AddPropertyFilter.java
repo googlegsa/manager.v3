@@ -31,14 +31,14 @@ import java.util.logging.Level;
 /**
  * A {@link Document} filter that adds a new {@link Property}
  * or adds values to an existing Property.
- * <p/>
+ * <p>
  * If the {@code overwrite} flag is {@code true}, the new
  * property values replace any existing values of the target property.
  * Otherwise, the new property values augment any existing values
  * of the target property.
- * <p/>
+ * <p>
  * <b>Example {@code documentFilters.xml} Configurations:</b>
- * <p/>
+ * <p>
  * The following example tags all fed documents with source department
  * identification meta-data. It adds a {@code DeptId} property, with
  * the single value {@code Finance} to all documents.
@@ -113,7 +113,7 @@ public class AddPropertyFilter extends AbstractDocumentFilter {
   /**
    * Sets the additional String value that will be returned for
    * the configured Property.
-   * <p/>
+   * <p>
    * A convenience method that wraps the {@code value} in a single
    * item List and calls {@link #setPropertyValues}.
    *
@@ -140,7 +140,7 @@ public class AddPropertyFilter extends AbstractDocumentFilter {
    * Finds a {@link Property} by {@code name}.  If the requested property
    * is the filtered property, return that property with the configured
    * additional values.
-   * <p/>
+   * <p>
    * If the {@code overwrite} flag is {@code true}, the new
    * property values replace any existing values of the target property.
    * Otherwise, the new property values augment any existing values
