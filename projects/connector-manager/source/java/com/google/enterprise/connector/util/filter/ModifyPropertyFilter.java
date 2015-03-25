@@ -84,7 +84,7 @@ import java.util.regex.PatternSyntaxException;
    &lt;!-- Replace '.' and '_' with a space. --&gt;
    &lt;bean id="DotUnderscoreToWhiteSpace"
       class="com.google.enterprise.connector.util.filter.ModifyPropertyFilter"&gt;
-     &lt;property name="propertyNames"/&gt;
+     &lt;property name="propertyNames"&gt;
        &lt;set&gt;
          &lt;value&gt;Foo&lt;/value&gt;
          &lt;value&gt;Bar&lt;/value&gt;

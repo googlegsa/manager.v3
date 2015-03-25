@@ -11,15 +11,45 @@ issues and work-arounds.
 Web Site: http://code.google.com/p/google-enterprise-connector-manager/
 
 
+Release 3.2.10, 24 March 2015
+=============================
+
+Introduction
+------------
+This is a patch release that fixes a few small problems discovered in
+the previous release. Most users do not need to upgrade. Connector
+developers and customers manually deploying connectors with Tomcat 8
+are encouraged to upgrade.
+
+Issues Fixed Since 3.2.6
+------------------------
+18248756 - Increase the default traversal batch timeout from 30 minutes
+           to 2 hours.
+           Note: The default value of the traversal.time.limit property
+           is set in applicationContext.xml, but it may be overridden in
+           applicationContext.properties.
+
+18969469 - NDC and MDC logging context strings were empty under Tomcat 8.
+           Note: When manually upgrading Connector Manager, this fix
+           requires the new META-INF/context.xml file from the
+           connector-manager.war file.
+
+Version Compatibility
+---------------------
+This version of the Connector Manager requires Java 6 JRE or newer.
+
+For connector developers, Subversion 1.8 and Java 8 are supported.
+
+
 Release 3.2.6, 25 April 2014
 ==============================
 
 Introduction
 ------------
 This is a patch release that fixes a few small problems discovered in the
-the previous release. Users of previous releases are encouraged to upgrade.
+previous release. Users of previous releases are encouraged to upgrade.
 
-Issues Fixed Since 3.2.2
+Issues Fixed Since 3.2.4
 ------------------------
 14303102 - The DatabaseConnectionPool utility class did not detect
            dead connections to SQL Server. This class now requires a
@@ -54,7 +84,7 @@ Release 3.2.4, 16 January 2014
 Introduction
 ------------
 This is a patch release that fixes a few small problems discovered in the
-the previous release. Users of previous releases are encouraged to upgrade.
+previous release. Users of previous releases are encouraged to upgrade.
 
 Issues Fixed Since 3.2.2
 ------------------------
@@ -88,7 +118,7 @@ Release 3.2.2, 24 October 2013
 Introduction
 ------------
 This is a patch release that fixes a few small problems discovered in the
-the previous release. Users of previous releases are encouraged to upgrade.
+previous release. Users of previous releases are encouraged to upgrade.
 
 Summary of Changes
 ------------------
@@ -176,7 +206,7 @@ Release 3.2.0, 13 August 2013
 Introduction
 ------------
 This is a patch release that fixes a few small problems discovered in the
-the previous release. Users of previous releases are encouraged to upgrade.
+previous release. Users of previous releases are encouraged to upgrade.
 
 Summary of Changes
 ------------------
@@ -236,7 +266,7 @@ Release 3.0.8, 08 May 2013
 Introduction
 ------------
 This is a patch release that fixes a few small problems discovered in the
-the previous release. Users of previous releases are encouraged to upgrade.
+previous release. Users of previous releases are encouraged to upgrade.
 
 Summary of Changes
 ------------------
@@ -297,7 +327,7 @@ Release 3.0.4, 19 November 2012
 Introduction
 ------------
 This is a patch release that fixes a few small problems discovered in the
-the previous release. Users of previous releases are encouraged to upgrade.
+previous release. Users of previous releases are encouraged to upgrade.
 
 Summary of Changes
 ------------------
@@ -338,7 +368,7 @@ Release 3.0.2, 17 October 2012
 Introduction
 ------------
 This is a patch release that fixes a few small problems discovered in the
-the previous release. Users of previous releases are encouraged to upgrade.
+previous release. Users of previous releases are encouraged to upgrade.
 
 Summary of Changes
 ------------------
@@ -362,7 +392,7 @@ Release 3.0.0, 13 September 2012
 Introduction
 ------------
 This is a patch release that fixes a few small problems discovered in the
-the previous release. Users of previous releases are encouraged to upgrade.
+previous release. Users of previous releases are encouraged to upgrade.
 
 Summary of Changes
 ------------------
@@ -398,7 +428,7 @@ Release 2.8.10, 28 November 2012
 Introduction
 ------------
 This is a patch release that fixes a few small problems discovered in the
-the previous release. Users of previous releases are encouraged to review
+previous release. Users of previous releases are encouraged to review
 the changes below to determine whether to upgrade.
 
 Summary of Changes
@@ -460,7 +490,7 @@ Release 2.8.6, 5 May 2012
 Introduction
 ------------
 This is a patch release that fixes a few small problems discovered in the
-the previous release. Users of previous releases are encouraged to review
+previous release. Users of previous releases are encouraged to review
 the changes below to determine whether to upgrade.
 
 Summary of Changes
@@ -486,7 +516,7 @@ Release 2.8.4, 23 February 2012
 Introduction
 ------------
 This is a patch release that fixes a few small problems discovered in the
-the previous release. Users of the previous release are encouraged to upgrade.
+previous release. Users of the previous release are encouraged to upgrade.
 
 Summary of Changes
 ------------------
@@ -561,7 +591,7 @@ Release 2.8.2, 10 October 2011
 Introduction
 ------------
 This is a patch release that fixes a few small problems discovered in the
-the previous release. Users of the previous release are encouraged to upgrade.
+previous release. Users of the previous release are encouraged to upgrade.
 
 Summary of Changes
 ------------------
@@ -774,7 +804,7 @@ Release 2.6.6,  7 December 2010
 Introduction
 ------------
 This is a patch release that fixes a few small problems discovered in the
-the previous release. New additions have been made to the connector SPI.
+previous release. New additions have been made to the connector SPI.
 Users of the previous release are encouraged to upgrade.
 
 Summary of Changes

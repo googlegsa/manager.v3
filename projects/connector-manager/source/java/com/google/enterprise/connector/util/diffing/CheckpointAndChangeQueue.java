@@ -388,9 +388,9 @@ public class CheckpointAndChangeQueue {
     }
   }
 
-  private void writeRecoveryState() throws IOException {
+  private void writeRecoveryState(RecoveryFile recoveryFile)
+      throws IOException {
     // TODO(pjo): Move this method into RecoveryFile.
-    File recoveryFile = new RecoveryFile(persistDir);
     FileOutputStream outStream = new FileOutputStream(recoveryFile);
     Writer writer = new OutputStreamWriter(outStream, Charsets.UTF_8);
     try {
@@ -463,12 +463,21 @@ public class CheckpointAndChangeQueue {
     removeCompletedChanges(checkpointString);
     loadUpFromChangeSource();
     monitorPoints.updateOnGuaranteed(checkpointAndChangeList);
+    RecoveryFile recoveryFile = new RecoveryFile(persistDir);
     try {
-      writeRecoveryState();
-    } finally {
-      // TODO: Enahnce with mechanism that remembers
-      // information about recovery files to avoid re-reading.
-      removeExcessRecoveryState();
+      try {
+        writeRecoveryState(recoveryFile);
+      } finally {
+        // TODO: Enhance with mechanism that remembers
+        // information about recovery files to avoid re-reading.
+        removeExcessRecoveryState();
+      }
+    } catch (IOException e) {
+      // Avoid filling the disk with recovery files, if we cannot recover.
+      if (recoveryFile.exists()) {
+        recoveryFile.delete();
+      }
+      throw e;
     }
     return getList();
   }

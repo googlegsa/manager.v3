@@ -275,7 +275,7 @@ public abstract class Value {
    * Formats a calendar object for the Feeds Protocol, using the
    * <a href="http://www.iso.org/iso/support/faqs/faqs_widely_used_standards/widely_used_standards_other/date_and_time_format.htm">
    * ISO-8601</a> format for just the date portion.  See
-   * <a href="http://code.google.com/apis/searchappliance/documentation/feedsguide.html">
+   * <a href="http://www.google.com/support/enterprise/static/gsa/docs/admin/72/gsa_doc_set/feedsguide/feedsguide.html">
    * Feeds Protocol Developer's Guide</a>
    *
    * @param calendar a {@code Calendar}

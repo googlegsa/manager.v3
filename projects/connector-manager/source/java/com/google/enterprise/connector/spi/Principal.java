@@ -145,7 +145,7 @@ public class Principal implements Comparable<Principal> {
   }
 
   /**
-   * Note that is comparison is inconsistent with equals, in
+   * Note that this comparison is inconsistent with equals, in
    * that the PrincipalType is not considered in ordering.
    */
   @Override
