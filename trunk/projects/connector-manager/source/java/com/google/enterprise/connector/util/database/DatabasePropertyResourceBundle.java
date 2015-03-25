@@ -31,10 +31,10 @@ import java.util.logging.Logger;
  * implementations.  This mirrors {@link java.util.PropertyResourceBundle}
  * in form and function, but is designed to supply SQL language translations
  * rather than spoken language translations.
- * <p/>
+ * <p>
  * {@code DatabasePropertyResourceBundles} are typically loaded using a
  * {@link DatabaseResourceBundleManager}.
- * <p/>
+ * <p>
  * Like {@code java.util.PropertyResourceBundle}, {@code DatabaseResourceBundle}
  * resources are specified in {@code Properties} files.  Unlike
  * {@link java.util.PropertyResourceBundle}, {@code DatabaseResourceBundle} uses
@@ -54,7 +54,7 @@ import java.util.logging.Logger;
  * are used, or any of the ancestor {@code DatabaseResourceBundles} (see below).
  * Variable substitution is done at the time of the call to
  * {@link #getString(String)} or {@link #getStringArray(String)}, so the
- * returned string(s) have all known substitutions resolved.<pre> </pre></li>
+ * returned string(s) have all known substitutions resolved.</li>
  * <li>Lists that may be fetched as an array of Strings - great for potentially
  * multi-statement DDL. For instance, this table creation DDL resource
  * definition consists of three distinct SQL statements:

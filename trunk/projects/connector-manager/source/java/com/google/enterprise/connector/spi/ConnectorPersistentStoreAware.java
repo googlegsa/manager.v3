@@ -19,7 +19,7 @@ package com.google.enterprise.connector.spi;
  * Manager will call the setter when it instantiates it, supplying a
  * {@link ConnectorPersistentStore} object, which encapsulates how a connector
  * can persist and use information about documents or any other information.
- * <p/>
+ * <p>
  * <strong>Note:</strong> The Connector Manager calls {@code setDatabaseAccess}
  * after the Connector has been instantiated by Spring, but before calling
  * {@link Connector#login()}.  If the {@link Connector} bean configuration

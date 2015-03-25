@@ -82,7 +82,7 @@ public class XmlUtils {
    * Used to write out an attribute for an element.  Surrounding whitespace will
    * not be added to the buffer.  The given value will be XML encoded before
    * appending to the buffer.
-   * <p/>
+   * <p>
    * For example, given attrName="foo" and attrValue="val&lt;bar" writes out:
    * <pre>foo="val&amp;lt;bar"</pre>
    *
@@ -141,7 +141,7 @@ public class XmlUtils {
    * is non-{@code null} and non-empty, then the attribute is written out,
    * preceded by a single space.
    * The given value will be XML encoded before appending to the buffer.
-   * <p/>
+   * <p>
    * For example, given attrName="foo" and attrValue="val&lt;bar" writes out:
    * <pre>foo="val&amp;lt;bar"</pre>
    *
@@ -167,16 +167,16 @@ public class XmlUtils {
   /**
    * XML encodes an attribute value, escaping some characters as
    * character entities, and dropping invalid control characters.
-   * <p/>
+   * <p>
    * Only four characters need to be encoded, according to the
    * <a href="http://www.w3.org/TR/2000/REC-xml-20001006#NT-Char">
    * W3C XML 1.0 Specification Character definition</a>: {@code < & " '}
    * (less-than, ampersand, double-quote, single-quote).
-   * <p/>
+   * <p>
    * Actually, we could only encode one of the quote characters if
    * we knew that that was the one used to wrap the value, but we'll
    * play it safe and encode both.
-   * <p/>
+   * <p>
    * We drop invalid XML characters, following the
    * <a href="http://www.w3.org/TR/2000/REC-xml-20001006#NT-Char">
    * W3C XML 1.0 Specification Character definition</a>:

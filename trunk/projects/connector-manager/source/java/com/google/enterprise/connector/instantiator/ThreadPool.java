@@ -32,19 +32,17 @@ import java.util.logging.Logger;
 
 /**
  * Pool for running {@link TimedCancelable}, time limited tasks.
- *
- * <p/>
+ * <p>
  * Users are provided a {@link TaskHandle} for each task. The {@link TaskHandle}
  * supports canceling the task and determining if the task is done running.
- *
- * <p/>
+ * <p>
  * The ThreadPool enforces a configurable maximum time interval for tasks. Each
  * task is guarded by a <b>time out task</b> that will cancel the primary task
  * if the primary task does not complete within the allowed interval.
- * <p/>
+ * <p>
  * If the configured maximum time interval is zero, tasks are allowed to run
  * until explicitly cancelled, or shutdown.
- * <p/>
+ * <p>
  * Task cancellation includes two actions that are visible for the task task's
  * {@link TimedCancelable}
  * <ol>
@@ -56,8 +54,7 @@ import java.util.logging.Logger;
  * </ol>
  * Once a task has been canceled its {@link TaskHandle#isDone()} method will
  * immediately start returning {@code true}.
- *
- * <p/>
+ * <p>
  * {@link ThreadPool} performs the following processing when a task completes
  * <ol>
  * <li>Cancel the <b>time out task</b> for the completed task.</li>

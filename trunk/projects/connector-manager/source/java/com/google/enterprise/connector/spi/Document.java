@@ -22,7 +22,7 @@ import java.util.Set;
  * provided through the {@link #findProperty(String)} method. In
  * addition, a method provides the caller with the {@code Set} of all property
  * names, which it can use to iterate over all properties.
- * <p/>
+ * <p>
  * <strong>Important:</strong> a {@link Property} object obtained by calling
  * {@link #findProperty(String)} may be invalidated by the next
  * call to {@link #findProperty(String)}.  Typically, the caller will
@@ -33,7 +33,7 @@ import java.util.Set;
  * implementation must return the same set of values associated with that
  * property name.  If the caller requests a property for which the
  * {@code Document} has no value, {@code null} should be returned.
- * <p/>
+ * <p>
  * The typical pattern for consuming an object that implements this
  * interface is as follows (disregarding exception handling):
  *

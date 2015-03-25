@@ -46,7 +46,7 @@ public interface TraversalSchedule {
 
   /**
    * Returns {@code true} if traversals could run at this time,
-   * equivalent to <pre>!isDisabled() && inScheduledInterval()</pre>.
+   * equivalent to <pre>!isDisabled() &amp;&amp; inScheduledInterval()</pre>.
    */
   public boolean shouldRun();
 }

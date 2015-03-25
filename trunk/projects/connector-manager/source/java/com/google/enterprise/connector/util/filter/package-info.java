@@ -23,43 +23,43 @@
  * {@link com.google.enterprise.connector.spi.SkippedDocumentException
  * SkippedDocumentException}
  * to prevent a document from being fed to the Google Search Appliance.
- * <p/>
+ * <p>
  * Multiple document filters may be chained together, forming
  * a transformational document processing pipeline.  Similar to a
  * Unix command pipeline, the filters are linked together, each using
  * the previous one as its source Document.
- * <p/>
- * <img src="doc-files/pipeline.png"/>
- * <p/>
+ * <p>
+ * <img src="doc-files/pipeline.png" alt="Pipeline diagram">
+ * <p>
  * Documents are extracted from the Repository,
  * and then supplied to the filter chain. {@code FilterA} gets first
  * crack at the document, then {@code FilterB}, then finally {@code FilterC},
  * before the Document is added to the Feed and sent to the GSA.
- * <p/>
+ * <p>
  * Filter instances are manufactured anew for each Document by a
  * {@link com.google.enterprise.connector.util.filter.DocumentFilterFactory
  * DocumentFilterFactory}, which wraps a new Filter around the supplied
  * source Document.
- * <p/>
+ * <p>
  * Several filters are included in this package, providing the ability to
  * modify property values, add, copy, rename, or remove properties.
- * <p/>
+ * <p>
  * You can also implement custom document filters. By extending
  * {@link com.google.enterprise.connector.util.filter.AbstractDocumentFilter
  * AbstractDocumentFilter}, you need only override one or
  * two methods to implement a new filter.
- * <p/>
+ * <p>
  * Document filters are configured in the Connector Manager's
  * {@code documentFilters.xml} file, located in the web application's
  * {@code WEB-INF} directory.  Document filters defined here will be applied
  * to all documents across all connector instances hosted by the Connector
  * Manager.
- * <p/>
+ * <p>
  * Document filters may also be configured for individual connector instances
  * in a connector's {@code connectorInstance.xml} (Advanced Configuration)
  * or {@code connectorDefaults.xml} file.  Connector-specific document filters
  * will be applied before the Connector Manager's global document filters.
- * <p/>
+ * <p>
  * For example, a filter chain might be configured as follows: <pre><code>
    &lt;bean id="DocumentFilters"
          class="com.google.enterprise.connector.util.filter.DocumentFilterChain"&gt;
