@@ -67,9 +67,9 @@
       <redirector outputproperty="svn.branch"
                   logError="true" >
         <outputfilterchain>
-	        <linecontains>
-	          <contains value="URL: "/>
-	        </linecontains>
+          <linecontainsregexp>
+            <regexp pattern="^URL: "/>
+          </linecontainsregexp>
           <replacestring from="URL: ${svn.repository.root}"/>
           <replaceregex pattern="/projects.*" />
           <replaceregex pattern=".*/" />

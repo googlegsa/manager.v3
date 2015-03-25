@@ -139,10 +139,15 @@ public class CryptoTest extends TestCase {
       decryptWithoutCipher("hello, world");
       fail("expected a NoSuchAlgorithmException wrapped in a RuntimeException");
     } catch (RuntimeException expected) {
-      if (expected.getCause() == null
-          || !(expected.getCause() instanceof NoSuchAlgorithmException)) {
-        throw expected;
+      // Look up the cause chain for a NoSuchAlgorithmException. It is
+      // nested differently in Java 8 and earlier versions.
+      Throwable t = expected;
+      while ((t = t.getCause()) != null) {
+        if (t instanceof NoSuchAlgorithmException) {
+          return;
+        }
       }
+      throw expected;
     }
   }
 
