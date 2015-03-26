@@ -61,13 +61,6 @@ public class SocialUserProfileTest extends TestCase {
     }
   }
 
-  public void testDocid() throws RepositoryException {
-    String docid =
-        Value.getSingleValueString(userProfile, SpiConstants.PROPNAME_DOCID);
-    assertNotNull(docid);
-    assertTrue(docid.startsWith("social:"));
-  }
-
   public void testGetUserContent() {
     assertEquals("Hey hey", userProfile.getUserContent().toString());
   }

@@ -584,8 +584,9 @@ public class SocialUserProfileDocument implements Document {
   }
 
   /**
-   * Creates a docId from a user profile.
+   * Static method to create a docId from a user profile.
    *
+   * @param userId
    * @return docId for the user profile document
    */
   private String makeDocId() {
