@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project name="google-enterprise-connector-manager" default="everything" basedir=".">
+
+  <!-- ========================= PROPERTIES ============================= -->
+  <property file="version.properties"/>
+
+  <!-- Define Directories. -->
+  <property name="connector-manager.dir" value="connector-manager" />
+  <property name="test-connectorA.dir" value="test-connectorA" />
+  <property name="test-connectorB.dir" value="test-connectorB" />
+  <property name="install.dir" value="install" />
+  <property name="downloads.dir" value="downloads" />
+  <property name="trunk.dir" value=".." />
+
+  <!-- =========================== TASKS =============================== -->
+
+  <include file="svnbuild.xml" as="svn"/>
+
+  <target name="clean" depends="clean-all" />
+
+  <target name="clean-all" depends="prebuild">
+    <ant dir="${connector-manager.dir}" target="clean" />
+    <ant dir="${test-connectorA.dir}" target="clean" />
+    <ant dir="${test-connectorB.dir}" target="clean" />
+  </target>
+
+  <target name="prebuild">
+    <antversion property="antversion" atleast="1.8" />
+    <fail unless="antversion"
+          message="This project requires ant version 1.8.0 or newer."/>
+  </target>
+
+  <target name="connector-manager" depends="prebuild">
+    <ant dir="${connector-manager.dir}" target="all">
+      <property name="version" value="${version}" />
+    </ant>
+  </target>
+
+  <target name="test-connectorA" depends="prebuild">
+    <ant dir="${test-connectorA.dir}">
+      <property name="version" value="${version}" />
+    </ant>
+  </target>
+
+  <target name="test-connectorB" depends="prebuild">
+    <ant dir="${test-connectorB.dir}">
+      <property name="version" value="${version}" />
+    </ant>
+  </target>
+
+  <target name="build-all" depends="test-connectorA,test-connectorB,connector-manager"/>
+
+  <target name="spi-javadoc">
+    <ant dir="${connector-manager.dir}" target="spi-javadoc">
+      <property name="version" value="${version}" />
+    </ant>
+  </target>
+
+  <target name="make-install-dir">
+    <mkdir dir="${install.dir}" />
+  </target>
+
+  <target name="install-connector-manager" depends="connector-manager,make-install-dir">
+    <mkdir dir="${install.dir}/connector-manager" />
+    <copy todir="${install.dir}/connector-manager" >
+      <fileset dir="${connector-manager.dir}/dist"/>
+    </copy>
+  </target>
+
+  <target name="make-downloads-dir">
+    <mkdir dir="${downloads.dir}" />
+  </target>
+
+  <target name="connector-manager-war-prod" depends="prebuild">
+    <ant dir="${connector-manager.dir}" target="war-prod">
+      <property name="version" value="${version}" />
+    </ant>
+  </target>
+
+  <target name="init-downloads" depends="prebuild,svn.svn-branch">
+    <property name="downloads.prefix" value="connector-manager-${svn.branch}"/>
+  </target>
+
+  <target name="download-connector-manager"
+          depends="connector-manager-war-prod,spi-javadoc,make-downloads-dir,init-downloads">
+    <copy file="${trunk.dir}/COPYING" tofile="${trunk.dir}/LICENSE"/>
+    <zip destfile="${downloads.dir}/${downloads.prefix}.zip">
+      <zipfileset dir="${connector-manager.dir}/dist/connector-manager"
+        includes="connector-manager.war" prefix="${downloads.prefix}"/>
+      <zipfileset dir="${trunk.dir}" includes="LICENSE,README,RELEASE_NOTES"
+        prefix="${downloads.prefix}"/>
+      <zipfileset dir="${connector-manager.dir}/source/scripts" includes="*"
+        prefix="${downloads.prefix}/Scripts"/>
+    </zip>
+    <checksum algorithm="SHA-1"
+              file="${downloads.dir}/${downloads.prefix}.zip"/>
+    <zip destfile="${downloads.dir}/${downloads.prefix}-src.zip">
+      <zipfileset dir="." includes="build.xml" prefix="${downloads.prefix}-src"/>
+      <zipfileset dir="${trunk.dir}" prefix="${downloads.prefix}-src"
+        includes="LICENSE,README,RELEASE_NOTES" />
+      <zipfileset dir="${connector-manager.dir}"
+        includes="build.xml,doc/**/*,etc/**/*,
+        source/**/*,testdata/**/*,third-party/**/*,
+        .classpath,.project"
+        prefix="${downloads.prefix}-src/${connector-manager.dir}"/>
+      <zipfileset dir="${test-connectorA.dir}"
+        includes="config/**/,source/**/,build.xml
+        .classpath,.project"
+        prefix="${downloads.prefix}-src/${test-connectorA.dir}"/>
+      <zipfileset dir="${test-connectorB.dir}"
+        includes="config/**/,source/**/,build.xml
+        .classpath,.project"
+        prefix="${downloads.prefix}-src/${test-connectorB.dir}"/>
+    </zip>
+    <checksum algorithm="SHA-1"
+              file="${downloads.dir}/${downloads.prefix}-src.zip"/>
+    <delete file="${trunk.dir}/LICENSE"/>
+  </target>
+
+  <target name="repackage" depends="init-downloads"
+          description="Repackage release candidate files for release.">
+    <property name="repackage.prefix" value="connector-manager-${version}"/>
+    <repackage-downloads downloads.dir="${downloads.dir}"
+                         downloads.prefix="${downloads.prefix}"
+                         repackage.prefix="${repackage.prefix}" />
+  </target>
+
+  <target name="install-test-connectorA" depends="test-connectorA,make-install-dir">
+    <mkdir dir="${install.dir}/test-connectorA" />
+    <copy todir="${install.dir}/test-connectorA" >
+      <fileset dir="${test-connectorA.dir}/dist"/>
+    </copy>
+  </target>
+
+  <target name="install-test-connectorB" depends="test-connectorB,make-install-dir">
+    <mkdir dir="${install.dir}/test-connectorB" />
+    <copy todir="${install.dir}/test-connectorB" >
+      <fileset dir="${test-connectorB.dir}/dist"/>
+    </copy>
+  </target>
+
+  <target name="test-all" depends="test-connectorA,test-connectorB,connector-manager">
+    <!-- <ant dir="${connector-manager.dir}" target="run_tests" /> -->
+    <!-- Cobertura code coverage runs the junit tests, albeit slowly. -->
+    <ant dir="${connector-manager.dir}" target="code_coverage" />
+    <!-- at present, the test-connectors do not have a run_tests target -->
+  </target>
+
+  <target name="install-all"
+    depends="install-test-connectorA,install-test-connectorB,install-connector-manager"/>
+
+  <target name="everything" depends="clean-all,build-all,test-all,install-all,download-connector-manager"/>
+
+</project>
