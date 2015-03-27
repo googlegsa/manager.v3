@@ -157,6 +157,7 @@
     </condition>
     <javadoc access="public" author="false" destdir="doc/javadoc/${version}"
              doctitle="Google Search Appliance Connector SPI"
+             windowtitle="Connector SPI"
              nodeprecated="false" nodeprecatedlist="true" noindex="false"
              nonavbar="false" notree="false" source="${jvm.version}"
              sourcepath="${src}" overview="${src}/overview.html"
