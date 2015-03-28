@@ -79,6 +79,27 @@
     <echo message="svn.branch.version set to '${svn.branch.version}'" />
   </target>
 
+  <macrodef name="archive-source"
+            description="Create source ZIP file for release.">
+    <attribute name="downloads.dir" description="Directory for all files."/>
+    <attribute name="downloads.prefix" description="Archive name prefix."/>
+    <sequential>
+      <property name="src.archive" value="@{downloads.prefix}-src" />
+      <echo message="Creating archive ${src.archive}." />
+      <exec executable="git" failonerror="true" outputproperty="git.root">
+        <arg line="rev-parse --show-toplevel" />
+      </exec>
+      <exec executable="git" dir="${git.root}" failonerror="true">
+        <arg value="archive" />
+        <arg value="--format=zip" />
+        <arg value="--prefix=${src.archive}/" />
+        <arg value="--output=@{downloads.dir}/${src.archive}.zip" />
+        <arg value="HEAD" />
+      </exec>
+      <checksum algorithm="SHA-1" file="@{downloads.dir}/${src.archive}.zip"/>
+    </sequential>
+  </macrodef>
+
   <macrodef name="repackage-zip"
             description="Repackage release candidate ZIP file for release.">
     <attribute name="destfile" description="Repackaged release ZIP file."/>
