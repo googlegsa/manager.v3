@@ -69,7 +69,7 @@ import java.util.regex.PatternSyntaxException;
  * <pre><code>
    &lt;!-- Add Erd&ouml;s as co-author of all my documents. --&gt;
    &lt;bean id="AddErdosAuthor"
-       class="com.google.enterprise.connector.util.filter.AddPropertyFilter"&gt;
+       class="com.google.enterprise.connector.util.filter.ModifyPropertyFilter"&gt;
      &lt;property name="propertyName" value="Author"/&gt;
      &lt;property name="pattern" value="C'est Moi"/&gt;
      &lt;property name="replacement" value="Paul Erd&ouml;s"/&gt;
