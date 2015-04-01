@@ -17,7 +17,9 @@ package com.google.enterprise.connector.servlet;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -25,8 +27,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * Utility to dump servlet request and responts packages in human-
- * readable form.  Useful for debugging purposes, for instace, as
+ * Utility to dump servlet request and response packages in human-
+ * readable form.  Useful for debugging purposes, for instance, as
  * called from doTrace().
  */
 /* Moved out of ServletUtil, to avoid having ServletUtil depend upon
@@ -111,11 +113,9 @@ public class ServletDump {
 
     String dumpStr = stringWriter.getBuffer().toString();
     if (LOGGER.isLoggable(Level.FINE)) {
-      LOGGER.fine("HttpRequest handled by "
-                  + sun.reflect.Reflection.getCallerClass(2).getName()
-                  + "\ncalled by "
-                  + sun.reflect.Reflection.getCallerClass(3).getName()
-                  + "\n" + dumpStr);
+      List<String> callerClasses = getCallerClasses();
+      LOGGER.fine("HttpRequest handled by " + callerClasses.get(3)
+          + "\ncalled by " + callerClasses.get(4) + "\n" + dumpStr);
     }
 
     // Now stuff it out to the response.
@@ -124,5 +124,17 @@ public class ServletDump {
     out.close();
 
     return true;
+  }
+
+  private static List<String> getCallerClasses() {
+    StackTraceElement[] stack = Thread.currentThread().getStackTrace();
+    List<String> classes = new ArrayList<String>(stack.length);
+    for (StackTraceElement element : stack) {
+      String name = element.getClassName();
+      if (!name.contains(".reflect.")) {
+        classes.add(name);
+      }
+    }
+    return classes;
   }
 }
