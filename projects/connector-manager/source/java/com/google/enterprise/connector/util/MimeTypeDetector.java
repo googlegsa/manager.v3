@@ -95,7 +95,7 @@ public class MimeTypeDetector {
 
   /**
    * Sets the supported
-   * <a href="http://docs.oracle.com/javase/6/docs/technotes/guides/intl/encoding.doc.html">
+   * <a href="http://docs.oracle.com/javase/7/docs/technotes/guides/intl/encoding.doc.html">
    * character encodings</a> for the {@code MimeTypeDetector}. When determining
    * Mime type based upon content, MimeTypeDetector will interpret the content
    * using the various encodings until it has found a match.  For performance
@@ -107,7 +107,7 @@ public class MimeTypeDetector {
    * <p>
    *
    * @param encodings a Set of canonical encoding names.
-   * @see <a href="http://docs.oracle.com/javase/6/docs/technotes/guides/intl/encoding.doc.html">Java Supported Encodings</a>
+   * @see <a href="http://docs.oracle.com/javase/7/docs/technotes/guides/intl/encoding.doc.html">Java Supported Encodings</a>
    */
   public static synchronized void setSupportedEncodings(Set<String> encodings) {
     Set<String> enc = Sets.newHashSet(encodings);
@@ -123,7 +123,7 @@ public class MimeTypeDetector {
    * the filename extension will be used for MIME type determination.  For
    * this reason, filenames that are extracted from ECMs, remote filesytems,
    * even URLs (using
-   * <a href="http://docs.oracle.com/javase/6/docs/api/java/net/URL.html#getPath()">
+   * <a href="http://docs.oracle.com/javase/7/docs/api/java/net/URL.html#getPath()">
    * URL.getPath()</a>) should work.  If {@code filename} is {@code null},
    * only the supplied {@code content} will be used to determine the MIME type.
    * <p>
@@ -167,7 +167,7 @@ public class MimeTypeDetector {
    * the filename extension will be used for MIME type determination.  For
    * this reason, filenames that are extracted from ECMs, remote filesytems,
    * even URLs (using
-   * <a href="http://docs.oracle.com/javase/6/docs/api/java/net/URL.html#getPath()">
+   * <a href="http://docs.oracle.com/javase/7/docs/api/java/net/URL.html#getPath()">
    * URL.getPath()</a>) should work.  If the MIME type can be determined
    * solely by the filename extension, it will be returned.
    * <p>

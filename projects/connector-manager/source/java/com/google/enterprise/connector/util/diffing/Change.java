@@ -90,6 +90,7 @@ public class Change {
       this.monitorCheckpoint = new MonitorCheckpoint(
           json.getJSONObject(Field.MONITOR_CHECKPOINT.name()));
     } else {
+      // TODO(jlacey): Remove this code, since FS connector 2.6 is obsolete.
       // This else condition is required for previous version of diffing
       // connector (FS connector) which used a completely different String
       // representation of Change.There is no way to know which factory to
@@ -101,7 +102,7 @@ public class Change {
       // compatibility of the change representations.
       tempFactoryType = FactoryType.INTERNAL;
       docHandle = internalFactory.fromString(json.toString());
-      if (this.documentHandle == null) {
+      if (docHandle == null) {
           tempFactoryType = FactoryType.CLIENT;
           docHandle = clientFactory.fromString(json.toString());
       }
