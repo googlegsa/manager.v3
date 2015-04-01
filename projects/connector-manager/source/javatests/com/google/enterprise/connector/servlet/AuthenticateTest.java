@@ -17,7 +17,10 @@ package com.google.enterprise.connector.servlet;
 import com.google.common.collect.ImmutableList;
 import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.manager.MockManager;
+import com.google.enterprise.connector.spi.AuthenticationIdentity;
+import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.connector.spi.Principal;
+import com.google.enterprise.connector.spi.SimpleAuthenticationIdentity;
 import com.google.enterprise.connector.spi.SpiConstants;
 
 import junit.framework.TestCase;
@@ -298,6 +301,43 @@ public class AuthenticateTest extends TestCase {
     doTestGroups(xmlBody);
   }
 
+  /**
+   * Confirms that a failing group lookup is turned into a Success in
+   * the XML response.
+   */
+  public void testFailGroup() {
+    String xmlBody =
+        "<AuthnRequest>\n" +
+        "  <Connectors>\n" +
+        "    <ConnectorName>connector1</ConnectorName>\n" +
+        "  </Connectors>\n" +
+        "  <Credentials>\n" +
+        "    <Username>fooUser</Username>\n" +
+        "    <Domain>timbuktu</Domain>\n" +
+        "  </Credentials>\n" +
+        "</AuthnRequest>";
+
+    String expectedResult =
+        "<CmResponse>\n" +
+        "  <AuthnResponse>\n" +
+        "    <Success ConnectorName=\"connector1\"/>\n" +
+        "  </AuthnResponse>\n" +
+        "</CmResponse>\n";
+
+    MockManager manager = MockManager.getInstance();
+    manager.setShouldVerifyIdentity(true);
+    manager.setExpectedIdentity("connector1", "fooUser", "fooPassword",
+        makeGroups("staff", "wheel"));
+    AuthenticationIdentity identity = new SimpleAuthenticationIdentity(
+        "fooUser", "fooPassword", "timbuktu");
+    AuthenticationResponse response =
+        manager.authenticate("connector1", identity);
+    assertFalse(response.isValid());
+
+    doTest(xmlBody, expectedResult, "connector1", "fooUser", "fooPassword",
+        makeGroups("staff", "wheel"));
+  }
+
   public void testPassAndFailGroups() {
     String xmlBody =
       "<AuthnRequest>\n" +
@@ -315,7 +355,7 @@ public class AuthenticateTest extends TestCase {
       "      <Group>staff</Group>\n" +
       "      <Group>wheel</Group>\n" +
       "    </Success>\n" +
-      "    <Failure ConnectorName=\"connector2\"/>\n" +
+      "    <Success ConnectorName=\"connector2\"/>\n" +
       "  </AuthnResponse>\n" +
       "</CmResponse>\n";
 
@@ -403,7 +443,7 @@ public class AuthenticateTest extends TestCase {
       "      <Group>st&amp;ff</Group>\n" +
       "      <Group>we&#39;ll</Group>\n" +
       "    </Success>\n" +
-      "    <Failure ConnectorName=\"connector2\"/>\n" +
+      "    <Success ConnectorName=\"connector2\"/>\n" +
       "  </AuthnResponse>\n" +
       "</CmResponse>\n";
 

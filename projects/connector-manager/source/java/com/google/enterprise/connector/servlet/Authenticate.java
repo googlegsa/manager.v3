@@ -172,6 +172,13 @@ public class Authenticate extends ConnectorManagerServlet {
             }
           }
           ServletUtil.writeXMLTag(out, 2, ServletUtil.XMLTAG_SUCCESS, true);
+        } else if (identity.getPassword() == null) {
+          // This is a group lookup request that failed. The GSA
+          // requires that we return success here.
+          ServletUtil.writeXMLTagWithAttrs(
+              out, 2, ServletUtil.XMLTAG_SUCCESS,
+              ServletUtil.XMLTAG_CONNECTOR_NAME + "=\"" + connectorName + "\"",
+              true);
         } else {
           ServletUtil.writeXMLTagWithAttrs(
               out, 2, ServletUtil.XMLTAG_FAILURE,
