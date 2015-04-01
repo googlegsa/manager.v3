@@ -68,10 +68,9 @@ public class AuthenticateTest extends TestCase {
 
   public void testNoCredentials() {
     String xmlBody = "<AuthnRequest>\n</AuthnRequest>";
-    String expectedResult = "<CmResponse>\n  <StatusId>"
-        + ConnectorMessageCode.RESPONSE_EMPTY_NODE
-        + "</StatusId>\n</CmResponse>\n";
-    doTest(xmlBody, expectedResult, null, "fooUser", "fooPassword", null);
+
+    doTestInvalidAuthentication(xmlBody,
+        ConnectorMessageCode.RESPONSE_EMPTY_NODE);
   }
 
   public void testBadUsername() {
@@ -86,6 +85,32 @@ public class AuthenticateTest extends TestCase {
     doTestFailedAuthentication(xmlBody);
   }
 
+  public void testEmptyUsername() {
+    String xmlBody =
+      "<AuthnRequest>\n" +
+      "  <Credentials>\n" +
+      "    <Username></Username>\n" +
+      "    <Password>fooPassword</Password>\n" +
+      "  </Credentials>\n" +
+      "</AuthnRequest>";
+
+    doTestInvalidAuthentication(xmlBody,
+        ConnectorMessageCode.RESPONSE_NULL_IDENTITY);
+  }
+
+  public void testNoUsername() {
+    String xmlBody =
+      "<AuthnRequest>\n" +
+      "  <Credentials>\n" +
+      "    <Username></Username>\n" +
+      "    <Password>fooPassword</Password>\n" +
+      "  </Credentials>\n" +
+      "</AuthnRequest>";
+
+    doTestInvalidAuthentication(xmlBody,
+        ConnectorMessageCode.RESPONSE_NULL_IDENTITY);
+  }
+
   public void testBadPassword() {
     String xmlBody =
       "<AuthnRequest>\n" +
@@ -98,7 +123,27 @@ public class AuthenticateTest extends TestCase {
     doTestFailedAuthentication(xmlBody);
   }
 
-  public void doTestFailedAuthentication(String xmlBody) {
+  public void testEmptyPassword() {
+    String xmlBody =
+      "<AuthnRequest>\n" +
+      "  <Credentials>\n" +
+      "    <Username>fooUser</Username>\n" +
+      "    <Password></Password>\n" +
+      "  </Credentials>\n" +
+      "</AuthnRequest>";
+
+    doTestInvalidAuthentication(xmlBody,
+        ConnectorMessageCode.RESPONSE_NULL_IDENTITY);
+  }
+
+  private void doTestInvalidAuthentication(String xmlBody, int messageCode) {
+    String expectedResult = "<CmResponse>\n  <StatusId>"
+        + messageCode
+        + "</StatusId>\n</CmResponse>\n";
+    doTest(xmlBody, expectedResult, null, "fooUser", "fooPassword", null);
+  }
+
+  private void doTestFailedAuthentication(String xmlBody) {
     String expectedResult =
       "<CmResponse>\n" +
       "  <AuthnResponse>\n" +
@@ -240,19 +285,6 @@ public class AuthenticateTest extends TestCase {
     doTestGroups(xmlBody);
   }
 
-
-  public void testGetGroupsEmptyPassword() {
-    String xmlBody =
-      "<AuthnRequest>\n" +
-      "  <Credentials>\n" +
-      "    <Username>fooUser</Username>\n" +
-      "    <Password></Password>\n" +
-      "  </Credentials>\n" +
-      "</AuthnRequest>";
-
-    // An empty password should fail Authentication.
-    doTestFailedAuthentication(xmlBody);
-  }
 
   public void testAuthenticateWithGroups() {
     String xmlBody =
