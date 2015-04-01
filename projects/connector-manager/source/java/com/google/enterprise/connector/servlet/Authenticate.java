@@ -91,18 +91,38 @@ public class Authenticate extends ConnectorManagerServlet {
       }
     }
 
-    ServletUtil.writeRootTag(out, false);
-    ServletUtil.writeXMLTag(out, 1, ServletUtil.XMLTAG_AUTHN_RESPONSE, false);
-
     String username = XmlParseUtil.getFirstElementByTagName(
       (Element) credList.item(0), ServletUtil.XMLTAG_AUTHN_USERNAME);
     String domain = XmlParseUtil.getFirstElementByTagName(
         (Element) credList.item(0), ServletUtil.XMLTAG_AUTHN_DOMAIN);
     NDC.append(Strings.isNullOrEmpty(domain) ? username
                : (domain + "/" + username));
-
     String password = XmlParseUtil.getOptionalElementByTagName(
         (Element) credList.item(0), ServletUtil.XMLTAG_AUTHN_PASSWORD);
+
+    if (username == null || "".equals(password)) {
+      ServletUtil.writeResponse(
+          out, ConnectorMessageCode.RESPONSE_NULL_IDENTITY);
+      return;
+    }
+
+    ServletUtil.writeRootTag(out, false);
+    ServletUtil.writeXMLTag(out, 1, ServletUtil.XMLTAG_AUTHN_RESPONSE, false);
+
+    AuthenticationIdentity identity =
+        new SimpleAuthenticationIdentity(username, password, domain);
+    handleEachConnector(requestedConnectors, identity, manager, out);
+
+    ServletUtil.writeXMLTag(out, 1, ServletUtil.XMLTAG_AUTHN_RESPONSE, true);
+    ServletUtil.writeRootTag(out, true);
+  }
+
+  /**
+   * Writes a Success or Failure element for each requested connector
+   * instance.
+   */
+  private static void handleEachConnector(Set<String> requestedConnectors,
+      AuthenticationIdentity identity, Manager manager, PrintWriter out) {
     for (ConnectorStatus connector : manager.getConnectorStatuses()) {
       String connectorName = connector.getName();
       if (requestedConnectors != null &&
@@ -111,8 +131,6 @@ public class Authenticate extends ConnectorManagerServlet {
       }
       NDC.pushAppend(connectorName);
       try {
-        AuthenticationIdentity identity =
-            new SimpleAuthenticationIdentity(username, password, domain);
         AuthenticationResponse response =
             manager.authenticate(connectorName, identity);
         if (response.isValid()) {
@@ -125,7 +143,7 @@ public class Authenticate extends ConnectorManagerServlet {
           // XmlUtils.appendStartTag().
           out.append(ServletUtil.indentStr(3));
           XmlUtils.xmlAppendStartTag(ServletUtil.XMLTAG_IDENTITY, out);
-          XmlUtils.xmlAppendAttrValue(username, out);
+          XmlUtils.xmlAppendAttrValue(identity.getUsername(), out);
           XmlUtils.xmlAppendEndTag(ServletUtil.XMLTAG_IDENTITY, out);
 
           // Add any returned groups that the user may belong to.
@@ -166,8 +184,5 @@ public class Authenticate extends ConnectorManagerServlet {
         NDC.pop();
       }
     }
-    ServletUtil.writeXMLTag(out, 1, ServletUtil.XMLTAG_AUTHN_RESPONSE, true);
-    ServletUtil.writeRootTag(out, true);
-    return;
   }
 }
