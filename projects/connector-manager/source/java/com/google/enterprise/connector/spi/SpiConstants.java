@@ -200,6 +200,8 @@ public class SpiConstants {
    * will be marked as public.
    * <p>
    * Value: google:ispublic
+   *
+   * @see #PROPNAME_AUTHMETHOD
    */
   public static final String PROPNAME_ISPUBLIC = "google:ispublic";
 
@@ -266,8 +268,11 @@ public class SpiConstants {
    *
    * where the &lt;scopeId&gt; will be the user ACL Scope ID.
    * <p>
-   * If the {@link #PROPNAME_ISPUBLIC} is missing or is {@code true}, then this
-   * property is ignored, since the document is public.
+   * If any of the properties {@code PROPNAME_ACLGROUPS},
+   * {@code PROPNAME_ACLUSERS}, {@code PROPNAME_ACLDENYGROUPS}, or
+   * {@code PROPNAME_ACLDENYUSERS} is supplied with a non-empty
+   * value, then the document will be marked as secure even if the
+   * {@link #PROPNAME_ISPUBLIC} is missing or is {@code true}.
    * <p>
    * If both the {@link #PROPNAME_ACLGROUPS} and {@link #PROPNAME_ACLUSERS}
    * properties are {@code null} or empty, then the GSA will use the
@@ -528,11 +533,19 @@ public class SpiConstants {
 
   /**
    * Identifies an optional, single-valued string property that specifies
-   * the authmethod of the document. Default: {@code httpbasic}.
+   * the authmethod of the document. Default: {@code none} if
+   * {@link #PROPNAME_ISPUBLIC} is missing or is {@code true}, or
+   * {@code httpbasic} if {@link #PROPNAME_ISPUBLIC} is {@code false}.
    * <p>
-   * AddPropertyFilter can be used to override the default value.
+   * Document filters can be used to override the default value.
    * <p>
+   * If both this property and {@link #PROPNAME_ISPUBLIC} are set, the
+   * more secure of the two determines the authmethod for the feed
+   * record.
+   * <p>
+   * Value: google:authmethod
    *
+   * @see #PROPNAME_ISPUBLIC
    * @since 3.0.8
    */
   public static final String PROPNAME_AUTHMETHOD = "google:authmethod";

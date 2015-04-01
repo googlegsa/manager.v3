@@ -162,7 +162,8 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
   private static final String XML_ENCODING = "encoding";
   private static final String XML_OVERWRITEACLS = "overwrite-acls";
 
-  private static final String CONNECTOR_AUTHMETHOD = "httpbasic";
+  private static final String AUTHMETHOD_CONNECTOR = "httpbasic";
+  private static final String AUTHMETHOD_NONE = "none";
 
   private static final String XML_ACL = "acl";
   private static final String XML_TYPE = "inheritance-type";
@@ -501,23 +502,41 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
           + SpiConstants.PROPNAME_LASTMODIFIED, e);
     }
 
+    // Pick the more secure of PROPNAME_ISPUBLIC and PROPNAME_AUTHMETHOD,
+    // and always set the authmethod attribute on the record. If
+    // PROPNAME_AUTHMETHOD is used, the value is not validated. Doing
+    // so would hard-code the allowed values here, which we want to
+    // avoid. Invalid values are an error in the connector or document
+    // filter, and will show up as feed failures.
     try {
-      ValueImpl v = (ValueImpl) Value.getSingleValue(document,
+      ValueImpl value = (ValueImpl) Value.getSingleValue(document,
           SpiConstants.PROPNAME_ISPUBLIC);
-      if (v != null) {
-        boolean isPublic = v.toBoolean();
-        if (!isPublic) {
-          String authmethod = DocUtils.getOptionalString(document,
-              SpiConstants.PROPNAME_AUTHMETHOD);
-          if (Strings.isNullOrEmpty(authmethod)){
-            authmethod = CONNECTOR_AUTHMETHOD;
-          }
-          XmlUtils.xmlAppendAttr(XML_AUTHMETHOD, authmethod, prefix);
-        }
+      boolean isPublic = (value == null) || value.toBoolean();
+      String property = DocUtils.getOptionalString(document,
+          SpiConstants.PROPNAME_AUTHMETHOD);
+      // Checking for "none" trims whitespace and ignores case, see:
+      // http://www.w3.org/TR/REC-xml/#AVNormalize
+      String authmethod =
+          (property == null) ? "" : property.trim().toLowerCase();
+      String attribute;
+      if (authmethod.isEmpty() || authmethod.equals(AUTHMETHOD_NONE)) {
+        attribute = (isPublic) ? AUTHMETHOD_NONE : AUTHMETHOD_CONNECTOR;
+      } else {
+        attribute = property;
       }
+
+      if (!authmethod.isEmpty()
+          && isPublic != authmethod.equals(AUTHMETHOD_NONE)) {
+        LOGGER.log(Level.WARNING, "Security conflict: {0}={1} and {2}={3}"
+            + "; Using more secure {2}={4}.",
+            new Object[] { SpiConstants.PROPNAME_ISPUBLIC, isPublic,
+                SpiConstants.PROPNAME_AUTHMETHOD, property, attribute });
+      }
+      XmlUtils.xmlAppendAttr(XML_AUTHMETHOD, attribute, prefix);
     } catch (IllegalArgumentException e) {
-      LOGGER.log(Level.WARNING, "Illegal value for ispublic property."
-          + " Treat as a public doc", e);
+      // TODO(wiarlawd): I left this here, but I don't see how this
+      // can happen. See ValueImplTest.
+      LOGGER.log(Level.WARNING, "The authmethod attribute will not be set", e);
     }
 
     prefix.append(">\n");
