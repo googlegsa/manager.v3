@@ -48,6 +48,7 @@ import com.google.enterprise.connector.util.filter.AddPropertyFilter;
 import com.google.enterprise.connector.util.filter.DocumentFilterChain;
 import com.google.enterprise.connector.util.filter.DocumentFilterFactory;
 import com.google.enterprise.connector.util.filter.ModifyPropertyFilter;
+import com.google.enterprise.connector.util.testing.Logging;
 
 import junit.framework.TestCase;
 
@@ -62,9 +63,11 @@ import java.io.InputStream;
 import java.io.StringReader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -140,7 +143,8 @@ public class DocPusherTest extends TestCase {
     String feedType = "metadata-and-url";
     String record = "<record url=\"http://www.sometesturl.com/test\""
         + " mimetype=\"text/html\""
-        + " last-modified=\"Tue, 15 Nov 1994 12:45:26 GMT\">\n"
+        + " last-modified=\"Tue, 15 Nov 1994 12:45:26 GMT\""
+        + " authmethod=\"none\">\n"
         + "<metadata>\n"
         + "<meta name=\"google:lastmodified\" content=\"Tue, 15 Nov 1994 12:45:26 GMT\"/>\n"
         + "<meta name=\"google:searchurl\" content=\"http://www.sometesturl.com/test\"/>\n"
@@ -159,7 +163,8 @@ public class DocPusherTest extends TestCase {
     String feedType = "metadata-and-url";
     String record = "<record url=\"http://www.sometesturl.com/searchurl\""
         + " mimetype=\"text/plain\""
-        + " last-modified=\"Thu, 01 Jan 1970 01:00:00 GMT\">\n"
+        + " last-modified=\"Thu, 01 Jan 1970 01:00:00 GMT\""
+        + " authmethod=\"none\">\n"
         + "<acl>\n"
         + "<principal scope=\"group\" access=\"permit\">Everyone</principal>\n"
         + "</acl>\n"
@@ -197,7 +202,8 @@ public class DocPusherTest extends TestCase {
     String feedType = "metadata-and-url";
     String record = "<record url=\"http://www.sometesturl.com/test\""
         + " mimetype=\"text/html\""
-        + " last-modified=\"Tue, 15 Nov 1994 12:45:26 GMT\">\n"
+        + " last-modified=\"Tue, 15 Nov 1994 12:45:26 GMT\""
+        + " authmethod=\"none\">\n"
         + "<metadata>\n"
         + "<meta name=\"google:lastmodified\" content=\"Tue, 15 Nov 1994 12:45:26 GMT\"/>\n"
         + "<meta name=\"google:searchurl\" content=\"http://www.sometesturl.com/test\"/>\n"
@@ -218,7 +224,8 @@ public class DocPusherTest extends TestCase {
     String feedType = "metadata-and-url";
     String record = "<record url=\"smb://localhost/share/test\""
         + " mimetype=\"text/html\""
-        + " last-modified=\"Tue, 15 Nov 1994 12:45:26 GMT\">\n"
+        + " last-modified=\"Tue, 15 Nov 1994 12:45:26 GMT\""
+        + " authmethod=\"none\">\n"
         + "<metadata>\n"
         + "<meta name=\"google:lastmodified\" content=\"Tue, 15 Nov 1994 12:45:26 GMT\"/>\n"
         + "<meta name=\"google:searchurl\" content=\"smb://localhost/share/test\"/>\n"
@@ -243,7 +250,8 @@ public class DocPusherTest extends TestCase {
     String feedType = "incremental";
     String record = "<record url=" + googleConnectorUrl("doc1")
         + " mimetype=\"" + SpiConstants.DEFAULT_MIMETYPE + "\""
-        + " last-modified=\"Tue, 15 Nov 1994 12:45:26 GMT\">\n"
+        + " last-modified=\"Tue, 15 Nov 1994 12:45:26 GMT\""
+        + " authmethod=\"none\">\n"
         + "<metadata>\n"
         + "<meta name=\"google:lastmodified\" content=\"Tue, 15 Nov 1994 12:45:26 GMT\"/>\n"
         + "<meta name=\"jcr:lastModified\" content=\"1970-01-01\"/>\n"
@@ -262,7 +270,8 @@ public class DocPusherTest extends TestCase {
     String feedType = "incremental";
     String record = "<record url=" + googleConnectorUrl("doc10")
         + " mimetype=\"" + SpiConstants.DEFAULT_MIMETYPE + "\""
-        + " last-modified=\"Tue, 15 Nov 1994 12:45:26 GMT\">\n"
+        + " last-modified=\"Tue, 15 Nov 1994 12:45:26 GMT\""
+        + " authmethod=\"none\">\n"
         + "<metadata>\n"
         + "<meta name=\"contentfile\" content=\"testdata/mocktestdata/i18n.html\"/>\n"
         + "<meta name=\"google:lastmodified\" content=\"Tue, 15 Nov 1994 12:45:26 GMT\"/>\n"
@@ -305,7 +314,8 @@ public class DocPusherTest extends TestCase {
     // case 2: "google:ispublic":"true"
     record = "<record url=" + googleConnectorUrl("doc1")
         + " mimetype=\"" + SpiConstants.DEFAULT_MIMETYPE + "\""
-        + " last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\">\n"
+        + " last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\""
+        + " authmethod=\"none\">\n"
         + "<metadata>\n"
         + "<meta name=\"google:aclusers\" content=\"joe\"/>\n"
         + "<meta name=\"google:aclusers\" content=\"mary\"/>\n"
@@ -321,7 +331,8 @@ public class DocPusherTest extends TestCase {
     // which null-handling should drop out, leaving just "joe, mary"
     record = "<record url=" + googleConnectorUrl("doc2")
         + " mimetype=\"" + SpiConstants.DEFAULT_MIMETYPE + "\""
-        + " last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\">\n"
+        + " last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\""
+        + " authmethod=\"none\">\n"
         + "<metadata>\n"
         + "<meta name=\"google:aclusers\" content=\"joe\"/>\n"
         + "<meta name=\"google:aclusers\" content=\"mary\"/>\n"
@@ -361,7 +372,8 @@ public class DocPusherTest extends TestCase {
     // Doc 2
     records += "<record url=" + googleConnectorUrl("doc2")
         + " mimetype=\"" + SpiConstants.DEFAULT_MIMETYPE + "\""
-        + " last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\">\n"
+        + " last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\""
+        + " authmethod=\"none\">\n"
         + "<metadata>\n"
         + "<meta name=\"google:aclusers\" content=\"joe\"/>\n"
         + "<meta name=\"google:aclusers\" content=\"mary\"/>\n"
@@ -374,7 +386,8 @@ public class DocPusherTest extends TestCase {
     // Doc 3
     records += "<record url=" + googleConnectorUrl("doc3")
         + " mimetype=\"" + SpiConstants.DEFAULT_MIMETYPE + "\""
-        + " last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\">\n"
+        + " last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\""
+        + " authmethod=\"none\">\n"
         + "<metadata>\n"
         + "<meta name=\"google:aclusers\" content=\"joe\"/>\n"
         + "<meta name=\"google:aclusers\" content=\"mary\"/>\n"
@@ -416,7 +429,8 @@ public class DocPusherTest extends TestCase {
     // Doc 2
     records += "<record url=" + googleConnectorUrl("doc2")
         + " mimetype=\"" + SpiConstants.DEFAULT_MIMETYPE + "\""
-        + " last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\">\n"
+        + " last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\""
+        + " authmethod=\"none\">\n"
         + "<acl>\n"
         + "<principal scope=\"user\" access=\"permit\">joe</principal>\n"
         + "<principal scope=\"user\" access=\"permit\">mary</principal>\n"
@@ -431,7 +445,8 @@ public class DocPusherTest extends TestCase {
     // Doc 3
     records += "<record url=" + googleConnectorUrl("doc3")
         + " mimetype=\"" + SpiConstants.DEFAULT_MIMETYPE + "\""
-        + " last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\">\n"
+        + " last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\""
+        + " authmethod=\"none\">\n"
         + "<acl>\n"
         + "<principal scope=\"user\" access=\"permit\">joe</principal>\n"
         + "<principal scope=\"user\" access=\"permit\">mary</principal>\n"
@@ -486,7 +501,8 @@ public class DocPusherTest extends TestCase {
     String content = "PGh0bWw+w47DscWjw6lyw7HDpcWjw67DtsOxw6XEvMOuxb7DpcWjw67DtsOxPC9odG1sPg==";
     String record = "<record url=" + googleConnectorUrl("doc10")
         + " mimetype=\"" + SpiConstants.DEFAULT_MIMETYPE + "\""
-        + " last-modified=\"Tue, 15 Nov 1994 12:45:26 GMT\">\n"
+        + " last-modified=\"Tue, 15 Nov 1994 12:45:26 GMT\""
+        + " authmethod=\"none\">\n"
         + "<metadata>\n"
         + "<meta name=\"contentfile\" content=\"testdata/mocktestdata/i18n.html\"/>\n"
         + "<meta name=\"google:lastmodified\" content=\"Tue, 15 Nov 1994 12:45:26 GMT\"/>\n"
@@ -2309,6 +2325,9 @@ public class DocPusherTest extends TestCase {
 
   /** Test non-public doc with authmethod unspecified. */
   public void testAuthmethodUnspecified() throws Exception {
+    List<String> conflicts = new ArrayList<String>();
+    Logging.captureLogMessages(XmlFeed.class, "Security conflict", conflicts);
+
     String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
         + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
         + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
@@ -2318,10 +2337,14 @@ public class DocPusherTest extends TestCase {
 
     assertStringContains("authmethod=\"httpbasic\"", resultXML);
     assertStringNotContains(SpiConstants.PROPNAME_AUTHMETHOD, resultXML);
+    assertTrue(conflicts.toString(), conflicts.isEmpty());
   }
 
   /** Test non-public doc with valid authmethod. */
   public void testValidAuthmethod() throws Exception {
+    List<String> conflicts = new ArrayList<String>();
+    Logging.captureLogMessages(XmlFeed.class, "Security conflict", conflicts);
+
     String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
         + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
         + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
@@ -2331,32 +2354,126 @@ public class DocPusherTest extends TestCase {
 
     assertStringContains("authmethod=\"ntlm\"", resultXML);
     assertStringNotContains(SpiConstants.PROPNAME_AUTHMETHOD, resultXML);
+    assertTrue(conflicts.toString(), conflicts.isEmpty());
   }
 
-  /** Test authmethod is removed when explicitly public **/
-  public void testAuthmethodRemovedExplicit() throws Exception {
+  /** Test authmethod is ignored when "none" and not public **/
+  public void testAuthmethodNoneIgnoredSecure() throws Exception {
+    List<String> conflicts = new ArrayList<String>();
+    Logging.captureLogMessages(XmlFeed.class, "Security conflict", conflicts);
+
     String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
         + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
         + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
-        + ",\"google:ispublic\":\"true\"" + ",\"google:authmethod\":\"shouldnotbehere\""
+        + ",\"google:ispublic\":\"false\"" + ",\"google:authmethod\":\"none\""
         + "}\r\n" + "";
     String resultXML = feedJsonEvent(json1);
 
-    assertStringNotContains("authmethod", resultXML);
+    assertStringContains("authmethod=\"httpbasic\"", resultXML);
     assertStringNotContains(SpiConstants.PROPNAME_AUTHMETHOD, resultXML);
+    assertFalse(conflicts.isEmpty());
   }
 
-  /** Test authmethod is removed when implicitly public **/
-  public void testAuthmethodRemovedImplicit() throws Exception {
+  /** Test authmethod is preferred when explicitly public **/
+  public void testAuthmethodPreferredExplicit() throws Exception {
+    List<String> conflicts = new ArrayList<String>();
+    Logging.captureLogMessages(XmlFeed.class, "Security conflict", conflicts);
+
     String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
         + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
         + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
-        + ",\"google:authmethod\":\"shouldnotbehere\""
+        + ",\"google:ispublic\":\"true\"" + ",\"google:authmethod\":\"ntlm\""
         + "}\r\n" + "";
     String resultXML = feedJsonEvent(json1);
 
-    assertStringNotContains("authmethod", resultXML);
+    assertStringContains("authmethod=\"ntlm\"", resultXML);
     assertStringNotContains(SpiConstants.PROPNAME_AUTHMETHOD, resultXML);
+    assertFalse(conflicts.isEmpty());
+  }
+
+  /** Test authmethod is preferred when implicitly public **/
+  public void testAuthmethodPreferredImplicit() throws Exception {
+    List<String> conflicts = new ArrayList<String>();
+    Logging.captureLogMessages(XmlFeed.class, "Security conflict", conflicts);
+
+    String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
+        + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
+        + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
+        + ",\"google:authmethod\":\"ntlm\""
+        + "}\r\n" + "";
+    String resultXML = feedJsonEvent(json1);
+
+    assertStringContains("authmethod=\"ntlm\"", resultXML);
+    assertStringNotContains(SpiConstants.PROPNAME_AUTHMETHOD, resultXML);
+    assertFalse(conflicts.isEmpty());
+  }
+
+  /** Test authmethod in uppercase with whitespace is detected as "none". **/
+  public void testAuthmethodCaseAndSpacesPublic() throws Exception {
+    List<String> conflicts = new ArrayList<String>();
+    Logging.captureLogMessages(XmlFeed.class, "Security conflict", conflicts);
+
+    String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
+        + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
+        + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
+        + ",\"google:ispublic\":\"true\"" + ",\"google:authmethod\":\" NONE \""
+        + "}\r\n" + "";
+    String resultXML = feedJsonEvent(json1);
+
+    assertStringContains("authmethod=\"none\"", resultXML);
+    assertStringNotContains(SpiConstants.PROPNAME_AUTHMETHOD, resultXML);
+    assertTrue(conflicts.toString(), conflicts.isEmpty());
+  }
+
+  /** Test authmethod in uppercase with whitespace loses to ispublic=false. **/
+  public void testAuthmethodCaseAndSpacesSecure() throws Exception {
+    List<String> conflicts = new ArrayList<String>();
+    Logging.captureLogMessages(XmlFeed.class, "Security conflict", conflicts);
+
+    String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
+        + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
+        + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
+        + ",\"google:ispublic\":\"false\"" + ",\"google:authmethod\":\" NONE \""
+        + "}\r\n" + "";
+    String resultXML = feedJsonEvent(json1);
+
+    assertStringContains("authmethod=\"httpbasic\"", resultXML);
+    assertStringNotContains(SpiConstants.PROPNAME_AUTHMETHOD, resultXML);
+    assertTrue(conflicts.toString(), conflicts.isEmpty());
+  }
+
+  /** Test authmethod is not validated but used as-is. **/
+  public void testAuthmethodInvalidPublic() throws Exception {
+    List<String> conflicts = new ArrayList<String>();
+    Logging.captureLogMessages(XmlFeed.class, "Security conflict", conflicts);
+
+    String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
+        + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
+        + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
+        + ",\"google:ispublic\":\"true\"" + ",\"google:authmethod\":\"Other \""
+        + "}\r\n" + "";
+    String resultXML = feedJsonEvent(json1);
+
+    assertStringContains("authmethod=\"Other \"", resultXML);
+    assertStringNotContains(SpiConstants.PROPNAME_AUTHMETHOD, resultXML);
+    assertTrue(conflicts.toString(), conflicts.isEmpty());
+  }
+
+  /** Test authmethod is not validated but used as-is. **/
+  public void testAuthmethodInvalidSecure() throws Exception {
+    List<String> conflicts = new ArrayList<String>();
+    Logging.captureLogMessages(XmlFeed.class, "Security conflict", conflicts);
+
+    String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
+        + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
+        + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
+        + ",\"google:ispublic\":\"false\"" + ",\"google:authmethod\":\"Other \""
+        + "}\r\n" + "";
+    String resultXML = feedJsonEvent(json1);
+
+    assertStringContains("authmethod=\"Other \"", resultXML);
+    assertStringNotContains(SpiConstants.PROPNAME_AUTHMETHOD, resultXML);
+    assertTrue(conflicts.toString(), conflicts.isEmpty());
   }
 
   /** Test doc with pagerank unspecified. */
