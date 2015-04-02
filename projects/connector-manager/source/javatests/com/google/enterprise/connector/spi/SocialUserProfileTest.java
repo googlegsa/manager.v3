@@ -19,6 +19,7 @@ import com.google.enterprise.connector.spi.SocialUserProfileDocument.ColleagueDa
 import junit.framework.TestCase;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class SocialUserProfileTest extends TestCase {
@@ -88,6 +89,32 @@ public class SocialUserProfileTest extends TestCase {
     assertTrue(userProfile.getPublic());
   }
 
+  public void testSetPublic_null() {
+    userProfile = new SocialUserProfileDocument(
+        SpiConstants.DEFAULT_USERPROFILE_COLLECTION);
+    assertTrue(userProfile.getPublic());
+  }
+
+  public void testSetPublic_uppercase() {
+    userProfile.setProperty(SpiConstants.PROPNAME_ISPUBLIC, "TRUE");
+    assertTrue(userProfile.getPublic());
+  }
+
+  public void testSetPublic_true() {
+    userProfile.setProperty(SpiConstants.PROPNAME_ISPUBLIC, "nope");
+    assertTrue(userProfile.getPublic());
+  }
+
+  public void testSetPublic_false() {
+    userProfile.setProperty(SpiConstants.PROPNAME_ISPUBLIC, "fAlSe");
+    assertFalse(userProfile.getPublic());
+  }
+
+  public void testSetPublic_f() {
+    userProfile.setProperty(SpiConstants.PROPNAME_ISPUBLIC, "F");
+    assertFalse(userProfile.getPublic());
+  }
+
   public void testGetUserKey() {
     assertEquals("google\\foo", userProfile.getUserKey().toString());
   }
@@ -112,6 +139,23 @@ public class SocialUserProfileTest extends TestCase {
     String xml = userProfile.getColleagueXml().toString();
     assertTrue(xml.indexOf("gsa:accountname=\"google%5Cfoo\"") != -1);
     assertTrue(xml.indexOf("gsa:email=\"foo%40google.com\"") != -1);
+  }
+
+  public void testSetProperty_null() {
+    try {
+      userProfile.setProperty(SpiConstants.PROPNAME_ISPUBLIC,
+          (List<String>) null);
+    } catch (NullPointerException expected) {
+    }
+  }
+
+  public void testSetProperty_empty() {
+    userProfile.setProperty(SpiConstants.PROPNAME_ISPUBLIC,
+        new ArrayList<String>());
+    try {
+      userProfile.getPublic();
+    } catch (IndexOutOfBoundsException expected) {
+    }
   }
 
 }

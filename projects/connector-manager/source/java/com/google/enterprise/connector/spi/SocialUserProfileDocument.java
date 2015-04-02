@@ -14,6 +14,8 @@
 
 package com.google.enterprise.connector.spi;
 
+import com.google.enterprise.connector.spiimpl.ValueImpl;
+
 import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Element;
 import org.w3c.dom.ls.DOMImplementationLS;
@@ -318,7 +320,7 @@ public class SocialUserProfileDocument implements Document {
    */
   public void setPublic(boolean isPublic) {
     properties.put(SpiConstants.PROPNAME_ISPUBLIC,
-        getValueList(isPublic ? "true" : "false"));
+        getValueList(String.valueOf(isPublic)));
   }
 
   /**
@@ -327,14 +329,9 @@ public class SocialUserProfileDocument implements Document {
    * @return true if the profile is public
    */
   public boolean getPublic() {
-    Value value = getSingleValue(properties.get(SpiConstants.PROPNAME_ISPUBLIC));
-    if (value == null) {
-      return false;
-    }
-    if (value.toString().equals("true")) {
-      return true;
-    }
-    return false;
+    ValueImpl value = (ValueImpl) getSingleValue(
+        properties.get(SpiConstants.PROPNAME_ISPUBLIC));
+    return (value == null) || value.toBoolean();
   }
 
   /**
