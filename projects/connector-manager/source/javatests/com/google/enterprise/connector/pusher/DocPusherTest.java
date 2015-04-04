@@ -2371,7 +2371,7 @@ public class DocPusherTest extends TestCase {
 
     assertStringContains("authmethod=\"httpbasic\"", resultXML);
     assertStringNotContains(SpiConstants.PROPNAME_AUTHMETHOD, resultXML);
-    assertFalse(conflicts.isEmpty());
+    assertFalse("Expected conflict not logged", conflicts.isEmpty());
   }
 
   /** Test authmethod is preferred when explicitly public **/
@@ -2388,7 +2388,7 @@ public class DocPusherTest extends TestCase {
 
     assertStringContains("authmethod=\"ntlm\"", resultXML);
     assertStringNotContains(SpiConstants.PROPNAME_AUTHMETHOD, resultXML);
-    assertFalse(conflicts.isEmpty());
+    assertFalse("Expected conflict not logged", conflicts.isEmpty());
   }
 
   /** Test authmethod is preferred when implicitly public **/
@@ -2405,7 +2405,7 @@ public class DocPusherTest extends TestCase {
 
     assertStringContains("authmethod=\"ntlm\"", resultXML);
     assertStringNotContains(SpiConstants.PROPNAME_AUTHMETHOD, resultXML);
-    assertFalse(conflicts.isEmpty());
+    assertFalse("Expected conflict not logged", conflicts.isEmpty());
   }
 
   /** Test authmethod in uppercase with whitespace is detected as "none". **/
@@ -2439,7 +2439,7 @@ public class DocPusherTest extends TestCase {
 
     assertStringContains("authmethod=\"httpbasic\"", resultXML);
     assertStringNotContains(SpiConstants.PROPNAME_AUTHMETHOD, resultXML);
-    assertTrue(conflicts.toString(), conflicts.isEmpty());
+    assertFalse("Expected conflict not logged", conflicts.isEmpty());
   }
 
   /** Test authmethod is not validated but used as-is. **/
@@ -2456,7 +2456,7 @@ public class DocPusherTest extends TestCase {
 
     assertStringContains("authmethod=\"Other \"", resultXML);
     assertStringNotContains(SpiConstants.PROPNAME_AUTHMETHOD, resultXML);
-    assertTrue(conflicts.toString(), conflicts.isEmpty());
+    assertFalse("Expected conflict not logged", conflicts.isEmpty());
   }
 
   /** Test authmethod is not validated but used as-is. **/
