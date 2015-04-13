@@ -352,6 +352,10 @@
       -->
       <ignore regex="org.apache.log4j.*" />
 
+      <auxClasspath>
+        <fileset dir="${thirdparty.prod.jars}" includes="**/*.jar" />
+      </auxClasspath>
+
       <!-- Instrument the application classes, but not the test classes. -->
       <fileset dir="${classes}" includes="**/*.class" />
       <fileset dir="${spi-classes}" includes="**/*.class" />
