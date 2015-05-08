@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project name="google-enterprise-connector-manager" default="everything" basedir=".">
+<project name="google-enterprise-connector-manager" default="build" basedir=".">
 
   <!-- ========================= PROPERTIES ============================= -->
   <property file="version.properties"/>
@@ -17,9 +17,11 @@
 
   <include file="svnbuild.xml" as="svn"/>
 
-  <target name="clean" depends="clean-all" />
+  <target name="clean-all">
+    <echo message="The clean-all target is deprecated. Use clean instead." />
+  </target>
 
-  <target name="clean-all" depends="prebuild">
+  <target name="clean" depends="prebuild">
     <ant dir="${connector-manager.dir}" target="clean" />
     <ant dir="${test-connectorA.dir}" target="clean" />
     <ant dir="${test-connectorB.dir}" target="clean" />
@@ -32,7 +34,7 @@
   </target>
 
   <target name="connector-manager" depends="prebuild">
-    <ant dir="${connector-manager.dir}" target="all">
+    <ant dir="${connector-manager.dir}">
       <property name="version" value="${version}" />
     </ant>
   </target>
@@ -49,10 +51,15 @@
     </ant>
   </target>
 
-  <target name="build-all" depends="test-connectorA,test-connectorB,connector-manager"/>
+  <target name="build-all">
+    <echo message="The build-all target is deprecated. Use build instead." />
+  </target>
 
-  <target name="spi-javadoc">
-    <ant dir="${connector-manager.dir}" target="spi-javadoc">
+  <target name="build"
+          depends="test-connectorA,test-connectorB,connector-manager"/>
+
+  <target name="javadoc">
+    <ant dir="${connector-manager.dir}" target="javadoc">
       <property name="version" value="${version}" />
     </ant>
   </target>
@@ -82,8 +89,8 @@
     <property name="downloads.prefix" value="connector-manager-${svn.branch}"/>
   </target>
 
-  <target name="download-connector-manager"
-          depends="connector-manager-war-prod,spi-javadoc,make-downloads-dir,init-downloads">
+  <target name="downloads"
+          depends="connector-manager-war-prod,javadoc,make-downloads-dir,init-downloads">
     <copy file="${trunk.dir}/COPYING" tofile="${trunk.dir}/LICENSE"/>
     <zip destfile="${downloads.dir}/${downloads.prefix}.zip">
       <zipfileset dir="${connector-manager.dir}/dist/connector-manager"
@@ -140,16 +147,25 @@
     </copy>
   </target>
 
-  <target name="test-all" depends="test-connectorA,test-connectorB,connector-manager">
-    <!-- <ant dir="${connector-manager.dir}" target="run_tests" /> -->
+  <target name="test-all">
+    <echo message="The test-all target is deprecated. Use test instead." />
+  </target>
+
+  <target name="test" depends="build">
+    <!-- <ant dir="${connector-manager.dir}" target="test" /> -->
     <!-- Cobertura code coverage runs the junit tests, albeit slowly. -->
     <ant dir="${connector-manager.dir}" target="code_coverage" />
     <!-- at present, the test-connectors do not have a run_tests target -->
   </target>
 
-  <target name="install-all"
+  <target name="install-all">
+    <echo
+        message="The install-all target is deprecated. Use install instead." />
+  </target>
+
+  <target name="install"
     depends="install-test-connectorA,install-test-connectorB,install-connector-manager"/>
 
-  <target name="everything" depends="clean-all,build-all,test-all,install-all,download-connector-manager"/>
+  <target name="everything" depends="clean,build,test,install,downloads"/>
 
 </project>

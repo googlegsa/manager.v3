@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!-- Connector buildfile. This build requires ant 1.8.0 or newer. -->
-<project name="connector-manager" default="connector_manager" basedir=".">
+<project name="connector-manager" default="build" basedir=".">
 
   <!-- ========================= PROPERTIES ============================= -->
   <property file="${user.home}/google-enterprise-connector-manager.properties"/>
@@ -74,12 +74,10 @@
     <ant inheritAll="false" dir="${projects.dir}/test-connectorB" />
   </target>
 
-  <target name="connector_manager" depends="war-prod"
+  <target name="build" depends="war"
           description="Google Search Appliance Connector Manager" />
 
-  <target name="all" depends="war" />
-
-  <target name="everything" depends="all,run_tests" />
+  <target name="everything" depends="clean,build,test" />
 
   <target name="init">
     <mkdir dir="${build}" />
@@ -144,7 +142,7 @@
     </jar>
   </target>
 
-  <target name="spi-javadoc">
+  <target name="javadoc">
     <!-- Use -Xdoclint:none with Java 8 and higher. The Java 7 and
          lower value cannot be an empty string, but should be a no-op,
          hence -J-Dgoogle.ignoreme=true. -->
@@ -304,7 +302,11 @@
     <pathelement path="${java.class.path}" />
   </path>
 
-  <target name="run_tests" depends="jar-tests,test_connector_jars"
+  <target name="run_tests">
+    <echo message="The run_tests target is deprecated. Use test instead." />
+  </target>
+
+  <target name="test" depends="jar-tests,test_connector_jars"
           description="Run tests">
     <antcall target="_run_tests">
       <param name="test.classpath" value="tests.classpath" />
