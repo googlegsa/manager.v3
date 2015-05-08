@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project name="TestConnectorA" default="TestConnectorA" basedir=".">
+<project name="TestConnectorA" default="build" basedir=".">
 
   <!-- ========================= PROPERTIES ============================= -->
   <property file="../version.properties"/>
@@ -15,8 +15,7 @@
   <!-- =========================== TASKS =============================== -->
   <include file="../svnbuild.xml" as="svn"/>
 
-  <target name="TestConnectorA" depends="init,jar">
-  </target>
+  <target name="build" depends="init,jar"/>
 
   <target name="init" depends="svn.svn-branch-version">
     <mkdir dir="${dist}" />
