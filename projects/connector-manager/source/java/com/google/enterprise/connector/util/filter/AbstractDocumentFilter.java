@@ -30,8 +30,29 @@ import java.util.logging.Logger;
  * A base {@link Document} filter implementation that does nothing.
  * It is meant to used as a base class for document filter subclasses.
  * Subclasses are exected to override {@link #findProperty(Document, String)}
- * and/or {@link #getPropertyNames(Document)}, but not
- * {@link #newDocumentFilter(Document)}.
+ * and/or {@link #getPropertyNames(Document)}, but it is not generally
+ * necessary to over {@link #newDocumentFilter(Document)}.
+ *
+ * Subclasses might override the factory method
+ * {@link #newDocumentFilter(Document)} if they wish to maintain
+ * per-document state, typically by subclassing {@link #DocumentFilter}
+ * to add additional fields. Be aware that the returned DocumentFilter
+ * will be given no indication that is no longer needed, other than
+ * being garbage collected, so take caution to avoid resource leaks.
+ *
+ * There is typically a single instance of this class, either once
+ * per Connector Manager for global document filters, or once per
+ * connector instance for per-connector document filters. Any configuration
+ * setter methods for this filter are called when this factory is created.
+ *
+ * The factory method, {@link #newDocumentFilter(Document)}, is called
+ * to create a new {@link #DocumentFilter} instance for each document
+ * that is processed.
+ *
+ * All of the public methods of this class may be called concurrently,
+ * as multiple documents may be processed at once. So subclasses should
+ * maintain thread safe access to any data that might be accessed via these
+ * calls.
  *
  * @since 2.8
  */
@@ -40,6 +61,14 @@ public abstract class AbstractDocumentFilter implements DocumentFilterFactory {
   /** The logger for this class. */
   protected final Logger LOGGER = Logger.getLogger(this.getClass().getName());
 
+  /**
+   * Creates a new {@link #DocumentFilter} instance with the {@code source} 
+   * document providing metadata and content for filtering.
+   *
+   * @param source the source {@link Document} for this filter
+   * @throws NullPointerException if source is null
+   * @throws RepositoryException if a repository access error occurs
+   */
   @Override
   public Document newDocumentFilter(Document source)
       throws RepositoryException {
@@ -61,7 +90,6 @@ public abstract class AbstractDocumentFilter implements DocumentFilterFactory {
    * @throws RepositoryDocumentException if a document has fatal
    *         processing errors
    */
-  /* @VisibleForJavaDoc */
   public Property findProperty(Document source, String name)
       throws RepositoryException {
     return source.findProperty(name);
@@ -79,7 +107,6 @@ public abstract class AbstractDocumentFilter implements DocumentFilterFactory {
    * @throws RepositoryDocumentException if a document has fatal
    *         processing errors
    */
-  /* @VisibleForJavaDoc */
   public Set<String> getPropertyNames(Document source)
       throws RepositoryException {
     return source.getPropertyNames();
@@ -120,10 +147,12 @@ public abstract class AbstractDocumentFilter implements DocumentFilterFactory {
 
   /**
    * A {@link Document} implementation that calls back to the outer class
-   * {@code findProperty()} and {code getPropertyNames()} methods, which
+   * {@code findProperty()} and {@code getPropertyNames()} methods, which
    * are likely to be overridden by subclasses.
+   *
+   * @since 3.4
    */
-  private class DocumentFilter implements Document {
+  protected class DocumentFilter implements Document {
 
     /** The {@link Document} that acts as the source for this filter. */
     protected Document source;
