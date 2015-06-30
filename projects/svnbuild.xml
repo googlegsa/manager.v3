@@ -24,7 +24,7 @@
           dir="${svn.base.dir}"
           outputproperty="git.tag"
           resultproperty="git.tag.result" >
-      <arg line="describe --tags" />
+      <arg line="describe --tags --exact-match" />
     </exec>
     <!-- This works on branches but fails on tags. -->
     <exec executable="git"
