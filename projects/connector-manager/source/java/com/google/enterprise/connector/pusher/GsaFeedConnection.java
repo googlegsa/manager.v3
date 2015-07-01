@@ -74,6 +74,9 @@ public class GsaFeedConnection implements FeedConnection {
   // Content encodings supported by GSA.
   private String contentEncodings = null;
 
+  /** Are inherited ACLs supported by the GSA? */
+  private Boolean supportsInheritedAcls;
+
   // True if we recently got a feed error of some sort.
   private boolean gotFeedError = false;
 
@@ -343,10 +346,20 @@ public class GsaFeedConnection implements FeedConnection {
     return contentEncodings;
   }
 
+  /**
+   * Checks the DTD for the acl element. The answer is cached if the
+   * DTD was successfully read.
+   */
   @Override
   public synchronized boolean supportsInheritedAcls() {
-    String dtd = getFeedDtd();
-    return (dtd == null) ? false : dtd.contains("<!ELEMENT acl ");
+    if (supportsInheritedAcls == null) {
+      String dtd = getFeedDtd();
+      if (dtd == null) {
+        return false;
+      }
+      supportsInheritedAcls = dtd.contains("<!ELEMENT acl ");
+    }
+    return supportsInheritedAcls;
   }
 
   @Override
@@ -430,8 +443,7 @@ public class GsaFeedConnection implements FeedConnection {
           LOGGER.log(Level.WARNING, "Failed to read Feed DTD. ", e);
         }
       } catch (UnsupportedOperationException e) {
-        // This older GSA does not support getdtd, so assume the GSA only
-        // supports base64 encoded.
+        // This older GSA does not support getdtd.
         LOGGER.fine("Unsupported GSA version lacks get Feed DTD support.");
       }
     }

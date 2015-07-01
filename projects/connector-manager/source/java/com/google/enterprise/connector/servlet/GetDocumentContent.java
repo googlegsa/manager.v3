@@ -82,12 +82,6 @@ public class GetDocumentContent extends HttpServlet {
 
   private static boolean useCompression = false;
   private static FeedConnection feedConnection;
-  /**
-   * GSA 7.0 introduces the ability to provide a HTTP header that specifies
-   * whether the document is secure. In previous GSAs we are required to use
-   * HTTP basic, which has to be configured correctly on the GSA.
-   */
-  private static Boolean securityHeaderSupported;
 
   public static void setUseCompression(boolean doCompression) {
     useCompression = doCompression;
@@ -101,23 +95,21 @@ public class GetDocumentContent extends HttpServlet {
     feedConnection = fc;
   }
 
+  /**
+   * GSA 7.0 introduces the ability to provide a HTTP header that specifies
+   * whether the document is secure. In previous GSAs we are required to use
+   * HTTP basic, which has to be configured correctly on the GSA.
+   */
   private synchronized static boolean isSecurityHeaderSupported() {
-    if (securityHeaderSupported != null) {
-      return securityHeaderSupported;
-    }
-
     if (feedConnection == null) {
       // FeedConnection is unavailable, so choose the pessimistic choice.
-      securityHeaderSupported = false;
+      return false;
     } else {
       // The newer ACL format was added in same GSA version as security header,
       // so we abuse the ACL feature detection logic.
-      securityHeaderSupported = feedConnection.supportsInheritedAcls();
+      return feedConnection.supportsInheritedAcls();
     }
-    return securityHeaderSupported;
   }
-
-  // TODO: Range requests?
 
   /**
    * Retrieves the content of a document from a connector instance.

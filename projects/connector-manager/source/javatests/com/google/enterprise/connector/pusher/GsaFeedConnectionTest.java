@@ -14,13 +14,79 @@
 
 package com.google.enterprise.connector.pusher;
 
+import static com.google.common.base.Charsets.UTF_8;
+
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpHandler;
+import com.sun.net.httpserver.HttpServer;
+
 import junit.framework.TestCase;
 
+import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.io.IOException;
+import java.io.OutputStream;
 
 /** Tests for {@link GsaFeedConnection} URLs. */
 public class GsaFeedConnectionTest extends TestCase {
+  private HttpServer server;
+  private DtdHandler handler;
+  private GsaFeedConnection feedConnection;
+
+  public void setUp() throws IOException {
+    handler = new DtdHandler();
+    server = HttpServer.create(new InetSocketAddress(0), 0);
+    server.createContext("/", handler);
+    server.start();
+    int port = server.getAddress().getPort();
+    feedConnection = new GsaFeedConnection("http", "localhost", port, -1);
+  }
+
+  public void tearDown() {
+    server.stop(0);
+  }
+
+  static class DtdHandler implements HttpHandler {
+    private String content;
+
+    void setContent(String content) {
+      this.content = content;
+    }
+
+    @Override
+    public void handle(HttpExchange exchange) throws IOException {
+      byte[] response = content.getBytes(UTF_8);
+      exchange.sendResponseHeaders(200, response.length);
+      OutputStream body = exchange.getResponseBody();
+      body.write(response);
+      exchange.close();
+    }
+  }
+
+  public void testSupportsInheritedAcls_true() throws IOException {
+    handler.setContent("<!ELEMENT acl (principal*)>");
+    assertEquals(true, feedConnection.supportsInheritedAcls());
+  }
+
+  public void testSupportsInheritedAcls_false() throws IOException {
+    handler.setContent("<!ELEMENT metadata (meta*)>");
+    assertEquals(false, feedConnection.supportsInheritedAcls());
+  }
+
+  public void testSupportsInheritedAcls_error() throws IOException {
+    server.removeContext("/");
+    assertEquals(false, feedConnection.supportsInheritedAcls());
+  }
+
+  public void testSupportsInheritedAcls_cached() throws IOException {
+    handler.setContent("<!ELEMENT acl (principal*)>");
+    assertEquals(true, feedConnection.supportsInheritedAcls());
+
+    server.removeContext("/");
+    assertEquals(true, feedConnection.supportsInheritedAcls());
+  }
+
   private void assertFeedUrl(String protocol,
       String host, int port, GsaFeedConnection feeder) {
     URL url = feeder.getFeedUrl();

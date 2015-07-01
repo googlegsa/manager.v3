@@ -236,7 +236,7 @@ public class GetDocumentContentTest extends TestCase {
   public void testGetDocumentContentNullDocid() throws Exception {
     checkNullOrEmptyConnectorNameDocid(connectorName, null);
   }
-                                       
+
   /** Test ProductionManager getDocumentContent with empty docid. */
   public void testGetDocumentContentEmptyDocid() throws Exception {
     checkNullOrEmptyConnectorNameDocid(connectorName, "");
@@ -449,6 +449,7 @@ public class GetDocumentContentTest extends TestCase {
         GetDocumentContent.handleMarkingDocumentSecurity(req, res, metaData);
     assertEquals(401, status);
     assertNotNull(res.getHeader("WWW-Authenticate"));
+    assertEquals(null, res.getHeader("X-Gsa-Serve-Security"));
   }
 
   /** Test successful use of authentication for private doc. */
@@ -463,6 +464,53 @@ public class GetDocumentContentTest extends TestCase {
     int status =
         GetDocumentContent.handleMarkingDocumentSecurity(req, res, metaData);
     assertEquals(200, status);
+    assertEquals(null, res.getHeader("X-Gsa-Serve-Security"));
+  }
+
+  public void testGsaServeSecurityHeader() throws Exception {
+    MockHttpServletRequest req = createMockRequest();
+    // connector5's documents are private.
+    Document metaData = GetDocumentContent.getDocumentMetaData(
+        req, MockManager.getInstance(), "connector5", docid);
+    MockHttpServletResponse res = new MockHttpServletResponse();
+    GetDocumentContent.setFeedConnection(new MockFeedConnection());
+    try {
+      int status =
+          GetDocumentContent.handleMarkingDocumentSecurity(req, res, metaData);
+      assertEquals(200, status);
+      assertEquals("secure", res.getHeader("X-Gsa-Serve-Security"));
+    } finally {
+      GetDocumentContent.setFeedConnection(null);
+    }
+  }
+
+  /**
+   * Tests that the FeedConnection.supportsInheritedAcls answer is not
+   * cached by GetDocumentContent.
+   */
+  public void testGsaServeSecurityHeaderWithFeedError() throws Exception {
+    MockHttpServletRequest req = createMockRequest();
+    // connector5's documents are private.
+    Document metaData = GetDocumentContent.getDocumentMetaData(
+        req, MockManager.getInstance(), "connector5", docid);
+    MockHttpServletResponse res = new MockHttpServletResponse();
+    GetDocumentContent.setFeedConnection(new MockFeedConnection() {
+        @Override public boolean supportsInheritedAcls() { return false; } });
+    try {
+      int status =
+          GetDocumentContent.handleMarkingDocumentSecurity(req, res, metaData);
+      assertEquals(401, status);
+      assertEquals(null, res.getHeader("X-Gsa-Serve-Security"));
+
+      GetDocumentContent.setFeedConnection(new MockFeedConnection() {
+          @Override public boolean supportsInheritedAcls() { return true; } });
+      status =
+          GetDocumentContent.handleMarkingDocumentSecurity(req, res, metaData);
+      assertEquals(200, status);
+      assertEquals("secure", res.getHeader("X-Gsa-Serve-Security"));
+    } finally {
+      GetDocumentContent.setFeedConnection(null);
+    }
   }
 
   private void encodeQueryParameter(MockHttpServletRequest req)
