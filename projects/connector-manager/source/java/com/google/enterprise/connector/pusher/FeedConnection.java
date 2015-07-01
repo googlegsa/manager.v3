@@ -54,6 +54,7 @@ public interface FeedConnection {
    * encodings.  For instance: "base64binary, base64compressed".
    *
    * @return supported content encodings.
+   * @see SpiConstants#ContentEncoding
    */
   public String getContentEncodings();
 

@@ -87,6 +87,13 @@ public class GsaFeedConnectionTest extends TestCase {
     assertEquals(true, feedConnection.supportsInheritedAcls());
   }
 
+  /** Tests that the content encodings do not rely on the DTD. */
+  public void testGetContentEncodings() throws IOException {
+    server.removeContext("/");
+    assertEquals("base64compressed,base64binary",
+        feedConnection.getContentEncodings());
+  }
+
   private void assertFeedUrl(String protocol,
       String host, int port, GsaFeedConnection feeder) {
     URL url = feeder.getFeedUrl();

@@ -17,6 +17,7 @@ package com.google.enterprise.connector.pusher;
 import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
 import com.google.enterprise.connector.servlet.ServletUtil;
+import com.google.enterprise.connector.spi.SpiConstants.ContentEncoding;
 import com.google.enterprise.connector.util.Clock;
 import com.google.enterprise.connector.util.SslUtil;
 import com.google.enterprise.connector.util.SystemClock;
@@ -72,7 +73,8 @@ public class GsaFeedConnection implements FeedConnection {
   private static final String CRLF = "\r\n";
 
   // Content encodings supported by GSA.
-  private String contentEncodings = null;
+  private String contentEncodings =
+      ContentEncoding.BASE64COMPRESSED + "," + ContentEncoding.BASE64BINARY;
 
   /** Are inherited ACLs supported by the GSA? */
   private Boolean supportsInheritedAcls;
@@ -142,7 +144,6 @@ public class GsaFeedConnection implements FeedConnection {
     gotFeedError = false;
     dtdUrl = new URL(protocol, host, port, "/getdtd");
     feedDtd = null;
-    contentEncodings = null;
     backlogUrl = new URL(protocol, host, port, "/getbacklogcount");
     lastBacklogCheck = 0L;
   }
@@ -328,21 +329,6 @@ public class GsaFeedConnection implements FeedConnection {
 
   @Override
   public synchronized String getContentEncodings() {
-    if (contentEncodings == null) {
-      String dtd = getFeedDtd();
-      if (dtd == null) {
-        // Failed to get a DTD. Assume the GSA only supports base64 encoded.
-        contentEncodings = "base64binary";
-      } else {
-        // TODO: Extract the supported content encodings from the DTD.
-        // As of GSA 6.2, returning a DTD at all also means compression
-        // is supported.
-        contentEncodings = "base64binary,base64compressed";
-      }
-      if (LOGGER.isLoggable(Level.FINE)) {
-        LOGGER.fine("GSA supports Content Encodings: " + contentEncodings);
-      }
-    }
     return contentEncodings;
   }
 
