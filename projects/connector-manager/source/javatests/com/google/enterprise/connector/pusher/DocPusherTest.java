@@ -1352,6 +1352,34 @@ public class DocPusherTest extends TestCase {
         resultXML);
   }
 
+  /**
+   * Roles are not supported in principal elements. Make sure they get
+   * stripped out. This test has only users, unlike the others below
+   * that have both users and groups.
+   */
+  public void testUserScopedRoleAclSmartGsa() throws Exception {
+    String userScopedRoleAcl = "{\"timestamp\":\"40\""
+        + ",\"docid\":\"user_scoped_role_acl\""
+        + ",\"content\":\"this document has scoped user with role ACL\""
+        + ",\"acl\":{type:string, value:[\"user:joe=reader\""
+        + ",\"user:mary=reader,writer\",\"user:admin=owner\"]}"
+        + ",\"google:ispublic\":\"false\"}";
+    String resultXML = feedJsonEvent(userScopedRoleAcl, true);
+    assertStringContains("authmethod=\"httpbasic\"", resultXML);
+    assertStringContains(
+        "<principal scope=\"user\" access=\"permit\">joe</principal>",
+        resultXML);
+    assertStringContains(
+        "<principal scope=\"user\" access=\"permit\">mary</principal>",
+        resultXML);
+    assertStringContains(
+        "<principal scope=\"user\" access=\"permit\">admin</principal>",
+        resultXML);
+    assertStringNotContains("<meta name=\"google:acl", resultXML);
+    assertStringNotContains(
+        "<meta name=\"" + SpiConstants.USER_ROLES_PROPNAME_PREFIX, resultXML);
+  }
+
   public void testUserGroupAcl() throws Exception {
     String userGroupAcl = "{\"timestamp\":\"50\""
         + ",\"docid\":\"user_group_acl\""

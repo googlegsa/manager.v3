@@ -99,6 +99,9 @@ public class AclUserGroupRolesFilter extends AbstractDocumentFilter {
       String aclPropName, String aclRolePrefix) throws RepositoryException {
     LinkedList<Value> acl = new LinkedList<Value>();
     Property scopeProp = document.findProperty(aclPropName);
+    if (scopeProp == null) {
+      return null;
+    }
     Value scopeVal;
     while ((scopeVal = scopeProp.nextValue()) != null) {
       Principal principal = (scopeVal instanceof PrincipalValue)
