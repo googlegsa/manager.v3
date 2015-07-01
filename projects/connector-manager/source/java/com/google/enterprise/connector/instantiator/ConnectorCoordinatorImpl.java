@@ -637,6 +637,9 @@ class ConnectorCoordinatorImpl implements
         if (!update) {
           throw new ConnectorExistsException();
         }
+        // TODO(jlacey): We don't want to hold the lock here, either,
+        // because it blocks other actions on the admin console during
+        // connector creation.
         if (typeName.equals(typeInfo.getConnectorTypeName())) {
           configuration =
               new Configuration(configuration, getConnectorConfiguration());
@@ -1060,7 +1063,16 @@ class ConnectorCoordinatorImpl implements
 
     // We have an apparently valid configuration. Create a connector instance
     // with that configuration.
-    // TODO: try to avoid instantiating the connector 3 times.
+    // TODO(jlacey): Try to avoid instantiating the connector 3 times.
+    // 1) The connector may have called makeConnector.
+    // 2) We create an InstanceInfo here for validation but don't save it.
+    // 3) The change detector instantiates the connector and sets
+    //    instanceInfo in connectorConfigurationChanged.
+    // The gap between the first two is only the parsing the of the
+    // document filter chain bean in the InstanceInfo constructor.
+    // That could be added to makeConnector, but then we would have to
+    // ensure that makeConnector was called around here somewhere if
+    // the connector in fact did not call it.
     InstanceInfo newInstanceInfo = new InstanceInfo(name, connectorDir,
         newTypeInfo, newConfiguration);
 
@@ -1102,20 +1114,23 @@ class ConnectorCoordinatorImpl implements
     shutdownConnector(false);
 
     setDatabaseAccess(newInstanceInfo);
+    // TODO(jlacey): Unsynchronized writes to otherwise synchronized fields.
     instanceInfo = newInstanceInfo;
     typeInfo = newTypeInfo;
 
-    // Prefetch an AuthorizationManager to avoid AuthZ time-outs
-    // when logging in to repository at search time.
+    // Prefetch the AuthenticationManager and AuthorizationManager to
+    // avoid AuthN and AuthZ timeouts when logging in to the repository
+    // at search time.
     try {
+      getAuthenticationManager();
       getAuthorizationManager();
     } catch (ConnectorNotFoundException cnfe) {
       // Not going to happen here, but even if it did, we don't care.
     } catch (InstantiatorException ie) {
-      // Likely failed connector.login(). This attempt to cache AuthZMgr failed.
-      // However it is not important yet, so log it and continue on.
+      // Likely failed connector.login(). This attempt to cache the managers
+      // failed. However it is not important yet, so log it and continue on.
       LOGGER.log(Level.WARNING,
-          "Failed to get AuthorizationManager for connector " + name, ie);
+          "Prefetch failed for connector " + name, ie);
     }
 
     // The load value in a Schedule is docs/minute.
