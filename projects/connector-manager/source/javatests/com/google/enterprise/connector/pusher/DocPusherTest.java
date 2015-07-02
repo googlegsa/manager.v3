@@ -282,7 +282,7 @@ public class DocPusherTest extends TestCase {
         + "\n</content>\n" + "</record>\n";
 
     expectedXml[0] = buildExpectedXML(feedType, record);
-    takeFeed(expectedXml, "MockRepositoryEventLog8.txt", true, true);
+    takeFeed(expectedXml, "MockRepositoryEventLog8.txt", true);
   }
 
   /**
@@ -297,13 +297,15 @@ public class DocPusherTest extends TestCase {
         + " mimetype=\"" + SpiConstants.DEFAULT_MIMETYPE + "\""
         + " last-modified=\"Thu, 01 Jan 1970 00:00:00 GMT\""
         + " authmethod=\"httpbasic\">\n"
+        + "<acl>\n"
+        + "<principal scope=\"user\" access=\"permit\">joe</principal>\n"
+        + "<principal scope=\"user\" access=\"permit\">mary</principal>\n"
+        + "<principal scope=\"user\" access=\"permit\">fred</principal>\n"
+        + "<principal scope=\"user\" access=\"permit\">mark</principal>\n"
+        + "<principal scope=\"user\" access=\"permit\">bill</principal>\n"
+        + "<principal scope=\"user\" access=\"permit\">admin</principal>\n"
+        + "</acl>\n"
         + "<metadata>\n"
-        + "<meta name=\"google:aclusers\" content=\"joe\"/>\n"
-        + "<meta name=\"google:aclusers\" content=\"mary\"/>\n"
-        + "<meta name=\"google:aclusers\" content=\"fred\"/>\n"
-        + "<meta name=\"google:aclusers\" content=\"mark\"/>\n"
-        + "<meta name=\"google:aclusers\" content=\"bill\"/>\n"
-        + "<meta name=\"google:aclusers\" content=\"admin\"/>\n"
         + "<meta name=\"google:ispublic\" content=\"false\"/>\n"
         + "<meta name=\"google:lastmodified\" content=\"1970-01-01\"/>\n"
         + "</metadata>\n" + "<content encoding=\"base64binary\">\n"
@@ -316,9 +318,11 @@ public class DocPusherTest extends TestCase {
         + " mimetype=\"" + SpiConstants.DEFAULT_MIMETYPE + "\""
         + " last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\""
         + " authmethod=\"none\">\n"
+        + "<acl>\n"
+        + "<principal scope=\"user\" access=\"permit\">joe</principal>\n"
+        + "<principal scope=\"user\" access=\"permit\">mary</principal>\n"
+        + "</acl>\n"
         + "<metadata>\n"
-        + "<meta name=\"google:aclusers\" content=\"joe\"/>\n"
-        + "<meta name=\"google:aclusers\" content=\"mary\"/>\n"
         + "<meta name=\"google:ispublic\" content=\"true\"/>\n"
         + "<meta name=\"google:lastmodified\" content=\"1970-01-01\"/>\n"
         + "</metadata>\n" + "<content encoding=\"base64binary\">\n"
@@ -333,9 +337,11 @@ public class DocPusherTest extends TestCase {
         + " mimetype=\"" + SpiConstants.DEFAULT_MIMETYPE + "\""
         + " last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\""
         + " authmethod=\"none\">\n"
+        + "<acl>\n"
+        + "<principal scope=\"user\" access=\"permit\">joe</principal>\n"
+        + "<principal scope=\"user\" access=\"permit\">mary</principal>\n"
+        + "</acl>\n"
         + "<metadata>\n"
-        + "<meta name=\"google:aclusers\" content=\"joe\"/>\n"
-        + "<meta name=\"google:aclusers\" content=\"mary\"/>\n"
         + "<meta name=\"google:ispublic\" content=\"public\"/>\n"
         + "<meta name=\"google:lastmodified\" content=\"1970-01-01\"/>\n"
         + "</metadata>\n" + "<content encoding=\"base64binary\">\n"
@@ -349,61 +355,6 @@ public class DocPusherTest extends TestCase {
    * Test for multiple document feed.
    */
   public void testMultiRecordFeed() throws Exception {
-    String feedType = "incremental";
-
-    // Doc 1.
-    String records = "<record url=" + googleConnectorUrl("doc1")
-        + " mimetype=\"" + SpiConstants.DEFAULT_MIMETYPE + "\""
-        + " last-modified=\"Thu, 01 Jan 1970 00:00:00 GMT\""
-        + " authmethod=\"httpbasic\">\n"
-        + "<metadata>\n"
-        + "<meta name=\"google:aclusers\" content=\"joe\"/>\n"
-        + "<meta name=\"google:aclusers\" content=\"mary\"/>\n"
-        + "<meta name=\"google:aclusers\" content=\"fred\"/>\n"
-        + "<meta name=\"google:aclusers\" content=\"mark\"/>\n"
-        + "<meta name=\"google:aclusers\" content=\"bill\"/>\n"
-        + "<meta name=\"google:aclusers\" content=\"admin\"/>\n"
-        + "<meta name=\"google:ispublic\" content=\"false\"/>\n"
-        + "<meta name=\"google:lastmodified\" content=\"1970-01-01\"/>\n"
-        + "</metadata>\n" + "<content encoding=\"base64binary\">\n"
-        + "VGhpcyBpcyBhIHNlY3VyZSBkb2N1bWVudA==" + "\n</content>\n"
-        + "</record>\n";
-
-    // Doc 2
-    records += "<record url=" + googleConnectorUrl("doc2")
-        + " mimetype=\"" + SpiConstants.DEFAULT_MIMETYPE + "\""
-        + " last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\""
-        + " authmethod=\"none\">\n"
-        + "<metadata>\n"
-        + "<meta name=\"google:aclusers\" content=\"joe\"/>\n"
-        + "<meta name=\"google:aclusers\" content=\"mary\"/>\n"
-        + "<meta name=\"google:ispublic\" content=\"true\"/>\n"
-        + "<meta name=\"google:lastmodified\" content=\"1970-01-01\"/>\n"
-        + "</metadata>\n" + "<content encoding=\"base64binary\">\n"
-        + "VGhpcyBpcyB0aGUgcHVibGljIGRvY3VtZW50Lg==" + "\n</content>\n"
-        + "</record>\n";
-
-    // Doc 3
-    records += "<record url=" + googleConnectorUrl("doc3")
-        + " mimetype=\"" + SpiConstants.DEFAULT_MIMETYPE + "\""
-        + " last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\""
-        + " authmethod=\"none\">\n"
-        + "<metadata>\n"
-        + "<meta name=\"google:aclusers\" content=\"joe\"/>\n"
-        + "<meta name=\"google:aclusers\" content=\"mary\"/>\n"
-        + "<meta name=\"google:ispublic\" content=\"true\"/>\n"
-        + "<meta name=\"google:lastmodified\" content=\"1970-01-01\"/>\n"
-        + "</metadata>\n" + "<content encoding=\"base64binary\">\n"
-        + "VGhpcyBpcyBhIGRvY3VtZW50Lg==" + "\n</content>\n" + "</record>\n";
-
-    String expectedXml = buildExpectedXML(feedType, records);
-    takeMultiFeed(expectedXml, "MockRepositoryEventLog9.txt", false);
-  }
-
-  /**
-   * Test for multiple document feed on smart GSA (supportsInheritedAcls).
-   */
-  public void testMultiRecordFeedSmartGsa() throws Exception {
     String feedType = "incremental";
 
     // Doc 1.
@@ -458,11 +409,11 @@ public class DocPusherTest extends TestCase {
         + "VGhpcyBpcyBhIGRvY3VtZW50Lg==" + "\n</content>\n" + "</record>\n";
 
     String expectedXml = buildExpectedXML(feedType, records);
-    takeMultiFeed(expectedXml, "MockRepositoryEventLog9.txt", true);
+    takeMultiFeed(expectedXml, "MockRepositoryEventLog9.txt");
   }
 
-  private void takeMultiFeed(String expectedXml, String repository,
-      final boolean supportsInheritedAcls) throws Exception {
+  private void takeMultiFeed(String expectedXml, String repository)
+      throws Exception {
     String gsaExpectedResponse = GsaFeedConnection.SUCCESS_RESPONSE;
     String gsaActualResponse;
 
@@ -471,12 +422,7 @@ public class DocPusherTest extends TestCase {
     QueryManager qm = new MockJcrQueryManager(r.getStore());
     TraversalManager qtm = new JcrTraversalManager(qm);
 
-    MockFeedConnection feedConnection = new MockFeedConnection() {
-      public boolean supportsInheritedAcls() {
-        return supportsInheritedAcls;
-      }
-    };
-
+    MockFeedConnection feedConnection = new MockFeedConnection();
     DocPusher dpusher = new DocPusher(feedConnection, dataSource, fsli, dfc);
     DocumentList documentList = qtm.startTraversal();
 
@@ -517,12 +463,11 @@ public class DocPusherTest extends TestCase {
 
   private void takeFeed(String[] expectedXml, String repository)
       throws Exception {
-    takeFeed(expectedXml, repository, false, false);
+    takeFeed(expectedXml, repository, false);
   }
 
   private void takeFeed(String[] expectedXml, String repository,
-      final boolean useCompression, final boolean supportsInheritedAcls)
-      throws Exception {
+      final boolean useCompression) throws Exception {
     String gsaExpectedResponse = GsaFeedConnection.SUCCESS_RESPONSE;
     String gsaActualResponse;
 
@@ -532,16 +477,13 @@ public class DocPusherTest extends TestCase {
     TraversalManager qtm = new JcrTraversalManager(qm);
 
     MockFeedConnection feedConnection = new MockFeedConnection() {
+      @Override
       public String getContentEncodings() {
         if (useCompression) {
           return super.getContentEncodings() + ", base64compressed";
         } else {
           return super.getContentEncodings();
         }
-      }
-
-      public boolean supportsInheritedAcls() {
-        return supportsInheritedAcls;
       }
     };
 
@@ -801,7 +743,7 @@ public class DocPusherTest extends TestCase {
     props.put(SpiConstants.PROPNAME_ACLUSERS, principal);
     Document document = ConnectorTestUtils.createSimpleDocument(props);
 
-    String resultXML = feedDocument(document, true);
+    String resultXML = feedDocument(document);
     assertStringContains(expected, resultXML);
     assertStringContains("url=" + googleConnectorUrl("doc1"), resultXML);
   }
@@ -822,7 +764,7 @@ public class DocPusherTest extends TestCase {
     mpf.setReplacement("johnson");
     mpf.setOverwrite(true);
 
-    String resultXML = feedDocument(document, mpf, false);
+    String resultXML = feedDocument(document, mpf);
 
     assertStringContains("last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\"",
         resultXML);
@@ -1240,6 +1182,20 @@ public class DocPusherTest extends TestCase {
   }
 
   /**
+   * Make sure that no ACL-related properties appear as metadata in
+   * the feed XML record.
+   */
+  private void assertNoAclMetadata(String feedXml) {
+    String meta = "<meta name=\"";
+    assertStringNotContains(meta + "acl\"", feedXml); // JSON property
+    assertStringNotContains(meta + SpiConstants.ACL_PROPNAME_PREFIX, feedXml);
+    assertStringNotContains(meta + SpiConstants.USER_ROLES_PROPNAME_PREFIX,
+        feedXml);
+    assertStringNotContains(meta + SpiConstants.GROUP_ROLES_PROPNAME_PREFIX,
+        feedXml);
+  }
+
+  /**
    * Test ACL related properties.  See the 'content' of the document for details
    * on what is being tested.
    */
@@ -1249,32 +1205,10 @@ public class DocPusherTest extends TestCase {
         + ",\"content\":\"this document has user only ACL\""
         + ",\"acl\":{type:string, value:[joe,mary,admin]}"
         + ",\"google:ispublic\":\"false\"}";
-    String resultXML = feedJsonEvent(userAcl, false);
+    String resultXML = feedJsonEvent(userAcl);
     assertStringContains("<record url=" + googleConnectorUrl("user_acl"),
                          resultXML);
     assertStringContains("authmethod=\"httpbasic\"", resultXML);
-    assertStringContains("<meta name=\"google:aclusers\" content=\"joe\"/>",
-                         resultXML);
-    assertStringContains("<meta name=\"google:aclusers\" content=\"mary\"/>",
-                         resultXML);
-    assertStringContains("<meta name=\"google:aclusers\" content=\"admin\"/>",
-                         resultXML);
-    assertStringNotContains("<meta name=\"acl\"", resultXML);
-    assertStringNotContains("<acl url=", resultXML);
-    assertStringNotContains("<principal", resultXML);
-  }
-
-  /**
-   * Test ACL related properties on GSA with advanced ACL support, separate
-   * acl elements should be created.
-   */
-  public void testUserAclSmartGsa() throws Exception {
-    String userAcl = "{\"timestamp\":\"20\""
-        + ",\"docid\":\"user_acl\""
-        + ",\"content\":\"this document has user only ACL\""
-        + ",\"acl\":{type:string, value:[joe,mary,admin]}"
-        + ",\"google:ispublic\":\"false\"}";
-    String resultXML = feedJsonEvent(userAcl, true);
     assertStringContains("<acl", resultXML);
     assertStringContains("<principal scope=\"user\" access=\"permit\">"
                          + "joe</principal>", resultXML);
@@ -1283,17 +1217,7 @@ public class DocPusherTest extends TestCase {
     assertStringContains("<principal scope=\"user\" access=\"permit\">"
                          + "admin</principal>", resultXML);
     assertStringContains("</acl>", resultXML);
-    assertStringContains("<record url=" + googleConnectorUrl("user_acl"),
-                         resultXML);
-    assertStringContains("authmethod=\"httpbasic\"", resultXML);
-
-    assertStringNotContains("<meta name=\"google:aclusers\" content=\"joe\"/>",
-                            resultXML);
-    assertStringNotContains("<meta name=\"google:aclusers\" content=\"mary\"/>",
-                            resultXML);
-    assertStringNotContains("<meta name=\"google:aclusers\" content=\"admin\"/>",
-                            resultXML);
-    assertStringNotContains("<meta name=\"acl\"", resultXML);
+    assertNoAclMetadata(resultXML);
   }
 
   public void testUserRoleAcl() throws Exception {
@@ -1306,24 +1230,22 @@ public class DocPusherTest extends TestCase {
     String resultXML = feedJsonEvent(userRoleAcl);
     assertStringContains("authmethod=\"httpbasic\"", resultXML);
     assertStringContains(
-        "<meta name=\"google:aclusers\" content=\"joe=reader\"/>", resultXML);
-    assertStringContains(
-        "<meta name=\"google:aclusers\" content=\"mary=reader\"/>", resultXML);
-    assertStringContains(
-        "<meta name=\"google:aclusers\" content=\"mary=writer\"/>", resultXML);
-    assertStringContains(
-        "<meta name=\"google:aclusers\" content=\"admin=owner\"/>", resultXML);
-    assertStringNotContains(
-        "<meta name=\"" + SpiConstants.USER_ROLES_PROPNAME_PREFIX + "joe\"",
+        "<principal scope=\"user\" access=\"permit\">joe</principal>",
         resultXML);
-    assertStringNotContains(
-        "<meta name=\"" + SpiConstants.USER_ROLES_PROPNAME_PREFIX + "mary\"",
+    assertStringContains(
+        "<principal scope=\"user\" access=\"permit\">mary</principal>",
         resultXML);
-    assertStringNotContains(
-        "<meta name=\"" + SpiConstants.USER_ROLES_PROPNAME_PREFIX + "admin\"",
+    assertStringContains(
+        "<principal scope=\"user\" access=\"permit\">admin</principal>",
         resultXML);
+    assertNoAclMetadata(resultXML);
   }
 
+  /**
+   * Roles are not supported in principal elements. Make sure they get
+   * stripped out. This test has only users, unlike the others below
+   * that have both users and groups.
+   */
   public void testUserScopedRoleAcl() throws Exception {
     String userScopedRoleAcl = "{\"timestamp\":\"40\""
         + ",\"docid\":\"user_scoped_role_acl\""
@@ -1334,39 +1256,6 @@ public class DocPusherTest extends TestCase {
     String resultXML = feedJsonEvent(userScopedRoleAcl);
     assertStringContains("authmethod=\"httpbasic\"", resultXML);
     assertStringContains(
-        "<meta name=\"google:aclusers\" content=\"joe=reader\"/>", resultXML);
-    assertStringContains(
-        "<meta name=\"google:aclusers\" content=\"mary=reader\"/>", resultXML);
-    assertStringContains(
-        "<meta name=\"google:aclusers\" content=\"mary=writer\"/>", resultXML);
-    assertStringContains(
-        "<meta name=\"google:aclusers\" content=\"admin=owner\"/>", resultXML);
-    assertStringNotContains(
-        "<meta name=\"" + SpiConstants.USER_ROLES_PROPNAME_PREFIX + "joe\"",
-        resultXML);
-    assertStringNotContains(
-        "<meta name=\"" + SpiConstants.USER_ROLES_PROPNAME_PREFIX + "mary\"",
-        resultXML);
-    assertStringNotContains(
-        "<meta name=\"" + SpiConstants.USER_ROLES_PROPNAME_PREFIX + "admin\"",
-        resultXML);
-  }
-
-  /**
-   * Roles are not supported in principal elements. Make sure they get
-   * stripped out. This test has only users, unlike the others below
-   * that have both users and groups.
-   */
-  public void testUserScopedRoleAclSmartGsa() throws Exception {
-    String userScopedRoleAcl = "{\"timestamp\":\"40\""
-        + ",\"docid\":\"user_scoped_role_acl\""
-        + ",\"content\":\"this document has scoped user with role ACL\""
-        + ",\"acl\":{type:string, value:[\"user:joe=reader\""
-        + ",\"user:mary=reader,writer\",\"user:admin=owner\"]}"
-        + ",\"google:ispublic\":\"false\"}";
-    String resultXML = feedJsonEvent(userScopedRoleAcl, true);
-    assertStringContains("authmethod=\"httpbasic\"", resultXML);
-    assertStringContains(
         "<principal scope=\"user\" access=\"permit\">joe</principal>",
         resultXML);
     assertStringContains(
@@ -1375,9 +1264,7 @@ public class DocPusherTest extends TestCase {
     assertStringContains(
         "<principal scope=\"user\" access=\"permit\">admin</principal>",
         resultXML);
-    assertStringNotContains("<meta name=\"google:acl", resultXML);
-    assertStringNotContains(
-        "<meta name=\"" + SpiConstants.USER_ROLES_PROPNAME_PREFIX, resultXML);
+    assertNoAclMetadata(resultXML);
   }
 
   public void testUserGroupAcl() throws Exception {
@@ -1387,28 +1274,7 @@ public class DocPusherTest extends TestCase {
         + ",\"acl\":{type:string, value:[\"user:joe\",\"user:mary\""
         + ",\"group:eng\"]}"
         + ",\"google:ispublic\":\"false\"}";
-    String resultXML = feedJsonEvent(userGroupAcl, false);
-    assertStringContains("<record url=" + googleConnectorUrl("user_group_acl"),
-                         resultXML);
-    assertStringContains("authmethod=\"httpbasic\"", resultXML);
-    assertStringContains("<meta name=\"google:aclusers\" content=\"joe\"/>",
-                         resultXML);
-    assertStringContains("<meta name=\"google:aclusers\" content=\"mary\"/>",
-                         resultXML);
-    assertStringContains("<meta name=\"google:aclgroups\" content=\"eng\"/>",
-                         resultXML);
-    assertStringNotContains("<acl url=", resultXML);
-    assertStringNotContains("<principal", resultXML);
-  }
-
-  public void testUserGroupAclSmartGsa() throws Exception {
-    String userGroupAcl = "{\"timestamp\":\"50\""
-        + ",\"docid\":\"user_group_acl\""
-        + ",\"content\":\"this document has scoped user and group ACL\""
-        + ",\"acl\":{type:string, value:[\"user:joe\",\"user:mary\""
-        + ",\"group:eng\"]}"
-        + ",\"google:ispublic\":\"false\"}";
-    String resultXML = feedJsonEvent(userGroupAcl, true);
+    String resultXML = feedJsonEvent(userGroupAcl);
 
     assertStringContains("<acl", resultXML);
     assertStringContains("<principal scope=\"user\" access=\"permit\">"
@@ -1421,47 +1287,14 @@ public class DocPusherTest extends TestCase {
     assertStringContains("<record url=" + googleConnectorUrl("user_group_acl"),
                          resultXML);
     assertStringContains("authmethod=\"httpbasic\"", resultXML);
-    assertStringNotContains("<meta name=\"google:aclusers\" content=\"joe\"/>",
-                            resultXML);
-    assertStringNotContains("<meta name=\"google:aclusers\" content=\"mary\"/>",
-                            resultXML);
-    assertStringNotContains("<meta name=\"google:aclgroups\" content=\"eng\"/>",
-                            resultXML);
-  }
-
-  public void testUserGroupRoleAcl() throws Exception {
-    String userGroupRoleAcl = "{\"timestamp\":\"60\""
-        + ",\"docid\":\"user_group_role_acl\""
-        + ",\"content\":\"this document has scoped user and group role ACL\""
-        + ",\"acl\":{type:string, value:[\"user:joe=reader\""
-        + ",\"user:mary=reader,writer\",\"group:eng=reader\"]}"
-        + ",\"google:ispublic\":\"false\"}";
-    String resultXML = feedJsonEvent(userGroupRoleAcl);
-    assertStringContains("authmethod=\"httpbasic\"", resultXML);
-    assertStringContains(
-        "<meta name=\"google:aclusers\" content=\"joe=reader\"/>", resultXML);
-    assertStringContains(
-        "<meta name=\"google:aclusers\" content=\"mary=reader\"/>", resultXML);
-    assertStringContains(
-        "<meta name=\"google:aclusers\" content=\"mary=writer\"/>", resultXML);
-    assertStringNotContains(
-        "<meta name=\"" + SpiConstants.USER_ROLES_PROPNAME_PREFIX + "joe\"",
-        resultXML);
-    assertStringNotContains(
-        "<meta name=\"" + SpiConstants.USER_ROLES_PROPNAME_PREFIX + "mary\"",
-        resultXML);
-    assertStringContains(
-        "<meta name=\"google:aclgroups\" content=\"eng=reader\"/>", resultXML);
-    assertStringNotContains(
-        "<meta name=\"" + SpiConstants.USER_ROLES_PROPNAME_PREFIX + "eng\"",
-        resultXML);
+    assertNoAclMetadata(resultXML);
   }
 
   /**
    * Roles are not supported in principal elements. Make sure they get
    * stripped out.
    */
-  public void testUserGroupRoleAclSmartGsa() throws Exception {
+  public void testUserGroupRoleAcl() throws Exception {
     String userGroupRoleAcl = "{\"timestamp\":\"60\""
         + ",\"docid\":\"user_group_role_acl\""
         + ",\"content\":\"this document has scoped user and group role ACL\""
@@ -1470,7 +1303,7 @@ public class DocPusherTest extends TestCase {
         + ",\"group:eng=reader\",\"group:sales=peeker\""
         + ",\"group:support=writer\"]}"
         + ",\"google:ispublic\":\"false\"}";
-    String resultXML = feedJsonEvent(userGroupRoleAcl, true);
+    String resultXML = feedJsonEvent(userGroupRoleAcl);
 
     assertStringContains("<acl", resultXML);
     assertStringContains("<principal scope=\"user\" access=\"permit\">"
@@ -1486,8 +1319,7 @@ public class DocPusherTest extends TestCase {
                          + googleConnectorUrl("user_group_role_acl"),
                          resultXML);
     assertStringContains("authmethod=\"httpbasic\"", resultXML);
-    assertStringNotContains("<meta name=\"google:aclusers\"", resultXML);
-    assertStringNotContains("<meta name=\"google:aclgroups\"", resultXML);
+    assertNoAclMetadata(resultXML);
     assertStringNotContains("access=\"deny\"", resultXML);
 
     // Roles should be stripped out, and peekers eliminated.
@@ -1503,7 +1335,7 @@ public class DocPusherTest extends TestCase {
    * Roles are not supported in principal elements. Make sure they get
    * stripped out.
    */
-  public void testDenyUserGroupRoleAclSmartGsa() throws Exception {
+  public void testDenyUserGroupRoleAcl() throws Exception {
     String userGroupRoleAcl = "{\"timestamp\":\"60\""
         + ",\"docid\":\"user_group_role_acl\""
         + ",\"content\":\"this document has scoped user and group role ACL\""
@@ -1512,7 +1344,7 @@ public class DocPusherTest extends TestCase {
         + ",\"group:eng=reader\",\"group:sales=peeker\""
         + ",\"group:support=writer\"]}"
         + ",\"google:ispublic\":\"false\"}";
-    String resultXML = feedJsonEvent(userGroupRoleAcl, true);
+    String resultXML = feedJsonEvent(userGroupRoleAcl);
 
     assertStringContains("<acl", resultXML);
     assertStringContains("<principal scope=\"user\" access=\"deny\">"
@@ -1528,8 +1360,7 @@ public class DocPusherTest extends TestCase {
                          + googleConnectorUrl("user_group_role_acl"),
                          resultXML);
     assertStringContains("authmethod=\"httpbasic\"", resultXML);
-    assertStringNotContains("<meta name=\"google:acldenyusers\"", resultXML);
-    assertStringNotContains("<meta name=\"google:acldenygroups\"", resultXML);
+    assertNoAclMetadata(resultXML);
     assertStringNotContains("access=\"permit\"", resultXML);
 
     // Roles should be stripped out, and writers and owners eliminated.
@@ -1548,8 +1379,9 @@ public class DocPusherTest extends TestCase {
         + ",\"google:ispublic\":\"false\"}";
     String resultXML = feedJsonEvent(userReaderAcl);
     assertStringContains("authmethod=\"httpbasic\"", resultXML);
-    assertStringContains("<meta name=\"google:aclusers\""
-        + " content=\"joe\"/>", resultXML);
+    assertStringContains(
+        "<principal scope=\"user\" access=\"permit\">joe</principal>",
+        resultXML);
   }
 
   public void testUserOwnerAcl() throws Exception {
@@ -1560,11 +1392,10 @@ public class DocPusherTest extends TestCase {
         + ",\"google:ispublic\":\"false\"}";
     String resultXML = feedJsonEvent(userOwnerAcl);
     assertStringContains("authmethod=\"httpbasic\"", resultXML);
-    assertStringContains("<meta name=\"google:aclusers\""
-        + " content=\"joe=owner\"/>", resultXML);
-    assertStringNotContains(
-        "<meta name=\"" + SpiConstants.USER_ROLES_PROPNAME_PREFIX + "joe\"",
+    assertStringContains(
+        "<principal scope=\"user\" access=\"permit\">joe</principal>",
         resultXML);
+    assertNoAclMetadata(resultXML);
   }
 
   public void testUserScopedOwnerAcl() throws Exception {
@@ -1575,11 +1406,10 @@ public class DocPusherTest extends TestCase {
         + ",\"google:ispublic\":\"false\"}";
     String resultXML = feedJsonEvent(userScopedOwnerAcl);
     assertStringContains("authmethod=\"httpbasic\"", resultXML);
-    assertStringContains("<meta name=\"google:aclusers\""
-        + " content=\"joe=owner\"/>", resultXML);
-    assertStringNotContains(
-        "<meta name=\"" + SpiConstants.USER_ROLES_PROPNAME_PREFIX + "joe\"",
+    assertStringContains(
+        "<principal scope=\"user\" access=\"permit\">joe</principal>",
         resultXML);
+    assertNoAclMetadata(resultXML);
   }
 
   public void testSameUserGroupAcl() throws Exception {
@@ -1590,17 +1420,12 @@ public class DocPusherTest extends TestCase {
         + ",\"google:ispublic\":\"false\"}";
     String resultXML = feedJsonEvent(sameUserGroupAcl);
     assertStringContains(
-        "<meta name=\"google:aclusers\" content=\"root=owner\"/>", resultXML);
-    assertStringNotContains(
-        "<meta name=\"" + SpiConstants.USER_ROLES_PROPNAME_PREFIX + "root\"",
+        "<principal scope=\"user\" access=\"permit\">root</principal>",
         resultXML);
     assertStringContains(
-        "<meta name=\"google:aclgroups\" content=\"root=reader\"/>", resultXML);
-    assertStringContains(
-        "<meta name=\"google:aclgroups\" content=\"root=writer\"/>", resultXML);
-    assertStringNotContains(
-        "<meta name=\"" + SpiConstants.USER_ROLES_PROPNAME_PREFIX + "root\"",
+        "<principal scope=\"group\" access=\"permit\">root</principal>",
         resultXML);
+    assertNoAclMetadata(resultXML);
   }
 
   public void testSomeUserRoleAcl() throws Exception {
@@ -1611,18 +1436,20 @@ public class DocPusherTest extends TestCase {
         + ",\"google:ispublic\":\"false\"}";
     String resultXML = feedJsonEvent(someUserRoleAcl);
     assertStringContains(
-        "<meta name=\"google:aclusers\" content=\"joe\"/>", resultXML);
+        "<principal scope=\"user\" access=\"permit\">joe</principal>",
+        resultXML);
     assertStringContains(
-        "<meta name=\"google:aclusers\" content=\"mary=reader\"/>", resultXML);
-    assertStringContains(
-        "<meta name=\"google:aclusers\" content=\"mary=writer\"/>", resultXML);
+        "<principal scope=\"user\" access=\"permit\">mary</principal>",
+        resultXML);
     assertStringNotContains(
         "<meta name=\"" + SpiConstants.USER_ROLES_PROPNAME_PREFIX + "mary\"",
         resultXML);
     assertStringContains(
-        "<meta name=\"google:aclgroups\" content=\"eng\"/>", resultXML);
+        "<principal scope=\"group\" access=\"permit\">eng</principal>",
+        resultXML);
     assertStringContains(
-        "<meta name=\"google:aclgroups\" content=\"root\"/>", resultXML);
+        "<principal scope=\"group\" access=\"permit\">root</principal>",
+        resultXML);
   }
 
   public void testSomeGroupRoleAcl() throws Exception {
@@ -1633,18 +1460,18 @@ public class DocPusherTest extends TestCase {
         + ",\"google:ispublic\":\"false\"}";
     String resultXML = feedJsonEvent(someGroupRoleAcl);
     assertStringContains(
-        "<meta name=\"google:aclusers\" content=\"joe\"/>", resultXML);
-    assertStringContains(
-        "<meta name=\"google:aclusers\" content=\"mary\"/>", resultXML);
-    assertStringContains(
-        "<meta name=\"google:aclgroups\" content=\"eng=reader\"/>", resultXML);
-    assertStringContains(
-        "<meta name=\"google:aclgroups\" content=\"eng=writer\"/>", resultXML);
-    assertStringContains(
-        "<meta name=\"google:aclgroups\" content=\"root\"/>", resultXML);
-    assertStringNotContains(
-        "<meta name=\"" + SpiConstants.USER_ROLES_PROPNAME_PREFIX + "eng\"",
+        "<principal scope=\"user\" access=\"permit\">joe</principal>",
         resultXML);
+    assertStringContains(
+        "<principal scope=\"user\" access=\"permit\">mary</principal>",
+        resultXML);
+    assertStringContains(
+        "<principal scope=\"group\" access=\"permit\">eng</principal>",
+        resultXML);
+    assertStringContains(
+        "<principal scope=\"group\" access=\"permit\">root</principal>",
+        resultXML);
+    assertNoAclMetadata(resultXML);
   }
 
   /**
@@ -1652,17 +1479,7 @@ public class DocPusherTest extends TestCase {
    * DocPusher and return the resulting XML feed string.
    */
   private String feedJsonEvent(String jsonEventString) throws Exception {
-    return feedJsonEvent(jsonEventString, false);
-  }
-
-  /**
-   * Utility method to take the given JSON event string and feed it through a
-   * DocPusher and return the resulting XML feed string.
-   */
-  private String feedJsonEvent(String jsonEventString,
-      boolean supportsInheritedAcls) throws Exception {
-    return feedDocument(JcrDocumentTest.makeDocumentFromJson(jsonEventString),
-                        supportsInheritedAcls);
+    return feedDocument(JcrDocumentTest.makeDocumentFromJson(jsonEventString));
   }
 
   /**
@@ -1670,16 +1487,7 @@ public class DocPusherTest extends TestCase {
    * DocPusher and return the resulting XML feed string.
    */
   private String feedDocument(Document document) throws Exception {
-    return feedDocument(document, dfc, false);
-  }
-
-  /**
-   * Utility method to take the given Document and feed it through a
-   * DocPusher and return the resulting XML feed string.
-   */
-  private String feedDocument(Document document, boolean supportsInheritedAcls)
-      throws Exception {
-    return feedDocument(document, dfc, supportsInheritedAcls);
+    return feedDocument(document, dfc);
   }
 
   /**
@@ -1687,14 +1495,9 @@ public class DocPusherTest extends TestCase {
    * and feed it through a DocPusher and return the resulting XML feed
    * string.
    */
-  private String feedDocument(Document document, DocumentFilterFactory dff,
-      final boolean supportsInheritedAcls) throws Exception {
-    MockFeedConnection mockFeedConnection = new MockFeedConnection() {
-      public boolean supportsInheritedAcls() {
-        return supportsInheritedAcls;
-      }
-    };
-
+  private String feedDocument(Document document, DocumentFilterFactory dff)
+      throws Exception {
+    MockFeedConnection mockFeedConnection = new MockFeedConnection();
     DocPusher dpusher =
         new DocPusher(mockFeedConnection, dataSource, fsli, dff);
     assertEquals(PusherStatus.OK, dpusher.take(document, null));
@@ -1704,27 +1507,19 @@ public class DocPusherTest extends TestCase {
 
   /**
    * Utility method to take the given Document and feed it through a
-   * DocPusher and return the resulting XML feed string.
+   * DocPusher and return the resulting XML feed string. It uses
+   * MockFeedConnection with default base64compressed encoding.
    */
   private String feedCompressedDocument(Document document) throws Exception {
-    return takeDocument(document, dfc, false);
-  }
-
-  /**
-   * Utility method to take the given Document and DocumentFilterFactory
-   * and feed it through a DocPusher and return the resulting XML feed
-   * string. It uses MockFeedConnection with default base64compressed encoding.
-   */
-  private String takeDocument(Document document, DocumentFilterFactory dff,
-      final boolean supportsInheritedAcls) throws Exception {
     MockFeedConnection mockFeedConnection = new MockFeedConnection() {
+      @Override
       public String getContentEncodings() {
         return ContentEncoding.BASE64COMPRESSED.toString();
       }
     };
 
     DocPusher dpusher =
-        new DocPusher(mockFeedConnection, dataSource, fsli, dff);
+        new DocPusher(mockFeedConnection, dataSource, fsli, dfc);
     assertEquals(PusherStatus.OK, dpusher.take(document, null));
     dpusher.flush();
     return mockFeedConnection.getFeed();
@@ -2345,7 +2140,7 @@ public class DocPusherTest extends TestCase {
     apf.setPropertyName("google:authmethod");
     apf.setPropertyValue("ntlm");
     apf.setOverwrite(true);
-    String resultXML = feedDocument(document, apf, false);
+    String resultXML = feedDocument(document, apf);
 
     assertStringContains("authmethod=\"ntlm\"", resultXML);
     assertStringNotContains(SpiConstants.PROPNAME_AUTHMETHOD, resultXML);
@@ -3511,68 +3306,6 @@ public class DocPusherTest extends TestCase {
     testDocumentAclInheritFrom(props, parentUrl);
   }
 
-  /**
-   * Tests switching FeedConnections between one that supports
-   * inherited ACLs and one that does not. Make sure it sends the correctly
-   * formatted feed to each.
-   */
-  public void testSwitchGSAs() throws Exception {
-    SwitchableFeedConnection feedConnection = new SwitchableFeedConnection();
-    feedConnection.setSupportsInheritedAcls(true);
-
-    // Set artificially low feedsize to force 1 document per feed.
-    FileSizeLimitInfo fileSizeLimit = new FileSizeLimitInfo();
-    fileSizeLimit.setMaxFeedSize(32);
-    fileSizeLimit.setMaxDocumentSize(1024 * 1024);
-
-    DocPusher dpusher =
-        new DocPusher(feedConnection, dataSource, fileSizeLimit, dfc);
-
-    String parentId = "parent-doc";
-    Map<String, Object> props = getTestAclDocumentConfig();
-    props.put(SpiConstants.PROPNAME_FEEDTYPE,
-              SpiConstants.FeedType.CONTENT.toString());
-    String parentUrl = ServletUtil.PROTOCOL + "junit.localhost"
-        + ServletUtil.DOCID + parentId;
-
-    // Feed the document and check that the feed has inherited ACLs.
-    Document document = ConnectorTestUtils.createSimpleDocument(props);
-    assertEquals(PusherStatus.OK, dpusher.take(document, null));
-    while (dpusher.checkSubmissions() > 0) {
-      Thread.sleep(100);
-    }
-    String resultXML = feedConnection.getFeed();
-
-    // This should be an acl feed record, followed by a regular feed record.
-    assertStringContains("<acl inheritance-type=", resultXML);
-    assertStringContains("<principal scope=", resultXML);
-    assertStringContains("</acl>", resultXML);
-    assertStringContains("<record url=", resultXML);
-    assertStringContains("</record>", resultXML);
-    assertStringNotContains("<meta name=\"google:aclinheritancetype\"",
-                            resultXML);
-    assertStringNotContains("<meta name=\"google:aclusers\"", resultXML);
-    assertStringNotContains("<meta name=\"google:aclgroups\"", resultXML);
-
-    // Now turn off inheritance, feed the document again and check that the
-    // feed has no inherited ACLs.
-    feedConnection.setSupportsInheritedAcls(false);
-    assertEquals(PusherStatus.OK, dpusher.take(document, null));
-    dpusher.flush();
-    resultXML = feedConnection.getFeed();
-
-    // This should have no acl feed record, only a regular feed record with
-    // ACL metadata.
-    assertStringNotContains("<acl inheritance-type=", resultXML);
-    assertStringNotContains("<principal scope=", resultXML);
-    assertStringNotContains("</acl>", resultXML);
-    assertStringContains("<record url=", resultXML);
-    assertStringContains("</record>", resultXML);
-    assertStringContains("<meta name=\"google:aclinheritancetype\"", resultXML);
-    assertStringContains("<meta name=\"google:aclusers\"", resultXML);
-    assertStringContains("<meta name=\"google:aclgroups\"", resultXML);
-  }
-
   /** Returns a document config with some ACL properties. */
   private Map<String, Object> getTestAclDocumentConfig() {
     Map<String, Object> props = getTestDocumentConfig();
@@ -3599,7 +3332,7 @@ public class DocPusherTest extends TestCase {
         SpiConstants.FeedType.CONTENT.toString());
 
     Document document = ConnectorTestUtils.createSimpleDocument(props);
-    String resultXML = feedDocument(document, true);
+    String resultXML = feedDocument(document);
 
     assertStringContains("<acl url=" + googleConnectorUrl("doc1")
         + " inheritance-type=\"parent-overrides\" inherit-from=\""
@@ -3629,7 +3362,7 @@ public class DocPusherTest extends TestCase {
         SpiConstants.FeedType.CONTENT.toString());
 
     Document document = ConnectorTestUtils.createSimpleDocument(props);
-    String resultXML = feedDocument(document, true);
+    String resultXML = feedDocument(document);
 
     // This should be an acl feed record, followed by a regular feed record.
     assertStringContains("<acl inheritance-type=\"parent-overrides\" "
@@ -3647,87 +3380,17 @@ public class DocPusherTest extends TestCase {
 
     assertStringContains("<record url=" + googleConnectorUrl("doc1"), resultXML);
 
-    assertStringNotContains(SpiConstants.PROPNAME_ACLINHERITFROM_DOCID,
-                            resultXML);
-    assertStringNotContains(SpiConstants.PROPNAME_ACLINHERITFROM_FEEDTYPE,
-                            resultXML);
-
-    assertStringNotContains("<meta name=\"google:aclinheritfrom\" content=\""
-        + expectedParentUrl + "\"/>", resultXML);
-    assertStringNotContains(
-        "<meta name=\"google:aclinheritancetype\" content=\"parent-overrides\"/>",
-        resultXML);
-    assertStringNotContains(
-        "<meta name=\"google:acldenyusers\" content=\"Jason Wang\"/>",
-        resultXML);
-    assertStringNotContains(
-        "<meta name=\"google:aclusers\" content=\"John Doe\"/>",
-        resultXML);
-    assertStringNotContains(
-        "<meta name=\"google:aclgroups\" content=\"Engineering\"/>",
-        resultXML);
+    assertNoAclMetadata(resultXML);
  }
 
-  public void testAclSmartGsa() throws Exception {
-    String parentUrl = "http://foo/parent-doc";
-    Map<String, Object> props = getTestAclDocumentConfig();
-    props.put(SpiConstants.PROPNAME_ACLINHERITFROM, parentUrl);
-
-    props.put(SpiConstants.PROPNAME_FEEDTYPE,
-        SpiConstants.FeedType.CONTENT.toString());
-    Document document = ConnectorTestUtils.createSimpleDocument(props);
-    String resultXML = feedDocument(document, true);
-    assertStringContains("parent-doc", resultXML);
-    assertStringNotContains("httpbasic", resultXML);
-  }
-
-  public void testAclNoDumbDown() throws Exception {
-    Map<String, Object> props = getTestAclDocumentConfig();
-    props.put(SpiConstants.PROPNAME_FEEDTYPE,
-        SpiConstants.FeedType.CONTENT.toString());
-    Document document = ConnectorTestUtils.createSimpleDocument(props);
-    String resultXML = feedDocument(document, false);
-    assertStringNotContains("httpbasic", resultXML);
-  }
-
-  public void testAclDumbDown() throws Exception {
-    String parentUrl = "http://foo/parent-doc";
-    Map<String, Object> props = getTestAclDocumentConfig();
-    props.put(SpiConstants.PROPNAME_ACLINHERITFROM_DOCID, "parent-doc");
-    props.put(SpiConstants.PROPNAME_ACLINHERITFROM_FRAGMENT, "elephant");
-    props.put(SpiConstants.PROPNAME_FEEDTYPE,
-        SpiConstants.FeedType.CONTENT.toString());
-    Document document = ConnectorTestUtils.createSimpleDocument(props);
-    String resultXML = feedDocument(document, false);
-    assertStringNotContains("parent-doc", resultXML);
-    assertStringNotContains(SpiConstants.ACL_PROPNAME_PREFIX, resultXML);
-    assertStringContains("httpbasic", resultXML);
-  }
-
-  public void testAclSkip() throws Exception {
-    String parentUrl = "http://foo/parent-doc";
-    Map<String, Object> props = getTestAclDocumentConfig();
-    props.put(SpiConstants.PROPNAME_ACLINHERITFROM, parentUrl);
-    props.put(SpiConstants.PROPNAME_FEEDTYPE,
-        SpiConstants.FeedType.CONTENT.toString());
-    props.put(SpiConstants.PROPNAME_DOCUMENTTYPE,
-        SpiConstants.DocumentType.ACL.toString());
-    Document document = ConnectorTestUtils.createSimpleDocument(props);
-    try {
-      feedDocument(document, false);
-      fail("Excepted SkippedDocumentException");
-    } catch (SkippedDocumentException ex) {
-    }
-  }
-
-  public void testExtractAclSmartGsa() throws Exception {
+  public void testExtractAcl() throws Exception {
     String parentDocid = "parent-doc";
     Map<String, Object> props = getTestAclDocumentConfig();
     props.put(SpiConstants.PROPNAME_ACLINHERITFROM_DOCID, parentDocid);
     props.put(SpiConstants.PROPNAME_FEEDTYPE,
         SpiConstants.FeedType.CONTENTURL.toString());
     Document document = ConnectorTestUtils.createSimpleDocument(props);
-    String resultXML = feedDocument(document, true);
+    String resultXML = feedDocument(document);
 
     String[] records = resultXML.split("</acl>", 2);
     // Should get ACL entry, followed by RECORD entry.
@@ -3764,19 +3427,6 @@ public class DocPusherTest extends TestCase {
     // Return a predictable non-unique ID to ease expected output comparisons.
     public String uniqueId() {
       return "test";
-    }
-  }
-
-  /**
-   * A FeedConnection that can toggle inherited ACL support.
-   */
-  private static class SwitchableFeedConnection extends MockFeedConnection {
-    private boolean supportsInheritedAcls = true;
-    public boolean supportsInheritedAcls() {
-      return supportsInheritedAcls;
-    }
-    public void setSupportsInheritedAcls(boolean supportsInheritedAcls) {
-      this.supportsInheritedAcls = supportsInheritedAcls;
     }
   }
 

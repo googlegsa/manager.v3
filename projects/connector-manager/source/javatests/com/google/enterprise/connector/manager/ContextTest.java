@@ -66,38 +66,37 @@ public class ContextTest extends TestCase {
   }
 
   public void testInitTraversalContext_false_null() {
-    // GSA 6.14, not disabled, no inherited, no deny
-    testInitTraversalContext(false, null, false, false);
+    // GSA 6.14, not disabled, inherited
+    testInitTraversalContext(false, null, true);
   }
 
   public void testInitTraversalContext_false_false() {
-    // GSA 6.14, not disabled, no inherited, no deny
-    testInitTraversalContext(false, false, false, false);
+    // GSA 6.14, not disabled, inherited
+    testInitTraversalContext(false, false, true);
   }
 
   public void testInitTraversalContext_false_true() {
-    // GSA 6.14, disabled, no inherited, no deny
-    testInitTraversalContext(false, true, false, false);
+    // GSA 6.14, disabled, no inherited
+    testInitTraversalContext(false, true, false);
   }
 
   public void testInitTraversalContext_true_null() {
-    // GSA 7.0, not disabled, inherited, deny
-    testInitTraversalContext(true, null, true, true);
+    // GSA 7.0, not disabled, inherited
+    testInitTraversalContext(true, null, true);
   }
 
   public void testInitTraversalContext_true_false() {
-    // GSA 7.0, not disabled, inherited, deny
-    testInitTraversalContext(true, false, true, true);
+    // GSA 7.0, not disabled, inherited
+    testInitTraversalContext(true, false, true);
   }
 
   public void testInitTraversalContext_true_true() {
-    // GSA 7.0, disabled, no inherited, deny
-    testInitTraversalContext(true, true, false, true);
+    // GSA 7.0, disabled, no inherited
+    testInitTraversalContext(true, true, false);
   }
 
   private void testInitTraversalContext(boolean gsaSupportsInheritedAcls,
-      Boolean feedDisableInheritedAcls, boolean expectedSupportsInheritedAcls,
-      boolean expectedSupportsDenyAcls) {
+      Boolean feedDisableInheritedAcls, boolean expectedSupportsInheritedAcls) {
     SimpleTraversalContext simpleContext = new SimpleTraversalContext();
     GsaFeedConnection feeder = createMock(GsaFeedConnection.class);
     expect(feeder.supportsInheritedAcls())
@@ -115,7 +114,6 @@ public class ContextTest extends TestCase {
 
     assertEquals("supportsInheritedAcls", expectedSupportsInheritedAcls,
         simpleContext.supportsInheritedAcls());
-    assertEquals("supportsDenyAcls", expectedSupportsDenyAcls,
-        simpleContext.supportsDenyAcls());
+    assertEquals("supportsDenyAcls", true, simpleContext.supportsDenyAcls());
   }
 }

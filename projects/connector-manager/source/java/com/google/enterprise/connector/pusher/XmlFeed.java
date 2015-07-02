@@ -95,9 +95,6 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
   /** Encoding method to use for Document content. */
   private final ContentEncoding contentEncoding;
 
-  /** If true, ACLs support inheritance and deny; otherwise legacy ACLs. */
-  private final boolean supportsInheritedAcls;
-
   private static UniqueIdGenerator uniqueIdGenerator = new UuidGenerator();
 
   private static DocumentFilterFactory stripAclDocumentFilter =
@@ -186,12 +183,10 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
     this.recordCount = 0;
     this.isClosed = false;
     this.feedId = uniqueIdGenerator.uniqueId();
-    this.supportsInheritedAcls = feedConnection.supportsInheritedAcls();
 
     // Configure the dynamic ACL transformation filters for the documents.
     this.urlConstructor = new UrlConstructor(dataSource, feedType);
-    this.aclTransformFilter =
-        new AclTransformFilter(feedConnection, this.urlConstructor);
+    this.aclTransformFilter = new AclTransformFilter(this.urlConstructor);
 
     supportedEncodings = feedConnection.getContentEncodings().toLowerCase();
     // Check to see if the GSA supports compressed content feeds.
@@ -388,28 +383,26 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
    */
   private void xmlWrapRecord(Document document)
       throws RepositoryException, IOException {
-    if (supportsInheritedAcls) {
-      String docType = DocUtils.getOptionalString(document,
-          SpiConstants.PROPNAME_DOCUMENTTYPE);
-      if (docType != null
-          && DocumentType.findDocumentType(docType) == DocumentType.ACL) {
-        xmlWrapAclRecord(document);
-        recordCount++;
-        return;
-      } else if (feedType == FeedType.CONTENTURL
-                 && DocUtils.hasAclProperties(document)) {
-        // GSA 7.0 does not support case-sensitivity or namespaces in ACLs
-        // during crawl-time. So we have to send the ACLs at feed-time.
-        // But the crawl-time metadata overwrites the feed-time ACLs.
-        // The proposed escape is to send a named resource ACL in the feed for
-        // each document, and at crawl-time return an empty ACL that inherits
-        // from the corresponding named resource ACL.
-        xmlWrapAclRecord(
-            extractedAclDocumentFilter.newDocumentFilter(document));
-        recordCount++;
-        document =
-            inheritFromExtractedAclDocumentFilter.newDocumentFilter(document);
-      }
+    String docType = DocUtils.getOptionalString(document,
+        SpiConstants.PROPNAME_DOCUMENTTYPE);
+    if (docType != null
+        && DocumentType.findDocumentType(docType) == DocumentType.ACL) {
+      xmlWrapAclRecord(document);
+      recordCount++;
+      return;
+    } else if (feedType == FeedType.CONTENTURL
+        && DocUtils.hasAclProperties(document)) {
+      // GSA 7.0 does not support case-sensitivity or namespaces in ACLs
+      // during crawl-time. So we have to send the ACLs at feed-time.
+      // But the crawl-time metadata overwrites the feed-time ACLs.
+      // The proposed escape is to send a named resource ACL in the feed for
+      // each document, and at crawl-time return an empty ACL that inherits
+      // from the corresponding named resource ACL.
+      xmlWrapAclRecord(
+          extractedAclDocumentFilter.newDocumentFilter(document));
+      recordCount++;
+      document =
+          inheritFromExtractedAclDocumentFilter.newDocumentFilter(document);
     }
     xmlWrapDocumentRecord(document);
     recordCount++;
@@ -423,7 +416,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
    */
   private void xmlWrapDocumentRecord(Document document)
       throws RepositoryException, IOException {
-    boolean aclRecordAllowed = supportsInheritedAcls;
+    boolean aclRecordAllowed = true;
     boolean metadataAllowed = (feedType != FeedType.CONTENTURL);
     boolean contentAllowed = (feedType == FeedType.CONTENT);
 
@@ -571,7 +564,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
       }
       alternateEncoding = (documentContentEncoding == null) 
           ? contentEncoding : documentContentEncoding;
-  
+
       // If including document content, wrap it with <content> tags.
       prefix.append("<");
       prefix.append(XML_CONTENT);

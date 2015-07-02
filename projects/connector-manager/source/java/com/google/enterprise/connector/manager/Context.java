@@ -794,24 +794,17 @@ public class Context {
   @VisibleForTesting
   void initTraversalContext(SimpleTraversalContext simpleContext,
       Properties props, GsaFeedConnection feeder) {
-    if (Boolean.valueOf(props.getProperty(FEED_DISABLE_INHERITED_ACLS))) {
-      simpleContext.setSupportsInheritedAcls(false);
-    } else if (feeder != null) {
-      simpleContext.setSupportsInheritedAcls(feeder.supportsInheritedAcls());
-    }
-    // N.B.: We are using feeder.supportsInheritedAcls() to
-    // determine whether DENY is supported. This is conservative,
-    // only claiming support for DENY ACLs on 7.0, and not on 6.14.
-    // TODO(jlacey): Check for 6.14 and support DENY there as well.
-    if (feeder != null) {
-      simpleContext.setSupportsDenyAcls(feeder.supportsInheritedAcls());
-    }
+    // Inherited ACLs can be disabled, but may still be used in feeds.
+    // See ProductionManager.getDocumentMetaData for an explanation.
+    // GSA 6.14 and earlier are not supported.
+    simpleContext.setSupportsInheritedAcls(
+        !Boolean.valueOf(props.getProperty(FEED_DISABLE_INHERITED_ACLS)));
+    simpleContext.setSupportsDenyAcls(true);
   }
 
   /**
    * Throws out the current context instance and gets another one. For testing
    * only. This could really boolux things up if it were used in production!
-   *
    */
   public static void refresh() {
     INSTANCE = new Context();

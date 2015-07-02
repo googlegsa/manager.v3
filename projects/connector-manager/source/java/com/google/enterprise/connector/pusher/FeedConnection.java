@@ -59,27 +59,15 @@ public interface FeedConnection {
   public String getContentEncodings();
 
   /**
-   * Returns {@code true} if Documents may include full ACL support,
-   * specifically DENY users or groups, ACL inheritance, and ACL-only
-   * Documents.  Some earlier Search Appliance implementations do not
-   * support these features.
+   * Returns {@code true} for GSA 7.0 and later.
+   * <p>
+   * Historically, this method was used to determine whether Documents
+   * could include full ACL support, specifically DENY users or
+   * groups, ACL inheritance, and ACL-only Documents.
    *
-   * @return {@code true} if Documents may include enhanced ACL support
-   *
-   * @see SecureDocument
-   * @see SpiConstants.AclInheritanceType
-   * @see SpiConstants.FeedType
-   * @see SpiConstants#PROPNAME_ACLINHERITFROM
-   * @see SpiConstants#PROPNAME_ACLINHERITANCETYPE
-   * @see SpiConstants#PROPNAME_ACLDENYGROUPS
-   * @see SpiConstants#PROPNAME_ACLDENYUSERS
-   *
+   * @return {@code true} if the GSA is 7.0 or later, or {@code false}
+   *     if the GSA is 6.14 or earlier
    * @since 3.0
-   */
-  /*
-   * TODO(jlacey): Split out supportsDenyAcls. We're currently using
-   * this method to check for DENY support as well, which means we
-   * don't support DENY on GSA 6.14.
    */
   boolean supportsInheritedAcls();
 }

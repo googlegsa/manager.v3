@@ -67,7 +67,6 @@ public class ProductionManager implements Manager {
 
   Instantiator instantiator;
   private DocumentFilterFactoryFactory documentFilterFactoryFactory = null;
-  private FeedConnection feedConnection;
 
   public ProductionManager() {
   }
@@ -90,11 +89,12 @@ public class ProductionManager implements Manager {
   }
 
   /**
-   * Sets the feed connection to use to discover if the security header is
-   * supported. This must be set during startup to take effect.
+   * This was used previously to determine whether feeds supported
+   * inherited ACLs. We now assume they do.
    */
   public void setFeedConnection(FeedConnection feedConnection) {
-    this.feedConnection = feedConnection;
+    LOGGER.warning("Deprecated feedConnection property, set to "
+        + feedConnection + ", will be ignored");
   }
 
   @Override
@@ -240,8 +240,7 @@ public class ProductionManager implements Manager {
       // The proposed escape is to send a named resource ACL in the feed for
       // each document, and at crawl-time return an empty ACL that inherits
       // from the corresponding named resource ACL.
-      if (feedConnection.supportsInheritedAcls()
-          && DocUtils.hasAclProperties(metaDoc)) {
+      if (DocUtils.hasAclProperties(metaDoc)) {
         metaDoc = new InheritFromExtractedAclDocumentFilter()
             .newDocumentFilter(metaDoc);
       }
@@ -249,7 +248,6 @@ public class ProductionManager implements Manager {
       // Configure the dynamic ACL transformation filters for the documents.
       // TODO(bmj): Is FeedType.CONTENTURL a reasonable assumption here?
       AclTransformFilter aclTransformFilter = new AclTransformFilter(
-          feedConnection,
           new UrlConstructor(connectorName, FeedType.CONTENTURL));
       metaDoc = aclTransformFilter.newDocumentFilter(metaDoc);
     }
