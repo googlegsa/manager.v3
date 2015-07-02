@@ -5,10 +5,39 @@
 This document contains the release notes for Google Search Appliance
 Connector Manager.  The following sections describe the release in
 detail and provide information that supplements the main documentation.
-See the Issues Tab on the Code Site for the current list of known
-issues and work-arounds.
 
-Web Site: http://code.google.com/p/google-enterprise-connector-manager/
+Web Site: https://github.com/googlegsa/manager.v3
+
+
+Release 3.2.12, 2 July 2015
+===========================
+
+Introduction
+------------
+This is a patch release that fixes a few small problems discovered in
+the previous release. Users of previous releases are encouraged to review
+the changes below to determine whether to upgrade.
+
+Issues Fixed Since 3.2.10
+-------------------------
+15398588 - Connector Manager should always send authmethod. With GSA 7.2,
+           the authmethod attribute in a feed record no longer defaults
+           to "none". If the URL was already indexed, the indexed value
+           is preserved. If a secure document is made public later, we
+           must send authmethod="none" explicitly.
+
+19938428 - Security Manager refutes credentials when connector group
+           lookup fails. If multiple group lookup mechanisms are used,
+           then a failure for one repository will block search results
+           from all repositories. As a workaround, if connector group
+           lookup fails, an empty success with no groups is returned to
+           the GSA.
+
+Version Compatibility
+---------------------
+This version of the Connector Manager requires Java 6 JRE or newer.
+
+For connector developers, Subversion 1.8 and Java 8 are supported.
 
 
 Release 3.2.10, 24 March 2015
