@@ -28,23 +28,36 @@ public class SimpleConnectorFactory implements ConnectorFactory {
   /**
    * Constructs a factory without a connector instance. A subclass
    * that calls this constructor should also override the {@link
-   * #makeConnector} method.
+   * #makeConnector makeConnector} method.
    */
   protected SimpleConnectorFactory() {
     this(null);
   }
 
+  /**
+   * Constructs a factory that returns the given connector instance.
+   *
+   * @param instance the connector to return from {@link #makeConnector
+   *     makeConnector}
+   */
   public SimpleConnectorFactory(Connector instance) {
     this.instance = instance;
   }
 
   /**
+   * This implementation returns the connector instance passed to the
+   * constructor.
+   *
+   * @return the connector instance passed to the constructor
    * @throws RepositoryException if a subclass overrides this method and throws
-   *         RepositoryException.
+   *         RepositoryException, or if the connector instance is {@code null}
    */
   @Override
   public Connector makeConnector(Map<String, String> config)
       throws RepositoryException {
+    if (connector == null) {
+      throw new RepositoryException("No connector instance");
+    }
     return instance;
   }
 }
