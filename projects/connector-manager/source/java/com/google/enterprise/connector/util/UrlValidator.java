@@ -228,6 +228,16 @@ public class UrlValidator {
           break;
       }
       return responseCode;
+    } catch (IOException e) {
+      if ("Authentication failure".equals(e.getMessage())) {
+        // This exception can be thrown during NTLM negotiation.
+        // TODO(jlacey): Write a test to reproduce this exception.
+        LOGGER.log(Level.CONFIG,
+            "Validate URL HTTP response: returning 401 for {0}", e.toString());
+        return HttpURLConnection.HTTP_UNAUTHORIZED;
+      } else {
+        throw e;
+      }
     } finally {
       httpConn.disconnect();
     }
