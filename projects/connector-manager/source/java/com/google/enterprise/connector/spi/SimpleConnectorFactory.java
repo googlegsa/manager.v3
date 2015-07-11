@@ -55,7 +55,7 @@ public class SimpleConnectorFactory implements ConnectorFactory {
   @Override
   public Connector makeConnector(Map<String, String> config)
       throws RepositoryException {
-    if (connector == null) {
+    if (instance == null) {
       throw new RepositoryException("No connector instance");
     }
     return instance;

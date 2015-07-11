@@ -51,9 +51,26 @@ public class SimpleConnectorFactoryTest extends TestCase {
     assertSame(instance, factory.makeConnector(null));
   }
 
+  public void testNullConstructorArg() throws RepositoryException {
+    ConnectorFactory factory = new SimpleConnectorFactory(null);
+    try {
+      factory.makeConnector(null);
+    } catch (RepositoryException e) {
+      if (!"No connector instance".equals(e.getMessage())) {
+        throw e;
+      }
+    }
+  }
+
   public void testBadFactorySubclass() throws RepositoryException {
     ConnectorFactory factory = new BadConnectorFactory();
-    assertNull(factory.makeConnector(null));
+    try {
+      factory.makeConnector(null);
+    } catch (RepositoryException e) {
+      if (!"No connector instance".equals(e.getMessage())) {
+        throw e;
+      }
+    }
   }
 
   public void testGoodFactorySubclass() throws RepositoryException {
