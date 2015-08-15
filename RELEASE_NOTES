@@ -9,6 +9,60 @@ detail and provide information that supplements the main documentation.
 Web Site: https://github.com/googlegsa/manager.v3
 
 
+Release 3.4.0, 18 August 2015
+=============================
+
+Introduction
+------------
+This is a patch release that fixes a few small problems discovered in
+the previous release. Users of previous releases are encouraged to review
+the changes below to determine whether to upgrade.
+
+Issues Fixed Since 3.2.12
+-------------------------
+23228968 - Upgrade Guava to 11.0.2 to match the Adaptor Library. This
+           breaks the use of the GSA Admin API, specifically the GData
+           client API, and dependent functionality has been removed:
+
+           * The SocialCollectionHandler class, used by the SharePoint
+             User Profile connector, no longer automatically creates a
+             collection on the GSA to hold indexed user profiles. The
+             collection must be created manually.
+
+           * The Connector for Lotus Notes no longer supports policy ACLs.
+             Only per-URL ACLs are supported, and GSA 7.0 or newer is
+             required.
+
+22366800 - Display URL validation with NTLM throws IOException:
+           Authentication failure. This error could occur with the
+           connectors for Documentum, FileNet, and Livelink, and any
+           third-party connectors that use the UrlValidator class from
+           Connector Manager.
+
+10380718 - File System Connector defaults to 6.14 behavior if it fails to
+           detect the GSA version. The version check is now retried when it
+           fails, rather than caching the failure permanently.
+
+7090302 - AuthN can timeout while initializing a new AuthenticationManager.
+
+Version Compatibility
+---------------------
+This version of the Connector Manager requires Java 6 JRE or newer, and
+Google Search Appliance (GSA) 7.0 or newer. Versions of the Google Search
+Appliance Connectors prior to 3.4 may not work with this version of the
+Connector Manager.
+
+AbstractDocumentFilter.DocumentFilter is now visible to subclasses to
+make it easier to override the newDocument method.
+
+SimpleConnectorFactory now throws an exception rather than return null
+when the no-args constructor is used, for consistency with the
+production ConnectorFactory used internally by Connector Manager.
+
+The embedded Cobertura JAR files were upgraded from version 1.9.4.1 to
+version 2.1.1, for compatibility with Java 7 and newer.
+
+
 Release 3.2.12, 2 July 2015
 ===========================
 
