@@ -57,64 +57,115 @@ public class XmlParseUtil {
   private static Logger LOGGER =
       Logger.getLogger(XmlParseUtil.class.getName());
 
-  private static final String XHTML_DTD_URL =
-      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd";
+  private static final String XHTML_DTD_ID =
+      "-//W3C//DTD XHTML 1.0 Transitional//EN";
   private static final String XHTML_DTD_FILE = "/xhtml1-transitional.dtd";
 
-  private static final String HTML_LAT1_URL =
-      "http://www.w3.org/TR/xhtml1/DTD/xhtml-lat1.ent";
+  private static final String HTML_LAT1_ID =
+      "-//W3C//ENTITIES Latin 1 for XHTML//EN";
   private static final String HTML_LAT1_FILE = "/xhtml-lat1.ent";
 
-  private static final String HTML_SYMBOL_URL =
-      "http://www.w3.org/TR/xhtml1/DTD/xhtml-symbol.ent";
+  private static final String HTML_SYMBOL_ID =
+      "-//W3C//ENTITIES Symbols for XHTML//EN";
   private static final String HTML_SYMBOL_FILE = "/xhtml-symbol.ent";
 
-  private static final String HTML_SPECIAL_URL =
-      "http://www.w3.org/TR/xhtml1/DTD/xhtml-special.ent";
+  private static final String HTML_SPECIAL_ID =
+      "-//W3C//ENTITIES Special for XHTML//EN";
   private static final String HTML_SPECIAL_FILE = "/xhtml-special.ent";
 
-  private static final String WEBAPP_DTD_URL =
-      "http://java.sun.com/dtd/web-app_2_3.dtd";
+  private static final String WEBAPP_DTD_ID =
+      "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN";
   private static final String WEBAPP_DTD_FILE = "/web-app_2_3.dtd";
 
-  private static final String XHTML_STRICT_DTD_URL =
-      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd";
+  private static final String XHTML_STRICT_DTD_ID =
+      "-//W3C//DTD XHTML 1.0 Strict//EN";
   private static final String XHTML_STRICT_DTD_FILE = "/xhtml1-strict.dtd";
 
   private static Map<String, String> LOCAL_DTDS =
-      ImmutableMap.<String, String> builder().
-      put(XHTML_DTD_URL, XHTML_DTD_FILE).
-      put(HTML_LAT1_URL, HTML_LAT1_FILE).
-      put(HTML_SYMBOL_URL, HTML_SYMBOL_FILE).
-      put(HTML_SPECIAL_URL, HTML_SPECIAL_FILE).
-      put(WEBAPP_DTD_URL, WEBAPP_DTD_FILE).
-      put(XHTML_STRICT_DTD_URL, XHTML_STRICT_DTD_FILE).
-      build();
+      ImmutableMap.<String, String> builder()
+      .put(XHTML_DTD_ID, XHTML_DTD_FILE)
+      .put(HTML_LAT1_ID, HTML_LAT1_FILE)
+      .put(HTML_SYMBOL_ID, HTML_SYMBOL_FILE)
+      .put(HTML_SPECIAL_ID, HTML_SPECIAL_FILE)
+      .put(WEBAPP_DTD_ID, WEBAPP_DTD_FILE)
+      .put(XHTML_STRICT_DTD_ID, XHTML_STRICT_DTD_FILE)
+      .build();
+
+  /**
+   * An {@link EntityResolver} implementation that resolves
+   * entities using a selection of locally stored DTDs. This resolver
+   * throws an exception if an unknown external entity is found.
+   *
+   * @since 3.2.14
+   */
+  public static final EntityResolver catalogEntityResolver =
+      new CatalogEntityResolver();
+
+  /**
+   * An {@link EntityResolver} implementation that always throws an exception.
+   *
+   * @since 3.2.14
+   */
+  public static final EntityResolver nonEntityResolver =
+      new NonEntityResolver();
 
   /**
    * An {@link EntityResolver} implementation that resolves
    * entities using a selection of locally stored DTDs.
+   *
+   * @deprecated Use {@link #catalogEntityResolver} for better security
    */
+  @Deprecated
   public static class LocalEntityResolver implements EntityResolver {
     @Override
     public InputSource resolveEntity(String publicId, String systemId) {
-      String filename = LOCAL_DTDS.get(systemId);
-      if (filename == null) {
-        return null;
-      }
-      URL url = getClass().getResource(filename);
-      if (url != null) {
-        return new InputSource(url.toString());
-      }
-      return null;
+      return resolveLocalEntity(publicId);
     }
   }
 
+  private static class CatalogEntityResolver implements EntityResolver {
+    @Override
+    public InputSource resolveEntity(String publicId, String systemId)
+        throws SAXException {
+      InputSource result = resolveLocalEntity(publicId);
+      if (result == null) {
+        throw resolveNotSupported(publicId, systemId);
+      } else {
+        return result;
+      }
+    }
+  }
+
+  private static class NonEntityResolver implements EntityResolver {
+    @Override
+    public InputSource resolveEntity(String publicId, String systemId)
+        throws SAXException {
+      throw resolveNotSupported(publicId, systemId);
+    }
+  }
+
+  private static InputSource resolveLocalEntity(String publicId) {
+    String filename = LOCAL_DTDS.get(publicId);
+    if (filename != null) {
+      URL url = XmlParseUtil.class.getResource(filename);
+      if (url != null) {
+        return new InputSource(url.toString());
+      }
+    }
+    return null;
+  }
+
+  private static SAXException resolveNotSupported(String publicId,
+      String systemId) {
+    return new SAXException("Error resolving "
+        + ((publicId == null) ? "" : publicId + "-") + systemId
+        + ". External entity resolution is not supported.");
+  }
+
   private static final String STRICT_HTML_PREFIX =
-      "<!DOCTYPE html PUBLIC "
-      + "\"-//W3C//DTD XHTML 1.0 Strict//EN\" \""
-      + XHTML_STRICT_DTD_URL
-      + "\">"
+      "<!DOCTYPE html PUBLIC \""
+      + XHTML_STRICT_DTD_ID
+      + "\" \"\">"
       + "<html xmlns=\"http://www.w3.org/1999/xhtml\">"
       + "<head><title/></head><body><table>";
 
@@ -151,9 +202,10 @@ public class XmlParseUtil {
   public static void validateXhtml(String formSnippet) throws Exception {
     DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
     factory.setValidating(true);
+    factory.setXIncludeAware(false);
     DocumentBuilder builder = factory.newDocumentBuilder();
     builder.setErrorHandler(new ThrowingErrorHandler());
-    builder.setEntityResolver(new LocalEntityResolver());
+    builder.setEntityResolver(catalogEntityResolver);
 
     String html = STRICT_HTML_PREFIX + formSnippet + HTML_SUFFIX;
     builder.parse(new ByteArrayInputStream(html.getBytes(Charsets.UTF_8)));
@@ -161,6 +213,11 @@ public class XmlParseUtil {
 
   private static DocumentBuilderFactory factory =
       DocumentBuilderFactory.newInstance();
+
+  static {
+    factory.setValidating(false);
+    factory.setXIncludeAware(false);
+  }
 
   /**
    * Parse an XML String to a {@code org.w3c.dom.Document}.
@@ -174,7 +231,7 @@ public class XmlParseUtil {
       SAXParseErrorHandler errorHandler,
       EntityResolver entityResolver) {
     InputStream in = stringToInputStream(fileContent);
-    return (in == null) ? null : parse(in, errorHandler, entityResolver);
+    return parse(in, errorHandler, entityResolver);
   }
 
   /**
@@ -187,7 +244,7 @@ public class XmlParseUtil {
   public static Element parseAndGetRootElement(String xmlBody,
       String rootTagName) {
     InputStream in = stringToInputStream(xmlBody);
-    return (in == null) ? null : parseAndGetRootElement(in, rootTagName);
+    return parseAndGetRootElement(in, rootTagName);
   }
 
   private static InputStream stringToInputStream(String fileContent) {
@@ -231,7 +288,7 @@ public class XmlParseUtil {
   public static Element parseAndGetRootElement(InputStream in,
       String rootTagName) {
     SAXParseErrorHandler errorHandler = new SAXParseErrorHandler();
-    Document document = parse(in, errorHandler, null);
+    Document document = parse(in, errorHandler, nonEntityResolver);
     if (document == null) {
       LOGGER.log(Level.WARNING, "XML parsing exception!");
       return null;

@@ -25,7 +25,6 @@ import com.google.enterprise.connector.spi.XmlUtils;
 import com.google.enterprise.connector.util.Base16;
 import com.google.enterprise.connector.util.SAXParseErrorHandler;
 import com.google.enterprise.connector.util.XmlParseUtil;
-import com.google.enterprise.connector.util.XmlParseUtil.LocalEntityResolver;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -869,7 +868,7 @@ public class ServletUtil {
     // Convert to DOM tree and obfuscated values if needed.
     Document document =
       XmlParseUtil.parse(rootSnippet, new SAXParseErrorHandler(),
-            new LocalEntityResolver());
+          XmlParseUtil.catalogEntityResolver);
     if (document == null) {
       LOGGER.log(Level.WARNING, "XML parsing exception!");
       return null;

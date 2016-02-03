@@ -155,8 +155,8 @@ public class ImportExport extends AbstractCommandLineApp {
       throws IOException {
     String xmlString =
         StringUtils.streamToStringAndThrow(new FileInputStream(filename));
-    Document document =
-        XmlParseUtil.parse(xmlString, new SAXParseErrorHandler(), null);
+    Document document = XmlParseUtil.parse(xmlString,
+        new SAXParseErrorHandler(), XmlParseUtil.nonEntityResolver);
     Element connectorsElement = document.getDocumentElement();
     ImportExportConnectorList connectors = new ImportExportConnectorList();
     connectors.fromXml(document.getDocumentElement(),

@@ -72,8 +72,8 @@ public class ExportManagerTest extends TestCase {
     String managerXml = asXmlString(new ExportManager());
 
     // Now parse that XML and see if it reflects some tiny bit of reality.
-    Document document =
-        XmlParseUtil.parse(managerXml, new SAXParseErrorHandler(), null);
+    Document document = XmlParseUtil.parse(managerXml,
+        new SAXParseErrorHandler(), XmlParseUtil.nonEntityResolver);
     assertNotNull(managerXml, document);
     Element managerElement = document.getDocumentElement();
 
@@ -104,8 +104,8 @@ public class ExportManagerTest extends TestCase {
     String managerXml = asXmlString(new ExportManager());
 
     // Now parse that XML and see if it reflects some tiny bit of reality.
-    Document document =
-        XmlParseUtil.parse(managerXml, new SAXParseErrorHandler(), null);
+    Document document = XmlParseUtil.parse(managerXml,
+        new SAXParseErrorHandler(), XmlParseUtil.nonEntityResolver);
     assertNotNull(managerXml, document);
     Element managerElement = document.getDocumentElement();
 
