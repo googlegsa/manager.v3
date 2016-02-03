@@ -1160,7 +1160,8 @@ public class DocPusherTest extends TestCase {
     // don't have the DTD.
     resultXML = resultXML.substring(resultXML.indexOf("<gsafeed>"));
     assertNotNull("Parse error",
-        XmlParseUtil.parse(resultXML, new FatalErrorHandler(), null));
+        XmlParseUtil.parse(resultXML, new FatalErrorHandler(),
+            XmlParseUtil.nonEntityResolver));
 
     // Do this after the XML parsing, since that's the main test.
     assertStringContains(expected, resultXML);

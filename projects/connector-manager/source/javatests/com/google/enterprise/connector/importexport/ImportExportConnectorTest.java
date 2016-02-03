@@ -398,8 +398,8 @@ public class ImportExportConnectorTest extends TestCase {
   }
 
   private static ImportExportConnector fromXmlString(String xmlString) {
-    Document document =
-        XmlParseUtil.parse(xmlString, new SAXParseErrorHandler(), null);
+    Document document = XmlParseUtil.parse(xmlString,
+        new SAXParseErrorHandler(), XmlParseUtil.nonEntityResolver);
     assertNotNull(xmlString, document);
     ImportExportConnector connector = new ImportExportConnector();
     connector.fromXml(document.getDocumentElement());

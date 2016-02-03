@@ -161,8 +161,8 @@ public class LegacyImportExportConnectorTest extends TestCase {
   }
 
   private ImportExportConnector fromXmlString(String xmlString) {
-    Document document =
-        XmlParseUtil.parse(xmlString, new SAXParseErrorHandler(), null);
+    Document document = XmlParseUtil.parse(xmlString,
+        new SAXParseErrorHandler(), XmlParseUtil.nonEntityResolver);
     ImportExportConnector connector = new LegacyImportExportConnector();
     connector.fromXml(document.getDocumentElement());
     return connector;

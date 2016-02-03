@@ -183,8 +183,8 @@ public class ImportExportConnectorListTest extends TestCase {
   }
 
   private static ImportExportConnectorList fromXmlString(String xmlString) {
-    Document document =
-        XmlParseUtil.parse(xmlString, new SAXParseErrorHandler(), null);
+    Document document = XmlParseUtil.parse(xmlString,
+        new SAXParseErrorHandler(), XmlParseUtil.nonEntityResolver);
     ImportExportConnector connector = new LegacyImportExportConnector();
     ImportExportConnectorList connectors = new ImportExportConnectorList();
     connectors.fromXml(document.getDocumentElement(),

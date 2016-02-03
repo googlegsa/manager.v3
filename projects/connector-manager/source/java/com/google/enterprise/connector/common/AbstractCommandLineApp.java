@@ -305,7 +305,7 @@ public abstract class AbstractCommandLineApp {
    */
   private void getKeystoreContextParams(InputStream in) {
     Document document = XmlParseUtil.parse(in, new SAXParseErrorHandler(),
-        new XmlParseUtil.LocalEntityResolver());
+        XmlParseUtil.catalogEntityResolver);
     NodeList params = document.getElementsByTagName("context-param");
     if (params == null) {
       return;
