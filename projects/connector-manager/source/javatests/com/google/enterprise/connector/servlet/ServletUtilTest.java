@@ -18,11 +18,16 @@ import com.google.common.base.Function;
 import com.google.enterprise.connector.common.SecurityUtils;
 import com.google.enterprise.connector.spi.XmlUtils;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
+import com.google.enterprise.connector.util.XmlParseUtil;
 
 import junit.framework.TestCase;
 
+import org.w3c.dom.Element;
+
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -35,6 +40,78 @@ public class ServletUtilTest extends TestCase {
   private static final String HIDE_KEY_TWO = "a_password_two";
   private static final String HIDE_KEY_THREE = "imapasswordtoo";
   private static final String CLEAR_KEY_ONE = "NotAPwd";
+
+  @SuppressWarnings("deprecation") // XMLTAG_STATUSID
+  public void testWriteMessageCode() {
+    StringWriter buffer = new StringWriter();
+    PrintWriter out = new PrintWriter(buffer);
+
+    String message = "foo</" + ServletUtil.XMLTAG_STATUS_MESSAGE + ">bar"
+        + "<" + ServletUtil.XMLTAG_STATUS_MESSAGE + ">";
+    String param = "foo\"/>bar<tag attr=\"";
+    ServletUtil.writeMessageCode(out,
+        new ConnectorMessageCode(42, message, new Object[] { param }));
+
+    Element body = XmlParseUtil.parseAndGetRootElement(
+        "<body>" + buffer + "</body>", "body");
+    assertNotNull(buffer.toString(), body);
+    assertEquals(ServletUtil.XMLTAG_STATUSID, "42",
+        XmlParseUtil.getFirstElementByTagName(body,
+            ServletUtil.XMLTAG_STATUSID));
+    assertEquals(ServletUtil.XMLTAG_STATUS_MESSAGE, message,
+        XmlParseUtil.getFirstElementByTagName(body,
+            ServletUtil.XMLTAG_STATUS_MESSAGE));
+    assertEquals(ServletUtil.XMLTAG_STATUS_PARAM, param,
+        XmlParseUtil.getFirstAttribute(body, ServletUtil.XMLTAG_STATUS_PARAMS,
+            ServletUtil.XMLTAG_STATUS_PARAM));
+  }
+
+  public void testWriteXmlElement() {
+    StringWriter buffer = new StringWriter();
+    PrintWriter out = new PrintWriter(buffer);
+
+    String value = "foo</tag>bar<tag>";
+    ServletUtil.writeXMLElement(out, 0, "tag", value);
+
+    Element body = XmlParseUtil.parseAndGetRootElement(
+        "<body>" + buffer + "</body>", "body");
+    assertNotNull(buffer.toString(), body);
+    assertEquals(value, XmlParseUtil.getFirstElementByTagName(body, "tag"));
+  }
+
+  public void testWriteXmlElement_null() {
+    StringWriter buffer = new StringWriter();
+    PrintWriter out = new PrintWriter(buffer);
+
+    ServletUtil.writeXMLElement(out, 0, "tag", null);
+
+    Element body = XmlParseUtil.parseAndGetRootElement(
+        "<body>" + buffer + "</body>", "body");
+    assertNotNull(buffer.toString(), body);
+    assertEquals("null", XmlParseUtil.getFirstElementByTagName(body, "tag"));
+  }
+
+  public void testWriteXmlElement_cdata() {
+    StringWriter buffer = new StringWriter();
+    PrintWriter out = new PrintWriter(buffer);
+
+    String value = "foo</tag>bar<tag>";
+    ServletUtil.writeXMLElement(out, 0, "tag",
+      ServletUtil.XML_CDATA_START + value + ServletUtil.XML_CDATA_END);
+
+    Element body =
+        XmlParseUtil.parseAndGetRootElement(buffer.toString(), "tag");
+    assertNotNull(buffer.toString(), body);
+    assertEquals(value, XmlParseUtil.getCdata(body));
+  }
+
+  public void testWriteEmptyXmlElement() {
+    StringWriter buffer = new StringWriter();
+    PrintWriter out = new PrintWriter(buffer);
+
+    ServletUtil.writeEmptyXMLElement(out, 0, "tag");
+    assertEquals("<tag></tag>\n", buffer.toString());
+  }
 
   public void testPrependCmPrefix() {
     onePrependTest("<foo spam=\"bar\">", "<foo spam=\"bar\">");

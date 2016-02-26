@@ -20,6 +20,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.enterprise.connector.common.JarUtils;
 import com.google.enterprise.connector.common.SecurityUtils;
+import com.google.enterprise.connector.spi.XmlUtils;
 import com.google.enterprise.connector.util.Base16;
 import com.google.enterprise.connector.util.SAXParseErrorHandler;
 import com.google.enterprise.connector.util.XmlParseUtil;
@@ -343,11 +344,18 @@ public class ServletUtil {
       if (param == null || param.length() < 1) {
         continue;
       }
-      out.println(indentStr(1)
-          + "<" + XMLTAG_STATUS_PARAMS
-          + " " + XMLTAG_STATUS_PARAM_ORDER + "=\"" + Integer.toString(i) + "\""
-          + " " + XMLTAG_STATUS_PARAM + "=\"" + param
-          + "\"/>");
+      out.write(indentStr(1));
+      out.write("<");
+      out.write(XMLTAG_STATUS_PARAMS);
+      try {
+        XmlUtils.xmlAppendAttr(XMLTAG_STATUS_PARAM_ORDER, Integer.toString(i),
+            out);
+        XmlUtils.xmlAppendAttr(XMLTAG_STATUS_PARAM, param, out);
+      } catch (IOException e) {
+        // Can't happen with PrintWriter.
+        throw new AssertionError(e);
+      }
+      out.println("/>");
     }
   }
 
@@ -361,22 +369,19 @@ public class ServletUtil {
    */
   public static void writeXMLElement(PrintWriter out, int indentLevel,
                                      String elemName, String elemValue) {
-    out.println(indentStr(indentLevel)
-        + "<" + elemName + ">" + elemValue + "</" + elemName + ">");
-  }
-
-  /**
-   * Write a name value pair as an XML element to a StringBuilder.
-   *
-   * @param out where StringBuilder to be written to
-   * @param indentLevel the depth of indentation.
-   * @param elemName element name
-   * @param elemValue element value
-   */
-  public static void writeXMLElement(StringBuilder out, int indentLevel,
-                                     String elemName, String elemValue) {
-    out.append(indentStr(indentLevel)).append("<").append(elemName).append(">");
-    out.append(elemValue).append("</").append(elemName).append(">");
+    out.write(indentStr(indentLevel));
+    try {
+      XmlUtils.xmlAppendStartTag(elemName, out);
+      if (elemValue == null || elemValue.startsWith(XML_CDATA_START)) {
+        out.print(elemValue);
+      } else {
+        XmlUtils.xmlAppendAttrValue(elemValue, out);
+      }
+      XmlUtils.xmlAppendEndTag(elemName, out);
+    } catch (IOException e) {
+      // Can't happen with PrintWriter.
+      throw new AssertionError(e);
+    }
   }
 
   /**
@@ -388,8 +393,7 @@ public class ServletUtil {
    */
   public static void writeEmptyXMLElement(PrintWriter out, int indentLevel,
                                           String elemName) {
-    out.println(indentStr(indentLevel)
-        + "<" + elemName + "></" + elemName + ">");
+    writeXMLElement(out, indentLevel, elemName, "");
   }
 
   /**
