@@ -409,6 +409,7 @@ public class ImportExportTest extends TestCase {
   private static ImportExportConnectorList fromXmlString(String xmlString) {
     Document document =
         XmlParseUtil.parse(xmlString, new SAXParseErrorHandler(), null);
+    assertNotNull(xmlString, document);
     Element connectorsElement = document.getDocumentElement();
     ImportExportConnectorList connectors = new ImportExportConnectorList();
     connectors.fromXml(document.getDocumentElement(),

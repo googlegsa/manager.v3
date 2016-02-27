@@ -15,6 +15,7 @@
 package com.google.enterprise.connector.servlet;
 
 import com.google.common.base.Function;
+import com.google.common.collect.ImmutableMap;
 import com.google.enterprise.connector.common.SecurityUtils;
 import com.google.enterprise.connector.spi.XmlUtils;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
@@ -111,6 +112,22 @@ public class ServletUtilTest extends TestCase {
 
     ServletUtil.writeEmptyXMLElement(out, 0, "tag");
     assertEquals("<tag></tag>\n", buffer.toString());
+  }
+
+  public void testWriteXmlTagWithAttrs() {
+    StringWriter buffer = new StringWriter();
+    PrintWriter out = new PrintWriter(buffer);
+
+    String name = "foo\"/>bar<tag attr=\"";
+    ServletUtil.writeXMLTagWithAttrs(out, 0, ServletUtil.XMLTAG_SUCCESS,
+        ImmutableMap.of(ServletUtil.XMLTAG_CONNECTOR_NAME, name), true);
+
+    Element body = XmlParseUtil.parseAndGetRootElement(
+        "<body>" + buffer + "</body>", "body");
+    assertNotNull(buffer.toString(), body);
+    assertEquals(ServletUtil.XMLTAG_CONNECTOR_NAME, name,
+        XmlParseUtil.getFirstAttribute(body, ServletUtil.XMLTAG_SUCCESS,
+            ServletUtil.XMLTAG_CONNECTOR_NAME));
   }
 
   public void testPrependCmPrefix() {

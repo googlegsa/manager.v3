@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.importexport;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.manager.Context;
@@ -140,18 +141,12 @@ public class ExportManager {
         new TreeMap<String, String>(PropertiesUtils.toMap(props));
 
     for (Map.Entry<String, String> me : sorted.entrySet()) {
-      StringBuilder builder = new StringBuilder();
-      try {
-        builder.append(ServletUtil.ATTRIBUTE_NAME);
-        XmlUtils.xmlAppendAttrValue(me.getKey(), builder);
-        builder.append(ServletUtil.QUOTE).append(ServletUtil.ATTRIBUTE_VALUE);
-        XmlUtils.xmlAppendAttrValue(me.getValue(), builder);
-        builder.append(ServletUtil.QUOTE);
-      } catch (IOException e) {
-        // Can't happen with StringBuilder.
-      }
       ServletUtil.writeXMLTagWithAttrs(out, indent + 1,
-          ServletUtil.XMLTAG_PARAMETERS, builder.toString(), true);
+          ServletUtil.XMLTAG_PARAMETERS,
+          ImmutableMap.of(
+              ServletUtil.ATTRIBUTE_NAME, me.getKey(),
+              ServletUtil.ATTRIBUTE_VALUE, me.getValue()),
+          true);
     }
     ServletUtil.writeXMLTag(out, indent,
         ServletUtil.XMLTAG_MANAGER_CONFIG, true);
@@ -167,17 +162,9 @@ public class ExportManager {
    */
   private void writeConfigXml(PrintWriter out, int indent, String name,
                               String configXml) {
-    StringBuilder builder = new StringBuilder();
-    try {
-      builder.append(ServletUtil.ATTRIBUTE_NAME);
-      XmlUtils.xmlAppendAttrValue(name, builder);
-      builder.append(ServletUtil.QUOTE);
-    } catch (IOException e) {
-      // Can't happen with StringBuilder.
-    }
-
     ServletUtil.writeXMLTagWithAttrs(out, indent,
-        ServletUtil.XMLTAG_MANAGER_CONFIG_XML, builder.toString(), false);
+        ServletUtil.XMLTAG_MANAGER_CONFIG_XML,
+        ImmutableMap.of(ServletUtil.ATTRIBUTE_NAME, name), false);
 
     out.print(ServletUtil.XML_CDATA_START);
     out.print(ServletUtil.escapeEndMarkers(configXml));

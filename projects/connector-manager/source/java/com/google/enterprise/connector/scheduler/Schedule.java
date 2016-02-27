@@ -51,7 +51,7 @@ public class Schedule implements TraversalSchedule {
    *          no new content, then automatically disable.</li>
    *  </ul>
    */
-  public static final int CURRENT_VERSION = 3;
+  public static final String CURRENT_VERSION = "3";
 
   /**
    * Signal to the Traverser that it should traverse the ECM repository

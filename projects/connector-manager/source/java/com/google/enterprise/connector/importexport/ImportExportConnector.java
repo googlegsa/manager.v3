@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.importexport;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.enterprise.connector.instantiator.Configuration;
 import com.google.enterprise.connector.scheduler.Schedule;
 import com.google.enterprise.connector.servlet.ServletUtil;
@@ -328,8 +329,9 @@ public class ImportExportConnector {
     if (schedule != null) {
       ServletUtil.writeXMLTagWithAttrs(out, indent,
           ServletUtil.XMLTAG_CONNECTOR_SCHEDULES,
-          ServletUtil.ATTRIBUTE_VERSION + Schedule.CURRENT_VERSION
-          + ServletUtil.QUOTE, false);
+          ImmutableMap.of(
+              ServletUtil.ATTRIBUTE_VERSION, Schedule.CURRENT_VERSION),
+          false);
        if (schedule.isDisabled()) {
           ServletUtil.writeXMLElement(out, indent + 1,
               ServletUtil.XMLTAG_DISABLED, "true");
@@ -360,12 +362,12 @@ public class ImportExportConnector {
     if (flags.contains(Style.LOCAL_ENCRYPTION)) {
       ServletUtil.writeXMLTagWithAttrs(out, indent,
           ServletUtil.XMLTAG_CONNECTOR_CONFIG,
-          ServletUtil.ATTRIBUTE_CRYPT + "internal" + ServletUtil.QUOTE,
+          ImmutableMap.of(ServletUtil.ATTRIBUTE_CRYPT, "internal"),
           false);
     } else if (flags.contains(Style.EXTERNAL_ENCRYPTION)) {
       ServletUtil.writeXMLTagWithAttrs(out, indent,
           ServletUtil.XMLTAG_CONNECTOR_CONFIG,
-          ServletUtil.ATTRIBUTE_CRYPT + "external" + ServletUtil.QUOTE,
+          ImmutableMap.of(ServletUtil.ATTRIBUTE_CRYPT, "external"),
           false);
     } else {
       // TODO: Should this really be the default?
@@ -378,17 +380,12 @@ public class ImportExportConnector {
     Map<String, String> configMap = getConfigMap();
     Map<String, String> sorted = new TreeMap<String, String>(configMap);
     for (Map.Entry<String, String> me : sorted.entrySet()) {
-      StringBuilder builder = new StringBuilder();
-      try {
-        builder.append(ServletUtil.ATTRIBUTE_NAME);
-        XmlUtils.xmlAppendAttrValue(me.getKey(), builder);
-        builder.append(ServletUtil.QUOTE).append(ServletUtil.ATTRIBUTE_VALUE);
-        XmlUtils.xmlAppendAttrValue(me.getValue(), builder);
-        builder.append(ServletUtil.QUOTE);
-      } catch (IOException e) { /* Can't happen with StringBuilder */ }
-
       ServletUtil.writeXMLTagWithAttrs(out, indent + 1,
-          ServletUtil.XMLTAG_PARAMETERS, builder.toString(), true);
+          ServletUtil.XMLTAG_PARAMETERS,
+          ImmutableMap.of(
+              ServletUtil.ATTRIBUTE_NAME, me.getKey(),
+              ServletUtil.ATTRIBUTE_VALUE, me.getValue()),
+          true);
     }
     ServletUtil.writeXMLTag(out, indent,
         ServletUtil.XMLTAG_CONNECTOR_CONFIG, true);
@@ -417,15 +414,13 @@ public class ImportExportConnector {
       ServletUtil.writeXMLElement(out, indent,
           ServletUtil.XMLTAG_CONNECTOR_TYPE, getTypeName());
     } else {
-      StringBuilder builder = new StringBuilder();
-      builder.append(ServletUtil.ATTRIBUTE_NAME).append(getTypeName());
-      builder.append(ServletUtil.QUOTE);
+      ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+      builder.put(ServletUtil.ATTRIBUTE_NAME, getTypeName());
       if (getTypeVersion() != null) {
-        builder.append(' ').append(ServletUtil.ATTRIBUTE_VERSION);
-        builder.append(getTypeVersion()).append(ServletUtil.QUOTE);
+        builder.put(ServletUtil.ATTRIBUTE_VERSION, getTypeVersion());
       }
       ServletUtil.writeXMLTagWithAttrs(out, indent,
-          ServletUtil.XMLTAG_CONNECTOR_TYPE, builder.toString(), true);
+          ServletUtil.XMLTAG_CONNECTOR_TYPE, builder.build(), true);
     }
   }
 }

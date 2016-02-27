@@ -369,6 +369,17 @@ public class ImportExportConnectorTest extends TestCase {
         + " value=\"one&amp;two&lt;three>four&#39;five&quot;\""));
   }
 
+  public void testWriteType() {
+    String typeVersion = "1.0 \"codename\"";
+
+    ImportExportConnector connector = new ImportExportConnector("connector-01",
+        new Configuration("TestConnector", CONFIG_MAP, null), null, null);
+    connector.setTypeVersion(typeVersion);
+    String xmlResult = asXmlString(connector);
+    connector = fromXmlString(xmlResult);
+    assertEquals(typeVersion, connector.getTypeVersion());
+  }
+
   static void assertContains(Map<String, String> config, String key, String value) {
     for (Map.Entry<String, String> entry : config.entrySet()) {
       if (entry.getKey().equals(key) && entry.getValue().equals(value)) {
@@ -389,6 +400,7 @@ public class ImportExportConnectorTest extends TestCase {
   private static ImportExportConnector fromXmlString(String xmlString) {
     Document document =
         XmlParseUtil.parse(xmlString, new SAXParseErrorHandler(), null);
+    assertNotNull(xmlString, document);
     ImportExportConnector connector = new ImportExportConnector();
     connector.fromXml(document.getDocumentElement());
     return connector;

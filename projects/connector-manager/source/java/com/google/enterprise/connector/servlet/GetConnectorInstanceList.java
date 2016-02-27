@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.servlet;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.enterprise.connector.common.JarUtils;
 import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.manager.ConnectorStatus;
@@ -147,8 +148,9 @@ public class GetConnectorInstanceList extends HttpServlet {
         // Put out new style Schedules element.
         ServletUtil.writeXMLTagWithAttrs(buffer, 3,
             ServletUtil.XMLTAG_CONNECTOR_SCHEDULES,
-            ServletUtil.ATTRIBUTE_VERSION + Schedule.CURRENT_VERSION
-            + ServletUtil.QUOTE, false);
+            ImmutableMap.of(
+                ServletUtil.ATTRIBUTE_VERSION, Schedule.CURRENT_VERSION),
+            false);
         buffer.append(schedule);
         ServletUtil.writeXMLTag(buffer, 0,
             ServletUtil.XMLTAG_CONNECTOR_SCHEDULES, true);
@@ -157,7 +159,7 @@ public class GetConnectorInstanceList extends HttpServlet {
         buffer.append('\n');
         ServletUtil.writeXMLTagWithAttrs(buffer, 3,
             DEPRECATED_XMLTAG_CONNECTOR_SCHEDULE,
-            ServletUtil.ATTRIBUTE_VERSION + "1" + ServletUtil.QUOTE,
+            ImmutableMap.of(ServletUtil.ATTRIBUTE_VERSION, "1"),
             false);
         buffer.append(Schedule.toLegacyString(schedule));
         ServletUtil.writeXMLTag(buffer, 0,

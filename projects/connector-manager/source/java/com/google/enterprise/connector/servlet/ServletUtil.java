@@ -18,6 +18,7 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
 import com.google.enterprise.connector.common.JarUtils;
 import com.google.enterprise.connector.common.SecurityUtils;
 import com.google.enterprise.connector.spi.XmlUtils;
@@ -205,11 +206,11 @@ public class ServletUtil {
     "<tr><td>Repository</td><td>\n" +
     "<input type=\"text\" name=\"Repository\" /></td></tr>\n";
 
-  public static final String ATTRIBUTE_NAME = "name=\"";
-  public static final String ATTRIBUTE_VALUE = " value=\"";
-  public static final String ATTRIBUTE_VERSION = "version=\"";
-  public static final String ATTRIBUTE_CRYPT = "encryption=\"";
-  public static final char QUOTE = '"';
+  public static final String ATTRIBUTE_NAME = "name";
+  public static final String ATTRIBUTE_VALUE = "value";
+  public static final String ATTRIBUTE_VERSION = "version";
+  // TODO(jlacey): Unused; see ImportExportConnector.java.
+  // public static final String ATTRIBUTE_CRYPT = "encryption";
 
   private static final String[] XMLIndent = {
       "",
@@ -344,18 +345,11 @@ public class ServletUtil {
       if (param == null || param.length() < 1) {
         continue;
       }
-      out.write(indentStr(1));
-      out.write("<");
-      out.write(XMLTAG_STATUS_PARAMS);
-      try {
-        XmlUtils.xmlAppendAttr(XMLTAG_STATUS_PARAM_ORDER, Integer.toString(i),
-            out);
-        XmlUtils.xmlAppendAttr(XMLTAG_STATUS_PARAM, param, out);
-      } catch (IOException e) {
-        // Can't happen with PrintWriter.
-        throw new AssertionError(e);
-      }
-      out.println("/>");
+      writeXMLTagWithAttrs(out, 1, XMLTAG_STATUS_PARAMS,
+          ImmutableMap.of(
+              XMLTAG_STATUS_PARAM_ORDER, Integer.toString(i),
+              XMLTAG_STATUS_PARAM, param),
+          true);
     }
   }
 
@@ -397,33 +391,37 @@ public class ServletUtil {
   }
 
   /**
-   * Write an XML tag with attributes out to a PrintWriter.
+   * Write an XML tag with attributes out to an Appendable. Unexpected
+   * errors may occur if the destination throws IOExceptions.
    *
-   * @param out where PrintWriter to be written to
-   * @param indentLevel the depth of indentation.
+   * @param out where the tag is appended
+   * @param indentLevel the depth of indentation
    * @param elemName element name
-   * @param attributes attributes
+   * @param attributes attribute map
    * @param closeTag if true, close the tag with '/>'
    */
-  public static void writeXMLTagWithAttrs(PrintWriter out, int indentLevel,
-      String elemName, String attributes, boolean closeTag) {
-    out.println(indentStr(indentLevel)
-        + "<" + elemName + " " + attributes + ((closeTag)? "/>" : ">"));
-  }
+  public static void writeXMLTagWithAttrs(Appendable out, int indentLevel,
+      String elemName, Map<String, String> attributes, boolean closeTag) {
+    try {
+      out.append(indentStr(indentLevel));
+      out.append('<');
+      out.append(elemName);
+      for (Map.Entry<String, String> attr : attributes.entrySet()) {
+        XmlUtils.xmlAppendAttr(attr.getKey(), attr.getValue(), out);
+      }
+      if (closeTag) {
+        out.append("/");
+      }
+      out.append(">");
 
-  /**
-   * Write an XML tag with attributes out to a StringBuilder.
-   *
-   * @param out where StringBuilder to be written to
-   * @param indentLevel the depth of indentation.
-   * @param elemName element name
-   * @param attributes attributes
-   * @param closeTag if true, close the tag with '/>'
-   */
-  public static void writeXMLTagWithAttrs(StringBuilder out, int indentLevel,
-      String elemName, String attributes, boolean closeTag) {
-    out.append(indentStr(indentLevel)).append("<").append(elemName);
-    out.append(" ").append(attributes).append((closeTag)? "/>" : ">");
+      // Legacy foulness. The old PrintWriter overload used println, but
+      // the StringBuilder overload did not include a trailing newline.
+      if (out instanceof PrintWriter) {
+        ((PrintWriter) out).println();
+      }
+    } catch (IOException e) {
+      throw new AssertionError(e);
+    }
   }
 
   /** Write an XML tag to a PrintWriter
