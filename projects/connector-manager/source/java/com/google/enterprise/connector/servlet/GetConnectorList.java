@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.servlet;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.enterprise.connector.common.JarUtils;
 import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.manager.Context;
@@ -115,7 +116,7 @@ public class GetConnectorList extends HttpServlet {
         StringBuilder buffer = new StringBuilder();
         ServletUtil.writeXMLTagWithAttrs(buffer, 2,
             ServletUtil.XMLTAG_CONNECTOR_TYPE,
-            ServletUtil.ATTRIBUTE_VERSION + version + ServletUtil.QUOTE,
+            ImmutableMap.of(ServletUtil.ATTRIBUTE_VERSION, version),
             false);
         buffer.append(typeName);
         ServletUtil.writeXMLTag(buffer, 0,

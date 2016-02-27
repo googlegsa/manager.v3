@@ -74,6 +74,7 @@ public class ExportManagerTest extends TestCase {
     // Now parse that XML and see if it reflects some tiny bit of reality.
     Document document =
         XmlParseUtil.parse(managerXml, new SAXParseErrorHandler(), null);
+    assertNotNull(managerXml, document);
     Element managerElement = document.getDocumentElement();
 
     // Extract the manager configuration properties.
@@ -105,6 +106,7 @@ public class ExportManagerTest extends TestCase {
     // Now parse that XML and see if it reflects some tiny bit of reality.
     Document document =
         XmlParseUtil.parse(managerXml, new SAXParseErrorHandler(), null);
+    assertNotNull(managerXml, document);
     Element managerElement = document.getDocumentElement();
 
     // Extract the manager configuration properties.

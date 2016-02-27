@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.importexport;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.enterprise.connector.instantiator.Configuration;
 import com.google.enterprise.connector.scheduler.Schedule;
 import com.google.enterprise.connector.servlet.ServletUtil;
@@ -70,8 +71,9 @@ public class LegacyImportExportConnector extends ImportExportConnector {
     StringBuilder builder = new StringBuilder();
     ServletUtil.writeXMLTagWithAttrs(builder, indent,
         ServletUtil.XMLTAG_CONNECTOR_SCHEDULES,
-        ServletUtil.ATTRIBUTE_VERSION + Schedule.CURRENT_VERSION
-        + ServletUtil.QUOTE, false);
+        ImmutableMap.of(
+            ServletUtil.ATTRIBUTE_VERSION, Schedule.CURRENT_VERSION),
+        false);
     Schedule schedule = getSchedule();
     if (schedule != null) {
         builder.append(schedule.toString());

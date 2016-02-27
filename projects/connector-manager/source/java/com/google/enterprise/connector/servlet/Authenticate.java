@@ -15,6 +15,7 @@
 package com.google.enterprise.connector.servlet;
 
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
 import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.manager.ConnectorStatus;
 import com.google.enterprise.connector.manager.Manager;
@@ -136,15 +137,10 @@ public class Authenticate extends ConnectorManagerServlet {
         if (response.isValid()) {
           ServletUtil.writeXMLTagWithAttrs(
               out, 2, ServletUtil.XMLTAG_SUCCESS,
-              ServletUtil.XMLTAG_CONNECTOR_NAME + "=\"" + connectorName + "\"",
+              ImmutableMap.of(ServletUtil.XMLTAG_CONNECTOR_NAME, connectorName),
               false);
-          // TODO: Either fix ServletUtil XML code to XML escape attr values and
-          // element text bodies, or add the ability to append attributes to
-          // XmlUtils.appendStartTag().
-          out.append(ServletUtil.indentStr(3));
-          XmlUtils.xmlAppendStartTag(ServletUtil.XMLTAG_IDENTITY, out);
-          XmlUtils.xmlAppendAttrValue(identity.getUsername(), out);
-          XmlUtils.xmlAppendEndTag(ServletUtil.XMLTAG_IDENTITY, out);
+          ServletUtil.writeXMLElement(out, 3, ServletUtil.XMLTAG_IDENTITY,
+              identity.getUsername());
 
           // Add any returned groups that the user may belong to.
           if (response.getGroups() != null) {
@@ -177,12 +173,12 @@ public class Authenticate extends ConnectorManagerServlet {
           // requires that we return success here.
           ServletUtil.writeXMLTagWithAttrs(
               out, 2, ServletUtil.XMLTAG_SUCCESS,
-              ServletUtil.XMLTAG_CONNECTOR_NAME + "=\"" + connectorName + "\"",
+              ImmutableMap.of(ServletUtil.XMLTAG_CONNECTOR_NAME, connectorName),
               true);
         } else {
           ServletUtil.writeXMLTagWithAttrs(
               out, 2, ServletUtil.XMLTAG_FAILURE,
-              ServletUtil.XMLTAG_CONNECTOR_NAME + "=\"" + connectorName + "\"",
+              ImmutableMap.of(ServletUtil.XMLTAG_CONNECTOR_NAME, connectorName),
               true);
         }
       } catch (IOException e) {

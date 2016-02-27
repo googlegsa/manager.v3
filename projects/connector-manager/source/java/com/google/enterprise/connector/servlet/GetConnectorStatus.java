@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.servlet;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.enterprise.connector.manager.ConnectorStatus;
 import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
@@ -93,8 +94,9 @@ public class GetConnectorStatus extends ConnectorManagerGetServlet {
         StringBuilder buffer = new StringBuilder();
         ServletUtil.writeXMLTagWithAttrs(buffer, 2,
             ServletUtil.XMLTAG_CONNECTOR_SCHEDULES,
-            ServletUtil.ATTRIBUTE_VERSION + Schedule.CURRENT_VERSION
-            + ServletUtil.QUOTE, false);
+            ImmutableMap.of(
+                ServletUtil.ATTRIBUTE_VERSION, Schedule.CURRENT_VERSION),
+            false);
         buffer.append(schedule);
         ServletUtil.writeXMLTag(buffer, 0,
             ServletUtil.XMLTAG_CONNECTOR_SCHEDULES, true);
