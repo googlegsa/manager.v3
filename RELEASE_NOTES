@@ -8,17 +8,23 @@ detail and provide information that supplements the main documentation.
 
 Web Site: https://github.com/googlegsa/manager.v3
 
+Version 4 connectors are being developed with the Adaptor Library, a
+new connector framework. See the Adaptors page for more information:
 
-Release 3.4.0, 18 August 2015
-=============================
+    http://googlegsa.github.io/adaptor/index.html
+
+
+Release 3.4.0, 1 March 2016
+===========================
 
 Introduction
 ------------
 This is a patch release that fixes a few small problems discovered in
-the previous release. Users of previous releases are encouraged to review
-the changes below to determine whether to upgrade.
+the previous release. Users of previous releases are encouraged to
+upgrade. Not all connectors are compatible with this release. When
+feasible, upgrading to version 4 is preferred.
 
-Issues Fixed Since 3.2.12
+Issues Fixed Since 3.2.14
 -------------------------
 23327478 - The SocialUserProfileDocument method isPublic is not
            consistent with the value used by feeds.
