@@ -9,6 +9,36 @@ detail and provide information that supplements the main documentation.
 Web Site: https://github.com/googlegsa/manager.v3
 
 
+Release 3.2.14, 1 March 2016
+============================
+
+Introduction
+------------
+This is a patch release that fixes a few security problems discovered in
+the previous release. Users of previous releases are encouraged to review
+the changes below to determine whether to upgrade.
+
+Issues Fixed Since 3.2.12
+-------------------------
+26417301 - Avoid possible XSS vulnerabilities when writing XML servlet
+           responses.
+
+26404394 - Avoid possible XXE vulnerabilities when parsing form
+           snippets, GSA to CM messages, and exported connector config files.
+
+To exploit the vulnerabilities, an attacker would need access to the
+Tomcat HTTP or HTTPS ports used by the GSA to communicate with the
+Connector Manager. Access is controlled by the Tomcat RemoteAddrValve
+by default in GCI installations. Access may be further secured using
+HTTPS and client certificates. For details, see:
+
+https://support.google.com/gsa/answer/4362924
+
+Version Compatibility
+---------------------
+This version of the Connector Manager requires Java 6 JRE or newer.
+
+
 Release 3.2.12, 2 July 2015
 ===========================
 
