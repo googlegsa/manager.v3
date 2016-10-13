@@ -14,8 +14,8 @@ new connector framework. See the Adaptors page for more information:
     http://googlegsa.github.io/adaptor/index.html
 
 
-Release 3.4.0, 1 March 2016
-===========================
+Release 3.4.0, 13 October 2016
+==============================
 
 Introduction
 ------------
@@ -26,6 +26,11 @@ feasible, upgrading to version 4 is preferred.
 
 Issues Fixed Since 3.2.14
 -------------------------
+32098052 - Support Excel binary and PowerPoint slideshow MIME types:
+           application/vnd.ms-excel.sheet.binary.macroEnabled.12
+           application/vnd.ms-powerpoint.slideshow.macroEnabled.12
+           application/vnd.openxmlformats-officedocument.presentationml.slideshow
+
 23327478 - The SocialUserProfileDocument method isPublic is not
            consistent with the value used by feeds.
 
